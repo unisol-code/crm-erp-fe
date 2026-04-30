@@ -1,0 +1,227 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* scrollbar-width: thin;
+  scrollbar-color: #bfbfbf #f0f0f0; */
+
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari, Opera */
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f0f0f0; 
+}
+::-webkit-scrollbar-thumb {
+  background: #b4b4b4; 
+  border-radius: 10px; 
+}
+
+.css-ikdnna-MuiTabs-flexContainer {
+  display: flex;
+  justify-content: space-around !important;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* .bg-dialog-header {
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-image: url("./assets/images/bgDialogHeader.png");
+} */
+.y-slider::-webkit-scrollbar {
+  width: 6px;
+}
+.y-slider::-webkit-scrollbar-thumb {
+  background: black;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.y-slider::-webkit-scrollbar-thumb:hover {
+  background-color: #ff004f;
+}
+
+.searchinput {
+  width: 40% !important;
+  border-radius: 25px !important;
+  border: 2.4px solid rgb(176, 174, 174);
+}
+
+.searchinput button {
+  margin-left: auto;
+}
+
+.filter {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.filter span {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.pagination {
+  display: flex;
+}
+
+.pagination button {
+  height: 29px;
+  width: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.pagination .nextbtn {
+  background-color: #c3e6fb;
+  font-size: 12px;
+  color: #000;
+}
+.pagination .prevbtn {
+  font-size: 12px;
+  color: #000;
+}
+
+.modal label {
+  font-family: Montserrat;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* .cardheader {
+  background-image: url("assets/images/cardimg.png");
+  font-weight: 600;
+  font-size: 30px;
+} */
+.cardheader span {
+  font-weight: 600;
+  font-size: 30px;
+}
+
+.cards {
+  border-radius: 15px;
+}
+
+.cardtitle {
+  margin-right: 0 !important;
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.modal .overflow-y-scroll {
+  scrollbar-width: none; /* For Firefox */
+}
+
+.modal .overflow-y-scroll::-webkit-scrollbar {
+  width: 0px; /* For Chrome, Safari, and Edge */
+  height: 0px; /* For horizontal scrollbar */
+}
+
+.modal .overflow-y-scroll::-webkit-scrollbar-thumb {
+  background-color: transparent; /* Remove thumb visibility */
+}
+
+.modal .overflow-y-scroll::-webkit-scrollbar-track {
+  background: transparent; /* Remove track visibility */
+}
+
+/* Custom style to make file input border-radius 20px */
+
+.file {
+  margin: 40px 0px;
+}
+
+.file-input::-webkit-file-upload-button {
+  border-radius: 20px; /* Apply border-radius to the button itself */
+  padding: 5px 20px;
+  background-color: #d5d9dd;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  border: none;
+}
+
+.file-input::-moz-file-upload-button {
+  border-radius: 20px;
+  padding: 5px 20px;
+  background-color: #d5d9dd;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  border: none;
+}
+
+.file-input {
+  font-size: 12px;
+}
+
+.file-input:focus {
+  font-size: 12px;
+}
+
+.file-input::file-selector-button {
+  border-radius: 20px;
+  background-color: #d5d9dd;
+  color: white;
+  font-size: 14px;
+}
+
+.file span {
+  font-size: 10px;
+  font-weight: 400;
+  color: #b9bbbc;
+  margin-top: 10px;
+}
+
+.file .flex-col {
+  margin-bottom: 15px;
+}
+
+.file label {
+  font-weight: 400;
+  font-size: 15px;
+}
+
+.fileupload {
+  background-color: #8fa1ff80;
+  border-radius: 20px;
+}
+
+.fileupload span {
+  font-size: 14px;
+  color: #3200fc;
+  font-weight: 400;
+}
+
+.fa-angle-left{
+  font-size: 25px;
+}
+
+.no-spinner {
+  appearance: textfield;         
+  -moz-appearance: textfield;    
+  -webkit-appearance: none;      
+}
+
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
