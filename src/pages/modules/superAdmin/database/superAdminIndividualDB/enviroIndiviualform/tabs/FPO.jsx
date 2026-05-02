@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { getIn } from "formik";
+import ReactSelect from "react-select";
 import useEnviroIndividualDrop from "../../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroIndividualDrop";
 
 // Reusable Section Heading
@@ -40,46 +41,74 @@ const FormField = ({ label, name, formik, type = "text", className = "", ...prop
   );
 };
 
-// CheckboxGroup Component (can be used for multi-select)
-const CheckboxGroup = ({ name, label, options, formik }) => {
-  const handleCheckboxChange = (event) => {
-    const { value, checked } = event.target;
-    const currentValues = formik.values[name] || [];
-    if (checked) {
-      formik.setFieldValue(name, [...currentValues, value]);
-    } else {
-      formik.setFieldValue(
-        name,
-        currentValues.filter((item) => item !== value)
-      );
-    }
+// SearchableMultiSelect Component
+const SearchableMultiSelect = ({ label, name, options, formik, placeholder = "Select options..." }) => {
+  const value = getIn(formik.values, name) || [];
+  const error = getIn(formik.errors, name);
+  const touched = getIn(formik.touched, name);
+
+  const selectedOptions = (options || []).filter(opt => value.includes(opt.value));
+
+  const handleChange = (selected) => {
+    const values = selected ? selected.map(opt => opt.value) : [];
+    formik.setFieldValue(name, values);
   };
 
   return (
     <div className="mb-4 col-span-1 md:col-span-2">
-      <label className="block mb-2 font-semibold text-gray-700">{label}</label>
-      <div className="flex flex-wrap gap-4 p-3 border border-gray-300 rounded-md">
-        {options.map((option) => (
-          <div key={option.value} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id={`${name}-${option.value}`}
-              name={name}
-              value={option.value}
-              checked={formik.values[name]?.includes(option.value) || false}
-              onChange={handleCheckboxChange}
-              onBlur={formik.handleBlur}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-            />
-            <label
-              htmlFor={`${name}-${option.value}`}
-              className="text-gray-700 cursor-pointer text-sm"
-            >
-              {option.label}
-            </label>
-          </div>
-        ))}
-      </div>
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+        </label>
+      )}
+      <ReactSelect
+        isMulti
+        name={name}
+        options={options}
+        value={selectedOptions}
+        onChange={handleChange}
+        onBlur={() => formik.setFieldTouched(name, true)}
+        placeholder={placeholder}
+        classNamePrefix="react-select"
+        className="basic-multi-select"
+        styles={{
+          control: (base) => ({
+            ...base,
+            borderColor: error && touched ? '#ef4444' : '#d1d5db',
+            '&:hover': {
+              borderColor: '#3b82f6'
+            },
+            borderRadius: '0.375rem',
+            boxShadow: 'none',
+            minHeight: '42px'
+          }),
+          multiValue: (base) => ({
+            ...base,
+            backgroundColor: '#eff6ff',
+            borderRadius: '0.25rem',
+          }),
+          multiValueLabel: (base) => ({
+            ...base,
+            color: '#1e40af',
+            fontWeight: '500',
+          }),
+          multiValueRemove: (base) => ({
+            ...base,
+            color: '#3b82f6',
+            '&:hover': {
+              backgroundColor: '#dbeafe',
+              color: '#1d4ed8',
+            },
+          }),
+          menu: (base) => ({
+            ...base,
+            zIndex: 50
+          })
+        }}
+      />
+      {error && touched && (
+        <div className="text-red-500 text-xs mt-1">{error}</div>
+      )}
     </div>
   );
 };
@@ -105,43 +134,6 @@ const FPOForm = ({ formik }) => {
 
   return (
     <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
-      {/* <SectionHeading title="General Information" />
-      <FormField
-        name="leadOwner"
-        label="Lead Owner"
-        formik={formik}
-        placeholder="Enter lead owner"
-      /> */}
-      {/* <FormField
-        name="productName"
-        label="Product Name"
-        formik={formik}
-        placeholder="Enter product name"
-      />
-      <FormField
-        name="birthday"
-        label="Birthday"
-        formik={formik}
-        type="date"
-      />
-      <FormField
-        name="anniversary"
-        label="Anniversary"
-        formik={formik}
-        type="date"
-      />
-      <FormField
-        name="hobbies"
-        label="Hobbies"
-        formik={formik}
-        placeholder="Enter hobbies"
-      />
-      <FormField
-        name="goals"
-        label="Goals"
-        formik={formik}
-        placeholder="Enter goals"
-      /> */}
 
       <SectionHeading title="SECTION 1: FPO Profile" />
       <FormField
@@ -226,9 +218,10 @@ const FPOForm = ({ formik }) => {
         placeholder="Enter Total Members"
         type="number"
       />
-      <CheckboxGroup
+      <SearchableMultiSelect
         name="memberCategories"
         label="13. Member Categories"
+        placeholder="Select Member Categories"
         options={(memberCategories || []).map((item) => ({
           label: item,
           value: item,
@@ -244,9 +237,10 @@ const FPOForm = ({ formik }) => {
           className="col-span-1 md:col-span-2"
         />
       )}
-      <CheckboxGroup
+      <SearchableMultiSelect
         name="primaryCommunicationChannels"
         label="14. Primary Communication Channels"
+        placeholder="Select Communication Channels"
         options={(primaryCommunicationChannels || []).map((item) => ({
           label: item,
           value: item,
@@ -270,9 +264,10 @@ const FPOForm = ({ formik }) => {
         formik={formik}
         placeholder="Enter annual turnover"
       />
-      <CheckboxGroup
+      <SearchableMultiSelect
         name="majorRevenueSources"
         label="17. Major Revenue Sources"
+        placeholder="Select Revenue Sources"
         options={(majorRevenueSources || []).map((item) => ({
           label: item,
           value: item,
@@ -290,9 +285,10 @@ const FPOForm = ({ formik }) => {
       )}
 
       <SectionHeading title="SECTION 6: Partnerships & Market Linkages" />
-      <CheckboxGroup
+      <SearchableMultiSelect
         name="keyBuyerTypes"
         label="18. Key Buyer Types"
+        placeholder="Select Buyer Types"
         options={(keyBuyerTypes || []).map((item) => ({
           label: item,
           value: item,

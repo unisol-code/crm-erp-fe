@@ -268,18 +268,19 @@ const EnviroIndivualform = () => {
       const govOfficerFields = [
         "firstName", "lastName", "email", "contact", "birthday", "anniversary",
         "hobbies", "goals", "officeName", "designation", "districtBlockRegion",
-        "yearsOfExperience", "frequentlyRequestedServices", "schemeUnderstanding",
-        "effectiveLanguage", "dataMaintainedDigitally", "dataManagementTools",
+        "yearsOfExperience", "frequentlyRequestedServices", "frequentlyRequestedServicesOthers",
+        "schemeUnderstanding", "effectiveLanguage", "dataMaintainedDigitally",
+        "dataManagementTools", "dataManagementToolsOthers",
         "salesId", "addedBy", "addedById", "hrmCompanyId", "edit"
       ];
 
       const fpoFields = [
-        "birthday", "anniversary", "hobbies", "goals", "fpoName", "registrationNumber",
+        "fpoName", "registrationNumber",
         "registrationAct", "yearOfEstablishment", "operationalArea", "officeAddress",
         "officialContactNumber", "officialEmailId", "websiteAppUrl", "numberOfBoardMembers",
-        "numberOfStaffMembers", "totalActiveMembers", "memberCategories",
+        "numberOfStaffMembers", "totalActiveMembers", "memberCategories", "memberCategoriesOthers",
         "primaryCommunicationChannels", "majorCropsHandled", "annualTurnover",
-        "majorRevenueSources", "keyBuyerTypes", "topChallenges", "topPriorities",
+        "majorRevenueSources", "majorRevenueSourcesOthers", "keyBuyerTypes", "topChallenges", "topPriorities",
         "salesId", "addedBy", "addedById", "hrmCompanyId", "edit"
       ];
 

@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { getIn } from "formik";
+import ReactSelect from "react-select";
 import useEnviroIndividualDrop from "../../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroIndividualDrop";
 
 const SectionHeading = ({ title }) => (
@@ -38,45 +39,74 @@ const FormField = ({ label, name, formik, type = "text", className = "", ...prop
   );
 };
 
-const CheckboxGroup = ({ name, label, options, formik }) => {
-  const handleCheckboxChange = (event) => {
-    const { value, checked } = event.target;
-    const currentValues = formik.values[name] || [];
-    if (checked) {
-      formik.setFieldValue(name, [...currentValues, value]);
-    } else {
-      formik.setFieldValue(
-        name,
-        currentValues.filter((item) => item !== value)
-      );
-    }
+// SearchableMultiSelect Component
+const SearchableMultiSelect = ({ label, name, options, formik, placeholder = "Select options..." }) => {
+  const value = getIn(formik.values, name) || [];
+  const error = getIn(formik.errors, name);
+  const touched = getIn(formik.touched, name);
+
+  const selectedOptions = (options || []).filter(opt => value.includes(opt.value));
+
+  const handleChange = (selected) => {
+    const values = selected ? selected.map(opt => opt.value) : [];
+    formik.setFieldValue(name, values);
   };
 
   return (
     <div className="mb-4 col-span-1 md:col-span-2">
-      <label className="block mb-2 font-semibold text-gray-700">{label}</label>
-      <div className="flex flex-wrap gap-4 p-3 border border-gray-300 rounded-md">
-        {options.map((option) => (
-          <div key={option.value} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id={`${name}-${option.value}`}
-              name={name}
-              value={option.value}
-              checked={formik.values[name]?.includes(option.value) || false}
-              onChange={handleCheckboxChange}
-              onBlur={formik.handleBlur}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-            />
-            <label
-              htmlFor={`${name}-${option.value}`}
-              className="text-gray-700 cursor-pointer text-sm"
-            >
-              {option.label}
-            </label>
-          </div>
-        ))}
-      </div>
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+        </label>
+      )}
+      <ReactSelect
+        isMulti
+        name={name}
+        options={options}
+        value={selectedOptions}
+        onChange={handleChange}
+        onBlur={() => formik.setFieldTouched(name, true)}
+        placeholder={placeholder}
+        classNamePrefix="react-select"
+        className="basic-multi-select"
+        styles={{
+          control: (base) => ({
+            ...base,
+            borderColor: error && touched ? '#ef4444' : '#d1d5db',
+            '&:hover': {
+              borderColor: '#3b82f6'
+            },
+            borderRadius: '0.375rem',
+            boxShadow: 'none',
+            minHeight: '42px'
+          }),
+          multiValue: (base) => ({
+            ...base,
+            backgroundColor: '#eff6ff',
+            borderRadius: '0.25rem',
+          }),
+          multiValueLabel: (base) => ({
+            ...base,
+            color: '#1e40af',
+            fontWeight: '500',
+          }),
+          multiValueRemove: (base) => ({
+            ...base,
+            color: '#3b82f6',
+            '&:hover': {
+              backgroundColor: '#dbeafe',
+              color: '#1d4ed8',
+            },
+          }),
+          menu: (base) => ({
+            ...base,
+            zIndex: 50
+          })
+        }}
+      />
+      {error && touched && (
+        <div className="text-red-500 text-xs mt-1">{error}</div>
+      )}
     </div>
   );
 };
@@ -208,9 +238,10 @@ const GovForm = ({ formik }) => {
       />
 
       <SectionHeading title="Section B: Farmer Interaction & Communication" />
-      <CheckboxGroup
+      <SearchableMultiSelect
         name="frequentlyRequestedServices"
         label="7. Frequently requested services"
+        placeholder="Select Services"
         options={(frequentlyRequestedServices || []).map((item) => ({
           label: item,
           value: item,
@@ -258,9 +289,10 @@ const GovForm = ({ formik }) => {
         ]}
         formik={formik}
       />
-      <CheckboxGroup
+      <SearchableMultiSelect
         name="dataManagementTools"
         label="14. Tools used for farmer data management"
+        placeholder="Select Tools"
         options={(dataManagementTools || []).map((item) => ({
           label: item,
           value: item,
