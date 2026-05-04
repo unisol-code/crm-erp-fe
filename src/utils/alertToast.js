@@ -12,3 +12,16 @@ export const confirmAlert = (message) => {
     cancelButtonText: 'Cancel',
   });
 };
+
+export const approveRejectRequestAlert = (message) => {
+  return Swal.fire({
+    title: 'Are you sure?',
+    text: message,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, proceed',
+    cancelButtonText: 'Cancel',
+  });
+};

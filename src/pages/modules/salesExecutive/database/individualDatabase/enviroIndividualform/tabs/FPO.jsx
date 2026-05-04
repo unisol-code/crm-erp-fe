@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { getIn } from "formik";
+import ReactSelect from "react-select";
+import useEnviroIndividualDrop from "../../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroIndividualDrop";
 
 // Reusable Section Heading
 const SectionHeading = ({ title }) => (
-  <div className="col-span-1 md:col-span-2 mt-4 mb-4">
-    <h3 className="text-lg font-bold text-gray-800 border-b-2 border-green-500 pb-2">
+  <div className="col-span-1 md:col-span-2 mt-4 mb-2">
+    <h3 className="text-lg font-bold text-gray-800 border-b-2 border-blue-500 pb-2">
       {title}
     </h3>
   </div>
@@ -30,10 +32,7 @@ const FormField = ({ label, name, formik, type = "text", className = "", ...prop
         value={value}
         onChange={formik.handleChange}
         onBlur={formik.handleBlur}
-        className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 ${error && touched
-          ? "border-red-500 focus:ring-red-200"
-          : "border-gray-300 focus:ring-green-200"
-          }`}
+        className="w-full px-3 py-2 border rounded focus:outline-none"
       />
       {error && touched && (
         <div className="text-red-500 text-xs mt-1">{error}</div>
@@ -42,57 +41,100 @@ const FormField = ({ label, name, formik, type = "text", className = "", ...prop
   );
 };
 
-// CheckboxGroup Component
-const CheckboxGroup = ({ name, label, options, formik }) => {
-  const handleCheckboxChange = (event) => {
-    const { value, checked } = event.target;
-    const currentValues = formik.values[name] || [];
-    if (checked) {
-      formik.setFieldValue(name, [...currentValues, value]);
-    } else {
-      formik.setFieldValue(
-        name,
-        currentValues.filter((item) => item !== value)
-      );
-    }
+// SearchableMultiSelect Component
+const SearchableMultiSelect = ({ label, name, options, formik, placeholder = "Select options..." }) => {
+  const value = getIn(formik.values, name) || [];
+  const error = getIn(formik.errors, name);
+  const touched = getIn(formik.touched, name);
+
+  const selectedOptions = (options || []).filter(opt => value.includes(opt.value));
+
+  const handleChange = (selected) => {
+    const values = selected ? selected.map(opt => opt.value) : [];
+    formik.setFieldValue(name, values);
   };
 
   return (
     <div className="mb-4 col-span-1 md:col-span-2">
-      <label className="block mb-2 font-semibold text-gray-700">{label}</label>
-      <div className="flex flex-wrap gap-4 p-3 border border-gray-300 rounded-md">
-        {options.map((option) => (
-          <div key={option.value} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id={`${name}-${option.value}`}
-              name={name}
-              value={option.value}
-              checked={formik.values[name]?.includes(option.value) || false}
-              onChange={handleCheckboxChange}
-              onBlur={formik.handleBlur}
-              className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-            />
-            <label
-              htmlFor={`${name}-${option.value}`}
-              className="text-gray-700 cursor-pointer text-sm"
-            >
-              {option.label}
-            </label>
-          </div>
-        ))}
-      </div>
-      {formik.touched[name] && formik.errors[name] && (
-        <div className="mt-1 text-sm text-red-500">{formik.errors[name]}</div>
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+        </label>
+      )}
+      <ReactSelect
+        isMulti
+        name={name}
+        options={options}
+        value={selectedOptions}
+        onChange={handleChange}
+        onBlur={() => formik.setFieldTouched(name, true)}
+        placeholder={placeholder}
+        classNamePrefix="react-select"
+        className="basic-multi-select"
+        styles={{
+          control: (base) => ({
+            ...base,
+            borderColor: error && touched ? '#ef4444' : '#d1d5db',
+            '&:hover': {
+              borderColor: '#3b82f6'
+            },
+            borderRadius: '0.375rem',
+            boxShadow: 'none',
+            minHeight: '42px'
+          }),
+          multiValue: (base) => ({
+            ...base,
+            backgroundColor: '#eff6ff',
+            borderRadius: '0.25rem',
+          }),
+          multiValueLabel: (base) => ({
+            ...base,
+            color: '#1e40af',
+            fontWeight: '500',
+          }),
+          multiValueRemove: (base) => ({
+            ...base,
+            color: '#3b82f6',
+            '&:hover': {
+              backgroundColor: '#dbeafe',
+              color: '#1d4ed8',
+            },
+          }),
+          menu: (base) => ({
+            ...base,
+            zIndex: 50
+          })
+        }}
+      />
+      {error && touched && (
+        <div className="text-red-500 text-xs mt-1">{error}</div>
       )}
     </div>
   );
 };
 
 const FpoForm = ({ formik }) => {
+  const {
+    fetchPrimaryCommunicationChannels,
+    fetchKeyBuyerTypes,
+    fetchMemberCategories,
+    fetchMajorRevenueSources,
+    primaryCommunicationChannels,
+    keyBuyerTypes,
+    memberCategories,
+    majorRevenueSources,
+  } = useEnviroIndividualDrop();
+
+  useEffect(() => {
+    fetchPrimaryCommunicationChannels();
+    fetchKeyBuyerTypes();
+    fetchMemberCategories();
+    fetchMajorRevenueSources();
+  }, []);
+
   return (
-    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 gap-y-1">
-      {/* SECTION 1: FPO Profile */}
+    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+
       <SectionHeading title="SECTION 1: FPO Profile" />
       <FormField
         name="fpoName"
@@ -131,6 +173,7 @@ const FpoForm = ({ formik }) => {
         label="6. Office Address"
         formik={formik}
         placeholder="Enter Office Address"
+        className="col-span-1 md:col-span-2"
       />
       <FormField
         name="officialContactNumber"
@@ -139,7 +182,7 @@ const FpoForm = ({ formik }) => {
         placeholder="Enter Contact Number"
       />
       <FormField
-        name="officialEmailID"
+        name="officialEmailId"
         label="8. Official Email ID"
         formik={formik}
         placeholder="Enter Email ID"
@@ -151,119 +194,122 @@ const FpoForm = ({ formik }) => {
         placeholder="Enter URL"
       />
 
-      {/* SECTION 2: Governance & Staffing */}
       <SectionHeading title="SECTION 2: Governance & Staffing" />
       <FormField
-        name="numBoardMembers"
+        name="numberOfBoardMembers"
         label="10. Number of Board Members"
         formik={formik}
+        placeholder="Enter Number"
         type="number"
-        placeholder="0"
       />
       <FormField
-        name="numStaffMembers"
+        name="numberOfStaffMembers"
         label="11. Number of Staff Members"
         formik={formik}
+        placeholder="Enter Number"
         type="number"
-        placeholder="0"
       />
 
-      {/* SECTION 3: Member Profile & Engagement */}
       <SectionHeading title="SECTION 3: Member Profile & Engagement" />
       <FormField
         name="totalActiveMembers"
-        label="15. Total Number of Active Members"
+        label="12. Total Farmer Members"
         formik={formik}
+        placeholder="Enter Total Members"
         type="number"
-        placeholder="0"
       />
-      <CheckboxGroup
+      <SearchableMultiSelect
         name="memberCategories"
-        label="16. Member Categories (Tick all that apply)"
-        options={[
-          { label: "Small Farmers", value: "Small Farmers" },
-          { label: "Marginal Farmers", value: "Marginal Farmers" },
-          { label: "Women Farmers", value: "Women Farmers" },
-          { label: "SC/ST", value: "SC/ST" },
-          { label: "Tenant Farmers", value: "Tenant Farmers" },
-          { label: "Others", value: "Others" },
-        ]}
+        label="13. Member Categories"
+        placeholder="Select Member Categories"
+        options={(memberCategories || []).map((item) => ({
+          label: item,
+          value: item,
+        }))}
         formik={formik}
       />
-      <CheckboxGroup
-        name="communicationChannels"
-        label="18. Primary Communication Channels (Tick all that apply)"
-        options={[
-          { label: "SMS", value: "SMS" },
-          { label: "WhatsApp", value: "WhatsApp" },
-          { label: "Phone Calls", value: "Phone Calls" },
-          { label: "Mobile App", value: "Mobile App" },
-          { label: "Meetings", value: "Meetings" },
-          { label: "Email", value: "Email" },
-        ]}
+      {formik.values.memberCategories?.includes("Others") && (
+        <FormField
+          name="memberCategoriesOthers"
+          label="Please specify other category"
+          formik={formik}
+          placeholder="Enter other category"
+          className="col-span-1 md:col-span-2"
+        />
+      )}
+      <SearchableMultiSelect
+        name="primaryCommunicationChannels"
+        label="14. Primary Communication Channels"
+        placeholder="Select Communication Channels"
+        options={(primaryCommunicationChannels || []).map((item) => ({
+          label: item,
+          value: item,
+        }))}
         formik={formik}
       />
 
-      {/* SECTION 4: Services & Business Operations */}
       <SectionHeading title="SECTION 4: Services & Business Operations" />
       <FormField
         name="majorCropsHandled"
-        label="35. Major Crops/Commodities Handled"
+        label="15. Major Crops Handled"
         formik={formik}
         placeholder="Enter major crops"
+        className="col-span-1 md:col-span-2"
       />
 
-      {/* SECTION 5: Finance & Member Benefits */}
       <SectionHeading title="SECTION 5: Finance & Member Benefits" />
       <FormField
         name="annualTurnover"
-        label="40. Annual Turnover (₹)"
+        label="16. Annual Turnover"
         formik={formik}
-        placeholder="Enter turnover"
+        placeholder="Enter annual turnover"
       />
-      <CheckboxGroup
+      <SearchableMultiSelect
         name="majorRevenueSources"
-        label="41. Major Revenue Sources (Tick all that apply)"
-        options={[
-          { label: "Input Sales", value: "Input Sales" },
-          { label: "Produce Sales", value: "Produce Sales" },
-          { label: "Processing", value: "Processing" },
-          { label: "Services", value: "Services" },
-          { label: "Grants", value: "Grants" },
-          { label: "Others", value: "Others" },
-        ]}
+        label="17. Major Revenue Sources"
+        placeholder="Select Revenue Sources"
+        options={(majorRevenueSources || []).map((item) => ({
+          label: item,
+          value: item,
+        }))}
         formik={formik}
       />
+      {formik.values.majorRevenueSources?.includes("Others") && (
+        <FormField
+          name="majorRevenueSourcesOthers"
+          label="Please specify other source"
+          formik={formik}
+          placeholder="Enter other source"
+          className="col-span-1 md:col-span-2"
+        />
+      )}
 
-      {/* SECTION 6: Partnerships & Market Linkages */}
       <SectionHeading title="SECTION 6: Partnerships & Market Linkages" />
-      <CheckboxGroup
+      <SearchableMultiSelect
         name="keyBuyerTypes"
-        label="45. Key Buyer Types (Tick all that apply)"
-        options={[
-          { label: "Wholesalers", value: "Wholesalers" },
-          { label: "Retailers", value: "Retailers" },
-          { label: "Processors", value: "Processors" },
-          { label: "Exporters", value: "Exporters" },
-          { label: "e-Marketplaces", value: "e-Marketplaces" },
-          { label: "Government Agencies", value: "Government Agencies" },
-        ]}
+        label="18. Key Buyer Types"
+        placeholder="Select Buyer Types"
+        options={(keyBuyerTypes || []).map((item) => ({
+          label: item,
+          value: item,
+        }))}
         formik={formik}
       />
 
-      {/* SECTION 7: Innovation & Future Planning */}
       <SectionHeading title="SECTION 7: Innovation & Future Planning" />
       <FormField
         name="topChallenges"
-        label="58. Top 3 challenges faced by the FPO"
+        label="19. Top Challenges"
         formik={formik}
-        placeholder="Enter challenges"
+        placeholder="Enter top challenges"
+        className="col-span-1 md:col-span-2"
       />
       <FormField
         name="topPriorities"
-        label="59. Top 3 improvement priorities"
+        label="20. Top Priorities"
         formik={formik}
-        placeholder="Enter priorities"
+        placeholder="Enter top priorities"
+        className="col-span-1 md:col-span-2"
       />
     </div>
   );

@@ -25,7 +25,13 @@ import {
     FiClock,
     FiUserCheck,
     FiEdit2,
-    FiAlertCircle
+    FiAlertCircle,
+    FiBriefcase,
+    FiAward,
+    FiSettings,
+    FiLayers,
+    FiGlobe,
+    FiUsers
 } from 'react-icons/fi';
 import { format } from 'date-fns';
 
@@ -49,15 +55,11 @@ const EnviroIndRequestAction = () => {
     };
 
     const handleApprove = () => {
-        if (window.confirm('Are you sure you want to approve this request?')) {
-            requestAction(id, { action: 'approve' });
-        }
+        requestAction(id, { action: 'approve' });
     };
 
     const handleReject = () => {
-        if (window.confirm('Are you sure you want to reject this request?')) {
-            requestAction(id, { action: 'reject' });
-        }
+        requestAction(id, { action: 'reject' });
     };
 
     const InfoCard = ({ title, icon: Icon, children, className = '' }) => (
@@ -148,6 +150,290 @@ const EnviroIndRequestAction = () => {
 
     const { requestedBy, targetDetails, status, createdAt } = editRequestsDetails;
 
+    console.log("targetDetails", targetDetails);
+
+    const renderFarmerDetails = () => (
+        <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                {/* Personal Information */}
+                <InfoCard title="Personal Information" icon={FiUser}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InfoRow label="First Name" value={targetDetails?.firstName} icon={FiUser} />
+                        <InfoRow label="Last Name" value={targetDetails?.lastName} icon={FiUser} />
+                        <InfoRow label="Contact Number" value={targetDetails?.contact} icon={FiPhone} />
+                        <InfoRow label="Email Address" value={targetDetails?.email} icon={FiMail} />
+                        <InfoRow label="PAN Number" value={targetDetails?.panNo} icon={FiFileText} />
+                        <InfoRow label="Profile Type" value={targetDetails?.typeOfProfile} />
+                    </div>
+                </InfoCard>
+
+                {/* Address Information */}
+                <InfoCard title="Address Details" icon={FiMapPin}>
+                    <div className="space-y-3">
+                        <InfoRow label="Full Address" value={targetDetails?.address} icon={FiMapPin} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <InfoRow label="Village" value={targetDetails?.villageName} icon={FiHome} />
+                            <InfoRow label="Taluka" value={targetDetails?.taluka} />
+                            <InfoRow label="District" value={targetDetails?.district} />
+                            <InfoRow label="State" value={targetDetails?.state} />
+                            <InfoRow label="PIN Code" value={targetDetails?.pinCode} />
+                        </div>
+                        <InfoRow label="Total Land Owned" value={targetDetails?.totalLandOwned} />
+                    </div>
+                </InfoCard>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                {/* Financial Information */}
+                <InfoCard title="Financial Information" icon={FiDollarSign}>
+                    <div className="space-y-3">
+                        <InfoRow label="Bank Name" value={targetDetails?.bankName} icon={FiCreditCard} />
+                        <InfoRow
+                            label="Existing Loan"
+                            value={`₹${targetDetails?.existingLoan || '0'}`}
+                            icon={FiDollarSign}
+                            highlight
+                        />
+                        <InfoRow label="Payment Mode" value={targetDetails?.paymentMode} />
+                    </div>
+                </InfoCard>
+
+                {/* Agriculture Details */}
+                <InfoCard title="Agriculture Details" icon={FiGrid}>
+                    <div className="grid grid-cols-1 gap-4">
+                        <InfoRow label="Crop Name" value={targetDetails?.cropName} icon={FiActivity} />
+                        <InfoRow label="Crop Type" value={targetDetails?.cropType} />
+                        <InfoRow label="Spraying Type" value={targetDetails?.sprayingType} />
+                        <InfoRow label="Spraying Duration" value={targetDetails?.sprayingDuration} />
+                    </div>
+                </InfoCard>
+
+                {/* Purchase Details */}
+                <InfoCard title="Purchase Details" icon={FiPackage}>
+                    <div className="space-y-3">
+                        <InfoRow label="Product Name" value={targetDetails?.productName} icon={FiBox} />
+                        <InfoRow label="Purpose for Buying" value={targetDetails?.purposeForBuying} icon={FiTarget} />
+                        <InfoRow
+                            label="Tentative Buying Date"
+                            value={formatDate(targetDetails?.tentativeBuyingDate)}
+                            icon={FiCalendar}
+                            highlight
+                        />
+                    </div>
+                </InfoCard>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                {/* Lead Information */}
+                <InfoCard title="Lead Information" icon={FiTarget}>
+                    <div className="space-y-3">
+                        <InfoRow
+                            label="Lead Generated Through"
+                            value={Array.isArray(targetDetails?.leadGeneratedThrough)
+                                ? targetDetails.leadGeneratedThrough.join(', ')
+                                : targetDetails?.leadGeneratedThrough}
+                            icon={FiTarget}
+                        />
+                        <InfoRow
+                            label="Lead Owner"
+                            value={targetDetails?.leadOwner}
+                            highlight
+                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <InfoRow
+                                label="Last Meeting"
+                                value={formatDate(targetDetails?.lastMeeting)}
+                                icon={FiCalendar}
+                            />
+                            <InfoRow
+                                label="Next Meeting"
+                                value={formatDate(targetDetails?.nextMeeting?.[0])}
+                                icon={FiCalendar}
+                            />
+                        </div>
+                    </div>
+                </InfoCard>
+
+                {/* System Information */}
+                <InfoCard title="System Information" icon={FiEdit2}>
+                    <div className="space-y-3">
+                        <InfoRow
+                            label="Segment"
+                            value={targetDetails?.segment}
+                        />
+                        <InfoRow
+                            label="Current Status"
+                            value={Array.isArray(targetDetails?.status)
+                                ? targetDetails.status.join(', ')
+                                : targetDetails?.status}
+                        />
+                    </div>
+                </InfoCard>
+            </div>
+        </>
+    );
+
+    const renderGovOfficerDetails = () => (
+        <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <InfoCard title="Personal Information" icon={FiUser}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InfoRow label="First Name" value={targetDetails?.firstName} icon={FiUser} />
+                        <InfoRow label="Last Name" value={targetDetails?.lastName} icon={FiUser} />
+                        <InfoRow label="Contact Number" value={targetDetails?.contact} icon={FiPhone} />
+                        <InfoRow label="Email Address" value={targetDetails?.email} icon={FiMail} />
+                        <InfoRow label="Profile Type" value={targetDetails?.typeOfProfile} />
+                    </div>
+                </InfoCard>
+
+                <InfoCard title="Professional Details" icon={FiBriefcase}>
+                    <div className="space-y-3">
+                        <InfoRow label="Designation" value={targetDetails?.designation} icon={FiBriefcase} />
+                        <InfoRow label="Office Name" value={targetDetails?.officeName} icon={FiHome} />
+                        <InfoRow label="District/Block/Region" value={targetDetails?.districtBlockRegion} icon={FiMapPin} />
+                        <InfoRow label="Years of Experience" value={targetDetails?.yearsOfExperience} icon={FiAward} />
+                    </div>
+                </InfoCard>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <InfoCard title="Digital & Service Usage" icon={FiSettings}>
+                    <div className="space-y-3">
+                        <InfoRow
+                            label="Frequently Requested Services"
+                            value={Array.isArray(targetDetails?.frequentlyRequestedServices)
+                                ? targetDetails.frequentlyRequestedServices.join(', ')
+                                : targetDetails?.frequentlyRequestedServices}
+                            icon={FiGrid}
+                        />
+                        <InfoRow label="Data Maintained Digitally" value={targetDetails?.dataMaintainedDigitally} />
+                        <InfoRow
+                            label="Data Management Tools"
+                            value={Array.isArray(targetDetails?.dataManagementTools)
+                                ? targetDetails.dataManagementTools.join(', ')
+                                : targetDetails?.dataManagementTools}
+                        />
+                        <InfoRow label="Scheme Understanding" value={targetDetails?.schemeUnderstanding} />
+                    </div>
+                </InfoCard>
+
+                <InfoCard title="Personal Preferences" icon={FiUserCheck}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InfoRow label="Effective Language" value={targetDetails?.effectiveLanguage} />
+                        <InfoRow label="Goals" value={targetDetails?.goals} />
+                        <InfoRow label="Hobbies" value={targetDetails?.hobbies} />
+                        <InfoRow label="Birthday" value={formatDate(targetDetails?.birthday)} icon={FiCalendar} />
+                        <InfoRow label="Anniversary" value={formatDate(targetDetails?.anniversary)} icon={FiCalendar} />
+                    </div>
+                </InfoCard>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 mb-4">
+                <InfoCard title="System Information" icon={FiEdit2}>
+                    <div className="space-y-3">
+                        <InfoRow label="Segment" value={targetDetails?.segment} />
+                    </div>
+                </InfoCard>
+            </div>
+        </>
+    );
+
+    const renderFPODetails = () => (
+        <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <InfoCard title="Organization Details" icon={FiHome}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InfoRow label="FPO Name" value={targetDetails?.fpoName} icon={FiHome} />
+                        <InfoRow label="Registration Number" value={targetDetails?.registrationNumber} icon={FiFileText} />
+                        <InfoRow label="Registration Act" value={targetDetails?.registrationAct} />
+                        <InfoRow label="Year of Establishment" value={targetDetails?.yearOfEstablishment} icon={FiCalendar} />
+                        <InfoRow label="Profile Type" value={targetDetails?.typeOfProfile} />
+                    </div>
+                </InfoCard>
+
+                <InfoCard title="Contact & Office Info" icon={FiMapPin}>
+                    <div className="space-y-3">
+                        <InfoRow label="Official Contact" value={targetDetails?.officialContactNumber} icon={FiPhone} />
+                        <InfoRow label="Official Email" value={targetDetails?.officialEmailId} icon={FiMail} />
+                        <InfoRow label="Office Address" value={targetDetails?.officeAddress} icon={FiMapPin} />
+                        <InfoRow label="Website/App URL" value={targetDetails?.websiteAppUrl} icon={FiGlobe} />
+                    </div>
+                </InfoCard>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <InfoCard title="Membership & Staff" icon={FiUsers}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InfoRow label="Total Active Members" value={targetDetails?.totalActiveMembers} icon={FiUsers} />
+                        <InfoRow
+                            label="Member Categories"
+                            value={Array.isArray(targetDetails?.memberCategories)
+                                ? targetDetails.memberCategories.join(', ')
+                                : targetDetails?.memberCategories}
+                            icon={FiLayers}
+                        />
+                        <InfoRow label="No. of Board Members" value={targetDetails?.numberOfBoardMembers} />
+                        <InfoRow label="No. of Staff Members" value={targetDetails?.numberOfStaffMembers} />
+                    </div>
+                </InfoCard>
+
+                <InfoCard title="Business Operations" icon={FiActivity}>
+                    <div className="space-y-3">
+                        <InfoRow label="Major Crops Handled" value={targetDetails?.majorCropsHandled} icon={FiActivity} />
+                        <InfoRow
+                            label="Major Revenue Sources"
+                            value={Array.isArray(targetDetails?.majorRevenueSources)
+                                ? targetDetails.majorRevenueSources.join(', ')
+                                : targetDetails?.majorRevenueSources}
+                            icon={FiDollarSign}
+                        />
+                        <InfoRow
+                            label="Key Buyer Types"
+                            value={Array.isArray(targetDetails?.keyBuyerTypes)
+                                ? targetDetails.keyBuyerTypes.join(', ')
+                                : targetDetails?.keyBuyerTypes}
+                        />
+                    </div>
+                </InfoCard>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <InfoCard title="Strategic Overview" icon={FiTarget}>
+                    <div className="space-y-3">
+                        <InfoRow
+                            label="Communication Channels"
+                            value={Array.isArray(targetDetails?.primaryCommunicationChannels)
+                                ? targetDetails.primaryCommunicationChannels.join(', ')
+                                : targetDetails?.primaryCommunicationChannels}
+                            icon={FiTarget}
+                        />
+                        <InfoRow label="Top Priorities" value={targetDetails?.topPriorities} />
+                        <InfoRow label="Top Challenges" value={targetDetails?.topChallenges} />
+                    </div>
+                </InfoCard>
+
+                <InfoCard title="System Information" icon={FiEdit2}>
+                    <div className="space-y-3">
+                        <InfoRow label="Segment" value={targetDetails?.segment} />
+                    </div>
+                </InfoCard>
+            </div>
+        </>
+    );
+
+    const renderDetails = () => {
+        switch (targetDetails?.typeOfProfile) {
+            case 'Farmer':
+                return renderFarmerDetails();
+            case 'Government Officer':
+                return renderGovOfficerDetails();
+            case 'FPO':
+                return renderFPODetails();
+            default:
+                return renderFarmerDetails(); // Default to farmer if type is unknown
+        }
+    };
+
     return (
         <div className="min-h-screen">
             <BreadCrumb
@@ -230,122 +516,7 @@ const EnviroIndRequestAction = () => {
             </div>
 
             {/* Request Details Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-                {/* Personal Information */}
-                <InfoCard title="Personal Information" icon={FiUser}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <InfoRow label="First Name" value={targetDetails?.firstName} icon={FiUser} />
-                        <InfoRow label="Last Name" value={targetDetails?.lastName} icon={FiUser} />
-                        <InfoRow label="Contact Number" value={targetDetails?.contact} icon={FiPhone} />
-                        <InfoRow label="Email Address" value={targetDetails?.email} icon={FiMail} />
-                        <InfoRow label="PAN Number" value={targetDetails?.panNo} icon={FiFileText} />
-                        <InfoRow label="Profile Type" value={targetDetails?.typeOfProfile} />
-                    </div>
-                </InfoCard>
-
-                {/* Address Information */}
-                <InfoCard title="Address Details" icon={FiMapPin}>
-                    <div className="space-y-3">
-                        <InfoRow label="Full Address" value={targetDetails?.address} icon={FiMapPin} />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InfoRow label="Village" value={targetDetails?.villageName} icon={FiHome} />
-                            <InfoRow label="Taluka" value={targetDetails?.taluka} />
-                            <InfoRow label="District" value={targetDetails?.district} />
-                            <InfoRow label="State" value={targetDetails?.state} />
-                            <InfoRow label="PIN Code" value={targetDetails?.pinCode} />
-                        </div>
-                        <InfoRow label="Total Land Owned" value={targetDetails?.totalLandOwned} />
-                    </div>
-                </InfoCard>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-                {/* Financial Information */}
-                <InfoCard title="Financial Information" icon={FiDollarSign}>
-                    <div className="space-y-3">
-                        <InfoRow label="Bank Name" value={targetDetails?.bankName} icon={FiCreditCard} />
-                        <InfoRow
-                            label="Existing Loan"
-                            value={`₹${targetDetails?.existingLoan || '0'}`}
-                            icon={FiDollarSign}
-                            highlight
-                        />
-                        <InfoRow label="Payment Mode" value={targetDetails?.paymentMode} />
-                    </div>
-                </InfoCard>
-
-                {/* Agriculture Details */}
-                <InfoCard title="Agriculture Details" icon={FiGrid}>
-                    <div className="grid grid-cols-1 gap-4">
-                        <InfoRow label="Crop Name" value={targetDetails?.cropName} icon={FiActivity} />
-                        <InfoRow label="Crop Type" value={targetDetails?.cropType} />
-                        <InfoRow label="Spraying Type" value={targetDetails?.sprayingType} />
-                        <InfoRow label="Spraying Duration" value={targetDetails?.sprayingDuration} />
-                    </div>
-                </InfoCard>
-
-                {/* Purchase Details */}
-                <InfoCard title="Purchase Details" icon={FiPackage}>
-                    <div className="space-y-3">
-                        <InfoRow label="Product Name" value={targetDetails?.productName} icon={FiBox} />
-                        <InfoRow label="Purpose for Buying" value={targetDetails?.purposeForBuying} icon={FiTarget} />
-                        <InfoRow
-                            label="Tentative Buying Date"
-                            value={formatDate(targetDetails?.tentativeBuyingDate)}
-                            icon={FiCalendar}
-                            highlight
-                        />
-                    </div>
-                </InfoCard>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Lead Information */}
-                <InfoCard title="Lead Information" icon={FiTarget}>
-                    <div className="space-y-3">
-                        <InfoRow
-                            label="Lead Generated Through"
-                            value={Array.isArray(targetDetails?.leadGeneratedThrough)
-                                ? targetDetails.leadGeneratedThrough.join(', ')
-                                : targetDetails?.leadGeneratedThrough}
-                            icon={FiTarget}
-                        />
-                        <InfoRow
-                            label="Lead Owner"
-                            value={targetDetails?.leadOwner}
-                            highlight
-                        />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InfoRow
-                                label="Last Meeting"
-                                value={formatDate(targetDetails?.lastMeeting)}
-                                icon={FiCalendar}
-                            />
-                            <InfoRow
-                                label="Next Meeting"
-                                value={formatDate(targetDetails?.nextMeeting?.[0])}
-                                icon={FiCalendar}
-                            />
-                        </div>
-                    </div>
-                </InfoCard>
-
-                {/* System Information */}
-                <InfoCard title="System Information" icon={FiEdit2}>
-                    <div className="space-y-3">
-                        <InfoRow
-                            label="Segment"
-                            value={targetDetails?.segment}
-                        />
-                        <InfoRow
-                            label="Current Status"
-                            value={Array.isArray(targetDetails?.status)
-                                ? targetDetails.status.join(', ')
-                                : targetDetails?.status}
-                        />
-                    </div>
-                </InfoCard>
-            </div>
+            {renderDetails()}
         </div>
     );
 };

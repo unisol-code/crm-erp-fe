@@ -163,9 +163,8 @@ const ViewRequests = () => {
             {activeTab === "Individual" && (
               <Box mt={2}>
                 <TableHeader
-                  title={`Update Request List From ${
-                    individualData?.requestedBy?.fullName || "-"
-                  }`}
+                  title={`Update Request List From ${individualData?.requestedBy?.fullName || "-"
+                    }`}
                   theme={theme}
                 />
 
@@ -175,23 +174,23 @@ const ViewRequests = () => {
                       <TableRow sx={{ backgroundColor: theme.secondaryColor }}>
                         {(isEnviroSolution
                           ? [
-                              "Sr.No",
-                              "Person Name",
-                              "Lead Owner",
-                              "Product Name",
-                              "Request Status",
-                              "Action",
-                            ]
+                            "Sr.No",
+                            "Profile Type",
+                            "Full Name",
+                            "FPO Name",
+                            "Request Status",
+                            "Action",
+                          ]
                           : [
-                              "Sr.No",
-                              "Hospital Name",
-                              "Designation",
-                              "Person Name",
-                              "Speciality",
-                              "Profile",
-                              "Request Status",
-                              "Action",
-                            ]
+                            "Sr.No",
+                            "Hospital Name",
+                            "Designation",
+                            "Person Name",
+                            "Speciality",
+                            "Profile",
+                            "Request Status",
+                            "Action",
+                          ]
                         ).map((head) => (
                           <TableCell key={head} sx={{ fontWeight: 600 }}>
                             {head}
@@ -207,14 +206,13 @@ const ViewRequests = () => {
                             {isEnviroSolution ? (
                               <>
                                 <TableCell>
-                                  {req?.targetDetails?.firstName}{" "}
-                                  {req?.targetDetails?.lastName}
+                                  {req?.targetDetails?.typeOfProfile || "-"}
                                 </TableCell>
                                 <TableCell>
-                                  {req?.targetDetails?.leadOwner}
+                                  {req?.targetDetails?.fullName || "-"}
                                 </TableCell>
                                 <TableCell>
-                                  {req?.targetDetails?.productName}
+                                  {req?.targetDetails?.fpoName || "-"}
                                 </TableCell>
                               </>
                             ) : (
@@ -243,8 +241,8 @@ const ViewRequests = () => {
                                   req?.status === "Approved"
                                     ? "green"
                                     : req?.status === "Rejected"
-                                    ? "red"
-                                    : "orange",
+                                      ? "red"
+                                      : "orange",
                                 fontWeight: 600,
                               }}
                             >
@@ -286,9 +284,8 @@ const ViewRequests = () => {
             {activeTab === "Organizational" && (
               <Box mt={2}>
                 <TableHeader
-                  title={`Update Request List From ${
-                    organizationData?.requestedBy?.fullName || "-"
-                  }`}
+                  title={`Update Request List From ${organizationData?.requestedBy?.fullName || "-"
+                    }`}
                   theme={theme}
                 />
 
@@ -298,24 +295,24 @@ const ViewRequests = () => {
                       <TableRow sx={{ backgroundColor: theme.secondaryColor }}>
                         {(isEnviroSolution
                           ? [
-                              "Sr.No",
-                              "Department Name",
-                              "District",
-                              "State",
-                              "Jurisdiction Level",
-                              "Request Status",
-                              "Action",
-                            ]
+                            "Sr.No",
+                            "Department Name",
+                            "District",
+                            "State",
+                            "Jurisdiction Level",
+                            "Request Status",
+                            "Action",
+                          ]
                           : [
-                              "Sr.No",
-                              "Organization Name",
-                              "Type",
-                              "Speciality",
-                              "Email",
-                              "Address",
-                              "Request Status",
-                              "Action",
-                            ]
+                            "Sr.No",
+                            "Organization Name",
+                            "Type",
+                            "Speciality",
+                            "Email",
+                            "Address",
+                            "Request Status",
+                            "Action",
+                          ]
                         ).map((head) => (
                           <TableCell key={head} sx={{ fontWeight: 600 }}>
                             {head}
@@ -380,8 +377,8 @@ const ViewRequests = () => {
                                   req?.status === "Approved"
                                     ? "green"
                                     : req?.status === "Rejected"
-                                    ? "red"
-                                    : "orange",
+                                      ? "red"
+                                      : "orange",
                                 fontWeight: 600,
                               }}
                             >

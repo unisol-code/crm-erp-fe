@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import {
   useRecoilState,
-  useRecoilState_TRANSITION_SUPPORT_UNSTABLE,
 } from "recoil";
 import conf from "../../config/index";
 import useFetch from "../useFetch";
@@ -15,11 +14,13 @@ import {
   totalActiveCustomerNoAtom,
   totalInactiveCustomerNoAtom,
   fetchEditRequestAtom,
-  fetchEmployeeEditRequestAtom,
   fetchEmployeeEditRequestDataAtom,
   fetchIndividualEmployeeEditRequestAtom,
   fetchOrgnizationalEmployeeEditRequestAtom,
 } from "../../state/databaseState/databaseState";
+import Swal from "sweetalert2";
+import { approveRejectRequestAlert } from "../../utils/alertToast";
+
 const useDatabase = () => {
   const [fetchData] = useFetch();
   const [loading, setLoading] = useState(false);
@@ -359,26 +360,34 @@ const useDatabase = () => {
     }
   };
 
-  const requestAction = async (id, data, userId) => {
-    setLoading(true);
-    try {
-      const res = await fetchData({
-        method: "PUT",
-        url: `${conf.apiBaseUrl}edit/update/${id}`,
-        data: data,
-      });
-      if (res) {
-        toast.success(res?.message);
-        return true
+  const requestAction = async (id, data) => {
+    const confirm = await approveRejectRequestAlert("Are you sure you want to perform this action?")
+    if (!confirm) return
+    if (confirm?.isConfirmed) {
+      setLoading(true);
+      try {
+        const res = await fetchData({
+          method: "PUT",
+          url: `${conf.apiBaseUrl}edit/update/${id}`,
+          data: data,
+        });
+        if (res) {
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: res?.message,
+          });
+          return true
+        }
+      } catch (error) {
+        console.error("Error updating :", error);
+        toast.error(
+          error.response?.data?.message
+        );
+        return false
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error updating :", error);
-      toast.error(
-        error.response?.data?.message
-      );
-      return false
-    } finally {
-      setLoading(false);
     }
   };
 
