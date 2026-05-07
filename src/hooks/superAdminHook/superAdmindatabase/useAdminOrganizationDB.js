@@ -18,35 +18,28 @@ const useAdminOrganizationDB = () => {
   );
   const [adminOrganizationalDBByID, setAdminOrganizationalDBByID] =
     useRecoilState(adminOrganizationalDBByIDAtom);
-    const token = sessionStorage.getItem("token");
-
 
   const fetchAdminOrganizationalDB = async (page, limit) => {
-  setLoading(true);
-  try {
-    const params = new URLSearchParams({
-      page: page,
-      limit: limit,
-    });
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: page,
+        limit: limit,
+      });
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}adminOrganization/getAllOrganization?${params}`,
+      });
 
-    const res = await fetchData({
-      method: "GET",
-      url: `${conf.apiBaseUrl}adminOrganization/getAllOrganization?${params}`,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (res) {
-      setAdminOrganizationalDB(res);
+      if (res) {
+        setAdminOrganizationalDB(res);
+      }
+    } catch (err) {
+      console.error("Error fetching SuperAdmin organizational DB:", err);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("Error fetching SuperAdmin organizational DB:", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const createAdminOrganization = async (data) => {
     setLoading(true);
@@ -57,45 +50,42 @@ const useAdminOrganizationDB = () => {
         data,
       });
       if (res) {
-        toast.success(res?.message || "Organization created successfully.");
+        toast.success(res?.message);
+        setLoading(false);
+        return true
       }
     } catch (err) {
       console.error("Error creating SuperAdmin organization:", err);
-      toast.error(
-        err?.response?.data?.message ||
-          "An error occurred while creating SuperAdmin organization."
-      );
+      toast.error(err?.response?.data?.message);
+      setLoading(false);
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
   const fetchAdminOrganizationalDBByID = async (id) => {
-  if (!id) return;
+    if (!id) return;
 
-  setLoading(true);
-  try {
-    const res = await fetchData({
-      method: "GET",
-      url: `${conf.apiBaseUrl}adminOrganization/getOrganizationById/${id}`,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    setLoading(true);
+    try {
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}adminOrganization/getOrganizationById/${id}`,
+      });
 
-    if (res) {
-      setAdminOrganizationalDBByID(res);
+      if (res) {
+        setAdminOrganizationalDBByID(res);
+      }
+    } catch (err) {
+      console.error(
+        "Error fetching SuperAdmin organizational DB by ID:",
+        err
+      );
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error(
-      "Error fetching SuperAdmin organizational DB by ID:",
-      err
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const updateAdminOrganization = async (id, data) => {
     setLoading(true);
@@ -106,14 +96,15 @@ const useAdminOrganizationDB = () => {
         data,
       });
       if (res) {
-        toast.success(res?.message || "Organization updated successfully.");
+        toast.success(res?.message);
+        setLoading(false);
+        return true;
       }
     } catch (err) {
       console.error("Error updating SuperAdmin organization:", err);
-      toast.error(
-        err?.response?.data?.message ||
-          "An error occurred while updating SuperAdmin organization."
-      );
+      toast.error(err?.response?.data?.message);
+      setLoading(false);
+      return false;
     } finally {
       setLoading(false);
     }
@@ -131,14 +122,19 @@ const useAdminOrganizationDB = () => {
           url: `${conf.apiBaseUrl}adminOrganization/delete-organizationById/${id}`,
         });
         if (res) {
-          toast.success(res?.message || "Organization deleted successfully.");
-          fetchAdminOrganizationalDB(1, 10); // Refresh the organizational DB after deletion
+          Swal.fire({
+            title: "Deleted!",
+            text: res?.message,
+            icon: "success",
+            confirmButtonText: "Okay",
+          })
+          fetchAdminOrganizationalDB(1, 10);
         }
       } catch (err) {
         console.error("Error deleting SuperAdmin organization:", err);
         toast.error(
           err?.response?.data?.message ||
-            "An error occurred while deleting SuperAdmin organization."
+          "An error occurred while deleting SuperAdmin organization."
         );
       } finally {
         setLoading(false);

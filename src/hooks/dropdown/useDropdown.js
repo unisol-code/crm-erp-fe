@@ -101,7 +101,7 @@ const useDropdown = () => {
   const [allStateName, setAllStateName] = useRecoilState(getAllStateNameAtom);
   const [segment, setSegment] = useRecoilState(segmentAtom);
   const [profile, setProfile] = useRecoilState(profileAtom);
-  const [enviroprofile, setEnviroProfile]= useRecoilState(enviroindiviualdropdownAtom);
+  const [enviroprofile, setEnviroProfile] = useRecoilState(enviroindiviualdropdownAtom);
   const [designation, setDesignation] = useRecoilState(designationAtom);
   const [getspeciality, setGetSpeciality] = useRecoilState(
     specialityIndividualAtom
@@ -124,15 +124,15 @@ const useDropdown = () => {
   const [orgnizationNames, setOrgnizationNames] =
     useRecoilState(orgnizationNamesAtom);
 
-    // organizational dropdown 
-    const [KWM1,  setKWM1] = useRecoilState(KWMQ1Atom);
-    const [KWM2,  setKWM2] = useRecoilState(KWMQ2Atom);
-    const [KWM5,  setKWM5] = useRecoilState(KWMQ5Atom);
-    const [KWM9,  setKWM9] = useRecoilState(KWMQ9Atom);
-    const [KWM11,  setKWM11] = useRecoilState(KWMQ11Atom);
-    const [IQ2,setIQ2] = useRecoilState(IQ2Atom);
-    const[IQ4,setIQ4]=useRecoilState(IQ4Atom)
-    const [BMW4, setBMW4] = useRecoilState(BMW4Atom);
+  // organizational dropdown 
+  const [KWM1, setKWM1] = useRecoilState(KWMQ1Atom);
+  const [KWM2, setKWM2] = useRecoilState(KWMQ2Atom);
+  const [KWM5, setKWM5] = useRecoilState(KWMQ5Atom);
+  const [KWM9, setKWM9] = useRecoilState(KWMQ9Atom);
+  const [KWM11, setKWM11] = useRecoilState(KWMQ11Atom);
+  const [IQ2, setIQ2] = useRecoilState(IQ2Atom);
+  const [IQ4, setIQ4] = useRecoilState(IQ4Atom)
+  const [BMW4, setBMW4] = useRecoilState(BMW4Atom);
 
 
   const [cities, setCities] = useRecoilState(allCitiesAtom);
@@ -645,12 +645,12 @@ const useDropdown = () => {
     }
   };
 
-  const getWasteMagement = async () =>{
+  const getWasteMagement = async () => {
     setLoading(true);
-    try{
-      const res =await fetchData({
-        method:"GET",
-        url:`${conf.apiBaseUrl}/dropdown/getWasteMagement`,
+    try {
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}/dropdown/getWasteMagement`,
       })
       if (res) {
         setWasteMagement(res?.data);
@@ -660,8 +660,8 @@ const useDropdown = () => {
     } finally {
       setLoading(false);
     }
-    }
-  
+  }
+
   const fetchDesignation = async () => {
     setLoading(true);
     try {
@@ -671,7 +671,7 @@ const useDropdown = () => {
       });
       if (res) {
         console.log("Designations fetched:", res.data);
-        setDesignation(res?.data || res); 
+        setDesignation(res?.data || res);
 
       }
     } catch (error) {
@@ -681,7 +681,7 @@ const useDropdown = () => {
     }
   };
 
-  
+
   const fetchAllRegion = async () => {
     setLoading(true);
     try {
@@ -809,7 +809,7 @@ const useDropdown = () => {
         setEmployees(res?.data);
       }
     } catch (error) {
-      console.error("Error while fetching emploees DropDown:", err);
+      console.error("Error while fetching emploees DropDown:", error);
     } finally {
       setLoading(false);
     }
@@ -910,8 +910,8 @@ const useDropdown = () => {
         url: `${conf.apiBaseUrl}drop-down/multiple-selector-kwmq1`,
       });
       if (res?.success) {
-      setKWM1(res.data); 
-    }
+        setKWM1(res.data);
+      }
     } catch (error) {
       console.error(
         "Error while fetching kitchen Q1 dropdown:",
@@ -930,8 +930,8 @@ const useDropdown = () => {
         url: `${conf.apiBaseUrl}drop-down/multiple-selector-kwmq2`,
       });
       if (res?.success) {
-      setKWM2(res.data); 
-    }
+        setKWM2(res.data);
+      }
     } catch (error) {
       console.error(
         "Error while fetching kitchen Q2 dropdown:",
@@ -949,8 +949,8 @@ const useDropdown = () => {
         url: `${conf.apiBaseUrl}drop-down/multiple-selector-kwmq5`,
       });
       if (res?.success) {
-      setKWM5(res.data); 
-    }
+        setKWM5(res.data);
+      }
     } catch (error) {
       console.error(
         "Error while fetching kitchen Q1 dropdown:",
@@ -968,8 +968,8 @@ const useDropdown = () => {
         url: `${conf.apiBaseUrl}drop-down/multiple-selector-kwmq9`,
       });
       if (res?.success) {
-      setKWM9(res.data); 
-    }
+        setKWM9(res.data);
+      }
     } catch (error) {
       console.error(
         "Error while fetching kitchen Q1 dropdown:",
@@ -979,7 +979,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
-    const fetchkitchenqueeleven = async () => {
+  const fetchkitchenqueeleven = async () => {
     setLoading(true);
     try {
       const res = await fetchData({
@@ -987,8 +987,8 @@ const useDropdown = () => {
         url: `${conf.apiBaseUrl}drop-down/multiple-selector-kwmq11`,
       });
       if (res?.success) {
-      setKWM11(res.data); 
-    }
+        setKWM11(res.data);
+      }
     } catch (error) {
       console.error(
         "Error while fetching kitchen Q1 dropdown:",
@@ -998,7 +998,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
-   const fetchlaundrytwo = async () => {
+  const fetchlaundrytwo = async () => {
     setLoading(true);
     try {
       const res = await fetchData({
@@ -1006,8 +1006,8 @@ const useDropdown = () => {
         url: `${conf.apiBaseUrl}drop-down/dropdown-lq2`,
       });
       if (res?.success) {
-      setIQ2(res.data); 
-    }
+        setIQ2(res.data);
+      }
     } catch (error) {
       console.error(
         "Error while fetching kitchen Q1 dropdown:",
@@ -1025,8 +1025,8 @@ const useDropdown = () => {
         url: `${conf.apiBaseUrl}drop-down/dropdown-lq4`,
       });
       if (res?.success) {
-      setIQ4(res.data); 
-    }
+        setIQ4(res.data);
+      }
     } catch (error) {
       console.error(
         "Error while fetching kitchen Q1 dropdown:",
@@ -1036,7 +1036,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
-   const fetchbiomedicalfour = async () => {
+  const fetchbiomedicalfour = async () => {
     setLoading(true);
     try {
       const res = await fetchData({
@@ -1044,8 +1044,8 @@ const useDropdown = () => {
         url: `${conf.apiBaseUrl}drop-down/multiple-selector-bmwq4`,
       });
       if (res?.success) {
-      setBMW4(res.data); 
-    }
+        setBMW4(res.data);
+      }
     } catch (error) {
       console.error(
         "Error while fetching kitchen Q1 dropdown:",
@@ -1055,7 +1055,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
- 
+
 
 
   return {

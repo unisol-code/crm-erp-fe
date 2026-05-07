@@ -15,6 +15,7 @@ import useAdminOrganizationDB from "../../../../../hooks/superAdminHook/superAdm
 import {
   initialValues,
   transformApiDataToForm,
+  transformFormDataToApi,
   validationSchema,
 } from "./SuperAdminOrganizationInitialValues";
 import HospitalData from "./superAdminOrganizationTabs/HospitalData";
@@ -27,6 +28,7 @@ const Select = ({
   options,
   loading = false,
   isReadOnly = false,
+  isMulti = false,
   placeholder = "Select option"
 
 }) => {
@@ -52,9 +54,9 @@ const Select = ({
   const selectOptions = options.map((opt) =>
     typeof opt === "string" ? { label: opt, value: opt } : opt
   );
-  const selectedOption =
-    selectOptions.find((opt) => opt.value === value) || null;
-
+  const selectedOption = isMulti
+    ? selectOptions.filter((opt) => value?.includes?.(opt.value))
+    : selectOptions.find((opt) => opt.value === value) || null;
 
   return (
     <div className="flex flex-col w-full mb-4">
@@ -63,11 +65,17 @@ const Select = ({
         options={selectOptions}
         isLoading={loading}
         name={name}
+        isMulti={isMulti}
         value={selectedOption}
-        onChange={(selected) =>
-          formik.setFieldValue(name, selected?.value || "")
-        }
+        onChange={(selected) => {
+          if (isMulti) {
+            formik.setFieldValue(name, selected ? selected.map(s => s.value) : []);
+          } else {
+            formik.setFieldValue(name, selected?.value || "");
+          }
+        }}
         onBlur={() => formik.setFieldTouched(name, true)}
+
         placeholder={placeholder}
         classNamePrefix="react-select"
         isDisabled={loading || isReadOnly}
@@ -114,27 +122,29 @@ const WasteManagementTabs = ({ formik, isReadOnly }) => {
     { label: "Biomedical Waste Management", value: "biomedical" },
   ];
 
-
   return (
     <div className="p-4 m-2">
       <div className="w-full md:w-2/3 ml-4">
         <Select
-          label="Select Waste Management Type"
-          name="wasteManagement.type"
+          label="Select Waste Management Type(s)"
+          name="wasteManagement.types"
           formik={formik}
-          placeholder="Select Waste Type"
+          isMulti
+          placeholder="Select Waste Type(s)"
           options={wasteOptions}
           isReadOnly={isReadOnly}
         />
       </div>
       <div className="w-full border-b border-gray-300 my-6" />
-      {formik.values.wasteManagement?.type && (
-        <BiomedicalAndSolidWaste
-          formik={formik}
-          type={formik.values.wasteManagement.type}
-          isReadOnly={isReadOnly}
-        />
-      )}
+      {formik.values.wasteManagement?.types?.map((type) => (
+        <div key={type} className="mb-8">
+          <BiomedicalAndSolidWaste
+            formik={formik}
+            type={type}
+            isReadOnly={isReadOnly}
+          />
+        </div>
+      ))}
     </div>
   );
 };
@@ -166,15 +176,20 @@ const AddNewSuperAdminOrganization = ({ mode = "add" }) => {
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       if (isView) return;
-
+      const apiData = transformFormDataToApi(values);
+      let success;
       if (isEdit) {
-        await updateAdminOrganization(id, values);
-        navigate(`/database/view-organization/${id}`);
+        success = await updateAdminOrganization(id, apiData);
+        if (success) {
+          navigate(`/database/view-organization/${id}`);
+        }
       } else {
-        await createAdminOrganization(values);
-        navigate("/database");
+        success = await createAdminOrganization(apiData);
+        if (success) {
+          navigate("/database");
+        }
       }
-    }
+    },
   });
 
   useEffect(() => {

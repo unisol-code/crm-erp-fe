@@ -222,7 +222,7 @@ export const initialValues = {
   },
 
   wasteManagement: {
-    type: "",
+    types: [],
   },
 
   stp: {
@@ -240,34 +240,77 @@ export const initialValues = {
 };
 
 // Transform API response data to form format
-export const transformApiDataToForm = (apiData) => ({
-  Basic: apiData.Basic || initialValues.Basic,
-  hospitalData: apiData.hospitalData || initialValues.hospitalData,
-  laundry: apiData.Laundry || initialValues.laundry,
-  kitchenWasteManagement:
-    apiData.kitchenWasteManagement || initialValues.kitchenWasteManagement,
-  bioMedicalWaste:
-    apiData.bioMedicalWaste || initialValues.bioMedicalWaste,
-  solidWaste: apiData.solidWaste || initialValues.solidWaste,
-  wasteWaterManagement: apiData.wasteWaterManagement || initialValues.wasteWaterManagement,
-  wasteManagement: apiData.wasteManagement || initialValues.wasteManagement,
-  stp: apiData.stp || initialValues.stp,
-  etp: apiData.etp || initialValues.etp,
-  salesPersonName: apiData.salesPersonName || "",
-  anyOtherInformation: apiData.anyOtherInformation || "",
-});
+export const transformApiDataToForm = (apiData) => {
+  const data = {
+    Basic: apiData.Basic || initialValues.Basic,
+    hospitalData: apiData.hospitalData || initialValues.hospitalData,
+    laundry: apiData.Laundry || initialValues.laundry,
+    kitchenWasteManagement:
+      apiData.kitchenWasteManagement || initialValues.kitchenWasteManagement,
+    bioMedicalWaste:
+      apiData.bioMedicalWaste || initialValues.bioMedicalWaste,
+    solidWaste: apiData.solidWaste || initialValues.solidWaste,
+    wasteWaterManagement: apiData.wasteWaterManagement || initialValues.wasteWaterManagement,
+    wasteManagement: apiData.wasteManagement || initialValues.wasteManagement,
+    stp: apiData.stp || initialValues.stp,
+    etp: apiData.etp || initialValues.etp,
+    salesPersonName: apiData.salesPersonName || "",
+    anyOtherInformation: apiData.anyOtherInformation || "",
+  };
 
-export const transformFormDataToApi = (values) => ({
-  Basic: values.Basic,
-  hospitalData: values.hospitalData,
-  ...values.laundry,
-  ...values.kitchenWasteManagement,
-  ...values.bioMedicalWaste,
-  solidWaste: values.solidWaste,
-  wasteWaterManagement: values.wasteWaterManagement,
-  wasteManagement: values.wasteManagement,
-  stp: values.stp,
-  etp: values.etp,
-  salesPersonName: values.salesPersonName,
-  anyOtherInformation: values.anyOtherInformation,
-});
+  // Transform SWQ29 from string to object for UI
+  if (data.solidWaste && typeof data.solidWaste.SWQ29 === "string") {
+    data.solidWaste.SWQ29 = {
+      answers: data.solidWaste.SWQ29 !== "No",
+      type: data.solidWaste.SWQ29 !== "No" ? data.solidWaste.SWQ29 : "",
+    };
+  }
+
+  // Transform wasteManagement to object for UI if it's in legacy format
+  if (data.wasteManagement && typeof data.wasteManagement === "string") {
+    data.wasteManagement = { types: [data.wasteManagement] };
+  } else if (data.wasteManagement && data.wasteManagement.type && !data.wasteManagement.types) {
+    // Handle another possible legacy format
+    data.wasteManagement = { types: [data.wasteManagement.type] };
+  }
+  
+  if (!data.wasteManagement) {
+    data.wasteManagement = { types: [] };
+  } else if (!data.wasteManagement.types) {
+    data.wasteManagement.types = [];
+  }
+
+  return data;
+};
+
+export const transformFormDataToApi = (values) => {
+  const payload = {
+    Basic: values.Basic,
+    hospitalData: values.hospitalData,
+    laundry: values.laundry,
+    kitchenWasteManagement: values.kitchenWasteManagement,
+    wasteManagement: {
+      types: values.wasteManagement?.types || []
+    },
+    stp: values.stp,
+    etp: values.etp,
+    salesPersonName: values.salesPersonName,
+    anyOtherInformation: values.anyOtherInformation,
+  };
+
+  const selectedTypes = values.wasteManagement?.types || [];
+
+  if (selectedTypes.includes("biomedical")) {
+    payload.bioMedicalWaste = values.bioMedicalWaste;
+  }
+  if (selectedTypes.includes("solid")) {
+    payload.solidWaste = {
+      ...values.solidWaste,
+    };
+  }
+  if (selectedTypes.includes("water")) {
+    payload.wasteWaterManagement = values.wasteWaterManagement;
+  }
+
+  return payload;
+};
