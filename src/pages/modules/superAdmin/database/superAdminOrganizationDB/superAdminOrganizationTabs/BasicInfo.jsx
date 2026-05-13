@@ -1,63 +1,35 @@
 import React, { useEffect, useState } from "react";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import ReactSelect from "react-select";
-import { values } from "lodash";
+import _ from "lodash";
 
-const Input = ({ label, name, formik, type = "text", placeholder ,isReadOnly = false}) => {
-  const value = name
-
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.values
-    );
-  const touched = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : false),
-      formik.touched
-    );
-  const error = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.errors
-    );
-  const inputValue =
-    type === "date" && value instanceof Date
-      ? value.toISOString().split("T")[0]
-      : value;
+// --- Input Component ---
+const Input = ({
+  label,
+  name,
+  formik,
+  type = "text",
+  placeholder,
+  isReadOnly = false,
+}) => {
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
   return (
     <div className="flex flex-col w-full mb-4">
-      <label htmlFor={name} className="text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
+      <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
       <input
-        id={name}
         type={type}
         name={name}
-        disabled={isReadOnly}
-        placeholder={placeholder}
-        value={inputValue || ""}
-        onChange={(e) => {
-          if (type === "number") {
-            const numValue =
-              e.target.value === "" ? "" : Number(e.target.value);
-            formik.setFieldValue(name, isNaN(numValue) ? "" : numValue);
-          } else if (type === "date") {
-            formik.setFieldValue(
-              name,
-              e.target.value ? new Date(e.target.value) : ""
-            );
-          } else {
-            formik.handleChange(e);
-          }
-        }}
+        value={value}
+        onChange={formik.handleChange}
         onBlur={formik.handleBlur}
-        className={`no-spinner border ${
-          touched && error ? "border-red-500" : "border-gray-300"
-        } rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400`}
+        placeholder={placeholder}
+        disabled={isReadOnly}
+        className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300
+          ${touched && error ? "border-red-500" : "border-[#556581]"}
+          ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
       />
       {touched && error && (
         <span className="text-red-500 text-xs mt-1">{error}</span>
@@ -66,33 +38,20 @@ const Input = ({ label, name, formik, type = "text", placeholder ,isReadOnly = f
   );
 };
 
+// --- Select Component ---
 const Select = ({
   label,
   name,
   formik,
   options,
-  loading = false,
-  onChange,
+  loading,
+  placeholder,
   isReadOnly = false,
+  onChange, // Optional custom onChange
 }) => {
-  const value = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.values
-    );
-  const touched = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : false),
-      formik.touched
-    );
-  const error = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.errors
-    );
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
   const selectOptions = options.map((opt) =>
     typeof opt === "string" ? { label: opt, value: opt } : opt
@@ -107,16 +66,10 @@ const Select = ({
         options={selectOptions}
         isLoading={loading}
         name={name}
-        
         value={selectedOption}
         onChange={(selected) => {
-          // always update formik value
           formik.setFieldValue(name, selected?.value || "");
-
-          // call custom onChange if passed
-          if (onChange) {
-            onChange(selected);
-          }
+          if (onChange) onChange(selected?.value || "");
         }}
         onBlur={() => formik.setFieldTouched(name, true)}
         placeholder={`Select ${label}`}
@@ -129,8 +82,9 @@ const Select = ({
     </div>
   );
 };
-const BasicInfo = ({ formik ,isReadOnly = false}) => {
+const BasicInfo = ({ formik, isReadOnly = false }) => {
   const [isGovt, setIsGovt] = useState(false);
+  const [selectedStateCode, setSelectedStateCode] = useState("");
   const {
     fetchSpeciality,
     speciality,
@@ -147,13 +101,14 @@ const BasicInfo = ({ formik ,isReadOnly = false}) => {
     region,
     fetchAllStateName,
     allStateName,
+    fetchDistrictList,
+    districtList,
     cities,
     fetchAllCities,
   } = useDropdown();
 
   useEffect(() => {
     fetchSpeciality();
-    fetchLegalEntity();
     fetchOrganizationTypes();
     fetchHospitalTypes();
     segmentState();
@@ -161,9 +116,23 @@ const BasicInfo = ({ formik ,isReadOnly = false}) => {
     fetchAllStateName();
   }, []);
 
-  const handleSelectCity = (stateCode) => {
+  // Fetch Legal Entity only when "Govt" is selected and data is not already loaded
+  useEffect(() => {
+    const orgType = formik.values?.Basic?.typeOfOrgOrHospital;
+    if (orgType === "Govt") {
+      fetchLegalEntity();
+    }
+  }, [formik.values?.Basic?.typeOfOrgOrHospital]);
+
+  const handleselectDistrict = (stateCode) => {
     if (stateCode) {
-      fetchAllCities(stateCode);
+      fetchDistrictList(stateCode);
+    }
+  };
+
+  const handleSelectCity = (districtCode) => {
+    if (districtCode) {
+      fetchAllCities(selectedStateCode, districtCode);
     }
   };
 
@@ -182,17 +151,17 @@ const BasicInfo = ({ formik ,isReadOnly = false}) => {
             options={
               Array.isArray(segment)
                 ? segment.map((seg) => ({
-                    label: seg,
-                    value: seg,
-                  }))
+                  label: seg,
+                  value: seg,
+                }))
                 : []
             }
           />
           <Input
-            label="Hospital / Organization Name"
+            label="Organization Name"
             name="Basic.hospitalName"
             formik={formik}
-            placeholder="Enter Hospital /  organization Name"
+            placeholder="organization Name"
             isReadOnly={isReadOnly}
           />
           <Select
@@ -203,9 +172,9 @@ const BasicInfo = ({ formik ,isReadOnly = false}) => {
             options={
               Array.isArray(hospitalTypes)
                 ? hospitalTypes.map((type) => ({
-                    label: type,
-                    value: type,
-                  }))
+                  label: type,
+                  value: type,
+                }))
                 : []
             }
           />
@@ -217,9 +186,9 @@ const BasicInfo = ({ formik ,isReadOnly = false}) => {
             options={
               Array.isArray(organizationTypes)
                 ? organizationTypes.map((type) => ({
-                    label: type,
-                    value: type,
-                  }))
+                  label: type,
+                  value: type,
+                }))
                 : []
             }
           />
@@ -231,80 +200,90 @@ const BasicInfo = ({ formik ,isReadOnly = false}) => {
               isReadOnly={isReadOnly}
               formik={formik}
               options={legalEntity || []}
+              loading={loading}
             />
           )}
 
-          <Input
-            label="Address"
-            name="Basic.address"
-            formik={formik}
-            isReadOnly={isReadOnly}
-            placeholder="Enter Address"
-          />
-          <Input
-            label="District"
-            name="Basic.district"
-            formik={formik}
-            isReadOnly={isReadOnly}
-            placeholder="Enter District"
-          />
           <Select
             label="State"
             name="Basic.state"
-            formik={formik}
             isReadOnly={isReadOnly}
+            formik={formik}
             options={
               Array.isArray(allStateName)
-                ? allStateName.map((type) => ({
-                    label: type.stateName,
-                    value: type.stateCode,
-                  }))
+                ? allStateName.map((state) => ({
+                  label: state.stateName,
+                  value: state.stateCode,
+                }))
                 : []
             }
-            onChange={(selectedOption) =>
-              handleSelectCity(selectedOption.value)
-            }
+            onChange={(val) => {
+              setSelectedStateCode(val);
+              handleselectDistrict(val);
+            }}
           />
 
+          <Select
+            label="District"
+            name="Basic.district"
+            isReadOnly={isReadOnly}
+            formik={formik}
+            options={
+              Array.isArray(districtList)
+                ? districtList.map((district) => ({
+                  label: district,
+                  value: district,
+                }))
+                : []
+            }
+            onChange={(val) => {
+              handleSelectCity(val);
+            }}
+          />
+
+          <Select
+            label="Region"
+            name="Basic.region"
+            isReadOnly={isReadOnly}
+            formik={formik}
+            options={
+              Array.isArray(region)
+                ? region.map((reg) => ({
+                  label: reg,
+                  value: reg,
+                }))
+                : []
+            }
+          />
           <Select
             label="City"
             name="Basic.city"
-            formik={formik}
             isReadOnly={isReadOnly}
-            isDisabled={!formik.values?.Basic?.state}
+            formik={formik}
             options={
               Array.isArray(cities)
                 ? cities.map((city) => ({
-                    label: city,
-                    value: city,
-                  }))
+                  label: city,
+                  value: city,
+                }))
                 : []
             }
           />
-
-          <Select
-            label="region"
-            name="Basic.region"
-            formik={formik}
-            isReadOnly={isReadOnly}
-            options={
-              Array.isArray(region)
-                ? region.map((type) => ({
-                    label: type,
-                    value: type,
-                  }))
-                : []
-            }
-          />
-
           <Input
             label="Email Address"
             name="Basic.emailAddress"
+            type="email"
             formik={formik}
             isReadOnly={isReadOnly}
-            placeholder="Enter Email Address"
+            placeholder="example@hospital.com"
           />
-          
+          <Input
+            label="Full Address"
+            name="Basic.address"
+            formik={formik}
+            isReadOnly={isReadOnly}
+            placeholder="123 Street Name, Area"
+          />
         </div>
       </div>
     </div>

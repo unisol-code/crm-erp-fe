@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import ReactSelect from "react-select";
+import _ from "lodash";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
+import ConcernPersonForm from "./ConcernPersonForm";
 
 const Select = ({
   label,
   name,
   formik,
-  options,   
+  options,
   isReadOnly = false,
   loading = false,
   placeholder = "Select option",
@@ -14,18 +16,20 @@ const Select = ({
   showOtherInput = false,
 }) => {
   const [showOther, setShowOther] = useState(false);
+  useEffect(() => {
+    if (isReadOnly) {
+      setShowOther(false);
+    }
+  }, [isReadOnly]);
 
-  const rawValue = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined),
-      formik.values
-    );
+
+  const rawValue = _.get(formik.values, name);
 
   const value = isMulti ? rawValue || [] : rawValue || "";
 
   /* 🔹 Add "Other" option */
   const selectOptions = [
+
     ...options.map((opt) =>
       typeof opt === "string" ? { label: opt, value: opt } : opt
     ),
@@ -46,9 +50,10 @@ const Select = ({
         options={selectOptions}
         isMulti={isMulti}
         value={selectedValue}
-        isLoading={loading}
+        isDisabled={isReadOnly || loading}
         placeholder={placeholder}
         onChange={(selected) => {
+          if (isReadOnly || loading) return;
           if (isMulti) {
             const values = selected ? selected.map((s) => s.value) : [];
 
@@ -69,12 +74,21 @@ const Select = ({
             }
           }
         }}
+
+        styles={{
+          control: (base) => ({
+            ...base,
+            backgroundColor: isReadOnly ? "#f3f4f6" : base.backgroundColor,
+            cursor: isReadOnly ? "not-allowed" : "default",
+          }),
+        }}
       />
 
       {/* 🔹 OTHER INPUT */}
       {showOtherInput && showOther && (
         <input
           type="text"
+          disabled={isReadOnly}
           className="mt-2 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400"
           placeholder="Please specify"
           value={value || ""}
@@ -98,32 +112,14 @@ const QuestionField = ({
   placeholder,
   isReadOnly = false,
 }) => {
-  const value = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.values
-    );
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
-  const touched = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : false),
-      formik.touched
-    );
-
-  const error = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.errors
-    );
-
-  const baseClass = `border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 ${
-    touched && error
-      ? "border-red-500 focus:ring-red-300"
-      : "border-gray-700 focus:ring-blue-400"
-  }`;
+  const baseClass = `border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 ${touched && error
+    ? "border-red-500 focus:ring-red-300"
+    : "border-gray-700 focus:ring-blue-400"
+    }`;
 
   // 🔹 BOOLEAN (Yes / No)
   if (type === "boolean") {
@@ -166,7 +162,6 @@ const QuestionField = ({
     );
   }
 
-  // 🔹 TEXTAREA
   // 🔹 TEXTAREA WITH WORD LIMIT
   if (type === "textarea") {
     const wordCount = countWords(value);
@@ -192,17 +187,15 @@ const QuestionField = ({
             }
           }}
           onBlur={formik.handleBlur}
-          className={`${baseClass} ${
-            exceeded ? "border-red-500 focus:ring-red-300" : ""
-          }`}
+          className={`${baseClass} ${exceeded ? "border-red-500 focus:ring-red-300" : ""
+            }`}
         />
 
         {/* Word Counter */}
         {maxWords && (
           <div
-            className={`text-xs mt-1 text-right ${
-              exceeded ? "text-red-500" : "text-gray-500"
-            }`}
+            className={`text-xs mt-1 text-right ${exceeded ? "text-red-500" : "text-gray-500"
+              }`}
           >
             {wordCount}/{maxWords} words
           </div>
@@ -237,7 +230,7 @@ const QuestionField = ({
           }
         }}
         onBlur={formik.handleBlur}
-        className={baseClass}
+        className={`${baseClass} ${type === "number" ? "no-spinner" : ""}`}
       />
 
       {touched && error && (
@@ -247,9 +240,7 @@ const QuestionField = ({
   );
 };
 
-// ✅ FIXED: Removed DoubleTextareaQuestion - use two separate QuestionField components instead
 const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
-  // Clear conditional field when parent changes
   const { fetchbiomedicalfour, BMW4, loading } = useDropdown();
 
   useEffect(() => {
@@ -284,7 +275,7 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
       <h1 className="text-xl font-semibold mb-6">Biomedical Waste Management</h1>
       <div className="grid grid-cols-1 gap-y-2">
         <QuestionField
-          label="1A. Who oversees biomedical waste management? - Designation (Ans in Brief)"
+          label="1A. Who oversees biomedical waste management? - Designation"
           name="bioMedicalWaste.BMWQ1A"
           type="textarea"
           formik={formik}
@@ -292,7 +283,7 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
           maxWords={50}
         />
         <QuestionField
-          label="1B. Who oversees biomedical waste management? - Committee (Ans in Brief)"
+          label="1B. Who oversees biomedical waste management? - Committee"
           name="bioMedicalWaste.BMWQ1B"
           type="textarea"
           formik={formik}
@@ -453,6 +444,13 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
           isReadOnly={isReadOnly}
           maxWords={50}
         />
+
+        <ConcernPersonForm 
+          title="Concern Persons (Bio Medical Waste)" 
+          sectionName="bioMedicalWaste.concernPersons" 
+          formik={formik} 
+          isReadOnly={isReadOnly} 
+        />
       </div>
     </div>
   );
@@ -539,7 +537,7 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
           formik={formik}
           isMulti
           isReadOnly={isReadOnly}
-          options={["Composting", "Biomethanation", "MRF", "RDF", "WtE", "None"]}
+          options={["Composting", "Biomethanation", "Material Recovery Facility (MRF)", "Refused Derived Fuel (RDF)", "Waste-to-Energy (WtE)", "None"]}
         />
 
         <QuestionField
@@ -630,6 +628,13 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
         <QuestionField label="63. Regulatory/compliance issues" name="solidWaste.SWQ63" type="textarea" formik={formik} isReadOnly={isReadOnly} />
         <QuestionField label="64. Behavioral/change management challenges" name="solidWaste.SWQ64" type="textarea" formik={formik} isReadOnly={isReadOnly} />
         <QuestionField label="65. Priority areas for improvement (next 1–3 years)" name="solidWaste.SWQ65" type="textarea" formik={formik} isReadOnly={isReadOnly} />
+
+        <ConcernPersonForm 
+          title="Concern Persons (Solid Waste)" 
+          sectionName="solidWaste.concernPersons" 
+          formik={formik} 
+          isReadOnly={isReadOnly} 
+        />
       </div>
     </div>
   );
@@ -699,6 +704,13 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
           </div>
           <QuestionField label="Additional CRM Requirements" name="wasteWaterManagement.WWWQ16" type="textarea" formik={formik} isReadOnly={isReadOnly} />
         </div>
+
+        <ConcernPersonForm 
+          title="Concern Persons (Waste Water Management)" 
+          sectionName="wasteWaterManagement.concernPersons" 
+          formik={formik} 
+          isReadOnly={isReadOnly} 
+        />
       </div>
     </div>
   );

@@ -5,12 +5,10 @@ import { FaPlusCircle } from "react-icons/fa";
 import { useTheme } from "../../../../../hooks/theme/useTheme";
 import Button from "../../../../../components/uiComponents/button/Button";
 import BasicInfo from "./organizationTabs/BasicInfo";
-import Surgery from "./organizationTabs/Surgery";
 import Laundry from "./organizationTabs/Laundry";
 import Kitchen from "./organizationTabs/Kitchen";
 import StpEtp from "./organizationTabs/StpEtp";
 import BiomedicalAndSolidWaste from "./organizationTabs/BiomedicalAndSolidWaste";
-import useOrganizationalDB from "../../../../../hooks/salesExecutiveHook/salesExecutiveDB/useOrganizationalDB";
 import { useNavigate, useParams } from "react-router-dom";
 import useDropdown from "../../../../../hooks/dropdown/useDropdown";
 import {
@@ -20,6 +18,7 @@ import {
 } from "./organizationInitialValues";
 import ReactSelect from "react-select";
 import HospitalData from "./organizationTabs/HospitalData";
+import useAdminOrganizationDB from "../../../../../hooks/superAdminHook/superAdmindatabase/useAdminOrganizationDB";
 
 // ✅ CRITICAL FIX: Move Select component outside
 const Select = ({
@@ -30,6 +29,7 @@ const Select = ({
   loading = false,
   placeholder = "Select option",
   isReadOnly = false,
+  isMulti = false,
 }) => {
   const value = name
     .split(".")
@@ -53,20 +53,27 @@ const Select = ({
   const selectOptions = options.map((opt) =>
     typeof opt === "string" ? { label: opt, value: opt } : opt
   );
-  const selectedOption =
-    selectOptions.find((opt) => opt.value === value) || null;
+
+  const selectedValue = isMulti
+    ? selectOptions.filter((opt) => value?.includes?.(opt.value))
+    : selectOptions.find((opt) => opt.value === value) || null;
 
   return (
     <div className="flex flex-col w-full mb-4">
       <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
       <ReactSelect
         options={selectOptions}
+        isMulti={isMulti}
         isLoading={loading}
         name={name}
-        value={selectedOption}
-        onChange={(selected) =>
-          formik.setFieldValue(name, selected?.value || "")
-        }
+        value={selectedValue}
+        onChange={(selected) => {
+          if (isMulti) {
+            formik.setFieldValue(name, selected ? selected.map((s) => s.value) : []);
+          } else {
+            formik.setFieldValue(name, selected?.value || "");
+          }
+        }}
         onBlur={() => formik.setFieldTouched(name, true)}
         placeholder={placeholder}
         classNamePrefix="react-select"
@@ -120,22 +127,25 @@ const WasteManagementTabs = ({ formik, isReadOnly }) => {
     <div className="p-4 m-2">
       <div className="w-full md:w-2/3 ml-4">
         <Select
-          label="Select Waste Management Type"
-          name="wasteManagement.type"
+          label="Select Waste Management Type(s)"
+          name="wasteManagement.types"
           formik={formik}
-          placeholder="Select Waste Type"
+          isMulti
+          placeholder="Select Waste Type(s)"
           options={wasteOptions}
           isReadOnly={isReadOnly}
         />
       </div>
       <div className="w-full border-b border-gray-300 my-6" />
-      {formik.values.wasteManagement?.type && (
-        <BiomedicalAndSolidWaste
-          formik={formik}
-          type={formik.values.wasteManagement.type}
-          isReadOnly={isReadOnly}
-        />
-      )}
+      {formik.values.wasteManagement?.types?.map((type) => (
+        <div key={type} className="mb-8">
+          <BiomedicalAndSolidWaste
+            formik={formik}
+            type={type}
+            isReadOnly={isReadOnly}
+          />
+        </div>
+      ))}
     </div>
   );
 };
@@ -144,14 +154,15 @@ const AddNewOrganization = ({ mode = "add" }) => {
   const { theme } = useTheme();
   const { id } = useParams();
   const navigate = useNavigate();
+
   const {
     loading,
-    createOrganization,
-    fetchOrganizationalDBByID,
-    organizationalDBByID,
-    resestOrganizationalDBByID,
-    updateOrganization,
-  } = useOrganizationalDB();
+    createAdminOrganization,
+    fetchAdminOrganizationalDBByID,
+    adminOrganizationalDBByID,
+    resestAdminOrganizationalDBByID,
+    updateAdminOrganization,
+  } = useAdminOrganizationDB();
   const [activeTab, setActiveTab] = useState("Basic Info");
   const [currentStep, setCurrentStep] = useState(0);
   const [touchedSteps, setTouchedSteps] = useState([]);
@@ -169,9 +180,9 @@ const AddNewOrganization = ({ mode = "add" }) => {
       console.log("Submitting values:", values);
       if (isView) return;
       if (isEdit) {
-        await updateOrganization(id, values);
+        await updateAdminOrganization(id, values);
       } else {
-        await createOrganization(values);
+        await createAdminOrganization(values);
       }
       navigate("/sales-executive/database");
     },
@@ -179,17 +190,17 @@ const AddNewOrganization = ({ mode = "add" }) => {
 
   useEffect(() => {
     if (id) {
-      fetchOrganizationalDBByID(id);
+      fetchAdminOrganizationalDBByID(id);
     }
-    return () => resestOrganizationalDBByID();
+    return () => resestAdminOrganizationalDBByID();
   }, [id]);
 
   useEffect(() => {
-    if (organizationalDBByID && (isEdit || isView)) {
-      const formData = transformApiDataToForm(organizationalDBByID);
+    if (adminOrganizationalDBByID && (isEdit || isView)) {
+      const formData = transformApiDataToForm(adminOrganizationalDBByID);
       formik.setValues(formData);
     }
-  }, [organizationalDBByID, isEdit]);
+  }, [adminOrganizationalDBByID, isEdit]);
 
   useEffect(() => {
     window.scrollTo({

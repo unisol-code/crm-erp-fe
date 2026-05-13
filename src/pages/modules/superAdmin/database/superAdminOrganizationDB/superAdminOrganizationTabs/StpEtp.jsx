@@ -1,182 +1,52 @@
-// import React from "react";
-
-// const Input = ({ label, name, formik, type = "text", placeholder }) => {
-//   const value = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ''), formik.values);
-//   const touched = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : false), formik.touched);
-//   const error = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ''), formik.errors);
-
-//   const inputValue = type === 'date' && value instanceof Date
-//     ? value.toISOString().split('T')[0]
-//     : value;
-
-//   return (
-//     <div className="flex flex-col w-full mb-4">
-//       <label htmlFor={name} className="text-sm font-medium text-gray-700 mb-1">{label}</label>
-//       <input
-//         id={name}
-//         type={type}
-//         name={name}
-//         placeholder={placeholder}
-//         value={inputValue || ''}
-//         onChange={(e) => {
-//           if (type === 'number') {
-//             const numValue = e.target.value === '' ? '' : Number(e.target.value);
-//             formik.setFieldValue(name, isNaN(numValue) ? '' : numValue);
-//           } else if (type === 'date') {
-//             formik.setFieldValue(name, e.target.value ? new Date(e.target.value) : '');
-//           } else {
-//             formik.handleChange(e);
-//           }
-//         }}
-//         onBlur={formik.handleBlur}
-//         className={`no-spinner border ${touched && error ? 'border-red-500' : 'border-gray-300'} rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400`}
-//       />
-//       {touched && error && (
-//         <span className="text-red-500 text-xs mt-1">{error}</span>
-//       )}
-//     </div>
-//   );
-// };
-
-// const Select = ({ label, name, formik, options }) => {
-//   const value = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ''), formik.values);
-//   const touched = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : false), formik.touched);
-//   const error = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ''), formik.errors);
-
-//   return (
-//     <div className="flex flex-col w-full mb-4">
-//       <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
-//       <select
-//         name={name}
-//         value={value}
-//         onChange={formik.handleChange}
-//         onBlur={formik.handleBlur}
-//         className={`border ${touched && error ? 'border-red-500' : 'border-gray-300'} rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400`}
-//       >
-//         <option value="">Select {label}</option>
-//         {options.map((option, index) => (
-//           <option key={index} value={option}>
-//             {option}
-//           </option>
-//         ))}
-//       </select>
-//       {touched && error && (
-//         <span className="text-red-500 text-xs mt-1">{error}</span>
-//       )}
-//     </div>
-//   );
-// };
-
-// const StpEtp = ({ formik }) => {
-//   return (
-//     <>
-//       <div className="p-4 bg-white rounded-md">
-//         <h1 className="text-xl font-semibold mb-6">STP</h1>
-//         <div className="p-6 pt-0">
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-11">
-//             <Input label="STP Status" name="stp.stpStatus" formik={formik} placeholder="Enter STP Status" />
-//             <Input type="number" label="Year of Installation" name="stp.yearOfInstallation" formik={formik} placeholder="Enter Year" />
-//             <Input label="STP Capacity" name="stp.stpCapacity" formik={formik} placeholder="Enter STP Capacity" />
-//             {/* <Input type="date" label="Year of Installation" name="stpInstallYear" formik={formik} placeholder="Select Year" /> */}
-//           </div>
-//         </div>
-//         <h1 className="text-xl font-semibold mb-6">ETP</h1>
-//         <div className="p-6 pt-0">
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//             <Input label="ETP Status" name="etp.etpStatus" formik={formik} placeholder="Enter ETP Status" />
-//             <Input type="number" label="Year of Installation" name="etp.yearOfInstallation" formik={formik} placeholder="Enter Year" />
-//             <Input label="ETP Capacity" name="etp.etpCapacity" formik={formik} placeholder="Enter ETP Capacity" />
-//           </div>
-//         </div>
-//       </div>
-//     </>
-//   );
-// };
-
-// export default StpEtp;
-
-
-import React, { useEffect } from "react";
+import React from "react";
 import ReactSelect from "react-select";
-// Reusable Select Input
-// const SelectInput = ({ label, name, formik, options, placeholder = "Select" }) => {
-//   const value = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ''), formik.values);
-//   const touched = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : false), formik.touched);
-//   const error = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ''), formik.errors);
+import _ from "lodash";
 
-//   return (
-//     <div className="flex flex-col w-full mb-4">
-//       <label htmlFor={name} className="text-sm font-medium text-gray-700 mb-1">{label}</label>
-//       <select
-//         id={name}
-//         name={name}
-//         value={value}
-//         onChange={formik.handleChange}
-//         onBlur={formik.handleBlur}
-//         className={`border ${touched && error ? 'border-red-500' : 'border-gray-300'} rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400`}
-//       >
-//         <option value="" disabled>{placeholder}</option>
-//         {options.map((option) => (
-//           <option key={option} value={option}>{option}</option>
-//         ))}
-//       </select>
-//       {touched && error && (
-//         <span className="text-red-500 text-xs mt-1">{error}</span>
-//       )}
-//     </div>
-//   );
-// };
-const Select = ({ label, name, formik, options, loading = false, isReadOnly = false }) => {
-  const value = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ''), formik.values);
-  const touched = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : false), formik.touched);
-  const error = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ''), formik.errors);
+// --- Select Component ---
+const Select = ({ label, name, formik, options, loading = false, isReadOnly = false, isMulti = false }) => {
+  const rawValue = _.get(formik.values, name);
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
+
+  const value = isMulti ? rawValue || [] : rawValue || "";
 
   const selectOptions = options.map((opt) =>
     typeof opt === 'string' ? { label: opt, value: opt } : opt
   );
-  const selectedOption = selectOptions.find((opt) => opt.value === value) || null;
   
+  const selectedOption = isMulti
+    ? selectOptions.filter((opt) => value?.includes?.(opt.value))
+    : selectOptions.find((opt) => opt.value === value) || null;
+
   return (
     <div className="flex flex-col w-full mb-4">
       <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
       <ReactSelect
         options={selectOptions}
+        isMulti={isMulti}
         isLoading={loading}
         name={name}
         value={selectedOption}
-        onChange={(selected) => formik.setFieldValue(name, selected?.value || '')}
+        onChange={(selected) => {
+          if (isMulti) {
+            formik.setFieldValue(name, selected ? selected.map(s => s.value) : []);
+          } else {
+            formik.setFieldValue(name, selected?.value || '');
+          }
+        }}
         onBlur={() => formik.setFieldTouched(name, true)}
         placeholder={`Select ${label}`}
         classNamePrefix="react-select"
-         isDisabled={loading || isReadOnly}
-        
-       styles={{
+        isDisabled={loading || isReadOnly}
+        styles={{
           control: (base, state) => ({
             ...base,
             minHeight: "48px",
             borderRadius: "0.5rem",
-            borderColor: state.isFocused
-              ? "#60A5FA"
-              : touched && error
-              ? "#EF4444"
-              : "#556581",
+            borderColor: state.isFocused ? "#60A5FA" : touched && error ? "#EF4444" : "#556581",
             boxShadow: state.isFocused ? "0 0 0 2px #60A5FA" : "none",
             backgroundColor: isReadOnly ? "#F3F4F6" : base.backgroundColor,
             cursor: isReadOnly ? "not-allowed" : base.cursor,
-          }),
-          valueContainer: (base) => ({  
-            ...base,
-            padding: "0 6px",
-            fontSize: "1rem",
-          }),
-          input: (base) => ({
-            ...base,
-            margin: 0,
-            padding: 0,
-          }),
-          placeholder: (base) => ({
-            ...base,
-            color: "#9CA3AF",
           }),
         }}
       />
@@ -186,11 +56,71 @@ const Select = ({ label, name, formik, options, loading = false, isReadOnly = fa
     </div>
   );
 };
-// Reusable Text Area
-const TextArea = ({ label, name, formik, placeholder , isReadOnly = false }) => {
-  const value = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ''), formik.values);
-  const touched = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : false), formik.touched);
-  const error = name.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ''), formik.errors);
+
+// --- QuestionField Component (Handles Boolean, Number, Text) ---
+const QuestionField = ({ label, name, type = "text", formik, isReadOnly = false, placeholder }) => {
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
+
+  if (type === "boolean") {
+    return (
+      <div className="flex flex-col w-full mb-4">
+        <label className="text-sm font-medium text-gray-700 mb-2">{label}</label>
+        <div className="flex gap-4">
+          {["Yes", "No"].map((option) => {
+            const boolValue = option === "Yes";
+            return (
+              <label key={option} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={name}
+                  value={boolValue}
+                  disabled={isReadOnly}
+                  checked={value === boolValue}
+                  onChange={() => formik.setFieldValue(name, boolValue)}
+                  onBlur={() => formik.setFieldTouched(name, true)}
+                />
+                {option}
+              </label>
+            );
+          })}
+        </div>
+        {touched && error && !isReadOnly && <span className="text-red-500 text-xs mt-1">{error}</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col w-full mb-4">
+      <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <input
+        type={type}
+        name={name}
+        placeholder={placeholder || "Enter answer"}
+        value={value}
+        disabled={isReadOnly}
+        onChange={(e) => {
+          if (type === "number") {
+            const val = e.target.value === "" ? "" : Number(e.target.value);
+            formik.setFieldValue(name, isNaN(val) ? "" : val);
+          } else {
+            formik.handleChange(e);
+          }
+        }}
+        onBlur={formik.handleBlur}
+        className={`border ${touched && error ? 'border-red-500' : 'border-gray-700'} rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 ${isReadOnly ? 'bg-gray-100' : 'bg-white'} ${type === "number" ? "no-spinner" : ""}`}
+      />
+      {touched && error && !isReadOnly && <span className="text-red-500 text-xs mt-1">{error}</span>}
+    </div>
+  );
+};
+
+// --- TextArea Component ---
+const TextArea = ({ label, name, formik, placeholder, isReadOnly = false }) => {
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
   return (
     <div className="flex flex-col w-full mb-4 col-span-2">
@@ -198,13 +128,13 @@ const TextArea = ({ label, name, formik, placeholder , isReadOnly = false }) => 
       <textarea
         id={name}
         name={name}
-        rows="4"
+        rows="3"
         placeholder={placeholder}
         value={value || ''}
         onChange={formik.handleChange}
-          disabled={isReadOnly}
+        disabled={isReadOnly}
         onBlur={formik.handleBlur}
-        className={`border ${touched && error ? 'border-red-500' : 'border-gray-700'} rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400`}
+        className={`border ${touched && error ? 'border-red-500' : 'border-gray-700'} rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 ${isReadOnly ? 'bg-gray-100' : 'bg-white'}`}
       />
       {touched && error && !isReadOnly && (
         <span className="text-red-500 text-xs mt-1">{error}</span>
@@ -213,41 +143,188 @@ const TextArea = ({ label, name, formik, placeholder , isReadOnly = false }) => 
   );
 };
 
-// Section Wrapper
+// --- Section Wrapper ---
 const Section = ({ title, children }) => (
   <div className="px-6 py-2 bg-white rounded-md">
-    <h1 className="text-xl font-semibold mb-6">{title}</h1>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-11 px-8">
+    <h1 className="text-xl font-semibold mb-6 border-b pb-2">{title}</h1>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-11 px-4">
       {children}
     </div>
   </div>
-);   
+);
 
-// Main Physiotherapy Setup Component
+// --- Main Physiotherapy Setup Component ---
 const PhysiotherapySetup = ({ formik, isReadOnly = false }) => {
   return (
-    <Section title="PHYSIOTHERAPY SETUP">
-      {/* Row 1 - Select Input */}
-      <Select
-        label="Focus Speciality"
-        name="physiotherapy.focus"
-        formik={formik}
-        options={["Orthopedic", "Neurological", "Cardiopulmonary", "Pediatric", "Geriatric"]}
-        placeholder="Select Speciality"
+    <div className="p-4">
+      <Section title="PHYSIOTHERAPY SETUP">
+        <TextArea
+          label="1. What is the primary objective of the physiotherapy center?"
+          name="physiotherapy.primaryObjective"
+          formik={formik}
           isReadOnly={isReadOnly}
-      />
+          placeholder="Enter primary objective"
+        />
 
-      {/* Row 2 - Text Area (spanning both columns) */}
-      <TextArea
-        label="Summary"
-        name="physiotherapy.summary"
-        formik={formik}
-         isReadOnly={isReadOnly}
-        placeholder="Enter summary of physiotherapy setup"
-      />
-    </Section>
+        <Select
+          label="2. Is the setup intended for OPD patients, IPD patients, sports rehab, etc.?"
+          name="physiotherapy.intendedFor"
+          formik={formik}
+          isMulti
+          options={["OPD patients", "IPD patients", "Sports rehabilitation", "Neuro rehabilitation", "Geriatric care", "Pediatric therapy", "Multi-specialty rehabilitation"]}
+          isReadOnly={isReadOnly}
+        />
+
+        <Select
+          label="3. Will it function as part of an existing hospital or as an independent center?"
+          name="physiotherapy.setupContext"
+          formik={formik}
+          options={["Part of existing hospital", "Independent rehabilitation center"]}
+          isReadOnly={isReadOnly}
+        />
+
+        <QuestionField
+          label="4. What is the expected patient load per day?"
+          name="physiotherapy.expectedPatientLoad"
+          type="number"
+          formik={formik}
+          isReadOnly={isReadOnly}
+          placeholder="Enter number"
+        />
+
+        <Select
+          label="5. Will the center provide only physiotherapy or multidisciplinary services?"
+          name="physiotherapy.serviceType"
+          formik={formik}
+          options={["Physiotherapy only", "Multidisciplinary rehabilitation services"]}
+          isReadOnly={isReadOnly}
+        />
+
+        <Select
+          label="6. Is the facility planned for urban, semi-urban, rural, or institutional use?"
+          name="physiotherapy.plannedLocation"
+          formik={formik}
+          options={["Urban", "Semi-urban", "Rural", "Institutional"]}
+          isReadOnly={isReadOnly}
+        />
+
+        <QuestionField
+          label="7. What is the total area available for the physiotherapy department?"
+          name="physiotherapy.totalArea"
+          type="text"
+          formik={formik}
+          isReadOnly={isReadOnly}
+          placeholder="e.g. 2000 sq ft"
+        />
+
+        <TextArea
+          label="8. How should the area be divided (Reception, Consultation, Electrotherapy, etc.)?"
+          name="physiotherapy.areaDivision"
+          formik={formik}
+          isReadOnly={isReadOnly}
+          placeholder="Describe area division for various sections"
+        />
+
+        <TextArea
+          label="9. What should be the ideal patient movement flow?"
+          name="physiotherapy.patientMovementFlow"
+          formik={formik}
+          isReadOnly={isReadOnly}
+          placeholder="Describe movement flow"
+        />
+
+        <QuestionField
+          label="10. Is barrier-free accessibility available for disabled patients?"
+          name="physiotherapy.barrierFreeAccessibility"
+          type="boolean"
+          formik={formik}
+          isReadOnly={isReadOnly}
+        />
+
+        <QuestionField
+          label="11. Are ramps, lifts, handrails, and wheelchair pathways planned?"
+          name="physiotherapy.infrastructurePlanned"
+          type="boolean"
+          formik={formik}
+          isReadOnly={isReadOnly}
+        />
+
+        <QuestionField
+          label="12. Is there sufficient ventilation and natural lighting?"
+          name="physiotherapy.ventilationLighting"
+          type="boolean"
+          formik={formik}
+          isReadOnly={isReadOnly}
+        />
+
+        <TextArea
+          label="13. What flooring is suitable for rehabilitation and patient safety?"
+          name="physiotherapy.suitableFlooring"
+          formik={formik}
+          isReadOnly={isReadOnly}
+          placeholder="Describe flooring type"
+        />
+
+        <QuestionField
+          label="14. Are acoustic and privacy requirements addressed?"
+          name="physiotherapy.privacyRequirements"
+          type="boolean"
+          formik={formik}
+          isReadOnly={isReadOnly}
+        />
+
+        <TextArea
+          label="15. What physiotherapy equipment is essential initially?"
+          name="physiotherapy.essentialEquipment"
+          formik={formik}
+          isReadOnly={isReadOnly}
+          placeholder="List essential equipment"
+        />
+
+        <TextArea
+          label="16. Which advanced rehabilitation technologies are required?"
+          name="physiotherapy.advancedTechnologies"
+          formik={formik}
+          isReadOnly={isReadOnly}
+          placeholder="List advanced technologies"
+        />
+
+        <QuestionField
+          label="17. How many treatment stations are needed?"
+          name="physiotherapy.treatmentStations"
+          type="number"
+          formik={formik}
+          isReadOnly={isReadOnly}
+          placeholder="Enter count"
+        />
+
+        <Select
+          label="18. Should imported or indigenous equipment be preferred?"
+          name="physiotherapy.equipmentPreference"
+          formik={formik}
+          options={["Imported", "Indigenous", "Both"]}
+          isReadOnly={isReadOnly}
+        />
+
+        <TextArea
+          label="19. What are the power and electrical requirements of the equipment?"
+          name="physiotherapy.powerRequirements"
+          formik={formik}
+          isReadOnly={isReadOnly}
+          placeholder="Describe power requirements"
+        />
+
+        <QuestionField
+          label="20. How many physiotherapists are there?"
+          name="physiotherapy.physiotherapistCount"
+          type="number"
+          formik={formik}
+          isReadOnly={isReadOnly}
+          placeholder="Enter count"
+        />
+      </Section>
+    </div>
   );
 };
 
 export default PhysiotherapySetup;
-

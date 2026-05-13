@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
+import ConcernPersonForm from "./ConcernPersonForm";
 import ReactSelect from "react-select";
+import _ from "lodash";
 
 const Select = ({
   label,
   name,
   formik,
   options,
-  isReadOnly = false,  
+  isReadOnly = false,
   loading = false,
   placeholder = "Select option",
   isMulti = false,
@@ -15,28 +17,11 @@ const Select = ({
 }) => {
   const [showOther, setShowOther] = useState(false);
 
-  const rawValue = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined),
-      formik.values
-    );
+  const rawValue = _.get(formik.values, name);
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
   const value = isMulti ? rawValue || [] : rawValue || "";
-
-  const touched = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : false),
-      formik.touched
-    );
-
-  const error = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.errors
-    );
 
   /* 🔹 Add "Other" option */
   const selectOptions = [
@@ -52,7 +37,9 @@ const Select = ({
 
   return (
     <div className="flex flex-col w-full mb-4">
-      <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
 
       <ReactSelect
         options={selectOptions}
@@ -90,8 +77,8 @@ const Select = ({
             borderColor: state.isFocused
               ? "#60A5FA"
               : touched && error
-              ? "#EF4444"
-              : "#556581",
+                ? "#EF4444"
+                : "#556581",
             boxShadow: state.isFocused ? "0 0 0 2px #60A5FA" : "none",
             backgroundColor: isReadOnly ? "#F3F4F6" : base.backgroundColor,
             cursor: isReadOnly ? "not-allowed" : base.cursor,
@@ -112,13 +99,12 @@ const Select = ({
           }),
         }}
       />
-
       {touched && error && !isReadOnly && (
         <span className="text-red-500 text-xs mt-1">{error}</span>
       )}
 
       {/* 🔹 OTHER INPUT */}
-      {showOtherInput && showOther && !isReadOnly && (
+      {showOtherInput && showOther && (
         <input
           type="text"
           className="mt-2 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400"
@@ -138,38 +124,20 @@ const countWords = (text = "") => {
 const QuestionField = ({
   label,
   name,
-  type = "text",
+  type = "text", // number | boolean | textarea | text
   formik,
   maxWords,
   placeholder,
   isReadOnly = false,
 }) => {
-  const value = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.values
-    );
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
-  const touched = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : false),
-      formik.touched
-    );
-
-  const error = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.errors
-    );
-
-  const baseClass = `border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 ${
-    touched && error
+  const baseClass = `border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 ${touched && error
       ? "border-red-500 focus:ring-red-300"
       : "border-gray-700 focus:ring-blue-400"
-  }`;
+    }`;
 
   // 🔹 BOOLEAN (Yes / No)
   if (type === "boolean") {
@@ -233,16 +201,15 @@ const QuestionField = ({
             }
           }}
           onBlur={formik.handleBlur}
-          className={`${baseClass} ${
-            exceeded ? "border-red-500 focus:ring-red-300" : ""
-          }`}
+          className={`${baseClass} ${exceeded ? "border-red-500 focus:ring-red-300" : ""
+            }`}
         />
 
+        {/* Word Counter */}
         {maxWords && (
           <div
-            className={`text-xs mt-1 text-right ${
-              exceeded ? "text-red-500" : "text-gray-500"
-            }`}
+            className={`text-xs mt-1 text-right ${exceeded ? "text-red-500" : "text-gray-500"
+              }`}
           >
             {wordCount}/{maxWords} words
           </div>
@@ -276,7 +243,7 @@ const QuestionField = ({
           }
         }}
         onBlur={formik.handleBlur}
-        className={baseClass}
+        className={`${baseClass} ${type === "number" ? "no-spinner" : ""}`}
       />
 
       {touched && error && !isReadOnly && (
@@ -344,6 +311,8 @@ const Kitchen = ({ formik, isReadOnly = false }) => {
 
       <div className="p-6 pt-0 bg-white rounded-md">
         <div className="grid grid-cols-1 gap-y-2">
+          {/* Q1 */}
+
           <Select
             label="1. How many meals are prepared daily?"
             name="kitchenWasteManagement.KWMQ1"
@@ -355,8 +324,9 @@ const Kitchen = ({ formik, isReadOnly = false }) => {
             options={kitchenQ1Options}
           />
 
+          {/* Q2 */}
           <Select
-            label="2. What types of food are commonly prepared (veg, non-veg, therapeutic diets, etc.)?"
+            label="2.What types of food are commonly prepared (veg, non-veg, therapeutic diets, etc.)?"
             name="kitchenWasteManagement.KWMQ2"
             formik={formik}
             isMulti
@@ -368,6 +338,7 @@ const Kitchen = ({ formik, isReadOnly = false }) => {
             placeholder="Select meals"
           />
 
+          {/* Q3 */}
           <QuestionField
             label="3. Do you have records of average food/raw material procurement and consumption?"
             name="kitchenWasteManagement.KWMQ3.answers"
@@ -376,6 +347,7 @@ const Kitchen = ({ formik, isReadOnly = false }) => {
             formik={formik}
           />
 
+          {/* Q3 – Conditional Text Field (only if YES) */}
           {formik.values?.kitchenWasteManagement?.KWMQ3?.answers === true && (
             <QuestionField
               label="Please describe briefly"
@@ -387,14 +359,16 @@ const Kitchen = ({ formik, isReadOnly = false }) => {
             />
           )}
 
+          {/* Q4 */}
           <QuestionField
-            label="4. Approximately how much kitchen waste (kg/day) is generated?"
+            label="4.Approximately how much kitchen waste (kg/day) is generated?"
             name="kitchenWasteManagement.KWMQ4"
             type="number"
             isReadOnly={isReadOnly}
             formik={formik}
           />
 
+          {/* Q5 */}
           <Select
             label="5. What types of kitchen waste are most common?"
             name="kitchenWasteManagement.KWMQ5"
@@ -408,6 +382,7 @@ const Kitchen = ({ formik, isReadOnly = false }) => {
             placeholder="Select Options"
           />
 
+          {/* Q6 */}
           <QuestionField
             label="6. Do you categorise waste into wet (biodegradable) and dry (non-biodegradable) waste?"
             name="kitchenWasteManagement.KWMQ6"
@@ -416,8 +391,9 @@ const Kitchen = ({ formik, isReadOnly = false }) => {
             formik={formik}
           />
 
+          {/* Q7 */}
           <QuestionField
-            label="7. How is the kitchen waste collected (bins, segregation at source)?"
+            label="7. How is the kitchen waste collected (bins, segrega􀆟on at source)?"
             name="kitchenWasteManagement.KWMQ7"
             type="textarea"
             maxWords={50}
@@ -425,6 +401,7 @@ const Kitchen = ({ formik, isReadOnly = false }) => {
             formik={formik}
           />
 
+          {/* Q8 */}
           <QuestionField
             label="8. What type of bins/containers store biodegradable waste?"
             name="kitchenWasteManagement.KWMQ8"
@@ -434,10 +411,12 @@ const Kitchen = ({ formik, isReadOnly = false }) => {
             isReadOnly={isReadOnly}
           />
 
+          {/* Q9 */}
           <Select
-            label="9. How frequently is waste collected from the kitchen"
+            label="9.How frequently is waste collected from the kitchen"
             name="kitchenWasteManagement.KWMQ9"
             formik={formik}
+            // isMulti
             showOtherInput
             isReadOnly={isReadOnly}
             otherFieldName="kitchenWasteManagement.KWMQ9"
@@ -446,6 +425,7 @@ const Kitchen = ({ formik, isReadOnly = false }) => {
             placeholder="Select Options"
           />
 
+          {/* Q10 */}
           <QuestionField
             label="10. How long is waste stored on-site before disposal?"
             name="kitchenWasteManagement.KWMQ10"
@@ -455,15 +435,24 @@ const Kitchen = ({ formik, isReadOnly = false }) => {
             isReadOnly={isReadOnly}
           />
 
+          {/* Q11 */}
           <Select
-            label="11. What is the current method of kitchen waste disposal?"
+            label="11. What is the current method of kitchen waste disposal ?"
             name="kitchenWasteManagement.KWMQ11"
             formik={formik}
+            // isMulti
             showOtherInput
             otherFieldName="kitchenWasteManagement.KWMQ11"
             options={kitchenQ11Options}
             loading={loading}
             placeholder="Select Option"
+            isReadOnly={isReadOnly}
+          />
+
+          <ConcernPersonForm
+            title="Concern Persons (Kitchen Waste)"
+            sectionName="kitchenWasteManagement.concernPersons"
+            formik={formik}
             isReadOnly={isReadOnly}
           />
         </div>

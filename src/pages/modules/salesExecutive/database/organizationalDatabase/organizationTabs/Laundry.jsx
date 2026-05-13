@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import ReactSelect from "react-select";
-
+import _ from "lodash";
+import ConcernPersonForm from "./ConcernPersonForm";
 
 const Select = ({
   label,
@@ -15,26 +16,16 @@ const Select = ({
   showOtherInput = false,
   otherFieldName,
 }) => {
-  const rawValue = name
-    .split(".")
-    .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined), formik.values);
-
+  const rawValue = _.get(formik.values, name);
   const value = isMulti ? rawValue || [] : rawValue || "";
 
-  const touched = name
-    .split(".")
-    .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : false), formik.touched);
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
-  const error = name
-    .split(".")
-    .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""), formik.errors);
-
-  // 🔹 add "Other" option
   const selectOptions = [
     ...options.map((opt) =>
       typeof opt === "string" ? { label: opt, value: opt } : opt
     ),
-    // ...(showOtherInput ? [{ label: "Other", value: "Other" }] : []),
   ];
 
   const selectedValue = isMulti
@@ -55,7 +46,8 @@ const Select = ({
         name={name}
         value={selectedValue}
         isLoading={loading}
-        isDisabled={loading || isReadOnly} 
+        isDisabled={loading || isReadOnly}
+
         onChange={(selected) => {
           if (isMulti) {
             const values = selected ? selected.map((s) => s.value) : [];
@@ -67,7 +59,7 @@ const Select = ({
         onBlur={() => formik.setFieldTouched(name, true)}
         placeholder={placeholder}
         classNamePrefix="react-select"
-        
+
         styles={{
           control: (base, state) => ({
             ...base,
@@ -76,11 +68,11 @@ const Select = ({
             borderColor: state.isFocused
               ? "#60A5FA"
               : touched && error
-              ? "#EF4444"
-              : "#556581",
+                ? "#EF4444"
+                : "#556581",
             boxShadow: state.isFocused ? "0 0 0 2px #60A5FA" : "none",
-            backgroundColor: isReadOnly ? "#F3F4F6" : base.backgroundColor, 
-            cursor: isReadOnly ? "not-allowed" : base.cursor, 
+            backgroundColor: isReadOnly ? "#F3F4F6" : base.backgroundColor,
+            cursor: isReadOnly ? "not-allowed" : base.cursor,
           }),
           valueContainer: (base) => ({
             ...base,
@@ -99,13 +91,12 @@ const Select = ({
         }}
       />
 
-      
       {touched && error && !isReadOnly && (
         <span className="text-red-500 text-xs mt-1">{error}</span>
       )}
 
       {/* 🔹 OTHER TEXT FIELD */}
-      {showOtherInput && isOtherSelected && !isReadOnly && ( 
+      {showOtherInput && isOtherSelected && !isReadOnly && (
         <input
           type="text"
           className="mt-2 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400"
@@ -137,32 +128,14 @@ const QuestionField = ({
   placeholder,
   isReadOnly = false,
 }) => {
-  const value = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.values
-    );
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
-  const touched = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : false),
-      formik.touched
-    );
-
-  const error = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.errors
-    );
-
-  const baseClass = `border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 ${
-    touched && error
-      ? "border-red-500 focus:ring-red-300"
-      : "border-gray-700 focus:ring-blue-400"
-  }`;
+  const baseClass = `border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 ${touched && error
+    ? "border-red-500 focus:ring-red-300"
+    : "border-gray-700 focus:ring-blue-400"
+    }`;
 
   // 🔹 BOOLEAN (Yes / No)
   if (type === "boolean") {
@@ -195,7 +168,6 @@ const QuestionField = ({
           })}
         </div>
 
-       
         {touched && error && !isReadOnly && (
           <span className="text-red-500 text-xs mt-1">{error}</span>
         )}
@@ -227,23 +199,20 @@ const QuestionField = ({
             }
           }}
           onBlur={formik.handleBlur}
-          className={`${baseClass} ${
-            exceeded ? "border-red-500 focus:ring-red-300" : ""
-          }`}
+          className={`${baseClass} ${exceeded ? "border-red-500 focus:ring-red-300" : ""
+            }`}
         />
 
-       
+        {/* Word Counter */}
         {maxWords && (
           <div
-            className={`text-xs mt-1 text-right ${
-              exceeded ? "text-red-500" : "text-gray-500"
-            }`}
+            className={`text-xs mt-1 text-right ${exceeded ? "text-red-500" : "text-gray-500"
+              }`}
           >
             {wordCount}/{maxWords} words
           </div>
         )}
 
-       
         {touched && error && !isReadOnly && (
           <span className="text-red-500 text-xs mt-1">{error}</span>
         )}
@@ -251,7 +220,7 @@ const QuestionField = ({
     );
   }
 
-  
+  // 🔹 NUMBER / TEXT (default)
   return (
     <div className="flex flex-col w-full mb-4">
       <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
@@ -275,14 +244,12 @@ const QuestionField = ({
         className={baseClass}
       />
 
-      
       {touched && error && !isReadOnly && (
         <span className="text-red-500 text-xs mt-1">{error}</span>
       )}
     </div>
   );
 };
-
 
 const DoubleTextareaQuestion = ({
   label,
@@ -292,7 +259,7 @@ const DoubleTextareaQuestion = ({
   labelA,
   labelB,
   maxWords = 50,
-  isReadOnly = false, 
+  isReadOnly = false,
 }) => {
   return (
     <div className="flex flex-col w-full mb-6">
@@ -306,7 +273,7 @@ const DoubleTextareaQuestion = ({
         type="textarea"
         formik={formik}
         maxWords={maxWords}
-        isReadOnly={isReadOnly} 
+        isReadOnly={isReadOnly}
       />
 
       {/* Infectious Linen */}
@@ -316,7 +283,7 @@ const DoubleTextareaQuestion = ({
         type="textarea"
         formik={formik}
         maxWords={maxWords}
-        isReadOnly={isReadOnly} 
+        isReadOnly={isReadOnly}
       />
     </div>
   );
@@ -324,7 +291,8 @@ const DoubleTextareaQuestion = ({
 
 // Laundry Component
 const Laundry = ({ formik, isReadOnly = false }) => {
-  const { fetchLaundryType, laundryType, loading, fetchlaundrytwo, IQ2 } = useDropdown();
+  const { fetchLaundryType, laundryType, loading, fetchlaundrytwo,
+    IQ2 } = useDropdown();
 
   useEffect(() => {
     fetchLaundryType();
@@ -333,11 +301,10 @@ const Laundry = ({ formik, isReadOnly = false }) => {
 
   const laundryQ2Options = Array.isArray(IQ2)
     ? IQ2.map((item) => ({
-        label: item,
-        value: item,
-      }))
+      label: item,
+      value: item,
+    }))
     : [];
-  const laundryTypeValue = formik.values?.Laundry?.laundryType;
 
   return (
     <div className="p-4">
@@ -346,15 +313,15 @@ const Laundry = ({ formik, isReadOnly = false }) => {
       <div className="p-6 pt-0 bg-white rounded-md">
         <div className="grid grid-cols-1 gap-y-2 mt-5">
           <QuestionField
-            label="1. On average, how many kg of linen is processed daily (bedsheets, gowns, uniforms, curtains, etc.)?"
+            label="1.	On average, how many kg of linen is processed daily (bedsheets, gowns, uniforms, curtains, etc.)?"
             name="laundry.LQ1"
             type="number"
-            isReadOnly={isReadOnly}  
+            isReadOnly={isReadOnly}
             formik={formik}
           />
 
           <Select
-            label="2. Who is responsible for laundry operations"
+            label="2.	Who is responsible for laundry operations "
             name="laundry.LQ2"
             formik={formik}
             options={laundryQ2Options}
@@ -364,7 +331,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="3. How is soiled linen collected from wards, ICUs, OTs, and other areas?"
+            label="3.	How is soiled linen collected from wards, ICUs, OTs, and other areas?"
             name="laundry.LQ3"
             formik={formik}
             type="textarea"
@@ -373,7 +340,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="4. Is infectious/contaminated linen segregated separately from non-infectious linen?"
+            label="4.	Is infectious/contaminated linen segregated separately from non-infectious linen?"
             name="laundry.LQ4"
             type="boolean"
             isReadOnly={isReadOnly}
@@ -381,7 +348,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="5. What type of bags/containers are used for collection (color-coded bags, trolleys, etc.)?"
+            label="5.	What type of bags/containers are used for collection (color-coded bags, trolleys, etc.)?"
             name="laundry.LQ5"
             formik={formik}
             type="textarea"
@@ -390,7 +357,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="6. How is soiled linen transported to the laundry (covered trolleys, chutes, designated lifts)?"
+            label="6.	How is soiled linen transported to the laundry (covered trolleys, chutes, designated lifts)?"
             name="laundry.LQ6"
             formik={formik}
             type="textarea"
@@ -399,7 +366,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="7. Is there a designated area for the temporary storage of soiled linen?"
+            label="7.	Is there a designated area for the temporary storage of soiled linen?"
             name="laundry.LQ7"
             formik={formik}
             type="textarea"
@@ -408,7 +375,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="8. What precautions are taken to prevent mixing of clean and soiled linen during handling?"
+            label="8.	What precautions are taken to prevent mixing of clean and soiled linen during handling?"
             name="laundry.LQ8"
             formik={formik}
             type="textarea"
@@ -417,7 +384,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="9. What type of laundry system is used (manual, semi-automatic, industrial machines)?"
+            label="9.	What type of laundry system is used (manual, semi-automatic, industrial machines)?"
             name="laundry.LQ9"
             formik={formik}
             type="textarea"
@@ -437,7 +404,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="11. What disinfectants/chemicals are used in the washing process?"
+            label="11.	What disinfectants/chemicals are used in the washing process?"
             name="laundry.LQ11"
             formik={formik}
             type="textarea"
@@ -446,7 +413,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="12. Are separate machines used for infected and non-infected linen?"
+            label="12.	Are separate machines used for infected and non-infected linen?"
             name="laundry.LQ12"
             formik={formik}
             type="textarea"
@@ -455,7 +422,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="13. How is hot water/steam used for disinfection?"
+            label="13.	How is hot water/steam used for disinfection?"
             name="laundry.LQ13"
             formik={formik}
             type="textarea"
@@ -464,7 +431,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="14. How is washed linen dried (dryers, natural sunlight, steam drying)?"
+            label="14.	How is washed linen dried (dryers, natural sunlight, steam drying)?"
             name="laundry.LQ14"
             formik={formik}
             type="textarea"
@@ -473,7 +440,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="15. Where and how is clean linen stored to ensure hygiene and avoid contamination?"
+            label="15.	Where and how is clean linen stored to ensure hygiene and avoid contamination?"
             name="laundry.LQ15"
             formik={formik}
             type="textarea"
@@ -482,7 +449,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="16. How is linen distributed back to different hospital departments?"
+            label="16.	How is linen distributed back to different hospital departments?"
             name="laundry.LQ16"
             formik={formik}
             type="textarea"
@@ -491,7 +458,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="17. How is torn/damaged linen handled (repair, reuse, or discard)?"
+            label="17.	How is torn/damaged linen handled (repair, reuse, or discard)?"
             name="laundry.LQ17"
             formik={formik}
             type="textarea"
@@ -500,7 +467,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="18. What is the disposal method for unusable linen (incineration, shredding, vendor sale)?"
+            label="18.	What is the disposal method for unusable linen (incineration, shredding, vendor sale)?"
             name="laundry.LQ18"
             formik={formik}
             type="textarea"
@@ -509,7 +476,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="19. Do you maintain records of linen rejection and replacement?"
+            label="19.	Do you maintain records of linen rejection and replacement?"
             name="laundry.LQ19"
             formik={formik}
             type="textarea"
@@ -517,6 +484,13 @@ const Laundry = ({ formik, isReadOnly = false }) => {
             maxWords={50}
           />
         </div>
+
+        <ConcernPersonForm
+          title="Concern Persons (Laundry)"
+          sectionName="laundry.concernPersons"
+          formik={formik}
+          isReadOnly={isReadOnly}
+        />
       </div>
     </div>
   );

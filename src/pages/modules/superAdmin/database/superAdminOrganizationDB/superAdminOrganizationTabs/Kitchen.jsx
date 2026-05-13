@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
+import ConcernPersonForm from "./ConcernPersonForm";
 import ReactSelect from "react-select";
+import _ from "lodash";
 
 const Select = ({
   label,
@@ -15,25 +17,9 @@ const Select = ({
 }) => {
   const [showOther, setShowOther] = useState(false);
 
-  const rawValue = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined),
-      formik.values
-    );
-     const touched = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : false),
-      formik.touched
-    );
-
-  const error = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.errors
-    );
+  const rawValue = _.get(formik.values, name);
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
   const value = isMulti ? rawValue || [] : rawValue || "";
 
@@ -91,8 +77,8 @@ const Select = ({
             borderColor: state.isFocused
               ? "#60A5FA"
               : touched && error
-              ? "#EF4444"
-              : "#556581",
+                ? "#EF4444"
+                : "#556581",
             boxShadow: state.isFocused ? "0 0 0 2px #60A5FA" : "none",
             backgroundColor: isReadOnly ? "#F3F4F6" : base.backgroundColor,
             cursor: isReadOnly ? "not-allowed" : base.cursor,
@@ -144,32 +130,14 @@ const QuestionField = ({
   placeholder,
   isReadOnly = false,
 }) => {
-  const value = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.values
-    );
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
-  const touched = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : false),
-      formik.touched
-    );
-
-  const error = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.errors
-    );
-
-  const baseClass = `border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 ${
-    touched && error
+  const baseClass = `border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 ${touched && error
       ? "border-red-500 focus:ring-red-300"
       : "border-gray-700 focus:ring-blue-400"
-  }`;
+    }`;
 
   // 🔹 BOOLEAN (Yes / No)
   if (type === "boolean") {
@@ -234,17 +202,15 @@ const QuestionField = ({
             }
           }}
           onBlur={formik.handleBlur}
-          className={`${baseClass} ${
-            exceeded ? "border-red-500 focus:ring-red-300" : ""
-          }`}
+          className={`${baseClass} ${exceeded ? "border-red-500 focus:ring-red-300" : ""
+            }`}
         />
 
         {/* Word Counter */}
         {maxWords && (
           <div
-            className={`text-xs mt-1 text-right ${
-              exceeded ? "text-red-500" : "text-gray-500"
-            }`}
+            className={`text-xs mt-1 text-right ${exceeded ? "text-red-500" : "text-gray-500"
+              }`}
           >
             {wordCount}/{maxWords} words
           </div>
@@ -278,17 +244,17 @@ const QuestionField = ({
           }
         }}
         onBlur={formik.handleBlur}
-        className={baseClass}
+        className={`${baseClass} ${type === "number" ? "no-spinner" : ""}`}
       />
 
-      {touched && error && !isReadOnly && (  
+      {touched && error && !isReadOnly && (
         <span className="text-red-500 text-xs mt-1">{error}</span>
       )}
     </div>
   );
 };
 
-const Kitchen = ({ formik ,isReadOnly = false }) => {
+const Kitchen = ({ formik, isReadOnly = false }) => {
   const {
     fetchKitchenType,
     kitchenType,
@@ -481,6 +447,13 @@ const Kitchen = ({ formik ,isReadOnly = false }) => {
             options={kitchenQ11Options}
             loading={loading}
             placeholder="Select Option"
+            isReadOnly={isReadOnly}
+          />
+
+          <ConcernPersonForm
+            title="Concern Persons (Kitchen Waste)"
+            sectionName="kitchenWasteManagement.concernPersons"
+            formik={formik}
             isReadOnly={isReadOnly}
           />
         </div>

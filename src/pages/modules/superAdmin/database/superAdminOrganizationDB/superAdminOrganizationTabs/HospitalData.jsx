@@ -1,56 +1,32 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import ReactSelect from "react-select";
-
-// --- Helper for nested paths with arrays ---
-const getValueByPath = (obj, path) => {
-  if (!obj) return "";
-  return path
-    .replace(/\[(\d+)\]/g, ".$1") // convert [0] into .0
-    .split(".")
-    .reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : ""), obj);
-};
+import _ from "lodash";
 
 // --- Input Component ---
-const Input = ({ label, name, formik, type = "text", placeholder ,isReadOnly = false}) => {
-  const value = getValueByPath(formik.values, name);
-  const touched = getValueByPath(formik.touched, name);
-  const error = getValueByPath(formik.errors, name);
+const Input = ({ label, name, formik, type = "text", placeholder, isReadOnly = false }) => {
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
   const inputValue =
-    type === "date" && value instanceof Date
-      ? value.toISOString().split("T")[0]
-      : value;
+    type === "number" && (value === 0 || value === "0") ? "" : value;
 
   return (
     <div className="flex flex-col w-full mb-4">
-      <label htmlFor={name} className="text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
+      <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
       <input
-        id={name}
         type={type}
         name={name}
-        disabled={isReadOnly}
-        placeholder={placeholder}
-        value={inputValue || ""}
-        onChange={(e) => {
-          if (type === "number") {
-            const numValue =
-              e.target.value === "" ? "" : Number(e.target.value);
-            formik.setFieldValue(name, isNaN(numValue) ? "" : numValue);
-          } else if (type === "date") {
-            formik.setFieldValue(
-              name,
-              e.target.value ? new Date(e.target.value) : ""
-            );
-          } else {
-            formik.handleChange(e);
-          }
-        }}
+        value={inputValue}
+        onChange={formik.handleChange}
         onBlur={formik.handleBlur}
-        className={`no-spinner border ${touched && error ? "border-red-500" : "border-gray-300"
-          } rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400`}
+        placeholder={placeholder}
+        disabled={isReadOnly}
+        className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300
+          ${touched && error ? "border-red-500" : "border-[#556581]"}
+          ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : "bg-white"}
+          ${type === "number" ? "no-spinner" : ""}`}
       />
       {touched && error && (
         <span className="text-red-500 text-xs mt-1">{error}</span>
@@ -60,18 +36,14 @@ const Input = ({ label, name, formik, type = "text", placeholder ,isReadOnly = f
 };
 
 // --- Select Component ---
-const Select = ({ label, name, formik, options, loading = false ,isReadOnly = false}) => {
-  const value = getValueByPath(formik.values, name);
-  const touched = getValueByPath(formik.touched, name);
-  const error = getValueByPath(formik.errors, name);
+const Select = ({ label, name, formik, options, loading, placeholder, isReadOnly = false }) => {
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
-  const selectOptions =
-    options?.map((opt) =>
-      typeof opt === "string"
-        ? { label: opt, value: opt }
-        : { label: opt.label, value: opt.value }
-    ) || [];
-
+  const selectOptions = options.map((opt) =>
+    typeof opt === "string" ? { label: opt, value: opt } : opt
+  );
   const selectedOption =
     selectOptions.find((opt) => opt.value === value) || null;
 
@@ -80,15 +52,12 @@ const Select = ({ label, name, formik, options, loading = false ,isReadOnly = fa
       <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
       <ReactSelect
         options={selectOptions}
-        key={`${name}-${selectOptions.length}`}
         isLoading={loading}
         name={name}
         value={selectedOption}
-        onChange={(selected) =>
-          formik.setFieldValue(name, selected?.value || "")
-        }
+        onChange={(selected) => formik.setFieldValue(name, selected?.value || "")}
         onBlur={() => formik.setFieldTouched(name, true)}
-        placeholder={`Select ${label}`}
+        placeholder={placeholder || `Select ${label}`}
         classNamePrefix="react-select"
         isDisabled={loading || isReadOnly}
       />
@@ -100,10 +69,19 @@ const Select = ({ label, name, formik, options, loading = false ,isReadOnly = fa
 };
 
 // --- Hospital Data Component ---
-const HospitalData = ({ formik ,isReadOnly = false}) => {
+const HospitalData = ({ formik, isReadOnly = false }) => {
   const { fetchSpeciality, speciality, fetchSurgeryType, surgeryType } =
     useDropdown();
 
+  useEffect(() => {
+    // Only call APIs if data is empty to avoid redundant calls when switching tabs
+    if (speciality.length === 0) {
+      fetchSpeciality();
+    }
+    if (surgeryType.length === 0) {
+      fetchSurgeryType();
+    }
+  }, []);
 
   const specialities = formik.values?.hospitalData?.specialities || [];
 
@@ -119,136 +97,165 @@ const HospitalData = ({ formik ,isReadOnly = false}) => {
     formik.setFieldValue("hospitalData.specialities", updated);
   };
 
-  const addSurgery = (specIndex) => {
-    const updated = [...specialities];
-    updated[specIndex].surgeries.push({
-      surgeryType: "",
-      numberOfSurgeries: 0,
-    });
+  const removeSpeciality = (index) => {
+    const updated = specialities.filter((_, i) => i !== index);
     formik.setFieldValue("hospitalData.specialities", updated);
   };
-  
 
+  const addSurgery = (specIndex) => {
+    const updated = [...specialities];
+    const spec = { ...updated[specIndex] };
+    spec.surgeries = [...spec.surgeries, { surgeryType: "", numberOfSurgeries: 0 }];
+    updated[specIndex] = spec;
+    formik.setFieldValue("hospitalData.specialities", updated);
+  };
+
+  const removeSurgery = (specIndex, surgIndex) => {
+    const updated = [...specialities];
+    const spec = { ...updated[specIndex] };
+    spec.surgeries = spec.surgeries.filter((_, i) => i !== surgIndex);
+    updated[specIndex] = spec;
+    formik.setFieldValue("hospitalData.specialities", updated);
+  };
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-semibold mb-6">HOSPITAL DATA</h1>
-      <div className="p-6 pt-0 bg-white rounded-md">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-11">
-          <Input
-            type="number"
-            label="Total Beds"
-            name="hospitalData.totalBeds"
-            formik={formik}
-            isReadOnly={isReadOnly}
-            placeholder="Enter Total Beds"
-          />
-          <Input
-            type="number"
-            label="Total ICU Beds"
-            name="hospitalData.totalICUBeds"
-            formik={formik}
-            isReadOnly={isReadOnly}
-            placeholder="Enter Total ICU Beds"
-          />
-          <Input
-            type="number"
-            label="Total Operation Theaters"
-            name="hospitalData.totalOT"
-            formik={formik}
-            isReadOnly={isReadOnly}
-            placeholder="Enter Total Operation Theaters"
-          />
+    <div className="p-6 bg-white rounded-lg shadow-sm">
+      <h3 className="text-lg font-semibold text-gray-800 mb-6 border-b pb-2">
+        Hospital Bed & Infrastructure Details
+      </h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Input label="Total Beds" name="hospitalData.totalBeds" type="number" formik={formik} isReadOnly={isReadOnly} placeholder="Enter total beds" />
+        <Input label="Total ICU Beds" name="hospitalData.totalICUBeds" type="number" formik={formik} isReadOnly={isReadOnly} placeholder="Enter total ICU beds" />
+        <Input label="Total Operation Theaters (OT)" name="hospitalData.totalOT" type="number" formik={formik} isReadOnly={isReadOnly} placeholder="Enter total OT" />
+      </div>
+
+      <div className="mt-8">
+        <div className="flex justify-between items-center mb-4">
+          <h4 className="text-md font-semibold text-gray-700">Specialities & Surgeries</h4>
+          {!isReadOnly && (
+            <button
+              type="button"
+              onClick={addSpeciality}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              + Add Speciality
+            </button>
+          )}
         </div>
 
-        {/* Specialities Section */}
-        <h2 className="text-lg font-medium mt-6 mb-3">Specialities</h2>
-        {/* {specialities.map((spec, specIndex) => ( */}
         {specialities.map((spec, specIndex) => {
-          // --- Speciality Filtering ---
-          const selectedSpecialityValues = specialities.map((s) => s.name);
-          const filteredSpecialities = (speciality || []).filter((opt) => {
-            const value = typeof opt === "string" ? opt : opt.value;
-            return (
-              !selectedSpecialityValues.includes(value) || value === spec.name
-            );
+          const otherSelectedSpecialities = specialities
+            .filter((_, i) => i !== specIndex)
+            .map((s) => s.name)
+            .filter(Boolean);
+
+          const filteredSpecialityOptions = speciality.filter((opt) => {
+            const val = typeof opt === "string" ? opt : opt.value;
+            return !otherSelectedSpecialities.includes(val);
           });
+
           return (
-            <div key={specIndex} className="border p-4 rounded-md mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-11">
+            <div key={specIndex} className="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50 relative group">
+              {!isReadOnly && (
+                <button
+                  type="button"
+                  onClick={() => removeSpeciality(specIndex)}
+                  className="absolute top-4 right-4 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  Remove Speciality
+                </button>
+              )}
+
+              <div className="w-full md:w-1/2">
                 <Select
-                  label="Speciality"
+                  label="Speciality Name"
                   name={`hospitalData.specialities[${specIndex}].name`}
                   formik={formik}
+                  options={filteredSpecialityOptions}
+                  placeholder="Search or select speciality"
                   isReadOnly={isReadOnly}
-                  options={filteredSpecialities}
-                />
-                <Input
-                  type="number"
-                  label="Total Surgeries (Calendar Year)"
-                  name={`hospitalData.specialities[${specIndex}].totalSurgeriesCalenderYear`}
-                  formik={formik}
-                  isReadOnly={isReadOnly}
-                  placeholder="Enter Total Surgeries (Calendar Year)"
                 />
               </div>
 
-              {/* Surgeries inside Speciality */}
-              <h3 className="text-md font-semibold mt-3 mb-2">Surgeries</h3>
-              {spec.surgeries.map((surg, surgIndex) => {
-                // find what surgeries are already selected in this speciality
-                const selectedTypes = spec.surgeries.map((s) => s.surgeryType);
+              <div className="mt-4 ml-4 pl-4 border-l-2 border-blue-200">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm font-medium text-gray-600">Surgeries</span>
+                  {!isReadOnly && (
+                    <button
+                      type="button"
+                      onClick={() => addSurgery(specIndex)}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
+                    >
+                      + Add Surgery Type
+                    </button>
+                  )}
+                </div>
 
-                // filter out selected ones, except keep the one already chosen for this row
-                const availableOptions = (surgeryType || []).filter(
-                  (option) =>
-                    !selectedTypes.includes(option) || option === surg.surgeryType
-                );
+                {spec.surgeries.map((surg, surgIndex) => {
+                  const otherSelectedSurgeries = spec.surgeries
+                    .filter((_, i) => i !== surgIndex)
+                    .map((s) => s.surgeryType)
+                    .filter(Boolean);
 
-                return (
-                  <div
-                    key={surgIndex}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-x-11 mb-3"
-                  >
-                    <Select
-                      label="Surgery Type"
-                      name={`hospitalData.specialities[${specIndex}].surgeries[${surgIndex}].surgeryType`}
-                      formik={formik}
-                      isReadOnly={isReadOnly}
-                      options={availableOptions}
-                    />
-                    <Input
-                      type="number"
-                      label="Number of Surgeries"
-                      name={`hospitalData.specialities[${specIndex}].surgeries[${surgIndex}].numberOfSurgeries`}
-                      formik={formik}
-                      isReadOnly={isReadOnly}
-                      placeholder="Enter Number of Surgeries"
-                    />
-                  </div>
-                );
-              })}
+                  const filteredSurgeryOptions = surgeryType.filter((opt) => {
+                    const val = typeof opt === "string" ? opt : opt.value;
+                    return !otherSelectedSurgeries.includes(val);
+                  });
 
-              {spec.surgeries.length < (surgeryType?.length || 0) && (
-                <button
-                  type="button"
-                  onClick={() => addSurgery(specIndex)}
-                  className="mt-2 px-4 py-1 text-sm bg-blue-100 text-blue-600 rounded-md"
-                >
-                  + Add Surgery
-                </button>
-              )}
+                  return (
+                    <div key={surgIndex} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3 items-end relative pr-8">
+                      <Select
+                        label="Surgery Type"
+                        name={`hospitalData.specialities[${specIndex}].surgeries[${surgIndex}].surgeryType`}
+                        formik={formik}
+                        options={filteredSurgeryOptions}
+                        placeholder="Search or select surgery"
+                        isReadOnly={isReadOnly}
+                      />
+                      <Input
+                        label="No. of Surgeries"
+                        name={`hospitalData.specialities[${specIndex}].surgeries[${surgIndex}].numberOfSurgeries`}
+                        type="number"
+                        formik={formik}
+                        isReadOnly={isReadOnly}
+                        placeholder="Enter count"
+                      />
+                      {!isReadOnly && spec.surgeries.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeSurgery(specIndex, surgIndex)}
+                          className="absolute right-0 top-10 text-red-400 hover:text-red-600"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="w-full md:w-1/3">
+                  <Input
+                    label="Total Surgeries in Calendar Year"
+                    name={`hospitalData.specialities[${specIndex}].totalSurgeriesCalenderYear`}
+                    type="number"
+                    formik={formik}
+                    isReadOnly={isReadOnly}
+                    placeholder="Enter total surgeries"
+                  />
+                </div>
+              </div>
             </div>
           );
         })}
 
-        <button
-          type="button"
-          onClick={addSpeciality}
-          className="mt-4 px-6 py-2 bg-green-100 text-green-600 rounded-md"
-        >
-          + Add Speciality
-        </button>
+        {specialities.length === 0 && (
+          <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 italic">
+            No specialities added yet. Click "+ Add Speciality" to begin.
+          </div>
+        )}
       </div>
     </div>
   );

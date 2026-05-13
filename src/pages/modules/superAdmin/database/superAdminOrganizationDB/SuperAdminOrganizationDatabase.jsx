@@ -36,11 +36,13 @@ const SuperAdminOrganizationDatabase = () => {
     fetchAdminOrganizationalDB,
     adminOrganizationalDB,
     loading,
-    deleteOrganization,
+    deleteAdminOrganization
   } = useAdminOrganizationDB();
+
   const { fetchEnviroAdminOrgList,
     enviroAdminOrgList, deleteEnviroAdminOrg,
     loading: enviroOrgListLoading, } = useEnviroAdminOrgDB();
+
   const navigate = useNavigate();
   const { theme } = useTheme();
   const [page, setPage] = useState(1);
@@ -86,7 +88,7 @@ const SuperAdminOrganizationDatabase = () => {
       await deleteEnviroAdminOrg(id);
       await fetchEnviroAdminOrgList(page, limit);
     } else {
-      await deleteOrganization(id);
+      await deleteAdminOrganization(id);
       await fetchAdminOrganizationalDB(page, limit);
     }
   };

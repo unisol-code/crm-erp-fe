@@ -61,8 +61,17 @@ export const validationSchema = Yup.object().shape({
       )
       .min(1, "At least one speciality is required"),
   }),
-  salesPersonName: Yup.string().required("Sales Person Name is required")
-
+  salesPersonName: Yup.string().required("Sales Person Name is required"),
+  solidWaste: Yup.object().shape({
+    SWQ8: Yup.object().shape({
+      wet: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+      dry: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+      hazardous: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+      cd: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+      sanitary: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+    }),
+    SWQ16: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+  }),
 });
 
 export const initialValues = {
@@ -108,6 +117,7 @@ export const initialValues = {
     KWMQ10: "",
     KWMQ11: "",
     // KWMQ11_OTHER: "",
+    concernPersons: [{ name: "", contact: "", designation: "" }],
   },
 
   laundry: {
@@ -131,6 +141,7 @@ export const initialValues = {
     LQ17: "",
     LQ18: "",
     LQ19: "",
+    concernPersons: [{ name: "", contact: "", designation: "" }],
   },
 
   bioMedicalWaste: {
@@ -158,6 +169,7 @@ export const initialValues = {
     BMWQ18: "",
     BMWQ19: "",
     BMWQ20: "",
+    concernPersons: [{ name: "", contact: "", designation: "" }],
   },
 
   solidWaste: {
@@ -200,6 +212,7 @@ export const initialValues = {
     SWQ63: "", // Regulatory/compliance issues
     SWQ64: "", // Behavioral/change management challenges
     SWQ65: "", // Priority areas for improvement
+    concernPersons: [{ name: "", contact: "", designation: "" }],
   },
 
   wasteWaterManagement: {
@@ -219,21 +232,34 @@ export const initialValues = {
     WWWQ14: false, // Planned Technology Upgrades
     WWWQ15: false, // Interest in Advanced Solutions
     WWWQ16: "", // Additional CRM Requirements
+    concernPersons: [{ name: "", contact: "", designation: "" }],
   },
 
   wasteManagement: {
     types: [],
   },
 
-  stp: {
-    stpStatus: "",
-    yearOfInstallation: "",
-    stpCapacity: "",
-  },
-  etp: {
-    etpStatus: "",
-    yearOfInstallation: "",
-    etpCapacity: "",
+  physiotherapy: {
+    primaryObjective: "",
+    intendedFor: [],
+    setupContext: "",
+    expectedPatientLoad: "",
+    serviceType: "",
+    plannedLocation: "",
+    totalArea: "",
+    areaDivision: "",
+    patientMovementFlow: "",
+    barrierFreeAccessibility: false,
+    infrastructurePlanned: false,
+    ventilationLighting: false,
+    suitableFlooring: "",
+    privacyRequirements: false,
+    essentialEquipment: "",
+    advancedTechnologies: "",
+    treatmentStations: "",
+    equipmentPreference: "",
+    powerRequirements: "",
+    physiotherapistCount: "",
   },
   salesPersonName: "",
   anyOtherInformation: "",
@@ -242,21 +268,25 @@ export const initialValues = {
 // Transform API response data to form format
 export const transformApiDataToForm = (apiData) => {
   const data = {
-    Basic: apiData.Basic || initialValues.Basic,
-    hospitalData: apiData.hospitalData || initialValues.hospitalData,
-    laundry: apiData.Laundry || initialValues.laundry,
-    kitchenWasteManagement:
-      apiData.kitchenWasteManagement || initialValues.kitchenWasteManagement,
-    bioMedicalWaste:
-      apiData.bioMedicalWaste || initialValues.bioMedicalWaste,
-    solidWaste: apiData.solidWaste || initialValues.solidWaste,
-    wasteWaterManagement: apiData.wasteWaterManagement || initialValues.wasteWaterManagement,
-    wasteManagement: apiData.wasteManagement || initialValues.wasteManagement,
-    stp: apiData.stp || initialValues.stp,
-    etp: apiData.etp || initialValues.etp,
+    Basic: apiData.Basic ? { ...apiData.Basic } : { ...initialValues.Basic },
+    hospitalData: apiData.hospitalData ? { ...apiData.hospitalData } : { ...initialValues.hospitalData },
+    laundry: apiData.Laundry ? { ...apiData.Laundry } : { ...initialValues.laundry },
+    kitchenWasteManagement: apiData.kitchenWasteManagement ? { ...apiData.kitchenWasteManagement } : { ...initialValues.kitchenWasteManagement },
+    bioMedicalWaste: apiData.bioMedicalWaste ? { ...apiData.bioMedicalWaste } : { ...initialValues.bioMedicalWaste },
+    solidWaste: apiData.solidWaste ? { ...apiData.solidWaste } : { ...initialValues.solidWaste },
+    wasteWaterManagement: apiData.wasteWaterManagement ? { ...apiData.wasteWaterManagement } : { ...initialValues.wasteWaterManagement },
+    wasteManagement: apiData.wasteManagement ? { ...apiData.wasteManagement } : { ...initialValues.wasteManagement },
+    physiotherapy: apiData.physiotherapy ? { ...apiData.physiotherapy } : { ...initialValues.physiotherapy },
     salesPersonName: apiData.salesPersonName || "",
     anyOtherInformation: apiData.anyOtherInformation || "",
   };
+
+  // Ensure concernPersons exists
+  if (!data.kitchenWasteManagement.concernPersons) data.kitchenWasteManagement.concernPersons = initialValues.kitchenWasteManagement.concernPersons;
+  if (!data.laundry.concernPersons) data.laundry.concernPersons = initialValues.laundry.concernPersons;
+  if (!data.bioMedicalWaste.concernPersons) data.bioMedicalWaste.concernPersons = initialValues.bioMedicalWaste.concernPersons;
+  if (!data.solidWaste.concernPersons) data.solidWaste.concernPersons = initialValues.solidWaste.concernPersons;
+  if (!data.wasteWaterManagement.concernPersons) data.wasteWaterManagement.concernPersons = initialValues.wasteWaterManagement.concernPersons;
 
   // Transform SWQ29 from string to object for UI
   if (data.solidWaste && typeof data.solidWaste.SWQ29 === "string") {
@@ -287,13 +317,12 @@ export const transformFormDataToApi = (values) => {
   const payload = {
     Basic: values.Basic,
     hospitalData: values.hospitalData,
-    laundry: values.laundry,
+    Laundry: values.laundry,
     kitchenWasteManagement: values.kitchenWasteManagement,
     wasteManagement: {
       types: values.wasteManagement?.types || []
     },
-    stp: values.stp,
-    etp: values.etp,
+    physiotherapy: values.physiotherapy,
     salesPersonName: values.salesPersonName,
     anyOtherInformation: values.anyOtherInformation,
   };

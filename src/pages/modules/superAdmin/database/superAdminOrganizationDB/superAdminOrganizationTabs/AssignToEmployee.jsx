@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import ReactSelect from "react-select";
+import _ from "lodash";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 
 const Select = ({
@@ -10,17 +11,9 @@ const Select = ({
   loading = false,
   isReadOnly = false,
 }) => {
-  const value = name
-    .split(".")
-    .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""), formik.values);
-
-  const touched = name
-    .split(".")
-    .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : false), formik.touched);
-
-  const error = name
-    .split(".")
-    .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""), formik.errors);
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
   const selectOptions = options.map((opt) =>
     typeof opt === "string" ? { label: opt, value: opt } : opt

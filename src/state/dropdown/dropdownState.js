@@ -1,284 +1,102 @@
 import { atom } from "recoil";
-import { recoilPersist } from "recoil-persist";
-const { persistAtom } = recoilPersist();
+import { createPersistedAtom } from "../recoilConfig";
 
-export const legalEntityAtom = atom({
-  key: "legalEntity",
-  default: [],
-  effects: [persistAtom],
-});
+export const legalEntityAtom = atom(createPersistedAtom("legalEntity", []))
 
-export const specialityAtom = atom({
-  key: "speciality",
-  default: [],
-  effects: [persistAtom],
-});
+export const specialityAtom = atom(createPersistedAtom("speciality", []))
 
-export const targetOrganizationNames = atom({
-  key: "organizationListState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const targetOrganizationNames = atom(createPersistedAtom("organizationListState", []))
 
-export const surgeryTypeAtom = atom({
-  key: "surgeryType",
-  default: [],
-  effects: [persistAtom],
-});
+export const surgeryTypeAtom = atom(createPersistedAtom("surgeryType", []))
 
-export const kitchenTypeAtom = atom({
-  key: "kitchenType",
-  default: [],
-  effects: [persistAtom],
-});
+export const kitchenTypeAtom = atom(createPersistedAtom("kitchenType", []))
 
-export const laundryTypeAtom = atom({
-  key: "laundryType",
-  default: [],
-  effects: [persistAtom],
-});
+export const laundryTypeAtom = atom(createPersistedAtom("laundryType", []))
 
-export const productListStateAtom = atom({
-  key: "allProductsListState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const productListStateAtom = atom(createPersistedAtom("allProductsListState", []))
 
-export const productDetailsStateAtom = atom({
-  key: "productDetailsState",
-  default: {},
-  effects_UNSTABLE: [persistAtom],
-});
+export const productDetailsStateAtom = atom(createPersistedAtom("productDetailsState", {}))
 
-export const cityNamesAtom = atom({
-  key: "cityNames",
-  default: [],
-  effects: [persistAtom],
-});
+export const cityNamesAtom = atom(createPersistedAtom("cityNames", []))
 
-export const doctorListAtom = atom({
-  key: "doctorListState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-export const productTypesAtom = atom({
-  key: "productTypesState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const doctorListAtom = atom(createPersistedAtom("doctorListState", []))
 
-export const hospitalTypeAtom = atom({
-  key: "hospitalTypeState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-export const organizationTypeAtom = atom({
-  key: "organizationTypeState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const productTypesAtom = atom(createPersistedAtom("productTypesState", []))
 
-export const callStatusObjectivesAtom = atom({
-  key: "callStatusObejctiveState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-export const genderAtom = atom({
-  key: "genderState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-export const salutationAtom = atom({
-  key: "salutationSate",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-export const customersProfileAtom = atom({
-  key: "customersProfile",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const hospitalTypeAtom = atom(createPersistedAtom("hospitalTypeState", []))
 
-export const typeofProfileAtom = atom({
-  key: "typeofProfile",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const organizationTypeAtom = atom(createPersistedAtom("organizationTypeState", []))
 
-export const professionalAssociationsAtom = atom({
-  key: "professionalAssociations",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const callStatusObjectivesAtom = atom(createPersistedAtom("callStatusObejctiveState", []))
 
-export const categoryAtom = atom({
-  key: "category",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const genderAtom = atom(createPersistedAtom("genderState", []))
 
-export const organizationCityAtom = atom({
-  key: "organizationCityState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-export const organizationTypeByCityAtom = atom({
-  key: "organizationTypeByCityState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-export const organizationNameByCityTypeAtom = atom({
-  key: "organizationNameByCityTypeState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const salutationAtom = atom(createPersistedAtom("salutationSate", []))
 
-export const specialityByOrgCityTypeAtom = atom({
-  key: "specialityByOrgCityTypeState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const customersProfileAtom = atom(createPersistedAtom("customersProfile", []))
 
-export const getAllStateNameAtom = atom({
-  key: "allStateName",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const typeofProfileAtom = atom(createPersistedAtom("typeofProfile", []))
 
-export const segmentAtom = atom({
-  key: "segment",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const professionalAssociationsAtom = atom(createPersistedAtom("professionalAssociations", []))
 
-export const profileAtom = atom({
-  key: "profile",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-export const regionAtom = atom({
-  key: "region",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-export const designationAtom = atom({
-  key: "getDesignation",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const categoryAtom = atom(createPersistedAtom("category", []))
 
-export const specialityIndividualAtom = atom({
-  key: "getspeciality",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const organizationCityAtom = atom(createPersistedAtom("organizationCityState", []))
 
-export const categoryIndividualAtom = atom({
-  key: "categorys",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const organizationTypeByCityAtom = atom(createPersistedAtom("organizationTypeByCityState", []))
 
-export const ProfileIndividualAtom = atom({
-  key: "profiles",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const organizationNameByCityTypeAtom = atom(createPersistedAtom("organizationNameByCityTypeState", []))
 
-export const HobbiesIndividualAtom = atom({
-  key: "hobbies",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const specialityByOrgCityTypeAtom = atom(createPersistedAtom("specialityByOrgCityTypeState", []))
 
-export const hospitalAssociatedWithAtom = atom({
-  key: "hospitalAssociatedWith",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const getAllStateNameAtom = atom(createPersistedAtom("allStateName", []));
 
-export const employeeAtom = atom({
-  key: "employee",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const districtListAtom = atom(createPersistedAtom("districtList", []));
 
-export const productsToPromoteAtom = atom({
-  key: "productsToPromote",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const allCitiesAtom = atom(createPersistedAtom("allCities", []));
 
-export const orgnizationNamesAtom = atom({
-  key: "orgnizationNames",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const segmentAtom = atom(createPersistedAtom("segment", []));
 
-export const designationForNonClinicalAtom = atom({
-  key:"designationForNonClinicalState",
-  default:[],
-  effects_UNSTABLE:[]
-})
+export const profileAtom = atom(createPersistedAtom("profile", []));
 
-export const departmentForNonClinicalAtom = atom({
-  key:"departmentForNonClinicalState",
-  default:[],
-  effects_UNSTABLE:[]
-})
+export const regionAtom = atom(createPersistedAtom("region", []));
 
-export const allCitiesAtom = atom({
-  key: "allCities",
-  default: [],
-  effects_UNSTABLE:[persistAtom],
-});
+export const designationAtom = atom(createPersistedAtom("getDesignation", []));
 
+export const specialityIndividualAtom = atom(createPersistedAtom("getspeciality", []));
 
-export const enviroindiviualdropdownAtom = atom ({
-  key:"",
-  default:[],
-  effects_UNSTABLE:[],
-})
+export const categoryIndividualAtom = atom(createPersistedAtom("categorys", []));
 
-export const KWMQ1Atom = atom ({
-   key:"KWMQ1",
-  default:[],
-  effects_UNSTABLE:[],
-})
+export const ProfileIndividualAtom = atom(createPersistedAtom("profiles", []));
 
-export const KWMQ2Atom = atom ({
-   key:"KWMQ2",
-  default:[],
-  effects_UNSTABLE:[],
-})
-export const KWMQ5Atom = atom ({
-   key:"KWMQ5",
-  default:[],
-  effects_UNSTABLE:[],
-})
-export const KWMQ9Atom = atom ({
-   key:"KWMQ9",
-  default:[],
-  effects_UNSTABLE:[],
-})
-export const KWMQ11Atom = atom ({
-   key:"KWMQ11",
-  default:[],
-  effects_UNSTABLE:[],
-})
-// remaining
-export const IQ2Atom = atom ({
-   key:"IQ2",
-  default:[],
-  effects_UNSTABLE:[],
-})
-export const IQ4Atom = atom ({
-   key:"IQ4",
-  default:[],
-  effects_UNSTABLE:[],
-})
-export const BMW4Atom = atom ({
-   key:"BMW4",
-  default:[],
-  effects_UNSTABLE:[],
-})
+export const HobbiesIndividualAtom = atom(createPersistedAtom("hobbies", []));
+
+export const hospitalAssociatedWithAtom = atom(createPersistedAtom("hospitalAssociatedWith", []));
+
+export const employeeAtom = atom(createPersistedAtom("employee", []));
+
+export const productsToPromoteAtom = atom(createPersistedAtom("productsToPromote", []));
+
+export const orgnizationNamesAtom = atom(createPersistedAtom("orgnizationNames", []));
+
+export const designationForNonClinicalAtom = atom(createPersistedAtom("designationForNonClinicalState", []));
+
+export const departmentForNonClinicalAtom = atom(createPersistedAtom("departmentForNonClinicalState", []));
+
+export const enviroindiviualdropdownAtom = atom(createPersistedAtom("enviroindiviualdropdown", []));
+
+export const KWMQ1Atom = atom(createPersistedAtom("KWMQ1", []));
+
+export const KWMQ2Atom = atom(createPersistedAtom("KWMQ2", []));
+
+export const KWMQ5Atom = atom(createPersistedAtom("KWMQ5", []));
+
+export const KWMQ9Atom = atom(createPersistedAtom("KWMQ9", []));
+
+export const KWMQ11Atom = atom(createPersistedAtom("KWMQ11", []));
+
+export const IQ2Atom = atom(createPersistedAtom("IQ2", []));
+
+export const IQ4Atom = atom(createPersistedAtom("IQ4", []));
+
+export const BMW4Atom = atom(createPersistedAtom("BMW4", []));

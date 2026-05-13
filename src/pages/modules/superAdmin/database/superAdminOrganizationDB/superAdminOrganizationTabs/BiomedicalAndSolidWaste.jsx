@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import ReactSelect from "react-select";
+import _ from "lodash";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
+import ConcernPersonForm from "./ConcernPersonForm";
 
 const Select = ({
   label,
@@ -15,18 +17,13 @@ const Select = ({
 }) => {
   const [showOther, setShowOther] = useState(false);
   useEffect(() => {
-  if (isReadOnly) {
-    setShowOther(false);
-  }
-}, [isReadOnly]);
+    if (isReadOnly) {
+      setShowOther(false);
+    }
+  }, [isReadOnly]);
 
 
-  const rawValue = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined),
-      formik.values
-    );
+  const rawValue = _.get(formik.values, name);
 
   const value = isMulti ? rawValue || [] : rawValue || "";
 
@@ -42,7 +39,7 @@ const Select = ({
   const selectedValue = isMulti
     ? selectOptions.filter((opt) => value?.includes?.(opt.value))
     : selectOptions.find((opt) => opt.value === value) || null;
-    console.log('isReadOnly value:', isReadOnly);
+  console.log('isReadOnly value:', isReadOnly);
 
   return (
     <div className="flex flex-col w-full mb-4">
@@ -116,30 +113,13 @@ const QuestionField = ({
   placeholder,
   isReadOnly = false,
 }) => {
-  const value = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.values
-    );
-
-  const touched = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : false),
-      formik.touched
-    );
-
-  const error = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.errors
-    );
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
   const baseClass = `border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 ${touched && error
-      ? "border-red-500 focus:ring-red-300"
-      : "border-gray-700 focus:ring-blue-400"
+    ? "border-red-500 focus:ring-red-300"
+    : "border-gray-700 focus:ring-blue-400"
     }`;
 
   // 🔹 BOOLEAN (Yes / No)
@@ -252,7 +232,7 @@ const QuestionField = ({
           }
         }}
         onBlur={formik.handleBlur}
-        className={baseClass}
+        className={`${baseClass} ${type === "number" ? "no-spinner" : ""}`}
       />
 
       {touched && error && (
@@ -299,7 +279,7 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
       <h1 className="text-xl font-semibold mb-6">Biomedical Waste Management</h1>
       <div className="grid grid-cols-1 gap-y-2">
         <QuestionField
-          label="1A. Who oversees biomedical waste management? - Designation (Ans in Brief)"
+          label="1A. Who oversees biomedical waste management? - Designation"
           name="bioMedicalWaste.BMWQ1A"
           type="textarea"
           formik={formik}
@@ -307,7 +287,7 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
           maxWords={50}
         />
         <QuestionField
-          label="1B. Who oversees biomedical waste management? - Committee (Ans in Brief)"
+          label="1B. Who oversees biomedical waste management? - Committee"
           name="bioMedicalWaste.BMWQ1B"
           type="textarea"
           formik={formik}
@@ -468,6 +448,13 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
           isReadOnly={isReadOnly}
           maxWords={50}
         />
+
+        <ConcernPersonForm 
+          title="Concern Persons (Bio Medical Waste)" 
+          sectionName="bioMedicalWaste.concernPersons" 
+          formik={formik} 
+          isReadOnly={isReadOnly} 
+        />
       </div>
     </div>
   );
@@ -554,7 +541,7 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
           formik={formik}
           isMulti
           isReadOnly={isReadOnly}
-          options={["Composting", "Biomethanation", "MRF", "RDF", "WtE", "None"]}
+          options={["Composting", "Biomethanation", "Material Recovery Facility (MRF)", "Refused Derived Fuel (RDF)", "Waste-to-Energy (WtE)", "None"]}
         />
 
         <QuestionField
@@ -645,6 +632,13 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
         <QuestionField label="63. Regulatory/compliance issues" name="solidWaste.SWQ63" type="textarea" formik={formik} isReadOnly={isReadOnly} />
         <QuestionField label="64. Behavioral/change management challenges" name="solidWaste.SWQ64" type="textarea" formik={formik} isReadOnly={isReadOnly} />
         <QuestionField label="65. Priority areas for improvement (next 1–3 years)" name="solidWaste.SWQ65" type="textarea" formik={formik} isReadOnly={isReadOnly} />
+
+        <ConcernPersonForm 
+          title="Concern Persons (Solid Waste)" 
+          sectionName="solidWaste.concernPersons" 
+          formik={formik} 
+          isReadOnly={isReadOnly} 
+        />
       </div>
     </div>
   );
@@ -714,6 +708,13 @@ const BiomedicalAndSolidWaste = ({ formik, type, isReadOnly = false }) => {
           </div>
           <QuestionField label="Additional CRM Requirements" name="wasteWaterManagement.WWWQ16" type="textarea" formik={formik} isReadOnly={isReadOnly} />
         </div>
+
+        <ConcernPersonForm 
+          title="Concern Persons (Waste Water Management)" 
+          sectionName="wasteWaterManagement.concernPersons" 
+          formik={formik} 
+          isReadOnly={isReadOnly} 
+        />
       </div>
     </div>
   );

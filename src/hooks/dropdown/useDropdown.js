@@ -49,6 +49,7 @@ import {
   IQ2Atom,
   IQ4Atom,
   BMW4Atom,
+  districtListAtom,
 } from "../../state/dropdown/dropdownState";
 import useFetch from "../useFetch";
 import { useRecoilState } from "recoil";
@@ -98,7 +99,6 @@ const useDropdown = () => {
   const [specialityByOrgCityType, setSpecialityByOrgCityType] = useRecoilState(
     specialityByOrgCityTypeAtom
   );
-  const [allStateName, setAllStateName] = useRecoilState(getAllStateNameAtom);
   const [segment, setSegment] = useRecoilState(segmentAtom);
   const [profile, setProfile] = useRecoilState(profileAtom);
   const [enviroprofile, setEnviroProfile] = useRecoilState(enviroindiviualdropdownAtom);
@@ -134,8 +134,13 @@ const useDropdown = () => {
   const [IQ4, setIQ4] = useRecoilState(IQ4Atom)
   const [BMW4, setBMW4] = useRecoilState(BMW4Atom);
 
+  const [allStateName, setAllStateName] = useRecoilState(getAllStateNameAtom);
+  const [districtList, setDistrictList] = useRecoilState(districtListAtom);
 
   const [cities, setCities] = useRecoilState(allCitiesAtom);
+
+  
+  
   const fetchLegalEntity = async () => {
     setLoading(true);
     try {
@@ -148,11 +153,12 @@ const useDropdown = () => {
       }
     } catch (err) {
       console.error("Error fetching legal entity:", err);
-      // toast.error(err?.response?.data?.message || "An error occurred while fetching legal entity.");
     } finally {
       setLoading(false);
     }
   };
+
+
 
   const fetchSpeciality = async () => {
     setLoading(true);
@@ -297,6 +303,7 @@ const useDropdown = () => {
   const resetProductDetails = () => {
     setProductDetails({});
   };
+
   const fetchDoctorList = async (id) => {
     setLoading(true);
     try {
@@ -314,6 +321,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
+
   const fetchProductTypes = async () => {
     setLoading(true);
     try {
@@ -331,6 +339,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
+
   const fetchHospitalTypes = async () => {
     setLoading(true);
     try {
@@ -594,6 +603,46 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
+
+  const fetchDistrictList = async (stateCode) => {
+    setLoading(true);
+    try {
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}drop-down/districts/${stateCode}`,
+      });
+      if (res) {
+        setDistrictList(res?.data);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching districts:", error);
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAllCities = async (stateCode, districtName) => {
+    setLoading(true);
+    try {
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}drop-down/cities/${stateCode}/${districtName}`,
+      });
+
+      if (res) {
+        setCities(res?.data);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching cities:", error);
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const segmentState = async () => {
     setLoading(true);
     try {
@@ -680,7 +729,6 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
-
 
   const fetchAllRegion = async () => {
     setLoading(true);
@@ -846,20 +894,6 @@ const useDropdown = () => {
       console.error("Error while fetching Orgnizations names DropDown:", err);
     } finally {
       setLoading(false);
-    }
-  };
-  const fetchAllCities = async (stateCode) => {
-    try {
-      const res = await fetchData({
-        method: "GET",
-        url: `${conf.apiBaseUrl}drop-down/getAllCities/${stateCode}`,
-      });
-
-      if (res) {
-        setCities(res?.data);
-      }
-    } catch (error) {
-      console.error("Error fetching cities:", error);
     }
   };
 
@@ -1056,8 +1090,6 @@ const useDropdown = () => {
     }
   };
 
-
-
   return {
     fetchLegalEntity,
     legalEntity,
@@ -1143,6 +1175,8 @@ const useDropdown = () => {
     fetchDepartmentForNonClinical,
     departmentForNonClinical,
     fetchSegment,
+    fetchDistrictList,
+    districtList,
     cities,
     fetchAllCities,
     fetchkitchenqueone,

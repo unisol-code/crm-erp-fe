@@ -8,11 +8,13 @@ export const validationSchema = Yup.object().shape({
     typeOfOrgOrHospital: Yup.string().required(
       "Organization/Hospital type is required"
     ),
+
     ifGovt: Yup.string().when("typeOfOrgOrHospital", {
       is: (val) => val === "Govt",
       then: (schema) => schema.required("Government field is required"),
       otherwise: (schema) => schema.notRequired().nullable(),
     }),
+
     address: Yup.string().required("Address is required"),
     district: Yup.string().required("District is required"),
     state: Yup.string().required("State is required"),
@@ -26,8 +28,6 @@ export const validationSchema = Yup.object().shape({
   hospitalData: Yup.object().shape({
     totalBeds: Yup.number()
       .typeError("Total Beds must be a number"),
-      // .required("Total Beds is required")
-      // .min(1, "At least 1 bed is required")
     totalICUBeds: Yup.number()
       .typeError("Total ICU Beds must be a number")
       .required("Total ICU Beds is required")
@@ -36,14 +36,13 @@ export const validationSchema = Yup.object().shape({
       .typeError("Total OT must be a number")
       .required("Total OT is required")
       .min(0, "Cannot be negative"),
+
     specialities: Yup.array()
       .of(
         Yup.object().shape({
-          // name: Yup.string().required("Speciality name is required"),
           surgeries: Yup.array()
             .of(
               Yup.object().shape({
-                // surgeryType: Yup.string().required("Surgery type is required"),
                 numberOfSurgeries: Yup.number()
                   .typeError("Number of surgeries must be a number")
                   .required("Number of surgeries is required")
@@ -59,9 +58,18 @@ export const validationSchema = Yup.object().shape({
       )
       .min(1, "At least one speciality is required"),
   }),
+  solidWaste: Yup.object().shape({
+    SWQ8: Yup.object().shape({
+      wet: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+      dry: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+      hazardous: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+      cd: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+      sanitary: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+    }),
+    SWQ16: Yup.number().typeError("Must be a number").max(100, "Percentage cannot exceed 100").min(0, "Percentage cannot be negative"),
+  }),
 });
 
-// Initial values - keep flat structure for form handling
 export const initialValues = {
   Basic: {
     segment: "",
@@ -76,7 +84,6 @@ export const initialValues = {
     city: "",
     emailAddress: "",
   },
-
   hospitalData: {
     totalBeds: 0,
     totalICUBeds: 0,
@@ -89,7 +96,6 @@ export const initialValues = {
       },
     ],
   },
-
   kitchenWasteManagement: {
     KWMQ1: [],
     KWMQ2: [],
@@ -102,6 +108,7 @@ export const initialValues = {
     KWMQ9: "",
     KWMQ10: "",
     KWMQ11: "",
+    concernPersons: [{ name: "", contact: "", designation: "" }],
   },
 
   laundry: {
@@ -125,6 +132,7 @@ export const initialValues = {
     LQ17: "",
     LQ18: "",
     LQ19: "",
+    concernPersons: [{ name: "", contact: "", designation: "" }],
   },
 
   bioMedicalWaste: {
@@ -152,10 +160,11 @@ export const initialValues = {
     BMWQ18: "",
     BMWQ19: "",
     BMWQ20: "",
+    concernPersons: [{ name: "", contact: "", designation: "" }],
   },
 
   solidWaste: {
-    SWQ1: "", // Estimated total waste generated per day (TPD)
+    SWQ1: "", 
     SWQ8: {
       wet: "",
       dry: "",
@@ -167,98 +176,153 @@ export const initialValues = {
       answers: false,
       frequency: "",
     },
-    SWQ10: false, // Is source segregation mandated
-    SWQ11: "", // Collection method
-    SWQ12: "", // Collection frequency
-    SWQ13: [], // Types of collection vehicles used
+    SWQ10: false, 
+    SWQ11: "", 
+    SWQ12: "", 
+    SWQ13: [], 
     SWQ13_OTHER: "",
-    SWQ14: [], // Waste processing facilities available
-    SWQ15: "", // Capacity of processing facilities (TPD)
-    SWQ16: "", // % of total waste processed
+    SWQ14: [], 
+    SWQ15: "", 
+    SWQ16: "", 
     SWQ29: {
       answers: false,
       type: "",
     },
-    SWQ30: "", // Handling of dry waste
-    SWQ31: "", // Final disposal method
+    SWQ30: "", 
+    SWQ31: "", 
     SWQ31_OTHER: "",
-    SWQ32: "", // Is the landfill/dumpsite compliant
-    SWQ33: false, // Measures for leachate management
-    SWQ34: false, // Gas collection or flaring system
-    SWQ35: false, // Dumpsite remediation or biomining initiated
-    SWQ36: "", // Total number of sanitation workers
-    SWQ37: "", // Mode of employment
-    SWQ60: "", // Key operational challenges
-    SWQ61: "", // Key infrastructure gaps
-    SWQ62: "", // Financial constraints
-    SWQ63: "", // Regulatory/compliance issues
-    SWQ64: "", // Behavioral/change management challenges
-    SWQ65: "", // Priority areas for improvement
+    SWQ32: "", 
+    SWQ33: false, 
+    SWQ34: false, 
+    SWQ35: false, 
+    SWQ36: "", 
+    SWQ37: "", 
+    SWQ60: "", 
+    SWQ61: "", 
+    SWQ62: "", 
+    SWQ63: "", 
+    SWQ64: "", 
+    SWQ65: "", 
+    concernPersons: [{ name: "", contact: "", designation: "" }],
   },
 
   wasteWaterManagement: {
-    WWWQ1: [], // Source of Wastewater
-    WWWQ2: "", // Major Industrial Sources
-    WWWQ3: "", // Average Daily Influent Volume
-    WWWQ4: [], // Treatment Type
-    WWWQ5: "", // Treatment Technologies Used
-    WWWQ6: "", // Sludge Treatment Method
-    WWWQ7: "", // Treated Water Utilization
-    WWWQ8: "", // Disposal Location
-    WWWQ9: "", // O&M Managed By
-    WWWQ10: "", // Name of O&M Agency
-    WWWQ11: "", // Key Challenges
-    WWWQ12: "", // Level of Automation
-    WWWQ13: false, // Planned Capacity Expansion
-    WWWQ14: false, // Planned Technology Upgrades
-    WWWQ15: false, // Interest in Advanced Solutions
-    WWWQ16: "", // Additional CRM Requirements
+    WWWQ1: [], 
+    WWWQ2: "", 
+    WWWQ3: "", 
+    WWWQ4: [], 
+    WWWQ5: "", 
+    WWWQ6: "", 
+    WWWQ7: "", 
+    WWWQ8: "", 
+    WWWQ9: "", 
+    WWWQ10: "", 
+    WWWQ11: "", 
+    WWWQ12: "", 
+    WWWQ13: false, 
+    WWWQ14: false, 
+    WWWQ15: false, 
+    WWWQ16: "", 
+    concernPersons: [{ name: "", contact: "", designation: "" }],
   },
 
   wasteManagement: {
-    type: "",
+    types: [],
   },
 
-  stp: {
-    stpStatus: "",
-    yearOfInstallation: "",
-    stpCapacity: "",
-  },
-  etp: {
-    etpStatus: "",
-    yearOfInstallation: "",
-    etpCapacity: "",
+  physiotherapy: {
+    primaryObjective: "",
+    intendedFor: [],
+    setupContext: "",
+    expectedPatientLoad: "",
+    serviceType: "",
+    plannedLocation: "",
+    totalArea: "",
+    areaDivision: "",
+    patientMovementFlow: "",
+    barrierFreeAccessibility: false,
+    infrastructurePlanned: false,
+    ventilationLighting: false,
+    suitableFlooring: "",
+    privacyRequirements: false,
+    essentialEquipment: "",
+    advancedTechnologies: "",
+    treatmentStations: "",
+    equipmentPreference: "",
+    powerRequirements: "",
+    physiotherapistCount: "",
   },
   anyOtherInformation: "",
 };
 
-// Transform API response data to form format
-export const transformApiDataToForm = (apiData) => ({
-  Basic: apiData.Basic || initialValues.Basic,
-  hospitalData: apiData.hospitalData || initialValues.hospitalData,
-  laundry: apiData.Laundry || initialValues.laundry,
-  kitchenWasteManagement:
-    apiData.kitchenWasteManagement || initialValues.kitchenWasteManagement,
-  bioMedicalWaste:
-    apiData.bioMedicalWaste || initialValues.bioMedicalWaste,
-  solidWaste: apiData.solidWaste || initialValues.solidWaste,
-  wasteWaterManagement: apiData.wasteWaterManagement || initialValues.wasteWaterManagement,
-  wasteManagement: apiData.wasteManagement || initialValues.wasteManagement,
-  stp: apiData.stp || initialValues.stp,
-  etp: apiData.etp || initialValues.etp,
-  anyOtherInformation: apiData.anyOtherInformation || "",
-});
+export const transformApiDataToForm = (apiData) => {
+  const data = {
+    Basic: apiData.Basic ? { ...apiData.Basic } : { ...initialValues.Basic },
+    hospitalData: apiData.hospitalData ? { ...apiData.hospitalData } : { ...initialValues.hospitalData },
+    laundry: apiData.Laundry ? { ...apiData.Laundry } : { ...initialValues.laundry },
+    kitchenWasteManagement: apiData.kitchenWasteManagement ? { ...apiData.kitchenWasteManagement } : { ...initialValues.kitchenWasteManagement },
+    bioMedicalWaste: apiData.bioMedicalWaste ? { ...apiData.bioMedicalWaste } : { ...initialValues.bioMedicalWaste },
+    solidWaste: apiData.solidWaste ? { ...apiData.solidWaste } : { ...initialValues.solidWaste },
+    wasteWaterManagement: apiData.wasteWaterManagement ? { ...apiData.wasteWaterManagement } : { ...initialValues.wasteWaterManagement },
+    wasteManagement: apiData.wasteManagement ? { ...apiData.wasteManagement } : { ...initialValues.wasteManagement },
+    physiotherapy: apiData.physiotherapy ? { ...apiData.physiotherapy } : { ...initialValues.physiotherapy },
+    anyOtherInformation: apiData.anyOtherInformation || "",
+  };
 
-export const transformFormDataToApi = (values) => ({
-  Basic: values.Basic,
-  hospitalData: values.hospitalData,
-  ...values.laundry,
-  ...values.kitchenWasteManagement,
-  ...values.bioMedicalWaste,
-  solidWaste: values.solidWaste,
-  wasteWaterManagement: values.wasteWaterManagement,
-  wasteManagement: values.wasteManagement,
-  stp: values.stp,
-  etp: values.etp,
-  anyOtherInformation: values.anyOtherInformation,
-});
+  if (!data.kitchenWasteManagement.concernPersons) data.kitchenWasteManagement.concernPersons = initialValues.kitchenWasteManagement.concernPersons;
+  if (!data.laundry.concernPersons) data.laundry.concernPersons = initialValues.laundry.concernPersons;
+  if (!data.bioMedicalWaste.concernPersons) data.bioMedicalWaste.concernPersons = initialValues.bioMedicalWaste.concernPersons;
+  if (!data.solidWaste.concernPersons) data.solidWaste.concernPersons = initialValues.solidWaste.concernPersons;
+  if (!data.wasteWaterManagement.concernPersons) data.wasteWaterManagement.concernPersons = initialValues.wasteWaterManagement.concernPersons;
+
+  if (data.solidWaste && typeof data.solidWaste.SWQ29 === "string") {
+    data.solidWaste.SWQ29 = {
+      answers: data.solidWaste.SWQ29 !== "No",
+      type: data.solidWaste.SWQ29 !== "No" ? data.solidWaste.SWQ29 : "",
+    };
+  }
+
+  if (data.wasteManagement && typeof data.wasteManagement === "string") {
+    data.wasteManagement = { types: [data.wasteManagement] };
+  } else if (data.wasteManagement && data.wasteManagement.type && !data.wasteManagement.types) {
+    data.wasteManagement = { types: [data.wasteManagement.type] };
+  }
+  
+  if (!data.wasteManagement) {
+    data.wasteManagement = { types: [] };
+  } else if (!data.wasteManagement.types) {
+    data.wasteManagement.types = [];
+  }
+
+  return data;
+};
+
+export const transformFormDataToApi = (values) => {
+  const payload = {
+    Basic: values.Basic,
+    hospitalData: values.hospitalData,
+    Laundry: values.laundry,
+    kitchenWasteManagement: values.kitchenWasteManagement,
+    wasteManagement: {
+      types: values.wasteManagement?.types || []
+    },
+    physiotherapy: values.physiotherapy,
+    anyOtherInformation: values.anyOtherInformation,
+  };
+
+  const selectedTypes = values.wasteManagement?.types || [];
+
+  if (selectedTypes.includes("biomedical")) {
+    payload.bioMedicalWaste = values.bioMedicalWaste;
+  }
+  if (selectedTypes.includes("solid")) {
+    payload.solidWaste = {
+      ...values.solidWaste,
+    };
+  }
+  if (selectedTypes.includes("water")) {
+    payload.wasteWaterManagement = values.wasteWaterManagement;
+  }
+
+  return payload;
+};

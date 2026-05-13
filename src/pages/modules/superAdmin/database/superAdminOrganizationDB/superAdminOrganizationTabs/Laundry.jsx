@@ -1,6 +1,8 @@
 import React, { useEffect } from "react";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import ReactSelect from "react-select";
+import _ from "lodash";
+import ConcernPersonForm from "./ConcernPersonForm";
 
 const Select = ({
   label,
@@ -14,27 +16,16 @@ const Select = ({
   showOtherInput = false,
   otherFieldName,
 }) => {
-  const rawValue = name
-    .split(".")
-    .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined), formik.values);
-
+  const rawValue = _.get(formik.values, name);
   const value = isMulti ? rawValue || [] : rawValue || "";
 
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
-  const touched = name
-    .split(".")
-    .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : false), formik.touched);
-
-  const error = name
-    .split(".")
-    .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""), formik.errors);
-
-  // 🔹 add "Other" option
   const selectOptions = [
     ...options.map((opt) =>
       typeof opt === "string" ? { label: opt, value: opt } : opt
     ),
-    // ...(showOtherInput ? [{ label: "Other", value: "Other" }] : []),
   ];
 
   const selectedValue = isMulti
@@ -44,8 +35,6 @@ const Select = ({
   const isOtherSelected = isMulti
     ? value?.includes("Other")
     : value === "Other";
-
-
 
   return (
     <div className="flex flex-col w-full mb-4">
@@ -57,8 +46,8 @@ const Select = ({
         name={name}
         value={selectedValue}
         isLoading={loading}
-        isDisabled={loading || isReadOnly} 
-        
+        isDisabled={loading || isReadOnly}
+
         onChange={(selected) => {
           if (isMulti) {
             const values = selected ? selected.map((s) => s.value) : [];
@@ -79,11 +68,11 @@ const Select = ({
             borderColor: state.isFocused
               ? "#60A5FA"
               : touched && error
-              ? "#EF4444"
-              : "#556581",
+                ? "#EF4444"
+                : "#556581",
             boxShadow: state.isFocused ? "0 0 0 2px #60A5FA" : "none",
-            backgroundColor: isReadOnly ? "#F3F4F6" : base.backgroundColor, 
-            cursor: isReadOnly ? "not-allowed" : base.cursor, 
+            backgroundColor: isReadOnly ? "#F3F4F6" : base.backgroundColor,
+            cursor: isReadOnly ? "not-allowed" : base.cursor,
           }),
           valueContainer: (base) => ({
             ...base,
@@ -139,26 +128,9 @@ const QuestionField = ({
   placeholder,
   isReadOnly = false,
 }) => {
-  const value = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.values
-    );
-
-  const touched = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : false),
-      formik.touched
-    );
-
-  const error = name
-    .split(".")
-    .reduce(
-      (obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""),
-      formik.errors
-    );
+  const value = _.get(formik.values, name, "");
+  const touched = _.get(formik.touched, name, false);
+  const error = _.get(formik.errors, name, "");
 
   const baseClass = `border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 ${touched && error
     ? "border-red-500 focus:ring-red-300"
@@ -196,7 +168,7 @@ const QuestionField = ({
           })}
         </div>
 
-        {touched && error && !isReadOnly  (
+        {touched && error && !isReadOnly && (
           <span className="text-red-500 text-xs mt-1">{error}</span>
         )}
       </div>
@@ -273,7 +245,7 @@ const QuestionField = ({
         className={baseClass}
       />
 
-      {touched && error && !isReadOnly  (
+      {touched && error && !isReadOnly && (
         <span className="text-red-500 text-xs mt-1">{error}</span>
       )}
     </div>
@@ -288,7 +260,7 @@ const DoubleTextareaQuestion = ({
   labelA,
   labelB,
   maxWords = 50,
-  isReadOnly = false, 
+  isReadOnly = false,
 }) => {
   return (
     <div className="flex flex-col w-full mb-6">
@@ -334,7 +306,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
       value: item,
     }))
     : [];
-  const laundryTypeValue = formik.values?.Laundry?.laundryType;
+  // const laundryTypeValue = formik.values?.Laundry?.laundryType;
 
   return (
     <div className="p-4">
@@ -356,7 +328,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
             formik={formik}
             options={laundryQ2Options}
             loading={loading}
-           isReadOnly={isReadOnly}
+            isReadOnly={isReadOnly}
             placeholder="Select Options"
           />
 
@@ -405,9 +377,7 @@ const Laundry = ({ formik, isReadOnly = false }) => {
           />
 
           <QuestionField
-            label="8.	What precautions are taken to prevent mixing of clean and soiled linen during handling?
-Text (limit 50 words)
-"
+            label="8.	What precautions are taken to prevent mixing of clean and soiled linen during handling?"
             name="laundry.LQ8"
             formik={formik}
             type="textarea"
@@ -416,9 +386,7 @@ Text (limit 50 words)
           />
 
           <QuestionField
-            label="9.	What type of laundry system is used (manual, semi-automatic, industrial machines)?
-Text (limit 50 words)
-"
+            label="9.	What type of laundry system is used (manual, semi-automatic, industrial machines)?"
             name="laundry.LQ9"
             formik={formik}
             type="textarea"
@@ -518,6 +486,13 @@ Text (limit 50 words)
             maxWords={50}
           />
         </div>
+
+        <ConcernPersonForm
+          title="Concern Persons (Laundry)"
+          sectionName="laundry.concernPersons"
+          formik={formik}
+          isReadOnly={isReadOnly}
+        />
       </div>
     </div>
   );

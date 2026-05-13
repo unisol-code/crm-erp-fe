@@ -23,7 +23,6 @@ import { useTheme } from "../../../../../hooks/theme/useTheme";
 import {
   TableHeader,
 } from "../../../../../components/uiComponents/DatabaseSharedComponents";
-import useOrganizationalDB from "../../../../../hooks/salesExecutiveHook/salesExecutiveDB/useOrganizationalDB";
 import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderSpinner";
 import Button from "../../../../../components/uiComponents/button/Button";
 import useDatabase from "../../../../../hooks/database/useDatabase";
@@ -31,14 +30,14 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import useCompany from "../../../../../hooks/common/useCompany";
 import useEnviroAdminOrgDB from "../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminOrgDB";
+import useAdminOrganizationDB from "../../../../../hooks/superAdminHook/superAdmindatabase/useAdminOrganizationDB";
 
 function OrganizationalDatabase() {
   const {
-    fetchOrganizationalDB,
-    organizationalDB,
+    fetchAdminOrganizationalDB,
+    adminOrganizationalDB,
     loading,
-    deleteOrganization,
-  } = useOrganizationalDB();
+  } = useAdminOrganizationDB();
   const { fetchEnviroAdminOrgList,
     enviroAdminOrgList,
     loading: enviroOrgListLoading, } = useEnviroAdminOrgDB();
@@ -65,15 +64,15 @@ function OrganizationalDatabase() {
     if (isEnviroSolution) {
       fetchEnviroAdminOrgList(page, limit);
     } else {
-      fetchOrganizationalDB(page, limit);
+      fetchAdminOrganizationalDB(page, limit);
     }
   }, [page, limit, isEnviroSolution]);
 
-  const tableData = isEnviroSolution ? enviroAdminOrgList?.data : organizationalDB?.data;
+  const tableData = isEnviroSolution ? enviroAdminOrgList?.data : adminOrganizationalDB?.data;
   const tableLoading = isEnviroSolution ? enviroOrgListLoading : loading;
-  const paginationData = isEnviroSolution ? enviroAdminOrgList : organizationalDB;
+  const paginationData = isEnviroSolution ? enviroAdminOrgList : adminOrganizationalDB;
 
-  console.log("Organizational DB:", organizationalDB);
+  console.log("Organizational DB:", adminOrganizationalDB);
   console.log("Enviro Org List:", enviroAdminOrgList);
 
   const handleView = (id) => () => {
@@ -102,7 +101,7 @@ function OrganizationalDatabase() {
   };
 
   const handleExport = () => {
-    if (!organizationalDB?.data || organizationalDB.data.length === 0) {
+    if (!adminOrganizationalDB?.data || adminOrganizationalDB.data.length === 0) {
       return;
     }
     const doc = new jsPDF();
@@ -121,7 +120,7 @@ function OrganizationalDatabase() {
     ];
 
     // Table rows
-    const rows = organizationalDB.data.map((org) => [
+    const rows = adminOrganizationalDB?.data.map((org) => [
       org.organizationName || "N/A",
       org.typeOfOrgOrHospital || "N/A",
       org.speciality || "-",
@@ -151,7 +150,6 @@ function OrganizationalDatabase() {
     // Save file
     doc.save("organizational-database.pdf");
   };
-
 
   return (
     <>

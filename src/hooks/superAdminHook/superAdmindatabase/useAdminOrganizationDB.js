@@ -75,7 +75,7 @@ const useAdminOrganizationDB = () => {
       });
 
       if (res) {
-        setAdminOrganizationalDBByID(res);
+        setAdminOrganizationalDBByID(res?.data);
       }
     } catch (err) {
       console.error(
