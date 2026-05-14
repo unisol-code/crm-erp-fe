@@ -260,28 +260,28 @@ const SuperAdminOrganizationDatabase = () => {
                           {data.addedBy || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.departmentName || "N/A"}
+                          {data.departmentName || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.jurisdictionLevel || "N/A"}
+                          {data.jurisdictionLevel || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.district || "N/A"}
+                          {data.district || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.state || "N/A"}
+                          {data.state || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.officialEmailId || "N/A"}
+                          {data.officialEmailId || "-"}
                         </TableCell>
                       </>
                     ) : (
                       <>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.salesPersonName || "N/A"}
+                          {data.salesPersonName || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.organizationName || "N/A"}
+                          {data.organizationName || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
                           {data.specialities?.map((s) => s.name).join(", ") || "-"}

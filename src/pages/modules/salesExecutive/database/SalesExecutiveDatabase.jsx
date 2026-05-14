@@ -14,6 +14,7 @@ import {
 import { useRecoilState } from "recoil";
 import { getEmployeeActiveStateAtom } from "../../../../state/salesExecutiveState/Individuals/IndividualsState";
 import useCompany from "../../../../hooks/common/useCompany";
+
 function SalesExecutiveDatabase() {
   const [activeTab, setActiveTab] = useRecoilState(getEmployeeActiveStateAtom);
   const { theme } = useTheme();
@@ -28,6 +29,7 @@ function SalesExecutiveDatabase() {
       fetchGetIndividualDashboard();
     }
   }, [isEnviroSolution]);
+
   const dashboardCards = [
     {
       title: "Total Customer Plan",
@@ -160,6 +162,7 @@ function SalesExecutiveDatabase() {
     </div>
   );
 }
+
 function IndividualDataCard({ data }) {
   return (
     <Box

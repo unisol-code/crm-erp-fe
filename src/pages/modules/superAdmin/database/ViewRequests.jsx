@@ -284,7 +284,7 @@ const ViewRequests = () => {
             {activeTab === "Organizational" && (
               <Box mt={2}>
                 <TableHeader
-                  title={`Update Request List From ${organizationData?.requestedBy?.fullName || "-"
+                  title={`Update Request List From ${organizationData?.requestedBy?.fullName || organizationData?.userName || "-"
                     }`}
                   theme={theme}
                 />
@@ -307,9 +307,10 @@ const ViewRequests = () => {
                             "Sr.No",
                             "Organization Name",
                             "Type",
-                            "Speciality",
-                            "Email",
+                            // "Speciality",
+                            "District",
                             "Address",
+                            "Email",
                             "Request Status",
                             "Action",
                           ]
@@ -350,24 +351,24 @@ const ViewRequests = () => {
                             ) : (
                               <>
                                 <TableCell>
-                                  {req?.targetDetails?.Basic?.hospitalName}
+                                  {req?.organizationName}
                                 </TableCell>
                                 <TableCell>
-                                  {
-                                    req?.targetDetails?.Basic
-                                      ?.typeOfOrgOrHospital
-                                  }
+                                  {req?.type}
                                 </TableCell>
-                                <TableCell>
-                                  {req?.targetDetails?.hospitalData?.specialities
+                                {/*<TableCell>
+                                   {req?.specialities
                                     ?.map((s) => s.name)
-                                    .join(", ")}
+                                    .join(", ") || "-"}
+                                </TableCell> */}
+                                <TableCell>
+                                  {req?.district}
                                 </TableCell>
                                 <TableCell>
-                                  {req?.targetDetails?.Basic?.emailAddress}
+                                  {req?.address}
                                 </TableCell>
                                 <TableCell>
-                                  {req?.targetDetails?.Basic?.address}
+                                  {req?.email}
                                 </TableCell>
                               </>
                             )}

@@ -199,7 +199,7 @@ function OrganizationalDatabase() {
                     </TableCell>
                     <TableCell sx={{ padding: 2 }}>Speciality</TableCell>
                     <TableCell sx={{ padding: 2 }}>Email Address</TableCell>
-                    <TableCell sx={{ padding: 2 }}>Address</TableCell>
+                    <TableCell sx={{ padding: 2 }}>District</TableCell>
                   </>
                 )}
                 <TableCell sx={{ padding: 2, textAlign: "center" }}>
@@ -222,28 +222,28 @@ function OrganizationalDatabase() {
                     <TableCell sx={{ padding: 2 }}>{(page - 1) * limit + index + 1}</TableCell>
                     {isEnviroSolution ? (
                       <>
-                        <TableCell sx={{ padding: 2 }}>{data.departmentName || "N/A"}</TableCell>
-                        <TableCell sx={{ padding: 2 }}>{data.jurisdictionLevel || "N/A"}</TableCell>
-                        <TableCell sx={{ padding: 2 }}>{data.district || "N/A"}</TableCell>
-                        <TableCell sx={{ padding: 2 }}>{data.state || "N/A"}</TableCell>
-                        <TableCell sx={{ padding: 2 }}>{data.officialEmailId || "N/A"}</TableCell>
+                        <TableCell sx={{ padding: 2 }}>{data.departmentName || "-"}</TableCell>
+                        <TableCell sx={{ padding: 2 }}>{data.jurisdictionLevel || "-"}</TableCell>
+                        <TableCell sx={{ padding: 2 }}>{data.district || "-"}</TableCell>
+                        <TableCell sx={{ padding: 2 }}>{data.state || "-"}</TableCell>
+                        <TableCell sx={{ padding: 2 }}>{data.officialEmailId || "-"}</TableCell>
                       </>
                     ) : (
                       <>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.organizationName}
+                          {data.organizationName || "-"}
                         </TableCell>
 
                         <TableCell sx={{ padding: 2 }}>
-                          {data.typeOfOrgOrHospital}
+                          {data.typeOfHospital || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.speciality || "-"}
+                          {data.specialities?.map((s) => s.name).join(", ") || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.emailAddress}
+                          {data.emailAddress || "-"}
                         </TableCell>
-                        <TableCell sx={{ padding: 2 }}>{data.address}</TableCell>
+                        <TableCell sx={{ padding: 2 }}>{data.district || "-"}</TableCell>
                       </>
                     )}
                     <TableCell sx={{ padding: 2 }}>
