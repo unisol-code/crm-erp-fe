@@ -130,11 +130,29 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
     }
   };
 
-  const handleSelectCity = (districtCode) => {
-    if (districtCode) {
-      fetchAllCities(selectedStateCode, districtCode);
+  const handleSelectCity = (districtCode, stateCode) => {
+    const sCode = stateCode || selectedStateCode;
+    if (districtCode && sCode) {
+      fetchAllCities(sCode, districtCode);
     }
   };
+
+  // ✅ Auto-fetch districts and cities when editing/viewing
+  useEffect(() => {
+    const stateCode = formik.values?.Basic?.state;
+    if (stateCode) {
+      setSelectedStateCode(stateCode);
+      fetchDistrictList(stateCode);
+    }
+  }, [formik.values?.Basic?.state]);
+
+  useEffect(() => {
+    const stateCode = formik.values?.Basic?.state;
+    const district = formik.values?.Basic?.district;
+    if (stateCode && district) {
+      fetchAllCities(stateCode, district);
+    }
+  }, [formik.values?.Basic?.state, formik.values?.Basic?.district]);
 
   return (
     <div className="p-4">

@@ -38,6 +38,7 @@ const ApprovalRequests = () => {
   useEffect(() => {
     fetchAllRequest(page, limit);
   }, [page, limit]);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <TableHeader title="Employees request" theme={theme} />
