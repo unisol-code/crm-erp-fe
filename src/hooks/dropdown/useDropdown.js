@@ -139,8 +139,6 @@ const useDropdown = () => {
 
   const [cities, setCities] = useRecoilState(allCitiesAtom);
 
-  
-  
   const fetchLegalEntity = async () => {
     setLoading(true);
     try {
@@ -157,8 +155,6 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
-
-
 
   const fetchSpeciality = async () => {
     setLoading(true);
@@ -357,6 +353,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
+
   const fetchOrganizationTypes = async () => {
     setLoading(true);
     try {
@@ -374,6 +371,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
+
   const fetchSegment = async () => {
     setLoading(true);
     try {
@@ -391,6 +389,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
+
   const fetchCallObjectiveStatuses = async () => {
     setLoading(true);
     try {
@@ -408,6 +407,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
+
   const fetchGender = async () => {
     setLoading(true);
     try {
@@ -443,6 +443,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
+
   const fetchTypeOfProfile = async () => {
     setLoading(true);
     try {
@@ -479,6 +480,7 @@ const useDropdown = () => {
       setLoading(false);
     }
   };
+
   const fetchProfessionalAssociations = async () => {
     setLoading(true);
     try {

@@ -33,6 +33,12 @@ function useFetch() {
         error.message,
         error.stack
       );
+
+      if (error.response?.data?.error === "Invalid or expired token.") {
+        sessionStorage.clear();
+        window.location.href = "/";
+      }
+
       throw error;
     }
   }, []);

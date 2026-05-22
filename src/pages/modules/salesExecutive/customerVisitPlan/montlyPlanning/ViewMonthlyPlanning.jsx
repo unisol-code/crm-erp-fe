@@ -11,6 +11,7 @@ import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderS
 import useMonthlyPlanning from "../../../../../hooks/salesExecutiveHook/customerVisitPlan/useMonthlyPlanning.js";
 import useDropdown from "../../../../../hooks/dropdown/useDropdown.js";
 import Select from "react-select";
+import * as XLSX from "xlsx-js-style";
 
 const ViewMonthlyPlanning = () => {
   const navigate = useNavigate();
@@ -62,6 +63,54 @@ const ViewMonthlyPlanning = () => {
       selectedOrganization
     );
   }, [page, limit]);
+
+  const handleExport = () => {
+    if (!oneMonthPlanningList?.data || oneMonthPlanningList.data.length === 0) {
+      return;
+    }
+
+    const dataRows = oneMonthPlanningList.data.map((entry, index) => ({
+      "Sr. No.": index + 1,
+      "Date": entry.date ? (() => {
+        const d = new Date(entry.date);
+        const datePart = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        const timePart = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+        return `${datePart}, ${timePart}`;
+      })() : "-",
+      "Organization Name": entry.organizationName || "-",
+      "Person Name": entry.personName || "-",
+      "Product To Be Promoted": entry.productToBePromoted || "-",
+      "Call Objective": entry.callObjective || "-",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataRows);
+
+    // Apply bold style to headers
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const address = XLSX.utils.encode_cell({ r: 0, c: C });
+      if (!ws[address]) continue;
+      ws[address].s = {
+        font: { bold: true },
+      };
+    }
+
+    // Apply column widths to prevent overlapping
+    ws["!cols"] = [
+      { wch: 10 }, // Sr. No.
+      { wch: 15 }, // Date
+      { wch: 25 }, // Organization Name
+      { wch: 25 }, // Person Name
+      { wch: 30 }, // Product To Be Promoted
+      { wch: 25 }, // Call Objective
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Monthly Planning");
+
+    XLSX.writeFile(wb, `Monthly_Planning_${month}_${year}.xlsx`);
+  };
+
   return (
     <div className="w-full min-h-screen">
       {/* Breadcrumbs */}
@@ -93,14 +142,13 @@ const ViewMonthlyPlanning = () => {
               <FiFilter size={16} />
             </button>
 
-            {/* Export Dropdown */}
+            {/* Export Button */}
             <div className="relative">
               <button
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleExport}
                 className="flex items-center gap-1 px-4 py-1.5 border border-gray-300 text-white rounded-md bg-[var(--primary-color)] text-sm"
               >
-                {selectedOption || "Export"}
-                <IoIosArrowDown size={18} className="text-gray-300" />
+                Export to Excel
               </button>
             </div>
 
@@ -204,7 +252,7 @@ const ViewMonthlyPlanning = () => {
                   "Date",
                   "Organization Name",
                   "Person Name",
-                  "Call Time",
+                  "Product To Be Promoted",
                   "Call Objective",
                   "Action",
                 ].map((heading, idx) => (
@@ -228,7 +276,15 @@ const ViewMonthlyPlanning = () => {
                 </tr>
               ) : oneMonthPlanningList?.data &&
                 oneMonthPlanningList?.data?.length > 0 ? (
-                oneMonthPlanningList.data.map((entry, index) => (
+                oneMonthPlanningList.data.map((entry, index) => {
+                  const formatDateTime = (dateStr) => {
+                    if (!dateStr) return "-";
+                    const d = new Date(dateStr);
+                    const datePart = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+                    const timePart = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+                    return `${datePart}, ${timePart}`;
+                  };
+                  return (
                   <tr
                     key={index}
                     className="text-center hover:bg-gray-50 transition-all"
@@ -237,22 +293,19 @@ const ViewMonthlyPlanning = () => {
                       {(page - 1) * limit + index + 1}
                     </td>
                     <td className="p-4 text-[17px] text-[#252C58]">
-                      {new Date(entry.date).toLocaleDateString("en-GB") ||
-                        "N/A"}
+                      {formatDateTime(entry.date)}
                     </td>
                     <td className="p-4 text-[17px] text-[#252C58]">
-                      {entry.organizationName || "N/A"}
+                      {entry.organizationName || "-"}
                     </td>
                     <td className="p-4 text-[17px] text-[#252C58]">
-                      {entry.personName || "N/A"}
+                      {entry.personName || "-"}
                     </td>
                     <td className="p-4 text-[17px] text-[#252C58]">
-                      {entry.callTime
-                        ? entry.callTime.split(":").slice(0, 2).join(":")
-                        : "N/A"}
+                      {entry.productToBePromoted || "-"}
                     </td>
                     <td className="p-4 text-[17px] text-[#252C58]">
-                      {entry.callObjective || "N/A"}
+                      {entry.callObjective || "-"}
                     </td>
                     <td className="p-2 text-[19px] text-[#252C58] align-middle">
                       <div className="flex justify-center">
@@ -273,7 +326,8 @@ const ViewMonthlyPlanning = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                );
+              })
               ) : (
                 <tr>
                   <td

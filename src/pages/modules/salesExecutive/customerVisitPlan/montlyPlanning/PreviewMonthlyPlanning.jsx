@@ -6,7 +6,6 @@ import { useTheme } from "../../../../../hooks/theme/useTheme";
 import { monthlyPlanningPreviewAtom } from "../../../../../state/mothlyPlanningState/monthlyPlanningState";
 import { useRecoilValue } from "recoil";
 
-
 const Item = ({ label, value }) => (
   <div className="flex flex-col mb-3">
     <label className="text-sm font-medium text-gray-700">{label}</label>
@@ -42,7 +41,6 @@ const salesStatus = [
     color: "bg-indigo-100 text-indigo-500",
   },
 ];
-
 
 const PreviewCreateMonthlyPlanning = () => {
   const { theme } = useTheme();

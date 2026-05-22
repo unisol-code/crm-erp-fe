@@ -38,6 +38,7 @@ import {
   CreateMonthlyPlanning,
   PreviewMonthlyPlanning,
   ViewMonthlyPlanningDetails,
+  UpdateMonthlyPlanning,
 } from "./pages/modules/salesExecutive/customerVisitPlan/montlyPlanning/index";
 
 import {
@@ -585,6 +586,17 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <CreateMonthlyPlanning />
+              </SalesExecutiveLayout>
+            }
+          />
+          <Route
+            path="/sales-executive/monthly-planning/update-monthly-plan/:id"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <UpdateMonthlyPlanning />
               </SalesExecutiveLayout>
             }
           />

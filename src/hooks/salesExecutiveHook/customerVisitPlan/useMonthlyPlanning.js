@@ -4,6 +4,8 @@ import useFetch from "../../useFetch";
 import conf from "../../../config/index";
 import { toast } from "react-toastify";
 import { monthlyPlanningDetailsStateAtom, monthlyPlanningListStateAtom, oneMonthPlanningStateAtom } from "../../../state/mothlyPlanningState/monthlyPlanningState";
+import Swal from "sweetalert2";
+import { confirmAlert } from "../../../utils/alertToast";
 
 const useMonthlyPlanning = () => {
     const [fetchData] = useFetch();
@@ -11,7 +13,7 @@ const useMonthlyPlanning = () => {
     const [monthlyPlanningList, setMonthlyPlanningList] = useRecoilState(monthlyPlanningListStateAtom);
     const [oneMonthPlanningList, setOneMonthPlanningList] = useRecoilState(oneMonthPlanningStateAtom);
     const [monthlyPlanningDetails, setMonthlyPlanningDetails] = useRecoilState(monthlyPlanningDetailsStateAtom)
-    
+
     const fetchMonthlyPlanningList = async (page, limit, fromDate, toDate) => {
         setLoading(true);
         try {
@@ -29,13 +31,23 @@ const useMonthlyPlanning = () => {
             setLoading(false);
         }
     };
-    const fetchOneMonthPlanningList = async (page, limit, month, year, doctorName,organizationName) => {
+
+    const fetchOneMonthPlanningList = async (page, limit, month, year, doctorName, organizationName, createPlanningForDate) => {
         setOneMonthPlanningList(null);
         setLoading(true);
         try {
+            const params = new URLSearchParams();
+            if (page) params.append("page", page);
+            if (limit) params.append("limit", limit);
+            if (month) params.append("month", month);
+            if (year) params.append("year", year);
+            if (doctorName) params.append("doctorName", doctorName);
+            if (organizationName) params.append("organizationName", organizationName);
+            if (createPlanningForDate) params.append("createPlanningForDate", createPlanningForDate);
+
             const res = await fetchData({
                 method: "GET",
-                url: `${conf.apiBaseUrl}planning/get-allmonthlyplanningsbymonth?page=${page}&limit=${limit}&month=${month}&year=${year}&doctorName=${doctorName}&organizationName=${organizationName}`
+                url: `${conf.apiBaseUrl}planning/get-allmonthlyplanningsbymonth?${params.toString()}`
             });
             if (res) {
                 console.log(res);
@@ -47,6 +59,7 @@ const useMonthlyPlanning = () => {
             setLoading(false);
         }
     }
+
     const fetchMonthlyPlanningDetailsById = async (id) => {
         setLoading(true);
         try {
@@ -65,33 +78,88 @@ const useMonthlyPlanning = () => {
             setLoading(false);
         }
     }
+
     const resetOneMonthPlanningList = () => {
         setOneMonthPlanningList(null)
     }
+
     const resetMonthlyPlanningDetails = () => {
         setMonthlyPlanningDetails(null);
     }
+
     const createMonthlyPlanning = async (data) => {
-    setLoading(true);
-    try {
-      const res = await fetchData({
-        method: "POST",
-        url: `${conf.apiBaseUrl}planning/create-monthlyplanning`,
-        data: data,
-      });
-      if (res) {
-        toast.success(res?.message);
-        return res;
-      } else {
-        throw new Error(res?.message);
-      }
-    } catch (error) {
-      console.error("Error creating monthly planning:", error);
-      toast.error(error.response?.data?.error);
-    } finally {
-      setLoading(false); 
-    }
-  };
+        setLoading(true);
+        try {
+            const res = await fetchData({
+                method: "POST",
+                url: `${conf.apiBaseUrl}planning/create-monthlyplanning`,
+                data: data,
+            });
+            if (res) {
+                toast.success(res?.message);
+                return res;
+            } else {
+                throw new Error(res?.message);
+            }
+        } catch (error) {
+            console.error("Error creating monthly planning:", error);
+            toast.error(error.response?.data?.error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const updateMonthlyPlanning = async (data, id) => {
+        setLoading(true);
+        try {
+            const res = await fetchData({
+                method: "PUT",
+                url: `${conf.apiBaseUrl}planning/update-monthlyplanning/${id}`,
+                data: data,
+            });
+            if (res) {
+                toast.success(res?.message);
+                return res;
+            } else {
+                throw new Error(res?.message);
+            }
+        } catch (error) {
+            console.error("Error updating monthly planning:", error);
+            toast.error(error.response?.data?.error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const deleteMonthlyPlanning = async (id) => {
+        const confirm = await confirmAlert("Are you sure you want to delete this monthly planning?",);
+        if (!confirm) return;
+        if (confirm.isConfirmed) {
+            try {
+                setLoading(true);
+                const res = await fetchData({
+                    method: "DELETE",
+                    url: `${conf.apiBaseUrl}planning/delete-monthlyplanning/${id}`,
+                });
+                if (res) {
+                    Swal.fire({
+                        title: "Deleted!",
+                        text: res?.message,
+                        icon: "success",
+                        confirmButtonText: "Okay",
+                    });
+                    setLoading(false);
+                    return res;
+                }
+            } catch (error) {
+                console.error("Error deleting monthly planning:", error);
+                toast.error(error.response?.data?.error);
+                setLoading(false);
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
 
     return {
         monthlyPlanningList,
@@ -103,7 +171,9 @@ const useMonthlyPlanning = () => {
         monthlyPlanningDetails,
         createMonthlyPlanning,
         resetMonthlyPlanningDetails,
-        resetOneMonthPlanningList
+        resetOneMonthPlanningList,
+        deleteMonthlyPlanning,
+        updateMonthlyPlanning
     };
 };
 

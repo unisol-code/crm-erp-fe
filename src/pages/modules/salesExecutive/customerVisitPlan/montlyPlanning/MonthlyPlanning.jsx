@@ -64,10 +64,10 @@ const MonthlyPlanning = () => {
       <div className="p-4 bg-white rounded-2xl">
         {/* Header Section */}
         <div className="flex justify-between gap-4 flex-wrap items-center mb-4">
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-gray-800">
             Monthly Planning List
           </h1>
-          <div className="flex flex-col gap-1">
+          {/* <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3 mt-3">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">From</span>
@@ -93,7 +93,7 @@ const MonthlyPlanning = () => {
                 {dateError}
               </div>
             )}
-          </div>
+          </div> */}
 
           <Button
             onClick={() =>
@@ -123,7 +123,7 @@ const MonthlyPlanning = () => {
                 <th className="p-4 text-base font-semibold text-left">Month</th>
                 <th className="p-4 text-base font-semibold text-left">Year</th>
                 <th className="p-4 text-base font-semibold text-left">
-                  Total Working Days
+                  Total Plannings
                 </th>
                 <th className="p-4 text-base font-semibold text-left">
                   Action
@@ -152,7 +152,7 @@ const MonthlyPlanning = () => {
                       {plan.year}
                     </td>
                     <td className="p-4 pl-20  text-[17px] font-normal text-[#252C58] ">
-                      {plan.workingDays}
+                      {plan.totalPlannings}
                     </td>
                     <td className="p-4 text-center text-[19px] align-middle">
                       <button
