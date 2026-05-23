@@ -44,7 +44,7 @@ const CreateMonthlyPlanning = () => {
     fetchMonthlyPlanningDetailsById,
     monthlyPlanningDetails,
     resetOneMonthPlanningList,
-    resetMonthlyPlanningDetails
+    resetMonthlyPlanningDetails,
   } = useMonthlyPlanning();
 
   const {
@@ -103,7 +103,10 @@ const CreateMonthlyPlanning = () => {
     validationSchema,
     onSubmit: async (values, { resetForm }) => {
       const entryToSave = { ...values };
-      if (entryToSave.selectOrganization === "Other" && entryToSave.customOrganization) {
+      if (
+        entryToSave.selectOrganization === "Other" &&
+        entryToSave.customOrganization
+      ) {
         entryToSave.selectOrganization = entryToSave.customOrganization;
       }
       if (entryToSave.nameOfDoctor === "Other" && entryToSave.customDoctor) {
@@ -112,7 +115,7 @@ const CreateMonthlyPlanning = () => {
 
       if (editingEntryId) {
         const payload = {
-          id: editingEntryId,
+          // id: editingEntryId,
           createPlanningForDate: entryToSave.createPlanningForDate,
           selectOrganization: entryToSave.selectOrganization,
           nameOfDoctor: entryToSave.nameOfDoctor,
@@ -120,9 +123,17 @@ const CreateMonthlyPlanning = () => {
           callObjective: entryToSave.callObjective,
         };
 
-        const res = await updateMonthlyPlanning(payload);
+        const res = await updateMonthlyPlanning(editingEntryId, payload);
         if (res) {
-          await fetchOneMonthPlanningList("", "", "", "", "", "", formik.values.createPlanningForDate);
+          await fetchOneMonthPlanningList(
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            formik.values.createPlanningForDate,
+          );
           setEditingEntryId(null);
           resetForm();
         }
@@ -137,7 +148,15 @@ const CreateMonthlyPlanning = () => {
 
         const res = await createMonthlyPlanning(payload);
         if (res) {
-          await fetchOneMonthPlanningList("", "", "", "", "", "", formik.values.createPlanningForDate);
+          await fetchOneMonthPlanningList(
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            formik.values.createPlanningForDate,
+          );
           resetForm();
         }
       }
@@ -150,7 +169,15 @@ const CreateMonthlyPlanning = () => {
       setShowTable(true);
       setEditingEntryId(null);
       formik.resetForm();
-      fetchOneMonthPlanningList("", "", "", "", "", "", formik.values.createPlanningForDate);
+      fetchOneMonthPlanningList(
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        formik.values.createPlanningForDate,
+      );
     }
   };
 
@@ -176,11 +203,18 @@ const CreateMonthlyPlanning = () => {
   const handleRemoveEntry = async (index) => {
     const entryToDelete = planningEntries[index];
     if (entryToDelete._id) {
-      const confirmed = window.confirm("Are you sure you want to delete this planning entry?");
-      if (confirmed) {
-        await deleteMonthlyPlanning(entryToDelete._id);
-        await fetchOneMonthPlanningList("", "", "", "", "", "", formik.values.createPlanningForDate);
-      }
+     const res = await deleteMonthlyPlanning(entryToDelete._id);
+     if (res) {
+          await fetchOneMonthPlanningList(
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            formik.values.createPlanningForDate,
+          );
+        }
     }
   };
 
@@ -195,7 +229,12 @@ const CreateMonthlyPlanning = () => {
     navigate("/sales-executive/monthly-planning");
   };
 
-  const formatOptions = (list, isStringList = false, labelKey = "name", valueKey = "name") => {
+  const formatOptions = (
+    list,
+    isStringList = false,
+    labelKey = "name",
+    valueKey = "name",
+  ) => {
     if (!Array.isArray(list)) return [];
     return list.map((item) => {
       if (isStringList || typeof item === "string") {
@@ -208,10 +247,26 @@ const CreateMonthlyPlanning = () => {
     });
   };
 
-  const organizationOptions = [...formatOptions(organizationList?.data, true), { label: "Other", value: "Other" }];
-  const doctorOptions = [...formatOptions(doctorList), { label: "Other", value: "Other" }];
+  const organizationOptions = [
+    ...formatOptions(organizationList?.data, true),
+    { label: "Other", value: "Other" },
+  ];
+  const doctorOptions = [
+    ...formatOptions(doctorList),
+    { label: "Other", value: "Other" },
+  ];
   const productOptions = formatOptions(productList);
-  const callObjectiveOptions = formatOptions(["Attending Doctor", "OPD Call", "Product Demo", "Clinical Study", "Clinical Paper", "Other"], true);
+  const callObjectiveOptions = formatOptions(
+    [
+      "Attending Doctor",
+      "OPD Call",
+      "Product Demo",
+      "Clinical Study",
+      "Clinical Paper",
+      "Other",
+    ],
+    true,
+  );
 
   const handleEditEntry = async (index) => {
     const entryToEdit = planningEntries[index];
@@ -221,12 +276,16 @@ const CreateMonthlyPlanning = () => {
       await fetchMonthlyPlanningDetailsById(entryToEdit._id);
     }
 
-    const orgExists = formatOptions(organizationList?.data, true).some(opt => opt.value === entryToEdit.selectOrganization);
-    const docExists = formatOptions(doctorList).some(opt => opt.value === entryToEdit.nameOfDoctor);
+    const orgExists = formatOptions(organizationList?.data, true).some(
+      (opt) => opt.value === entryToEdit.selectOrganization,
+    );
+    const docExists = formatOptions(doctorList).some(
+      (opt) => opt.value === entryToEdit.nameOfDoctor,
+    );
 
     let formattedDate = entryToEdit.createPlanningForDate;
-    if (formattedDate && !formattedDate.includes('T')) {
-      formattedDate = formattedDate.replace(' ', 'T');
+    if (formattedDate && !formattedDate.includes("T")) {
+      formattedDate = formattedDate.replace(" ", "T");
     }
 
     formik.setValues({
@@ -279,7 +338,6 @@ const CreateMonthlyPlanning = () => {
 
   return (
     <div className="w-full min-h-screen relative">
-      {(loading || submitLoading) && <LoaderSpinner />}
       <BreadCrumb
         linkText={[
           { text: "Customer Visit Plan" },
@@ -291,7 +349,8 @@ const CreateMonthlyPlanning = () => {
         ]}
       />
 
-      <div className="relative mb-4 mt-4 overflow-hidden rounded-2xl p-4"
+      <div
+        className="relative mb-4 mt-4 overflow-hidden rounded-2xl p-4"
         style={{ backgroundColor: theme.secondaryColor }}
       >
         <div className="relative flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -310,7 +369,10 @@ const CreateMonthlyPlanning = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 backdrop-blur-sm">
-            <TrendingUp className="h-4 w-4" style={{ color: theme.primaryColor }} />
+            <TrendingUp
+              className="h-4 w-4"
+              style={{ color: theme.primaryColor }}
+            />
             <span className="text-sm font-medium text-white">
               {planningEntries.length} Plans Ready
             </span>
@@ -321,20 +383,35 @@ const CreateMonthlyPlanning = () => {
       <div className="group mb-4 rounded-2xl border border-slate-200 bg-white shadow-lg shadow-slate-200/50 transition-all duration-300 hover:shadow-xl">
         <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4 rounded-t-2xl">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg p-1.5" style={{ backgroundColor: theme.primaryColor + '33' }}>
+            <div
+              className="rounded-lg p-1.5"
+              style={{ backgroundColor: theme.primaryColor + "33" }}
+            >
               {editingEntryId ? (
-                <Edit2 className="h-4 w-4" style={{ color: theme.primaryColor }} />
+                <Edit2
+                  className="h-4 w-4"
+                  style={{ color: theme.primaryColor }}
+                />
               ) : (
-                <Plus className="h-4 w-4" style={{ color: theme.primaryColor }} />
+                <Plus
+                  className="h-4 w-4"
+                  style={{ color: theme.primaryColor }}
+                />
               )}
             </div>
             <h2 className="text-lg font-semibold text-slate-800">
-              {editingEntryId ? "Edit Planning Entry" : "Add New Planning Entry"}
+              {editingEntryId
+                ? "Edit Planning Entry"
+                : "Add New Planning Entry"}
             </h2>
             {editingEntryId && (
-              <span className="text-xs text-orange-500 ml-2 font-medium">Editing mode</span>
+              <span className="text-xs text-orange-500 ml-2 font-medium">
+                Editing mode
+              </span>
             )}
-            <span className="text-xs text-slate-400 ml-2">Fill the details below</span>
+            <span className="text-xs text-slate-400 ml-2">
+              Fill the details below
+            </span>
           </div>
         </div>
 
@@ -342,7 +419,10 @@ const CreateMonthlyPlanning = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
             <div className="flex flex-col">
               <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <Calendar className="h-3.5 w-3.5" style={{ color: theme.primaryColor }} />
+                <Calendar
+                  className="h-3.5 w-3.5"
+                  style={{ color: theme.primaryColor }}
+                />
                 Date & Time
               </label>
               <input
@@ -353,7 +433,11 @@ const CreateMonthlyPlanning = () => {
                 onBlur={formik.handleBlur}
                 value={formik.values.createPlanningForDate}
                 className="w-full rounded-xl border border-slate-200 p-2.5 text-sm transition-all duration-200 focus:outline-none focus:ring-2"
-                style={{ borderColor: formik.values.createPlanningForDate ? theme.primaryColor : undefined }}
+                style={{
+                  borderColor: formik.values.createPlanningForDate
+                    ? theme.primaryColor
+                    : undefined,
+                }}
                 disabled={!!editingEntryId}
               />
               {formik.touched.createPlanningForDate &&
@@ -363,25 +447,35 @@ const CreateMonthlyPlanning = () => {
                   </p>
                 )}
               {editingEntryId && (
-                <p className="mt-1 text-xs text-amber-500">Date cannot be changed while editing</p>
+                <p className="mt-1 text-xs text-amber-500">
+                  Date cannot be changed while editing
+                </p>
               )}
             </div>
 
             <div className="flex flex-col">
               <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <Building2 className="h-3.5 w-3.5" style={{ color: theme.primaryColor }} />
+                <Building2
+                  className="h-3.5 w-3.5"
+                  style={{ color: theme.primaryColor }}
+                />
                 Organization
               </label>
               <Select
                 isLoading={dropdownLoading}
                 options={organizationOptions}
                 value={organizationOptions.find(
-                  (opt) => opt.value === formik.values.selectOrganization
+                  (opt) => opt.value === formik.values.selectOrganization,
                 )}
                 onChange={(selected) =>
-                  formik.setFieldValue("selectOrganization", selected?.value || "")
+                  formik.setFieldValue(
+                    "selectOrganization",
+                    selected?.value || "",
+                  )
                 }
-                onBlur={() => formik.setFieldTouched("selectOrganization", true)}
+                onBlur={() =>
+                  formik.setFieldTouched("selectOrganization", true)
+                }
                 isClearable
                 placeholder="Select Organization"
                 styles={customSelectStyles}
@@ -397,9 +491,15 @@ const CreateMonthlyPlanning = () => {
                     onBlur={formik.handleBlur}
                     value={formik.values.customOrganization}
                     className="w-full rounded-xl border border-slate-200 p-2 text-sm transition-all duration-200 focus:outline-none focus:ring-2 mb-1"
-                    style={{ borderColor: formik.values.customOrganization ? theme.primaryColor : undefined }}
+                    style={{
+                      borderColor: formik.values.customOrganization
+                        ? theme.primaryColor
+                        : undefined,
+                    }}
                   />
-                  <p className="text-[11px] text-orange-500 font-medium">Note: Please add this organization into database</p>
+                  <p className="text-[11px] text-orange-500 font-medium">
+                    Note: Please add this organization into database
+                  </p>
                 </div>
               )}
               {formik.touched.selectOrganization &&
@@ -418,14 +518,17 @@ const CreateMonthlyPlanning = () => {
 
             <div className="flex flex-col">
               <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <Stethoscope className="h-3.5 w-3.5" style={{ color: theme.primaryColor }} />
+                <Stethoscope
+                  className="h-3.5 w-3.5"
+                  style={{ color: theme.primaryColor }}
+                />
                 Individual Name
               </label>
               <Select
                 isLoading={dropdownLoading}
                 options={doctorOptions}
                 value={doctorOptions.find(
-                  (opt) => opt.value === formik.values.nameOfDoctor
+                  (opt) => opt.value === formik.values.nameOfDoctor,
                 )}
                 onChange={(selected) =>
                   formik.setFieldValue("nameOfDoctor", selected?.value || "")
@@ -446,9 +549,15 @@ const CreateMonthlyPlanning = () => {
                     onBlur={formik.handleBlur}
                     value={formik.values.customDoctor}
                     className="w-full rounded-xl border border-slate-200 p-2 text-sm transition-all duration-200 focus:outline-none focus:ring-2 mb-1"
-                    style={{ borderColor: formik.values.customDoctor ? theme.primaryColor : undefined }}
+                    style={{
+                      borderColor: formik.values.customDoctor
+                        ? theme.primaryColor
+                        : undefined,
+                    }}
                   />
-                  <p className="text-[11px] text-orange-500 font-medium">Note: Please add this individual into database</p>
+                  <p className="text-[11px] text-orange-500 font-medium">
+                    Note: Please add this individual into database
+                  </p>
                 </div>
               )}
               {formik.touched.nameOfDoctor && formik.errors.nameOfDoctor && (
@@ -456,29 +565,36 @@ const CreateMonthlyPlanning = () => {
                   {formik.errors.nameOfDoctor}
                 </p>
               )}
-              {formik.touched.customDoctor &&
-                formik.errors.customDoctor && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {formik.errors.customDoctor}
-                  </p>
-                )}
+              {formik.touched.customDoctor && formik.errors.customDoctor && (
+                <p className="mt-1 text-xs text-red-500">
+                  {formik.errors.customDoctor}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col">
               <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <Package className="h-3.5 w-3.5" style={{ color: theme.primaryColor }} />
+                <Package
+                  className="h-3.5 w-3.5"
+                  style={{ color: theme.primaryColor }}
+                />
                 Product
               </label>
               <Select
                 isLoading={dropdownLoading}
                 options={productOptions}
                 value={productOptions.find(
-                  (opt) => opt.value === formik.values.productToBePromoted
+                  (opt) => opt.value === formik.values.productToBePromoted,
                 )}
                 onChange={(selected) =>
-                  formik.setFieldValue("productToBePromoted", selected?.value || "")
+                  formik.setFieldValue(
+                    "productToBePromoted",
+                    selected?.value || "",
+                  )
                 }
-                onBlur={() => formik.setFieldTouched("productToBePromoted", true)}
+                onBlur={() =>
+                  formik.setFieldTouched("productToBePromoted", true)
+                }
                 isClearable
                 placeholder="Select Product"
                 styles={customSelectStyles}
@@ -494,13 +610,16 @@ const CreateMonthlyPlanning = () => {
 
             <div className="flex flex-col">
               <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <Target className="h-3.5 w-3.5" style={{ color: theme.primaryColor }} />
+                <Target
+                  className="h-3.5 w-3.5"
+                  style={{ color: theme.primaryColor }}
+                />
                 Call Objective
               </label>
               <Select
                 options={callObjectiveOptions}
                 value={callObjectiveOptions.find(
-                  (opt) => opt.value === formik.values.callObjective
+                  (opt) => opt.value === formik.values.callObjective,
                 )}
                 onChange={(selected) =>
                   formik.setFieldValue("callObjective", selected?.value || "")
@@ -536,12 +655,20 @@ const CreateMonthlyPlanning = () => {
               variant={1}
               icon={<Search className="h-4 w-4" />}
               onClick={handleSearch}
-              disabled={!formik.values.createPlanningForDate || !!editingEntryId}
+              disabled={
+                !formik.values.createPlanningForDate || !!editingEntryId
+              }
             />
             <Button
               text={editingEntryId ? "Edit in Plan" : "Add to Plan"}
               variant={1}
-              icon={editingEntryId ? <Edit2 className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+              icon={
+                editingEntryId ? (
+                  <Edit2 className="h-4 w-4" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )
+              }
               onClick={formik.handleSubmit}
               loading={submitLoading}
             />
@@ -562,9 +689,18 @@ const CreateMonthlyPlanning = () => {
                 </h2>
               </div>
               {planningEntries.length > 0 && (
-                <div className="flex items-center gap-1 rounded-full px-3 py-1" style={{ backgroundColor: theme.primaryColor + '20' }}>
-                  <CheckCircle2 className="h-3.5 w-3.5" style={{ color: theme.primaryColor }} />
-                  <span className="text-xs font-medium" style={{ color: theme.primaryColor }}>
+                <div
+                  className="flex items-center gap-1 rounded-full px-3 py-1"
+                  style={{ backgroundColor: theme.primaryColor + "20" }}
+                >
+                  <CheckCircle2
+                    className="h-3.5 w-3.5"
+                    style={{ color: theme.primaryColor }}
+                  />
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: theme.primaryColor }}
+                  >
                     {planningEntries.length} entries
                   </span>
                 </div>
@@ -578,7 +714,9 @@ const CreateMonthlyPlanning = () => {
                 <div className="mb-4 rounded-full bg-slate-100 p-4">
                   <Calendar className="h-8 w-8 text-slate-400" />
                 </div>
-                <p className="text-sm text-slate-400">No planning entries found for this date</p>
+                <p className="text-sm text-slate-400">
+                  No planning entries found for this date
+                </p>
                 <p className="text-xs text-slate-300 mt-1">
                   Fill the form above and click "Add to Plan" to create entries
                 </p>
@@ -608,16 +746,23 @@ const CreateMonthlyPlanning = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
+                  {(loading || submitLoading) && (
+                    <div className="w-full bg-white flex items-center justify-center">
+                      <LoaderSpinner />
+                    </div>
+                  )}
                   {planningEntries.map((entry, index) => (
                     <tr
                       key={entry._id || index}
-                      className={`transition-all duration-200 hover:bg-slate-50/50 group ${editingEntryId === entry._id ? 'bg-blue-50' : ''}`}
+                      className={`transition-all duration-200 hover:bg-slate-50/50 group ${editingEntryId === entry._id ? "bg-blue-50" : ""}`}
                       onMouseEnter={() => setHoveredRow(index)}
                       onMouseLeave={() => setHoveredRow(null)}
                     >
                       <td className="px-6 py-4 text-sm text-slate-700 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <div className={`h-2 w-2 rounded-full ${getStatusColor(index)}`} />
+                          <div
+                            className={`h-2 w-2 rounded-full ${getStatusColor(index)}`}
+                          />
                           {new Date(entry.createPlanningForDate).toLocaleString(
                             "en-GB",
                             {
@@ -627,7 +772,7 @@ const CreateMonthlyPlanning = () => {
                               hour: "2-digit",
                               minute: "2-digit",
                               hour12: false,
-                            }
+                            },
                           )}
                         </div>
                       </td>

@@ -109,7 +109,7 @@ const useMonthlyPlanning = () => {
         }
     };
 
-    const updateMonthlyPlanning = async (data, id) => {
+    const updateMonthlyPlanning = async (id, data) => {
         setLoading(true);
         try {
             const res = await fetchData({
