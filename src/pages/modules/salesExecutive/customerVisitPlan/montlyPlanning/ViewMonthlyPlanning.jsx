@@ -60,7 +60,7 @@ const ViewMonthlyPlanning = () => {
       month,
       year,
       selectedPerson,
-      selectedOrganization
+      selectedOrganization,
     );
   }, [page, limit]);
 
@@ -71,12 +71,22 @@ const ViewMonthlyPlanning = () => {
 
     const dataRows = oneMonthPlanningList.data.map((entry, index) => ({
       "Sr. No.": index + 1,
-      "Date": entry.date ? (() => {
-        const d = new Date(entry.date);
-        const datePart = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-        const timePart = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-        return `${datePart}, ${timePart}`;
-      })() : "-",
+      Date: entry.date
+        ? (() => {
+            const d = new Date(entry.date);
+            const datePart = d.toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            });
+            const timePart = d.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            });
+            return `${datePart}, ${timePart}`;
+          })()
+        : "-",
       "Organization Name": entry.organizationName || "-",
       "Person Name": entry.personName || "-",
       "Product To Be Promoted": entry.productToBePromoted || "-",
@@ -151,6 +161,17 @@ const ViewMonthlyPlanning = () => {
                 Export to Excel
               </button>
             </div>
+            <div className="relative mt-3">
+              <Button
+                onClick={() =>
+                  navigate(
+                    "/sales-executive/monthly-planning/create-monthly-plan",
+                  )
+                }
+                variant={1}
+                text="Create Monthly Plan"
+              />
+            </div>
 
             {/* Filter Popup */}
             {showFilter && (
@@ -202,7 +223,7 @@ const ViewMonthlyPlanning = () => {
                             value: org,
                           }))
                           .find(
-                            (option) => option.value === selectedOrganization
+                            (option) => option.value === selectedOrganization,
                           ) || null
                       }
                       onChange={(selectedOption) => {
@@ -229,7 +250,7 @@ const ViewMonthlyPlanning = () => {
                         month,
                         year,
                         selectedPerson,
-                        selectedOrganization
+                        selectedOrganization,
                       );
                     }}
                   />
@@ -280,54 +301,62 @@ const ViewMonthlyPlanning = () => {
                   const formatDateTime = (dateStr) => {
                     if (!dateStr) return "-";
                     const d = new Date(dateStr);
-                    const datePart = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-                    const timePart = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+                    const datePart = d.toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    });
+                    const timePart = d.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    });
                     return `${datePart}, ${timePart}`;
                   };
                   return (
-                  <tr
-                    key={index}
-                    className="text-center hover:bg-gray-50 transition-all"
-                  >
-                    <td className="p-4 text-[17px] text-[#252C58]">
-                      {(page - 1) * limit + index + 1}
-                    </td>
-                    <td className="p-4 text-[17px] text-[#252C58]">
-                      {formatDateTime(entry.date)}
-                    </td>
-                    <td className="p-4 text-[17px] text-[#252C58]">
-                      {entry.organizationName || "-"}
-                    </td>
-                    <td className="p-4 text-[17px] text-[#252C58]">
-                      {entry.personName || "-"}
-                    </td>
-                    <td className="p-4 text-[17px] text-[#252C58]">
-                      {entry.productToBePromoted || "-"}
-                    </td>
-                    <td className="p-4 text-[17px] text-[#252C58]">
-                      {entry.callObjective || "-"}
-                    </td>
-                    <td className="p-2 text-[19px] text-[#252C58] align-middle">
-                      <div className="flex justify-center">
-                        <button
-                          className="text-black hover:bg-blue-200 rounded-full w-8 h-8 flex items-center justify-center"
-                          onClick={() => {
-                            resetMonthlyPlanningDetails();
-                            navigate(
-                              `/sales-executive/monthly-planning/view-monthly-planning/${month}/${year}/view-monthly-planning-details/${entry._id}`
-                            );
-                          }}
-                        >
-                          <TiEye
-                            size={18}
-                            style={{ color: theme.primaryColor }}
-                          />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
+                    <tr
+                      key={index}
+                      className="text-center hover:bg-gray-50 transition-all"
+                    >
+                      <td className="p-4 text-[17px] text-[#252C58]">
+                        {(page - 1) * limit + index + 1}
+                      </td>
+                      <td className="p-4 text-[17px] text-[#252C58]">
+                        {formatDateTime(entry.date)}
+                      </td>
+                      <td className="p-4 text-[17px] text-[#252C58]">
+                        {entry.organizationName || "-"}
+                      </td>
+                      <td className="p-4 text-[17px] text-[#252C58]">
+                        {entry.personName || "-"}
+                      </td>
+                      <td className="p-4 text-[17px] text-[#252C58]">
+                        {entry.productToBePromoted || "-"}
+                      </td>
+                      <td className="p-4 text-[17px] text-[#252C58]">
+                        {entry.callObjective || "-"}
+                      </td>
+                      <td className="p-2 text-[19px] text-[#252C58] align-middle">
+                        <div className="flex justify-center">
+                          <button
+                            className="text-black hover:bg-blue-200 rounded-full w-8 h-8 flex items-center justify-center"
+                            onClick={() => {
+                              resetMonthlyPlanningDetails();
+                              navigate(
+                                `/sales-executive/monthly-planning/view-monthly-planning/${month}/${year}/view-monthly-planning-details/${entry._id}`,
+                              );
+                            }}
+                          >
+                            <TiEye
+                              size={18}
+                              style={{ color: theme.primaryColor }}
+                            />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td

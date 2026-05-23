@@ -26,29 +26,7 @@ function ViewMonthlyPlanningDetails() {
     }
   }, [id]);
 
-  // if (loading) {
-  //   return (
-  //     <div className="w-full min-h-screen">
-  //       <BreadCrumb
-  //         linkText={[
-  //           { text: "Customer Visit Plan" },
-  //           {
-  //             text: "Monthly Planning",
-  //             href: "/sales-executive/monthly-planning",
-  //           },
-  //           {
-  //             text: "View Monthly Planning",
-  //             href: `/sales-executive/monthly-planning/view-monthly-planning/${month}/${year}`,
-  //           },
-  //           { text: "View Monthly Planning Details" },
-  //         ]}
-  //       />
-  //       <div className="flex bg-white justify-center items-center w-full rounded-b-2xl py-8">
-  //         <LoaderSpinner />
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  console.log("Monthly Planning Details:", monthlyPlanningDetails);
 
   const data = monthlyPlanningDetails?.data || {};
 
