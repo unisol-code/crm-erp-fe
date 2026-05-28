@@ -12,7 +12,7 @@ const Pagination = ({
 }) => {
     const [itemsPerPageState, setItemsPerPageState] = useState(itemsPerPage ?? 10);
     const itemsPerPageOptions = [1, 2, 5, 10, 20, 50, 100]
-    console.log("currentPage prop received by Pagination:", currentPage);
+    // console.log("currentPage prop received by Pagination:", currentPage);
 
     useEffect(() => {
         if (itemsPerPage !== undefined && itemsPerPage !== itemsPerPageState) {
@@ -35,7 +35,7 @@ const Pagination = ({
     };
 
     const handleItemsPerPageChange = (e) => {
-        console.log(e)
+        // console.log(e)
         const value = parseInt(e.target.value, 10);
         setItemsPerPageState(value);
         if (onItemsPerPageChange) {

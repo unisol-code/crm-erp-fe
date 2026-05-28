@@ -47,7 +47,7 @@ const MonthlyPlanning = () => {
 
   const handleViewClick = (month, year) => {
     navigate(
-      `/sales-executive/monthly-planning/view-monthly-planning/${month}/${year}`
+      `/sales-executive/monthly-planning/view-month-wise/${month}/${year}`
     );
   };
 

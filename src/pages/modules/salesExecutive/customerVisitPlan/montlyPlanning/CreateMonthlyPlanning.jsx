@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Edit2,
   Search,
+  AlertCircle,
 } from "lucide-react";
 import BreadCrumb from "../../../../../components/uiComponents/breadcrumb/BreadCrumb";
 import { useTheme } from "../../../../../hooks/theme/useTheme";
@@ -29,6 +30,192 @@ import useMonthlyPlanning from "../../../../../hooks/salesExecutiveHook/customer
 import useDropdown from "../../../../../hooks/dropdown/useDropdown";
 import Button from "../../../../../components/uiComponents/button/Button";
 import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderSpinner";
+
+// Helper function to convert UTC date to local datetime-local input value
+const convertUTCToLocalDateTime = (utcDateStr) => {
+  if (!utcDateStr) return "";
+  const date = new Date(utcDateStr);
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+// Helper function to format date and time in readable format (using UTC to avoid timezone shifts)
+const formatDateTimeLocal = (dateStr) => {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  const datePart = date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC"
+  });
+  const timePart = date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC"
+  });
+  return `${datePart}, ${timePart}`;
+};
+
+// Helper function to format time only
+const formatTimeOnlyLocal = (dateStr) => {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  return date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC"
+  });
+};
+
+// Helper function to get current datetime in UTC for min attribute
+const getCurrentUTCDateTime = () => {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(now.getUTCDate()).padStart(2, '0');
+  const hours = String(now.getUTCHours()).padStart(2, '0');
+  const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+// Helper function to convert local datetime string to UTC ISO string
+const convertToUTCISO = (localDateTimeStr) => {
+  if (!localDateTimeStr) return null;
+  // Parse the local datetime string (YYYY-MM-DDTHH:mm)
+  const [datePart, timePart] = localDateTimeStr.split('T');
+  const [year, month, day] = datePart.split('-');
+  const [hours, minutes] = timePart.split(':');
+  
+  // Create UTC date
+  const utcDate = new Date(Date.UTC(
+    parseInt(year),
+    parseInt(month) - 1,
+    parseInt(day),
+    parseInt(hours),
+    parseInt(minutes)
+  ));
+  
+  return utcDate.toISOString();
+};
+
+// Helper function for planning time conflict validation
+const validatePlanningTimeConflict = (
+  selectedDateTimeLocal,
+  existingEntries,
+  currentOrganization,
+  editingEntryId = null
+) => {
+  if (!selectedDateTimeLocal || !existingEntries?.length) return null;
+
+  // Parse the selected local datetime
+  const [selectedDatePart, selectedTimePart] = selectedDateTimeLocal.split('T');
+  const [selectedYear, selectedMonth, selectedDay] = selectedDatePart.split('-');
+  const [selectedHours, selectedMinutes] = selectedTimePart.split(':');
+  
+  const selectedTimestamp = Date.UTC(
+    parseInt(selectedYear),
+    parseInt(selectedMonth) - 1,
+    parseInt(selectedDay),
+    parseInt(selectedHours),
+    parseInt(selectedMinutes)
+  );
+
+  // Find entries on the same date
+  const sameDateEntries = existingEntries.filter(entry => {
+    if (editingEntryId && entry._id === editingEntryId) return false;
+    const entryDate = new Date(entry.date);
+    const entryYear = entryDate.getUTCFullYear();
+    const entryMonth = entryDate.getUTCMonth();
+    const entryDay = entryDate.getUTCDate();
+    
+    return entryYear === parseInt(selectedYear) &&
+           entryMonth === parseInt(selectedMonth) - 1 &&
+           entryDay === parseInt(selectedDay);
+  });
+
+  if (sameDateEntries.length === 0) return null;
+
+  // Check for exact same time
+  const exactMatch = sameDateEntries.find(entry => {
+    const entryDate = new Date(entry.date);
+    const entryTimestamp = entryDate.getTime();
+    return Math.abs(entryTimestamp - selectedTimestamp) < 60000; // Within 1 minute
+  });
+
+  if (exactMatch) {
+    return {
+      type: "exact_match",
+      message: `A planning entry already exists at ${formatTimeOnlyLocal(exactMatch.date)}. Please choose a different time.`
+    };
+  }
+
+  // Sort entries by time
+  const sortedEntries = [...sameDateEntries].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
+  // Check time gap requirements with adjacent entries
+  for (let i = 0; i < sortedEntries.length; i++) {
+    const entry = sortedEntries[i];
+    const entryTimestamp = new Date(entry.date).getTime();
+    const timeDiffMinutes = Math.abs(selectedTimestamp - entryTimestamp) / (1000 * 60);
+    
+    const isSameOrganization = entry.organizationName === currentOrganization;
+    const requiredGap = isSameOrganization ? 20 : 40;
+    
+    if (timeDiffMinutes < requiredGap) {
+      return {
+        type: "gap_violation",
+        message: `Minimum ${requiredGap} minute gap required ${isSameOrganization ? 'for same organization' : 'between different organizations'}. 
+                  There is already a planned visit at ${formatTimeOnlyLocal(entry.date)} for ${entry.organizationName}.`,
+        conflictEntry: {
+          time: formatTimeOnlyLocal(entry.date),
+          organization: entry.organizationName,
+          gap: requiredGap
+        }
+      };
+    }
+  }
+
+  return null;
+};
+
+// Helper function to get existing plans for display
+const getExistingPlansForDate = (selectedDateTimeLocal, existingEntries) => {
+  if (!selectedDateTimeLocal || !existingEntries?.length) return [];
+
+  const [selectedDatePart] = selectedDateTimeLocal.split('T');
+  const [selectedYear, selectedMonth, selectedDay] = selectedDatePart.split('-');
+
+  const sameDateEntries = existingEntries.filter(entry => {
+    const entryDate = new Date(entry.date);
+    const entryYear = entryDate.getUTCFullYear();
+    const entryMonth = entryDate.getUTCMonth();
+    const entryDay = entryDate.getUTCDate();
+    
+    return entryYear === parseInt(selectedYear) &&
+           entryMonth === parseInt(selectedMonth) - 1 &&
+           entryDay === parseInt(selectedDay);
+  });
+
+  // Sort by time
+  const sortedEntries = sameDateEntries.sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
+  return sortedEntries.map(entry => ({
+    formattedTime: formatTimeOnlyLocal(entry.date),
+    organization: entry.organizationName,
+    timestamp: new Date(entry.date).getTime()
+  }));
+};
 
 const CreateMonthlyPlanning = () => {
   const { theme } = useTheme();
@@ -42,7 +229,6 @@ const CreateMonthlyPlanning = () => {
     updateMonthlyPlanning,
     loading,
     fetchMonthlyPlanningDetailsById,
-    monthlyPlanningDetails,
     resetOneMonthPlanningList,
     resetMonthlyPlanningDetails,
   } = useMonthlyPlanning();
@@ -58,10 +244,11 @@ const CreateMonthlyPlanning = () => {
   } = useDropdown();
 
   const [planningEntries, setPlanningEntries] = useState([]);
-  const [hoveredRow, setHoveredRow] = useState(null);
   const [showTable, setShowTable] = useState(false);
   const [searchTriggered, setSearchTriggered] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState(null);
+  const [existingPlans, setExistingPlans] = useState([]);
+  const [currentSelectedDate, setCurrentSelectedDate] = useState("");
 
   useEffect(() => {
     fetchProductsNames();
@@ -69,26 +256,60 @@ const CreateMonthlyPlanning = () => {
     fetchDoctorList();
   }, []);
 
-  const validationSchema = Yup.object({
-    createPlanningForDate: Yup.date()
-      .min(new Date(), "Past date and time is not allowed")
-      .nullable()
-      .required("Date is required"),
-    selectOrganization: Yup.string().required("Organization is required"),
-    customOrganization: Yup.string().when("selectOrganization", {
-      is: "Other",
-      then: (schema) => schema.required("Custom organization is required"),
-      otherwise: (schema) => schema.notRequired(),
-    }),
-    nameOfDoctor: Yup.string().required("Individual name is required"),
-    customDoctor: Yup.string().when("nameOfDoctor", {
-      is: "Other",
-      then: (schema) => schema.required("Custom individual name is required"),
-      otherwise: (schema) => schema.notRequired(),
-    }),
-    productToBePromoted: Yup.string().required("Product is required"),
-    callObjective: Yup.string().required("Call objective is required"),
-  });
+  // Validation schema with dynamic date validation
+  const getValidationSchema = () => {
+    return Yup.object({
+      createPlanningForDate: Yup.string()
+        .required("Date and time is required")
+        .test("past-date", "Past date and time is not allowed", function(value) {
+          if (!value) return true;
+          const [datePart, timePart] = value.split('T');
+          const [year, month, day] = datePart.split('-');
+          const [hours, minutes] = timePart.split(':');
+          
+          const selectedUTC = Date.UTC(
+            parseInt(year),
+            parseInt(month) - 1,
+            parseInt(day),
+            parseInt(hours),
+            parseInt(minutes)
+          );
+          const nowUTC = Date.now();
+          return selectedUTC >= nowUTC;
+        })
+        .test("planning-conflict", "Planning conflict", function(value) {
+          if (!value || !oneMonthPlanningList?.data) return true;
+          
+          const conflict = validatePlanningTimeConflict(
+            value,
+            oneMonthPlanningList.data,
+            this.parent?.selectOrganization,
+            editingEntryId
+          );
+          
+          if (conflict) {
+            return this.createError({ message: conflict.message });
+          }
+          return true;
+        }),
+      selectOrganization: Yup.string().required("Organization is required"),
+      customOrganization: Yup.string().when("selectOrganization", {
+        is: "Other",
+        then: (schema) => schema.required("Custom organization is required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+      nameOfDoctor: Yup.string().required("Individual name is required"),
+      customDoctor: Yup.string().when("nameOfDoctor", {
+        is: "Other",
+        then: (schema) => schema.required("Custom individual name is required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+      productToBePromoted: Yup.array()
+        .min(1, "At least one product is required")
+        .required("Product is required"),
+      callObjective: Yup.string().required("Call objective is required"),
+    });
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -97,11 +318,27 @@ const CreateMonthlyPlanning = () => {
       customOrganization: "",
       nameOfDoctor: "",
       customDoctor: "",
-      productToBePromoted: "",
+      productToBePromoted: [],
       callObjective: "",
     },
-    validationSchema,
-    onSubmit: async (values, { resetForm }) => {
+    validationSchema: getValidationSchema(),
+    onSubmit: async (values, { resetForm, setSubmitting }) => {
+      // Validate time conflict before submission
+      if (values.createPlanningForDate && oneMonthPlanningList?.data) {
+        const conflict = validatePlanningTimeConflict(
+          values.createPlanningForDate,
+          oneMonthPlanningList.data,
+          values.selectOrganization,
+          editingEntryId
+        );
+        
+        if (conflict) {
+          formik.setFieldError("createPlanningForDate", conflict.message);
+          setSubmitting(false);
+          return;
+        }
+      }
+
       const entryToSave = { ...values };
       if (
         entryToSave.selectOrganization === "Other" &&
@@ -113,10 +350,12 @@ const CreateMonthlyPlanning = () => {
         entryToSave.nameOfDoctor = entryToSave.customDoctor;
       }
 
+      // Convert local datetime to UTC ISO string for API
+      const utcDateTime = convertToUTCISO(entryToSave.createPlanningForDate);
+
       if (editingEntryId) {
         const payload = {
-          // id: editingEntryId,
-          createPlanningForDate: entryToSave.createPlanningForDate,
+          createPlanningForDate: utcDateTime,
           selectOrganization: entryToSave.selectOrganization,
           nameOfDoctor: entryToSave.nameOfDoctor,
           productToBePromoted: entryToSave.productToBePromoted,
@@ -132,14 +371,28 @@ const CreateMonthlyPlanning = () => {
             "",
             "",
             "",
-            formik.values.createPlanningForDate,
+            utcDateTime,
           );
           setEditingEntryId(null);
-          resetForm();
+          // Reset all form fields except the date
+          resetForm({
+            values: {
+              createPlanningForDate: values.createPlanningForDate,
+              selectOrganization: "",
+              customOrganization: "",
+              nameOfDoctor: "",
+              customDoctor: "",
+              productToBePromoted: [],
+              callObjective: "",
+            }
+          });
+          // Clear any validation errors
+          formik.setErrors({});
+          formik.setTouched({});
         }
       } else {
         const payload = {
-          createPlanningForDate: entryToSave.createPlanningForDate,
+          createPlanningForDate: utcDateTime,
           selectOrganization: entryToSave.selectOrganization,
           nameOfDoctor: entryToSave.nameOfDoctor,
           productToBePromoted: entryToSave.productToBePromoted,
@@ -155,20 +408,76 @@ const CreateMonthlyPlanning = () => {
             "",
             "",
             "",
-            formik.values.createPlanningForDate,
+            utcDateTime,
           );
-          resetForm();
+          // Reset all form fields except the date
+          resetForm({
+            values: {
+              createPlanningForDate: values.createPlanningForDate,
+              selectOrganization: "",
+              customOrganization: "",
+              nameOfDoctor: "",
+              customDoctor: "",
+              productToBePromoted: [],
+              callObjective: "",
+            }
+          });
+          // Clear any validation errors
+          formik.setErrors({});
+          formik.setTouched({});
         }
       }
+      setSubmitting(false);
     },
   });
 
+  // Watch for date changes and trigger API call
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (formik.values.createPlanningForDate && !editingEntryId) {
+        setCurrentSelectedDate(formik.values.createPlanningForDate);
+        const utcDateTime = convertToUTCISO(formik.values.createPlanningForDate);
+        fetchOneMonthPlanningList(
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          utcDateTime
+        );
+        setSearchTriggered(true);
+        setShowTable(true);
+      }
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [formik.values.createPlanningForDate, editingEntryId]);
+
+  // Update existing plans when data changes
+  useEffect(() => {
+    if (formik.values.createPlanningForDate && oneMonthPlanningList?.data) {
+      const plans = getExistingPlansForDate(
+        formik.values.createPlanningForDate,
+        oneMonthPlanningList.data
+      );
+      setExistingPlans(plans);
+    }
+  }, [formik.values.createPlanningForDate, oneMonthPlanningList?.data]);
+
+  // Revalidate when organization or planning list changes
+  useEffect(() => {
+    if (formik.values.createPlanningForDate && formik.values.selectOrganization) {
+      formik.validateField("createPlanningForDate");
+    }
+  }, [oneMonthPlanningList?.data, formik.values.selectOrganization, editingEntryId]);
+
   const handleSearch = () => {
-    if (formik.values.createPlanningForDate) {
+    if (formik.values.createPlanningForDate && !editingEntryId) {
       setSearchTriggered(true);
       setShowTable(true);
       setEditingEntryId(null);
-      formik.resetForm();
+      const utcDateTime = convertToUTCISO(formik.values.createPlanningForDate);
       fetchOneMonthPlanningList(
         "",
         "",
@@ -176,7 +485,7 @@ const CreateMonthlyPlanning = () => {
         "",
         "",
         "",
-        formik.values.createPlanningForDate,
+        utcDateTime,
       );
     }
   };
@@ -198,23 +507,38 @@ const CreateMonthlyPlanning = () => {
   const handleClear = () => {
     formik.resetForm();
     setEditingEntryId(null);
+    setExistingPlans([]);
+    setCurrentSelectedDate("");
+    // Clear all form values
+    formik.setValues({
+      createPlanningForDate: "",
+      selectOrganization: "",
+      customOrganization: "",
+      nameOfDoctor: "",
+      customDoctor: "",
+      productToBePromoted: [],
+      callObjective: "",
+    });
+    formik.setErrors({});
+    formik.setTouched({});
   };
 
   const handleRemoveEntry = async (index) => {
     const entryToDelete = planningEntries[index];
     if (entryToDelete._id) {
-     const res = await deleteMonthlyPlanning(entryToDelete._id);
-     if (res) {
-          await fetchOneMonthPlanningList(
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            formik.values.createPlanningForDate,
-          );
-        }
+      const res = await deleteMonthlyPlanning(entryToDelete._id);
+      if (res) {
+        const utcDateTime = convertToUTCISO(formik.values.createPlanningForDate);
+        await fetchOneMonthPlanningList(
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          utcDateTime,
+        );
+      }
     }
   };
 
@@ -223,6 +547,8 @@ const CreateMonthlyPlanning = () => {
     setShowTable(false);
     setSearchTriggered(false);
     setEditingEntryId(null);
+    setExistingPlans([]);
+    setCurrentSelectedDate("");
     formik.resetForm();
     resetOneMonthPlanningList();
     resetMonthlyPlanningDetails();
@@ -283,18 +609,18 @@ const CreateMonthlyPlanning = () => {
       (opt) => opt.value === entryToEdit.nameOfDoctor,
     );
 
-    let formattedDate = entryToEdit.createPlanningForDate;
-    if (formattedDate && !formattedDate.includes("T")) {
-      formattedDate = formattedDate.replace(" ", "T");
-    }
+    // Convert UTC to local datetime-local format
+    const localDateTime = convertUTCToLocalDateTime(entryToEdit.createPlanningForDate);
 
     formik.setValues({
-      createPlanningForDate: formattedDate || "",
+      createPlanningForDate: localDateTime,
       selectOrganization: orgExists ? entryToEdit.selectOrganization : "Other",
       customOrganization: orgExists ? "" : entryToEdit.selectOrganization,
       nameOfDoctor: docExists ? entryToEdit.nameOfDoctor : "Other",
       customDoctor: docExists ? "" : entryToEdit.nameOfDoctor,
-      productToBePromoted: entryToEdit.productToBePromoted || "",
+      productToBePromoted: Array.isArray(entryToEdit.productToBePromoted) 
+        ? entryToEdit.productToBePromoted 
+        : [entryToEdit.productToBePromoted],
       callObjective: entryToEdit.callObjective || "",
     });
   };
@@ -330,10 +656,32 @@ const CreateMonthlyPlanning = () => {
     return colors[index % colors.length];
   };
 
-  const getCurrentDateTime = () => {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    return now.toISOString().slice(0, 16);
+  // Format existing plans for display
+  const getExistingPlansDisplay = () => {
+    if (!existingPlans.length) return null;
+    
+    return (
+      <div className="mt-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800 mb-1">
+              Existing plans for this date:
+            </p>
+            <div className="space-y-1">
+              {existingPlans.map((plan, idx) => (
+                <div key={idx} className="text-xs text-amber-700">
+                  • {plan.formattedTime} - {plan.organization}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-amber-700 mt-2">
+              💡 Tip: Maintain at least 20 min gap for same organization, 40 min for different organizations
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -428,13 +776,17 @@ const CreateMonthlyPlanning = () => {
               <input
                 type="datetime-local"
                 name="createPlanningForDate"
-                min={getCurrentDateTime()}
+                min={getCurrentUTCDateTime()}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 value={formik.values.createPlanningForDate}
-                className="w-full rounded-xl border border-slate-200 p-2.5 text-sm transition-all duration-200 focus:outline-none focus:ring-2"
+                className={`w-full rounded-xl border p-2.5 text-sm transition-all duration-200 focus:outline-none focus:ring-2 ${
+                  formik.touched.createPlanningForDate && formik.errors.createPlanningForDate
+                    ? "border-red-500 focus:ring-red-200"
+                    : "border-slate-200 focus:ring-blue-200"
+                }`}
                 style={{
-                  borderColor: formik.values.createPlanningForDate
+                  borderColor: formik.values.createPlanningForDate && !formik.errors.createPlanningForDate
                     ? theme.primaryColor
                     : undefined,
                 }}
@@ -442,15 +794,17 @@ const CreateMonthlyPlanning = () => {
               />
               {formik.touched.createPlanningForDate &&
                 formik.errors.createPlanningForDate && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {formik.errors.createPlanningForDate}
-                  </p>
+                  <div className="mt-1 flex items-start gap-1 text-xs text-red-500">
+                    <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                    <span>{formik.errors.createPlanningForDate}</span>
+                  </div>
                 )}
               {editingEntryId && (
                 <p className="mt-1 text-xs text-amber-500">
                   Date cannot be changed while editing
                 </p>
               )}
+              {getExistingPlansDisplay()}
             </div>
 
             <div className="flex flex-col">
@@ -462,17 +816,22 @@ const CreateMonthlyPlanning = () => {
                 Organization
               </label>
               <Select
+                key={`org-select-${formik.values.selectOrganization}`}
                 isLoading={dropdownLoading}
                 options={organizationOptions}
                 value={organizationOptions.find(
                   (opt) => opt.value === formik.values.selectOrganization,
                 )}
-                onChange={(selected) =>
-                  formik.setFieldValue(
-                    "selectOrganization",
-                    selected?.value || "",
-                  )
-                }
+                onChange={(selected) => {
+                  formik.setFieldValue("selectOrganization", selected?.value || "");
+                  formik.setFieldValue("customOrganization", "");
+                  // Revalidate date when organization changes
+                  if (formik.values.createPlanningForDate) {
+                    setTimeout(() => {
+                      formik.validateField("createPlanningForDate");
+                    }, 100);
+                  }
+                }}
                 onBlur={() =>
                   formik.setFieldTouched("selectOrganization", true)
                 }
@@ -525,14 +884,16 @@ const CreateMonthlyPlanning = () => {
                 Individual Name
               </label>
               <Select
+                key={`doctor-select-${formik.values.nameOfDoctor}`}
                 isLoading={dropdownLoading}
                 options={doctorOptions}
                 value={doctorOptions.find(
                   (opt) => opt.value === formik.values.nameOfDoctor,
                 )}
-                onChange={(selected) =>
-                  formik.setFieldValue("nameOfDoctor", selected?.value || "")
-                }
+                onChange={(selected) => {
+                  formik.setFieldValue("nameOfDoctor", selected?.value || "");
+                  formik.setFieldValue("customDoctor", "");
+                }}
                 onBlur={() => formik.setFieldTouched("nameOfDoctor", true)}
                 isClearable
                 placeholder="Select Individual"
@@ -578,26 +939,49 @@ const CreateMonthlyPlanning = () => {
                   className="h-3.5 w-3.5"
                   style={{ color: theme.primaryColor }}
                 />
-                Product
+                Product (Multiselect)
               </label>
               <Select
+                key={`product-select-${formik.values.productToBePromoted?.length}`}
                 isLoading={dropdownLoading}
                 options={productOptions}
-                value={productOptions.find(
-                  (opt) => opt.value === formik.values.productToBePromoted,
+                value={productOptions.filter(opt => 
+                  formik.values.productToBePromoted?.includes(opt.value)
                 )}
                 onChange={(selected) =>
                   formik.setFieldValue(
                     "productToBePromoted",
-                    selected?.value || "",
+                    selected ? selected.map(opt => opt.value) : []
                   )
                 }
                 onBlur={() =>
                   formik.setFieldTouched("productToBePromoted", true)
                 }
+                isMulti
                 isClearable
-                placeholder="Select Product"
-                styles={customSelectStyles}
+                placeholder="Select Products"
+                styles={{
+                  ...customSelectStyles,
+                  multiValue: (base) => ({
+                    ...base,
+                    backgroundColor: theme.primaryColor + "20",
+                    borderRadius: "8px",
+                  }),
+                  multiValueLabel: (base) => ({
+                    ...base,
+                    color: theme.primaryColor,
+                    fontWeight: 500,
+                  }),
+                  multiValueRemove: (base) => ({
+                    ...base,
+                    color: theme.primaryColor,
+                    "&:hover": {
+                      backgroundColor: theme.primaryColor,
+                      color: "white",
+                      borderRadius: "4px",
+                    },
+                  }),
+                }}
                 classNamePrefix="react-select"
               />
               {formik.touched.productToBePromoted &&
@@ -617,6 +1001,7 @@ const CreateMonthlyPlanning = () => {
                 Call Objective
               </label>
               <Select
+                key={`objective-select-${formik.values.callObjective}`}
                 options={callObjectiveOptions}
                 value={callObjectiveOptions.find(
                   (opt) => opt.value === formik.values.callObjective,
@@ -671,6 +1056,7 @@ const CreateMonthlyPlanning = () => {
               }
               onClick={formik.handleSubmit}
               loading={submitLoading}
+              disabled={!!formik.errors.createPlanningForDate}
             />
           </div>
         </div>
@@ -747,59 +1133,59 @@ const CreateMonthlyPlanning = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {(loading || submitLoading) && (
-                    <div className="w-full bg-white flex items-center justify-center">
-                      <LoaderSpinner />
-                    </div>
+                    <tr>
+                      <td colSpan="6" className="text-center py-8">
+                        <LoaderSpinner />
+                      </td>
+                    </tr>
                   )}
-                  {planningEntries.map((entry, index) => (
+                  {!loading && !submitLoading && planningEntries.map((entry, index) => (
                     <tr
                       key={entry._id || index}
                       className={`transition-all duration-200 hover:bg-slate-50/50 group ${editingEntryId === entry._id ? "bg-blue-50" : ""}`}
-                      onMouseEnter={() => setHoveredRow(index)}
-                      onMouseLeave={() => setHoveredRow(null)}
                     >
                       <td className="px-6 py-4 text-sm text-slate-700 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <div
                             className={`h-2 w-2 rounded-full ${getStatusColor(index)}`}
                           />
-                          {new Date(entry.createPlanningForDate).toLocaleString(
-                            "en-GB",
-                            {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              hour12: false,
-                            },
-                          )}
+                          {formatDateTimeLocal(entry.createPlanningForDate)}
                         </div>
-                      </td>
+                       </td>
                       <td className="px-6 py-4 text-sm text-slate-700">
                         <div className="flex items-center gap-2">
                           <Building2 className="h-3.5 w-3.5 text-slate-400" />
                           {entry.selectOrganization}
                         </div>
-                      </td>
+                       </td>
                       <td className="px-6 py-4 text-sm text-slate-700">
                         <div className="flex items-center gap-2">
                           <User className="h-3.5 w-3.5 text-slate-400" />
                           {entry.nameOfDoctor}
                         </div>
-                      </td>
+                       </td>
                       <td className="px-6 py-4 text-sm text-slate-700">
-                        <div className="flex items-center gap-2">
-                          <Pill className="h-3.5 w-3.5 text-slate-400" />
-                          {entry.productToBePromoted}
+                        <div className="flex flex-wrap gap-1">
+                          {(Array.isArray(entry.productToBePromoted) 
+                            ? entry.productToBePromoted 
+                            : [entry.productToBePromoted]
+                          ).map((product, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700"
+                            >
+                              <Pill className="h-2.5 w-2.5" />
+                              {product}
+                            </span>
+                          ))}
                         </div>
-                      </td>
+                       </td>
                       <td className="px-6 py-4 text-sm text-slate-700">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
                           <Target className="h-3 w-3" />
                           {entry.callObjective}
                         </span>
-                      </td>
+                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex justify-center items-center gap-1">
                           <button
@@ -819,7 +1205,7 @@ const CreateMonthlyPlanning = () => {
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
-                      </td>
+                       </td>
                     </tr>
                   ))}
                 </tbody>

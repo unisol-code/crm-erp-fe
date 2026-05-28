@@ -39,6 +39,7 @@ import {
   PreviewMonthlyPlanning,
   ViewMonthlyPlanningDetails,
   UpdateMonthlyPlanning,
+  ViewMonthWisePlanning,
 } from "./pages/modules/salesExecutive/customerVisitPlan/montlyPlanning/index";
 
 import {
@@ -557,7 +558,18 @@ function App() {
             }
           />
           <Route
-            path="/sales-executive/monthly-planning/view-monthly-planning/:month/:year"
+            path="/sales-executive/monthly-planning/view-month-wise/:month/:year"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <ViewMonthWisePlanning />
+              </SalesExecutiveLayout>
+            }
+          />
+          <Route
+            path="/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/:date"
             element={
               <SalesExecutiveLayout
                 activeTab={activeTab}
@@ -568,7 +580,7 @@ function App() {
             }
           />
           <Route
-            path="/sales-executive/monthly-planning/view-monthly-planning/:month/:year/view-monthly-planning-details/:id"
+            path="/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/:id"
             element={
               <SalesExecutiveLayout
                 activeTab={activeTab}

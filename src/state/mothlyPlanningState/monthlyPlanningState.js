@@ -1,27 +1,12 @@
 import { atom } from "recoil";
-import { recoilPersist } from "recoil-persist";
+import { createPersistedAtom } from "../recoilConfig";
 
-const { persistAtom } = recoilPersist();
+export const monthlyPlanningListStateAtom = atom(createPersistedAtom("monthlyPlanningListState", []));
 
-export const monthlyPlanningListStateAtom = atom({
-  key: "monthlyPlanningListState",
-  default: [],
-  effects_UNSTABLE: [persistAtom], 
-});
-export const oneMonthPlanningStateAtom = atom({
-    key:"oneMonthPlanningState",
-    default: [],
-    effects_UNSTABLE: [persistAtom],
-})
+export const oneMonthPlanningStateAtom = atom(createPersistedAtom("oneMonthPlanningState", []));
 
-export const monthlyPlanningDetailsStateAtom = atom({
-  key:"monthlyPlanningDetailsState",
-  default:[],
-  effects_UNSTABLE:[persistAtom]
-})
+export const monthlyPlanningDetailsStateAtom = atom(createPersistedAtom("monthlyPlanningDetailsState", []));
 
-export const monthlyPlanningPreviewAtom = atom({
-  key:"monthlyPlanningPreviewState",
-  default:[],
-  effects_UNSTABLE:[persistAtom]
-})
+export const monthlyPlanningPreviewAtom = atom(createPersistedAtom("monthlyPlanningPreviewState", []));
+
+export const monthWisePlanningStateAtom = atom(createPersistedAtom("monthWisePlanningState", []));
