@@ -3,7 +3,7 @@ import { useState } from "react";
 import useFetch from "../../useFetch";
 import conf from "../../../config/index";
 import { toast } from "react-toastify";
-import { monthlyPlanningDetailsStateAtom, monthlyPlanningListStateAtom, oneMonthPlanningStateAtom } from "../../../state/mothlyPlanningState/monthlyPlanningState";
+import { monthlyPlanningDetailsStateAtom, monthlyPlanningListStateAtom, monthWisePlanningStateAtom, oneMonthPlanningStateAtom } from "../../../state/mothlyPlanningState/monthlyPlanningState";
 import Swal from "sweetalert2";
 import { confirmAlert } from "../../../utils/alertToast";
 
@@ -13,6 +13,7 @@ const useMonthlyPlanning = () => {
     const [monthlyPlanningList, setMonthlyPlanningList] = useRecoilState(monthlyPlanningListStateAtom);
     const [oneMonthPlanningList, setOneMonthPlanningList] = useRecoilState(oneMonthPlanningStateAtom);
     const [monthlyPlanningDetails, setMonthlyPlanningDetails] = useRecoilState(monthlyPlanningDetailsStateAtom)
+    const [monthWisePlanning, setMonthWisePlanning] = useRecoilState(monthWisePlanningStateAtom);
 
     const fetchMonthlyPlanningList = async (page, limit, fromDate, toDate) => {
         setLoading(true);
@@ -27,6 +28,29 @@ const useMonthlyPlanning = () => {
         } catch (err) {
             console.error("Error while fetching monthly planning list:", err);
             toast.error("Failed to fetch monthly planning list");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchMonthWisePlanning = async (page, limit, month, year) => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            if (page) params.append("page", page);
+            if (limit) params.append("limit", limit);
+            if (month) params.append("month", month);
+            if (year) params.append("year", year);
+            const res = await fetchData({
+                method: "GET",
+                url: `${conf.apiBaseUrl}planning/get-allmonthlyplanningsbymonth-summary?${params.toString()}`
+            });
+            if (res) {
+                setMonthWisePlanning(res);
+            }
+        } catch (err) {
+            console.error("Error while fetching month-wise planning:", err);
+            toast.error("Failed to fetch month-wise planning");
         } finally {
             setLoading(false);
         }
@@ -103,7 +127,7 @@ const useMonthlyPlanning = () => {
             }
         } catch (error) {
             console.error("Error creating monthly planning:", error);
-            toast.error(error.response?.data?.error);
+            toast.error(error.response?.data?.message);
         } finally {
             setLoading(false);
         }
@@ -125,7 +149,7 @@ const useMonthlyPlanning = () => {
             }
         } catch (error) {
             console.error("Error updating monthly planning:", error);
-            toast.error(error.response?.data?.error);
+            toast.error(error.response?.data?.message);
         } finally {
             setLoading(false);
         }
@@ -173,7 +197,9 @@ const useMonthlyPlanning = () => {
         resetMonthlyPlanningDetails,
         resetOneMonthPlanningList,
         deleteMonthlyPlanning,
-        updateMonthlyPlanning
+        updateMonthlyPlanning,
+        fetchMonthWisePlanning,
+        monthWisePlanning
     };
 };
 

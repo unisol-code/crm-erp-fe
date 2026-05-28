@@ -26,7 +26,7 @@ const SalesExecutiveSidebar = ({ collapsed, setCollapsed }) => {
   const [logoutClicked, setLogoutClicked] = useState(false);
   const { theme } = useTheme();
   const { pathname } = useLocation();
-  console.log(pathname);
+  // console.log(pathname);
   const navigate = useNavigate();
   const setUserInfo = useSetRecoilState(userAuthState);
   const { resetSuperAdmin, resetEmployee } = useSignIn();
@@ -179,7 +179,7 @@ const SalesExecutiveSidebar = ({ collapsed, setCollapsed }) => {
             const isExpanded = expandedItems.includes(item.id);
 
             const checkActive = (subs) => {
-              console.log(subs);
+              // console.log(subs);
               if (!subs) return false;
               return subs.some((sub) => {
                 const isActive =
@@ -192,7 +192,7 @@ const SalesExecutiveSidebar = ({ collapsed, setCollapsed }) => {
 
             const isMainActive =
               checkActive(item.subItems) || pathname === item.path;
-            console.log(isMainActive);
+            // console.log(isMainActive);
 
             return (
               <SidebarItem

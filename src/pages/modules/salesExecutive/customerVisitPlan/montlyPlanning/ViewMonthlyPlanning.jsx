@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { TiEye } from "react-icons/ti";
+import { TiEye, TiTrash } from "react-icons/ti";
 import { FiFilter } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
 import Pagination from "../../../../../components/uiComponents/pagination/Pagination.jsx";
@@ -20,9 +20,11 @@ const ViewMonthlyPlanning = () => {
     oneMonthPlanningList,
     loading,
     resetMonthlyPlanningDetails,
+    deleteMonthlyPlanning,
   } = useMonthlyPlanning();
-  const { month, year } = useParams();
-  console.log("Month:", month, "Year:", year);
+  // const { month, year } = useParams();
+  const { date } = useParams();
+  console.log("Date:", date);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [showFilter, setShowFilter] = useState(false);
@@ -57,10 +59,11 @@ const ViewMonthlyPlanning = () => {
     fetchOneMonthPlanningList(
       page,
       limit,
-      month,
-      year,
+      "",
+      "",
       selectedPerson,
       selectedOrganization,
+      date
     );
   }, [page, limit]);
 
@@ -73,19 +76,19 @@ const ViewMonthlyPlanning = () => {
       "Sr. No.": index + 1,
       Date: entry.date
         ? (() => {
-            const d = new Date(entry.date);
-            const datePart = d.toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            });
-            const timePart = d.toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            });
-            return `${datePart}, ${timePart}`;
-          })()
+          const d = new Date(entry.date);
+          const datePart = d.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          });
+          const timePart = d.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          });
+          return `${datePart}, ${timePart}`;
+        })()
         : "-",
       "Organization Name": entry.organizationName || "-",
       "Person Name": entry.personName || "-",
@@ -118,8 +121,23 @@ const ViewMonthlyPlanning = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Monthly Planning");
 
-    XLSX.writeFile(wb, `Monthly_Planning_${month}_${year}.xlsx`);
+    XLSX.writeFile(wb, `Monthly_Planning_${date}.xlsx`);
   };
+
+  const onDelete = async (id) => {
+   const isDeleted = await deleteMonthlyPlanning(id);
+      if(isDeleted) {
+        fetchOneMonthPlanningList(
+          page,
+          limit,
+          "",
+          "",
+          selectedPerson,
+          selectedOrganization,
+          date
+        );
+      }
+    };
 
   return (
     <div className="w-full min-h-screen">
@@ -131,15 +149,15 @@ const ViewMonthlyPlanning = () => {
             text: "Monthly Planning",
             href: "/sales-executive/monthly-planning",
           },
-          { text: "View Monthly Planning" },
+          { text: `View ${oneMonthPlanningList?.month} ${oneMonthPlanningList?.year} Planning`, href: `/sales-executive/monthly-planning/view-month-wise/${oneMonthPlanningList?.month}/${oneMonthPlanningList?.year}` },
+          { text: `View ${date} Planning` },
         ]}
       />
-
       <div className="p-4 bg-white rounded-2xl">
         <div className="flex items-center justify-between mb-4 relative">
           <h2 className="text-lg font-semibold text-gray-800">
-            {month && year
-              ? `${month} ${year} Planning List`
+            {date
+              ? `Planning List for ${date}`
               : "Monthly Planning List"}
           </h2>
 
@@ -247,8 +265,7 @@ const ViewMonthlyPlanning = () => {
                       fetchOneMonthPlanningList(
                         1,
                         limit,
-                        month,
-                        year,
+                        date,
                         selectedPerson,
                         selectedOrganization,
                       );
@@ -343,11 +360,21 @@ const ViewMonthlyPlanning = () => {
                             onClick={() => {
                               resetMonthlyPlanningDetails();
                               navigate(
-                                `/sales-executive/monthly-planning/view-monthly-planning/${month}/${year}/view-monthly-planning-details/${entry._id}`,
+                                `/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/${entry._id}`,
                               );
                             }}
                           >
                             <TiEye
+                              size={18}
+                              style={{ color: theme.primaryColor }}
+                            />
+                          </button>
+                          {/* delete button */}
+                          <button
+                            className="ml-2 text-black hover:bg-red-200 rounded-full w-8 h-8 flex items-center justify-center"
+                            onClick={() => onDelete(entry._id)}
+                          >
+                            <TiTrash
                               size={18}
                               style={{ color: theme.primaryColor }}
                             />
