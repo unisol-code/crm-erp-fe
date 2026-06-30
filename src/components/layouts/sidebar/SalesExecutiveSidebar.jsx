@@ -72,6 +72,10 @@ const SalesExecutiveSidebar = ({ collapsed, setCollapsed }) => {
         { id: 41, name: "Sales Report", path: "/sales-executive/sales-report" },
       ],
     },
+    // {
+    //   // id: 5,
+    //   // name : ""
+    // }
   ];
 
   const handleToggle = (id, subItems = [], parentPath = []) => {

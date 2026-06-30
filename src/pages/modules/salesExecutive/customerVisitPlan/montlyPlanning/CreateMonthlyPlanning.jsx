@@ -261,22 +261,22 @@ const CreateMonthlyPlanning = () => {
     return Yup.object({
       createPlanningForDate: Yup.string()
         .required("Date and time is required")
-        .test("past-date", "Past date and time is not allowed", function(value) {
-          if (!value) return true;
-          const [datePart, timePart] = value.split('T');
-          const [year, month, day] = datePart.split('-');
-          const [hours, minutes] = timePart.split(':');
+        // .test("past-date", "Past date and time is not allowed", function(value) {
+        //   if (!value) return true;
+        //   const [datePart, timePart] = value.split('T');
+        //   const [year, month, day] = datePart.split('-');
+        //   const [hours, minutes] = timePart.split(':');
           
-          const selectedUTC = Date.UTC(
-            parseInt(year),
-            parseInt(month) - 1,
-            parseInt(day),
-            parseInt(hours),
-            parseInt(minutes)
-          );
-          const nowUTC = Date.now();
-          return selectedUTC >= nowUTC;
-        })
+        //   const selectedUTC = Date.UTC(
+        //     parseInt(year),
+        //     parseInt(month) - 1,
+        //     parseInt(day),
+        //     parseInt(hours),
+        //     parseInt(minutes)
+        //   );
+        //   const nowUTC = Date.now();
+        //   return selectedUTC >= nowUTC;
+        // })
         .test("planning-conflict", "Planning conflict", function(value) {
           if (!value || !oneMonthPlanningList?.data) return true;
           
@@ -776,7 +776,7 @@ const CreateMonthlyPlanning = () => {
               <input
                 type="datetime-local"
                 name="createPlanningForDate"
-                min={getCurrentUTCDateTime()}
+                // min={getCurrentUTCDateTime()}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 value={formik.values.createPlanningForDate}
