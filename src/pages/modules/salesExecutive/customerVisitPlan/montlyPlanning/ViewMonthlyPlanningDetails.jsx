@@ -451,7 +451,7 @@ function ViewMonthlyPlanningDetails() {
 
         <div className="bg-white rounded-b-2xl shadow-lg overflow-hidden">
           {/* Month Expired Warning */}
-          {isPlanningMonthExpired && (
+          {/* {isPlanningMonthExpired && (
             <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 m-6 rounded-lg">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -460,7 +460,7 @@ function ViewMonthlyPlanningDetails() {
                 <span className="font-medium">This planning month ({planningMonth}) has expired. Editing is no longer allowed.</span>
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Basic Info Section */}
           <div className="p-6 border-b border-gray-200">
@@ -485,7 +485,7 @@ function ViewMonthlyPlanningDetails() {
           </div>
 
           {/* Meeting Form Section */}
-          {!isPlanningMonthExpired ? (
+          {/* {!isPlanningMonthExpired ? ( */}
             <form onSubmit={formik.handleSubmit} className="p-6 space-y-8">
               {/* Visit Date & Meeting Status */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl">
@@ -500,7 +500,7 @@ function ViewMonthlyPlanningDetails() {
                       name="visitDate"
                       value={formik.values.visitDate}
                       onChange={(val) => formik.setFieldValue("visitDate", val)}
-                      disabled={!canEditMeetingDetails}
+                      // disabled={!canEditMeetingDetails}
                     />
                     {formik.touched.visitDate && formik.errors.visitDate && (
                       <p className="text-red-500 text-xs mt-1">{formik.errors.visitDate}</p>
@@ -519,7 +519,7 @@ function ViewMonthlyPlanningDetails() {
                         }
                       }}
                       options={meetingStatusOptions}
-                      disabled={!canEditMeetingDetails}
+                      // disabled={!canEditMeetingDetails}
                     />
                     {formik.touched.meetingStatus && formik.errors.meetingStatus && (
                       <p className="text-red-500 text-xs mt-1">{formik.errors.meetingStatus}</p>
@@ -536,7 +536,7 @@ function ViewMonthlyPlanningDetails() {
                         name="postponedDate"
                         value={formik.values.postponedDate}
                         onChange={(val) => formik.setFieldValue("postponedDate", val)}
-                        disabled={!canEditMeetingDetails}
+                        // disabled={!canEditMeetingDetails}
                         className="md:w-1/2"
                       />
                       {formik.touched.postponedDate && formik.errors.postponedDate && (
@@ -550,7 +550,7 @@ function ViewMonthlyPlanningDetails() {
                         value={formik.values.postponedRemark}
                         onChange={(val) => formik.setFieldValue("postponedRemark", val)}
                         placeholder="Enter remarks..."
-                        disabled={!canEditMeetingDetails}
+                        // disabled={!canEditMeetingDetails}
                         className="md:w-1/2"
                       />
                       {formik.touched.postponedRemark && formik.errors.postponedRemark && (
@@ -584,7 +584,7 @@ function ViewMonthlyPlanningDetails() {
                                 value={opt}
                                 checked={formik.values.productFeatureBenefitExplainedStatus === opt}
                                 onChange={formik.handleChange}
-                                disabled={!canEditMeetingDetails}
+                                // disabled={!canEditMeetingDetails}
                                 className="w-4 h-4 text-blue-600 disabled:opacity-50"
                               />
                               <span className="text-sm capitalize">{opt}</span>
@@ -597,7 +597,7 @@ function ViewMonthlyPlanningDetails() {
                             value={formik.values.productFeatureBenefitExplainedText}
                             onChange={(val) => formik.setFieldValue("productFeatureBenefitExplainedText", val)}
                             placeholder="Additional details..."
-                            disabled={!canEditMeetingDetails}
+                            // disabled={!canEditMeetingDetails}
                           />
                         </div>
                       </div>
@@ -609,7 +609,7 @@ function ViewMonthlyPlanningDetails() {
                         options={["yes", "no"]}
                         value={formik.values.isProductDryDemoDone}
                         onChange={(val) => formik.setFieldValue("isProductDryDemoDone", val)}
-                        disabled={!canEditMeetingDetails}
+                        // disabled={!canEditMeetingDetails}
                       />
                       <div className="ml-4 pl-4">
                         <TextInput
@@ -617,7 +617,7 @@ function ViewMonthlyPlanningDetails() {
                           value={formik.values.isProductDryDemoDoneText}
                           onChange={(val) => formik.setFieldValue("isProductDryDemoDoneText", val)}
                           placeholder="Additional details..."
-                          disabled={!canEditMeetingDetails}
+                          // disabled={!canEditMeetingDetails}
                         />
                       </div>
 
@@ -628,7 +628,7 @@ function ViewMonthlyPlanningDetails() {
                         options={["yes", "no"]}
                         value={formik.values.isProductLiveDemoAttended}
                         onChange={(val) => formik.setFieldValue("isProductLiveDemoAttended", val)}
-                        disabled={!canEditMeetingDetails}
+                        // disabled={!canEditMeetingDetails}
                       />
                       <div className="ml-4 pl-4">
                         <TextInput
@@ -636,7 +636,7 @@ function ViewMonthlyPlanningDetails() {
                           value={formik.values.isProductLiveDemoAttendedText}
                           onChange={(val) => formik.setFieldValue("isProductLiveDemoAttendedText", val)}
                           placeholder="Additional details..."
-                          disabled={!canEditMeetingDetails}
+                          // disabled={!canEditMeetingDetails}
                         />
                       </div>
 
@@ -654,7 +654,7 @@ function ViewMonthlyPlanningDetails() {
                                 value={opt}
                                 checked={formik.values.doctorQuestionStatus === opt}
                                 onChange={formik.handleChange}
-                                disabled={!canEditMeetingDetails}
+                                // disabled={!canEditMeetingDetails}
                                 className="w-4 h-4 text-blue-600 disabled:opacity-50"
                               />
                               <span className="text-sm capitalize">{opt}</span>
@@ -667,7 +667,7 @@ function ViewMonthlyPlanningDetails() {
                             value={formik.values.doctorQuestionText}
                             onChange={(val) => formik.setFieldValue("doctorQuestionText", val)}
                             placeholder="Question details..."
-                            disabled={!canEditMeetingDetails}
+                            // disabled={!canEditMeetingDetails}
                           />
                         </div>
                       </div>
@@ -699,7 +699,7 @@ function ViewMonthlyPlanningDetails() {
                             value={formik.values.concernText}
                             onChange={(val) => formik.setFieldValue("concernText", val)}
                             placeholder="Concern details..."
-                            disabled={!canEditMeetingDetails}
+                            // disabled={!canEditMeetingDetails}
                           />
                         </div>
                       </div>
@@ -711,7 +711,7 @@ function ViewMonthlyPlanningDetails() {
                         options={["yes", "no"]}
                         value={formik.values.wantToBuy}
                         onChange={(val) => formik.setFieldValue("wantToBuy", val)}
-                        disabled={!canEditMeetingDetails}
+                        // disabled={!canEditMeetingDetails}
                       />
 
                       {/* Conditional fields for Want to Buy = Yes */}
@@ -723,7 +723,7 @@ function ViewMonthlyPlanningDetails() {
                               name="expectedSalesClosureDate"
                               value={formik.values.expectedSalesClosureDate}
                               onChange={(val) => formik.setFieldValue("expectedSalesClosureDate", val)}
-                              disabled={!canEditMeetingDetails}
+                              // disabled={!canEditMeetingDetails}
                             />
                             {formik.touched.expectedSalesClosureDate && formik.errors.expectedSalesClosureDate && (
                               <p className="text-red-500 text-xs mt-1">{formik.errors.expectedSalesClosureDate}</p>
@@ -737,7 +737,7 @@ function ViewMonthlyPlanningDetails() {
                               onChange={(val) => formik.setFieldValue("remark", val)}
                               placeholder="Type the Peoples who are critical for the product"
                               rows={2}
-                              disabled={!canEditMeetingDetails}
+                              // disabled={!canEditMeetingDetails}
                             />
                           </div>
                         </div>
@@ -782,7 +782,7 @@ function ViewMonthlyPlanningDetails() {
                               }
                             }}
                             options={salesStatusOptions}
-                            disabled={!canEditMeetingDetails}
+                            // disabled={!canEditMeetingDetails}
                           />
                         </div>
                       </div>
@@ -803,7 +803,7 @@ function ViewMonthlyPlanningDetails() {
                             name="nextMeetingDateTime"
                             value={formik.values.nextMeetingDateTime}
                             onChange={(val) => formik.setFieldValue("nextMeetingDateTime", val)}
-                            disabled={!canEditMeetingDetails}
+                            // disabled={!canEditMeetingDetails}
                           />
                           {formik.touched.nextMeetingDateTime && formik.errors.nextMeetingDateTime && (
                             <p className="text-red-500 text-xs mt-1">{formik.errors.nextMeetingDateTime}</p>
@@ -816,7 +816,7 @@ function ViewMonthlyPlanningDetails() {
                             value={formik.values.nextCallObjective}
                             onChange={(val) => formik.setFieldValue("nextCallObjective", val)}
                             placeholder="Enter next call objective"
-                            disabled={!canEditMeetingDetails}
+                            // disabled={!canEditMeetingDetails}
                           />
                           {formik.touched.nextCallObjective && formik.errors.nextCallObjective && (
                             <p className="text-red-500 text-xs mt-1">{formik.errors.nextCallObjective}</p>
@@ -833,7 +833,7 @@ function ViewMonthlyPlanningDetails() {
                                   value={opt}
                                   checked={formik.values.quotationSubmitted === opt}
                                   onChange={formik.handleChange}
-                                  disabled={!canEditMeetingDetails}
+                                  // disabled={!canEditMeetingDetails}
                                   className="w-4 h-4 text-purple-600 disabled:opacity-50"
                                 />
                                 <span className="text-sm capitalize">{opt}</span>
@@ -851,7 +851,7 @@ function ViewMonthlyPlanningDetails() {
                               value={formik.values.quotationNumber}
                               onChange={(val) => formik.setFieldValue("quotationNumber", val)}
                               placeholder="Enter quotation number"
-                              disabled={!canEditMeetingDetails}
+                              // disabled={!canEditMeetingDetails}
                             />
                             {formik.touched.quotationNumber && formik.errors.quotationNumber && (
                               <p className="text-red-500 text-xs mt-1">{formik.errors.quotationNumber}</p>
@@ -866,7 +866,7 @@ function ViewMonthlyPlanningDetails() {
                             value={formik.values.requiredSupport}
                             onChange={(val) => formik.setFieldValue("requiredSupport", val)}
                             placeholder="Any support required?"
-                            disabled={!canEditMeetingDetails}
+                            // disabled={!canEditMeetingDetails}
                           />
                         </div>
                         <div className="md:col-span-2">
@@ -877,7 +877,7 @@ function ViewMonthlyPlanningDetails() {
                             onChange={(val) => formik.setFieldValue("comments", val)}
                             placeholder="Additional comments..."
                             rows={3}
-                            disabled={!canEditMeetingDetails}
+                            // disabled={!canEditMeetingDetails}
                           />
                         </div>
                       </div>
@@ -898,7 +898,7 @@ function ViewMonthlyPlanningDetails() {
                             name="orderDate"
                             value={formik.values.orderDate}
                             onChange={(val) => formik.setFieldValue("orderDate", val)}
-                            disabled={!canEditMeetingDetails}
+                            // disabled={!canEditMeetingDetails}
                           />
                           {formik.touched.orderDate && formik.errors.orderDate && (
                             <p className="text-red-500 text-xs mt-1">{formik.errors.orderDate}</p>
@@ -911,7 +911,7 @@ function ViewMonthlyPlanningDetails() {
                             value={formik.values.purchaseNumber}
                             onChange={(val) => formik.setFieldValue("purchaseNumber", val)}
                             placeholder="Enter purchase number"
-                            disabled={!canEditMeetingDetails}
+                            // disabled={!canEditMeetingDetails}
                           />
                           {formik.touched.purchaseNumber && formik.errors.purchaseNumber && (
                             <p className="text-red-500 text-xs mt-1">{formik.errors.purchaseNumber}</p>
@@ -927,27 +927,27 @@ function ViewMonthlyPlanningDetails() {
               <div className="flex justify-end pt-4 border-t border-gray-200">
                 <Button
                   type="submit"
-                  disabled={!canEditMeetingDetails}
+                  // disabled={!canEditMeetingDetails}
                   variant={1}
                   text="Save Details"
                 />
               </div>
             </form>
-          ) : (
-            <div className="p-8 text-center bg-yellow-50 m-6 rounded-lg">
-              <div className="text-yellow-700">
-                <svg className="w-12 h-12 mx-auto mb-3 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-lg font-medium">
-                  Meeting form is only available during the planning month ({planningMonth})
-                </p>
-                <p className="text-sm mt-1">
-                  Please check back during the planning period to update meeting details.
-                </p>
-              </div>
-            </div>
-          )}
+          {/* // ) : (
+          //   <div className="p-8 text-center bg-yellow-50 m-6 rounded-lg">
+          //     <div className="text-yellow-700">
+          //       <svg className="w-12 h-12 mx-auto mb-3 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          //         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          //       </svg>
+          //       <p className="text-lg font-medium">
+          //         Meeting form is only available during the planning month ({planningMonth})
+          //       </p>
+          //       <p className="text-sm mt-1">
+          //         Please check back during the planning period to update meeting details.
+          //       </p>
+          //     </div>
+          //   </div>
+          // )} */}
         </div>
       </div>
     </div>
