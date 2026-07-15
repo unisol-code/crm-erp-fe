@@ -567,14 +567,19 @@ const CreateMonthlyPlanning = () => {
         return { label: item, value: item };
       }
       return {
-        label: item[labelKey] || item.fullName,
-        value: item[valueKey] || item.fullName,
+        label: item[labelKey] || item.fullName || item.hospitalName,
+        value: item[valueKey] || item.fullName || item.hospitalName,
       };
     });
   };
 
   const organizationOptions = [
-    ...formatOptions(organizationList?.data, true),
+    ...(organizationList?.data?.map((item) => ({
+      label: item.uniqueCode
+        ? `${item.hospitalName} (${item.uniqueCode})`
+        : item.hospitalName,
+      value: item.hospitalName,
+    })) || []),
     { label: "Other", value: "Other" },
   ];
   const doctorOptions = [
@@ -602,7 +607,7 @@ const CreateMonthlyPlanning = () => {
       await fetchMonthlyPlanningDetailsById(entryToEdit._id);
     }
 
-    const orgExists = formatOptions(organizationList?.data, true).some(
+    const orgExists = organizationOptions.some(
       (opt) => opt.value === entryToEdit.selectOrganization,
     );
     const docExists = formatOptions(doctorList).some(
