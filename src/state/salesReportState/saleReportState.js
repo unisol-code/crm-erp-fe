@@ -13,3 +13,9 @@ export const salesReportIdAtom = atom({
   default: [],
   effects_UNSTABLE: [persistAtom],
 });
+
+export const employeeSalesReportIdAtom = atom({
+  key: "employeeSalesReportId",
+  default: [],
+  effects_UNSTABLE: [persistAtom],
+});

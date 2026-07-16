@@ -6,9 +6,11 @@ import useFetch from "../useFetch";
 import conf from "../../config/index";
 //State
 import {
+  employeeSalesReportIdAtom,
   saleReportAtom,
   salesReportIdAtom,
 } from "../../state/salesReportState/saleReportState";
+import { allEmployeeAtom } from "../../state/allEmployeeState/allEmployeeState";
 
 const useGetSalesReport = () => {
   const [fetchData] = useFetch();
@@ -16,6 +18,8 @@ const useGetSalesReport = () => {
   const [salesReportsFilter, setSalesReportsFilter] =
     useRecoilState(saleReportAtom);
   const [salesReportId, setSalesReportId] = useRecoilState(salesReportIdAtom);
+  const [allEmployee, setAllEmployee] = useRecoilState(allEmployeeAtom);
+  const [employeeSalesReportId, setEmployeeSalesReportId] = useRecoilState(employeeSalesReportIdAtom);
 
   const getSalesFilter = async (filterType, from, to) => {
     setLoading(true);
@@ -57,12 +61,52 @@ const useGetSalesReport = () => {
     }
   };
 
+  //ADMIN SALES EXECUTIVE EMPLOYEE LIST
+
+    const getEmployeeList = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}monthlyPlanning/getAllEmployees`,
+      });
+      if (res) {
+        setAllEmployee(res);
+      }
+    } catch (error) {
+      console.error("error while fetching employee list:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //   const getEmployeeSalesReportById = async (id) => {
+  //   setLoading(true);
+  //   try {
+  //     const resultId = await fetchData({
+  //       method: "GET",
+  //       url: `${conf.apiBaseUrl}monthlyPlanning/getWorkingDaysByMonthYear/${id}`,
+  //     });
+  //     if (resultId) {
+  //       setEmployeeSalesReportId(resultId);
+  //     }
+  //   } catch (error) {
+  //     console.error("error while fetching sales by Id:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   return {
     getSalesFilter,
     salesReportsFilter,
     loading,
     getSalesReportById,
     salesReportId,
+    getEmployeeList,
+    allEmployee,
+    // getEmployeeSalesReportById,
+    // employeeSalesReportId,
   };
 };
 
