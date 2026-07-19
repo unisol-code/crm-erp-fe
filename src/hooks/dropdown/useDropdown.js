@@ -606,12 +606,12 @@ const useDropdown = () => {
     }
   };
 
-  const fetchDistrictList = async (stateCode) => {
+  const fetchDistrictList = async (stateName) => {
     setLoading(true);
     try {
       const res = await fetchData({
         method: "GET",
-        url: `${conf.apiBaseUrl}drop-down/districts/${stateCode}`,
+        url: `${conf.apiBaseUrl}drop-down/districts/${stateName}`,
       });
       if (res) {
         setDistrictList(res?.data);

@@ -64,19 +64,20 @@ const ViewMonthWisePlanning = () => {
     // Stats cards data
     const stats = [
         {
-            label: "Total Plans",
+            // label: "Total Plans",
+             label: "Total Hospital Coverage",
             value: monthWisePlanning?.totalItems || 0,
             icon: HiOutlineDocumentText,
             color: "blue"
         },
         {
-            label: "Total Calls",
+            label: "Total Doctors Coverage",
             value: monthWisePlanning?.data?.reduce((sum, item) => sum + (item.noOfCalls || 0), 0) || 0,
             icon: FiPhone,
             color: "green"
         },
         {
-            label: "Unique Products",
+            label: "Total Products Coverage",
             value: monthWisePlanning?.data?.reduce((sum, item) => sum + getUniqueProductsCount(item.products), 0) || 0,
             icon: FiPackage,
             color: "purple"

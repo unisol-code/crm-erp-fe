@@ -46,7 +46,7 @@ import {
   EmployeeList,
   EmployeeMonthlyPlanning,
   EmployeeViewMonthlyPlanning,
-  EmployeeCreateMonthlyPlanning,
+  // EmployeeCreateMonthlyPlanning,
   EmployeePreviewMonthlyPlanning,
   EmployeeViewMonthlyPlanningDetails,
   EmployeeUpdateMonthlyPlanning,
@@ -513,6 +513,28 @@ function App() {
             }
           />
         </Route>
+                 <Route
+            path="/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/:id/:date"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EmployeeViewMonthlyPlanning />
+              </SuperAdminLayout>
+            }
+          />
+                 <Route
+            path="/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EmployeeViewMonthlyPlanningDetails />
+              </SuperAdminLayout>
+            }
+          />
 
         {/* <Route
           path="/organization-details/:id"

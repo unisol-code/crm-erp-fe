@@ -12,7 +12,11 @@ const InputWithError = ({ label, name, formik, type = "text", ...props }) => {
 
   return (
     <div className="mb-4">
-      {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+        </label>
+      )}
       <input
         {...props}
         type={type}
@@ -23,13 +27,16 @@ const InputWithError = ({ label, name, formik, type = "text", ...props }) => {
         className={`w-full px-3 py-2 border rounded focus:outline-none"
           }`}
       />
-      {error && touched && <div className="text-red-500 text-xs mt-1">{error}</div>}
+      {error && touched && (
+        <div className="text-red-500 text-xs mt-1">{error}</div>
+      )}
     </div>
   );
 };
 
 const FPO = ({ formik }) => {
   const [selectedDesignation, setSelectedDesignation] = useState(null);
+  const [selectedStateCode, setSelectedStateCode] = useState("");
   const [selectProfiles, setSelectedProfiles] = useState(null);
   const {
     fetchDesignation,
@@ -48,7 +55,9 @@ const FPO = ({ formik }) => {
     loading,
     fetchAllStateName,
     employees,
-    fetchAllEmployees
+    fetchAllEmployees,
+    fetchDistrictList,
+    districtList,
   } = useDropdown();
 
   const selectStyles = {
@@ -88,7 +97,6 @@ const FPO = ({ formik }) => {
     fetchAllEmployees();
   }, []);
 
-
   const hospitalOptions = [
     { label: "Hospital 1", value: "Hospital 1" },
     { label: "Hospital 2", value: "Hospital 2" },
@@ -98,27 +106,34 @@ const FPO = ({ formik }) => {
   const handleHospitalChange = (selectedOptions) => {
     const currentHospitals = formik.values.hospitalsAssociatedWith || [];
 
-    const newHospitals = selectedOptions.map(opt => {
-      const existing = currentHospitals.find(h => h.hospitalName === opt.value);
+    const newHospitals = selectedOptions.map((opt) => {
+      const existing = currentHospitals.find(
+        (h) => h.hospitalName === opt.value,
+      );
       return {
         hospitalName: opt.value,
         days: existing ? existing.days : [],
         timings: existing
           ? existing.timings
           : {
-            startTime: "",
-            endTime: "",
-          },
+              startTime: "",
+              endTime: "",
+            },
       };
     });
 
     formik.setFieldValue("hospitalsAssociatedWith", newHospitals);
   };
-  const handleSelectCity = (stateCode) => {
+  const handleSelectState = (stateCode) => {
     if (stateCode) {
-      fetchAllCities(stateCode);
+      fetchDistrictList(stateCode);
     }
   };
+  // const handleSelectCity = (stateCode) => {
+  //   if (stateCode) {
+  //     fetchAllCities(stateCode);
+  //   }
+  // };
   const daysOptions = [
     { label: "Monday", value: "Monday" },
     { label: "Tuesday", value: "Tuesday" },
@@ -129,6 +144,51 @@ const FPO = ({ formik }) => {
     { label: "Sunday", value: "Sunday" },
   ];
 
+  const calculateDuration = (startTime, endTime) => {
+  if (!startTime || !endTime) return "";
+
+  const [sh, sm] = startTime.split(":").map(Number);
+  const [eh, em] = endTime.split(":").map(Number);
+
+  let start = sh * 60 + sm;
+  let end = eh * 60 + em;
+
+  // Handle overnight meetings
+  if (end < start) {
+    end += 24 * 60;
+  }
+
+  const diff = end - start;
+
+  const hours = Math.floor(diff / 60);
+  const minutes = diff % 60;
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours} Hour${hours > 1 ? "s" : ""} ${minutes} Minute${minutes > 1 ? "s" : ""}`;
+  }
+
+  if (hours > 0) {
+    return `${hours} Hour${hours > 1 ? "s" : ""}`;
+  }
+
+  return `${minutes} Minute${minutes > 1 ? "s" : ""}`;
+};
+
+useEffect(() => {
+  const start = formik.values?.VisitDetails?.startTime;
+  const end = formik.values?.VisitDetails?.endTime;
+
+  if (start && end) {
+    const duration = calculateDuration(start, end);
+
+    if (duration !== formik.values.VisitDetails.duration) {
+      formik.setFieldValue("VisitDetails.duration", duration);
+    }
+  }
+}, [
+  formik.values?.VisitDetails?.startTime,
+  formik.values?.VisitDetails?.endTime,
+]);
   return (
     <div className="">
       <h1 className="text-2xl font-bold text-gray-800 mb-8 pb-4 border-b border-gray-200">
@@ -144,7 +204,7 @@ const FPO = ({ formik }) => {
         />
 
         {/* Designation */}
-        
+
         <div>
           <label className="block mb-2 text-sm font-medium text-gray-700">
             Designation
@@ -161,8 +221,9 @@ const FPO = ({ formik }) => {
             value={
               Array.isArray(designation)
                 ? designation
-                  .map((d) => ({ label: d.name, value: d.name }))
-                  .find((opt) => opt.value === formik.values.designation) || null
+                    .map((d) => ({ label: d.name, value: d.name }))
+                    .find((opt) => opt.value === formik.values.designation) ||
+                  null
                 : null
             }
             onChange={(selected) => {
@@ -190,17 +251,24 @@ const FPO = ({ formik }) => {
           </div>
         </div>
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Speciality</label>
+          <label className="block mb-1 text-sm font-medium text-gray-700">
+            Speciality
+          </label>
           <ReactSelect
             isLoading={loading}
-            options={Array.isArray(getspeciality) ? getspeciality.map(d => ({ label: d, value: d })) : []}
+            options={
+              Array.isArray(getspeciality)
+                ? getspeciality.map((d) => ({ label: d, value: d }))
+                : []
+            }
             value={
               getspeciality
                 ?.map((spe) => ({
                   label: spe,
                   value: spe,
                 }))
-                .find(option => option.value === formik.values.speciality) || null
+                .find((option) => option.value === formik.values.speciality) ||
+              null
             }
             onChange={(selected) => {
               formik.setFieldValue("speciality", selected?.value || "");
@@ -211,14 +279,38 @@ const FPO = ({ formik }) => {
             styles={selectStyles}
           />
           {formik.touched.speciality && formik.errors.speciality && (
-            <div className="text-red-500 text-xs mt-1">{formik.errors.speciality}</div>
+            <div className="text-red-500 text-xs mt-1">
+              {formik.errors.speciality}
+            </div>
           )}
         </div>
 
-        <Input label="Contact No" placeholder="Enter Contact No." name="contactNo" formik={formik} />
-        <Input label="Alternate Contact No" placeholder="Enter Alternate Contact No." name="alternateContactNo" formik={formik} />
-        <Input label="Official Email" placeholder="Enter Official Email" name="officialEmail" type="email" formik={formik} />
-        <Input label="Personal Email" placeholder="Enter Personal Email" name="personalEmail" type="email" formik={formik} />
+        <Input
+          label="Contact No"
+          placeholder="Enter Contact No."
+          name="contactNo"
+          formik={formik}
+        />
+        <Input
+          label="Alternate Contact No"
+          placeholder="Enter Alternate Contact No."
+          name="alternateContactNo"
+          formik={formik}
+        />
+        <Input
+          label="Official Email"
+          placeholder="Enter Official Email"
+          name="officialEmail"
+          type="email"
+          formik={formik}
+        />
+        <Input
+          label="Personal Email"
+          placeholder="Enter Personal Email"
+          name="personalEmail"
+          type="email"
+          formik={formik}
+        />
         {/* Hobbies */}
         <div>
           <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -262,7 +354,12 @@ const FPO = ({ formik }) => {
             )}
           </div>
         </div>
-        <Input placeholder="Enter Residence Address" label="Residence Address" name="residenceAddress" formik={formik} />
+        <Input
+          placeholder="Enter Residence Address"
+          label="Residence Address"
+          name="residenceAddress"
+          formik={formik}
+        />
         {/* State */}
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -275,22 +372,32 @@ const FPO = ({ formik }) => {
             options={
               Array.isArray(allStateName)
                 ? allStateName.map((state) => ({
-                  label: state.stateName,
-                  value: state.stateCode,
-                }))
+                    label: state.stateName,
+                    value: state.stateName,
+                    stateCode: state.stateCode,
+                  }))
                 : []
             }
             value={
               allStateName
                 ?.map((state) => ({
                   label: state.stateName,
-                  value: state.stateCode,
+                  value: state.stateName,
                 }))
                 .find((option) => option.value === formik.values.state) || null
             }
+            // onChange={(selected) => {
+            //   formik.setFieldValue("state", selected?.value || "");
+            //   handleSelectState(selected?.value);
+            // }}
             onChange={(selected) => {
               formik.setFieldValue("state", selected?.value || "");
-              handleSelectCity(selected?.value);
+
+              // State Code save karo
+              setSelectedStateCode(selected?.stateCode);
+
+              // District fetch karo
+              fetchDistrictList(selected?.value);
             }}
             onBlur={() => formik.setFieldTouched("state", true)}
             placeholder="Select State"
@@ -299,6 +406,53 @@ const FPO = ({ formik }) => {
           {formik.touched.state && formik.errors.state && (
             <div className="text-red-500 text-xs mt-1">
               {formik.errors.state}
+            </div>
+          )}
+        </div>
+
+        {/* Districts */}
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">
+            District
+          </label>
+          <ReactSelect
+            className="w-full"
+            isLoading={loading}
+            styles={selectStyles}
+            isDisabled={!formik.values.state}
+            options={
+              Array.isArray(districtList)
+                ? districtList.map((district) => ({
+                    label: district,
+                    value: district,
+                  }))
+                : []
+            }
+            value={
+              districtList
+                ?.map((district) => ({
+                  label: district,
+                  value: district,
+                }))
+                .find((option) => option.value === formik.values.district) ||
+              null
+            }
+            // onChange={(selected) => {
+            //   formik.setFieldValue("districts", selected?.value || "");
+            //   handleSelectCity(selected?.value);
+            // }}
+            onChange={(selected) => {
+              formik.setFieldValue("district", selected?.value || "");
+
+              fetchAllCities(selectedStateCode, selected?.value);
+            }}
+            onBlur={() => formik.setFieldTouched("district", true)}
+            placeholder="Select district"
+            isClearable
+          />
+          {formik.touched.district && formik.errors.district && (
+            <div className="text-red-500 text-xs mt-1">
+              {formik.errors.district}
             </div>
           )}
         </div>
@@ -316,9 +470,9 @@ const FPO = ({ formik }) => {
             options={
               Array.isArray(cities)
                 ? cities.map((city) => ({
-                  label: city,
-                  value: city,
-                }))
+                    label: city,
+                    value: city,
+                  }))
                 : []
             }
             value={
@@ -328,7 +482,7 @@ const FPO = ({ formik }) => {
                   value: city,
                 }))
                 .find(
-                  (option) => option.value === formik.values.cityTownVillage
+                  (option) => option.value === formik.values.cityTownVillage,
                 ) || null
             }
             onChange={(selected) => {
@@ -345,21 +499,33 @@ const FPO = ({ formik }) => {
           )}
         </div>
         {/* <Input placeholder="Enter City/Town/Village" label="City/Town/Village" name="cityTownVillage" formik={formik} /> */}
-        <Input placeholder="Enter District" label="District" name="district" formik={formik} />
+        {/* <Input placeholder="Enter District" label="District" name="district" formik={formik} /> */}
         {/* <Input placeholder="Enter State" label="State" name="state" formik={formik} /> */}
-        <Input placeholder="Enter Pin Code" label="Pin Code" name="pincode" formik={formik} />
-        <Input placeholder="Enter Landmark" label="Landmark" name="landmark" formik={formik} />
+        <Input
+          placeholder="Enter Pin Code"
+          label="Pin Code"
+          name="pincode"
+          formik={formik}
+        />
+        <Input
+          placeholder="Enter Landmark"
+          label="Landmark"
+          name="landmark"
+          formik={formik}
+        />
 
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Category</label>
+          <label className="block mb-1 text-sm font-medium text-gray-700">
+            Category
+          </label>
           <ReactSelect
             isLoading={loading}
             options={
               Array.isArray(categorys)
                 ? categorys.map((cat) => ({
-                  label: cat.label,
-                  value: cat.label,
-                }))
+                    label: cat.label,
+                    value: cat.label,
+                  }))
                 : []
             }
             value={
@@ -368,7 +534,8 @@ const FPO = ({ formik }) => {
                   label: cat.label,
                   value: cat.label,
                 }))
-                .find((option) => option.value === formik.values.category) || null
+                .find((option) => option.value === formik.values.category) ||
+              null
             }
             onChange={(selected) => {
               formik.setFieldValue("category", selected?.value || "");
@@ -379,10 +546,17 @@ const FPO = ({ formik }) => {
             styles={selectStyles}
           />
           {formik.touched.category && formik.errors.category && (
-            <div className="text-red-500 text-xs mt-1">{formik.errors.category}</div>
+            <div className="text-red-500 text-xs mt-1">
+              {formik.errors.category}
+            </div>
           )}
         </div>
-        <Input placeholder="Enter Academic Interest" label="Academic Interest" name="academicInterest" formik={formik} />
+        <Input
+          placeholder="Enter Academic Interest"
+          label="Academic Interest"
+          name="academicInterest"
+          formik={formik}
+        />
 
         {/* Graduation */}
         <div className="space-y-4">
@@ -417,12 +591,14 @@ const FPO = ({ formik }) => {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Relationship Status</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Relationship Status
+          </label>
           <ReactSelect
             options={relationshipOptions}
             value={
               relationshipOptions.find(
-                (option) => option.value === formik.values.relationshipStatus
+                (option) => option.value === formik.values.relationshipStatus,
               ) || null
             }
             onChange={(selected) =>
@@ -433,11 +609,12 @@ const FPO = ({ formik }) => {
             isClearable
             styles={selectStyles}
           />
-          {formik.touched.relationshipStatus && formik.errors.relationshipStatus && (
-            <div className="text-red-500 text-xs mt-1">
-              {formik.errors.relationshipStatus}
-            </div>
-          )}
+          {formik.touched.relationshipStatus &&
+            formik.errors.relationshipStatus && (
+              <div className="text-red-500 text-xs mt-1">
+                {formik.errors.relationshipStatus}
+              </div>
+            )}
         </div>
 
         {formik.values.relationshipStatus === "Married" && (
@@ -459,8 +636,49 @@ const FPO = ({ formik }) => {
         )}
 
         <Input label="DOB" name="dob" type="date" formik={formik} />
-        <Input label="Visit Target" placeholder="Enter Visit Target" name="visitTarget" type="number" formik={formik} />
-        <Input label="Visit Achievement" placeholder="Enter Visit Achievement" name="visitAchievement" type="number" formik={formik} />
+        <Input
+          label="Visit Target"
+          placeholder="Enter Visit Target"
+          name="visitTarget"
+          type="number"
+          formik={formik}
+        />
+        <div className="md:col-span-2">
+          {/* <h3 className="text-lg font-semibold text-gray-800 mb-4">
+    Visit Details
+  </h3> */}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Input
+              label="Meeting Start Time"
+              name="VisitDetails.startTime"
+              type="time"
+              formik={formik}
+            />
+
+            <Input
+              label="Meeting End Time"
+              name="VisitDetails.endTime"
+              type="time"
+              formik={formik}
+            />
+
+            <Input
+              label="Meeting Duration"
+              name="VisitDetails.duration"
+              placeholder="30 Minutes"
+              formik={formik}
+              readOnly
+            />
+          </div>
+        </div>
+        <Input
+          label="Visit Achievement"
+          placeholder="Enter Visit Achievement"
+          name="visitAchievement"
+          type="number"
+          formik={formik}
+        />
         <Select
           placeholder="Enter Surgery Days"
           label="Surgery Days"
@@ -483,15 +701,18 @@ const FPO = ({ formik }) => {
               { label: "Open", value: "Open" },
             ]}
             value={
-              formik.values.typeOfSurgeryPerformed?.map(s => ({
+              formik.values.typeOfSurgeryPerformed?.map((s) => ({
                 label: s.type,
                 value: s.type,
               })) || []
             }
             onChange={(selectedOptions) => {
-              const currentSurgeries = formik.values.typeOfSurgeryPerformed || [];
-              const newSurgeries = selectedOptions.map(opt => {
-                const existing = currentSurgeries.find(s => s.type === opt.value);
+              const currentSurgeries =
+                formik.values.typeOfSurgeryPerformed || [];
+              const newSurgeries = selectedOptions.map((opt) => {
+                const existing = currentSurgeries.find(
+                  (s) => s.type === opt.value,
+                );
                 return {
                   type: opt.value,
                   count: existing ? existing.count : "",
@@ -499,7 +720,9 @@ const FPO = ({ formik }) => {
               });
               formik.setFieldValue("typeOfSurgeryPerformed", newSurgeries);
             }}
-            onBlur={() => formik.setFieldTouched("typeOfSurgeryPerformed", true)}
+            onBlur={() =>
+              formik.setFieldTouched("typeOfSurgeryPerformed", true)
+            }
             placeholder="Select surgery types..."
             className="w-full"
             styles={{
@@ -510,20 +733,18 @@ const FPO = ({ formik }) => {
                 borderColor: "#d1d5db",
                 boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
                 "&:hover": { borderColor: "#9ca3af" },
-              })
+              }),
             }}
           />
 
-          {
-            formik.touched.typeOfSurgeryPerformed &&
+          {formik.touched.typeOfSurgeryPerformed &&
             formik.errors.typeOfSurgeryPerformed &&
             Array.isArray(formik.values.typeOfSurgeryPerformed) &&
             formik.values.typeOfSurgeryPerformed.length === 0 && (
               <div className="text-red-500 text-xs mt-2">
                 Please select at least one surgery type
               </div>
-            )
-          }
+            )}
         </div>
 
         {formik.values.typeOfSurgeryPerformed?.length > 0 && (
@@ -533,19 +754,34 @@ const FPO = ({ formik }) => {
             </h4>
             <div className="space-y-3">
               {formik.values.typeOfSurgeryPerformed.map((surgery, index) => (
-                <div key={index} className="flex items-center gap-4 p-3 bg-white rounded border">
-                  <span className="font-medium text-gray-700 w-32">{surgery.type}</span>
+                <div
+                  key={index}
+                  className="flex items-center gap-4 p-3 bg-white rounded border"
+                >
+                  <span className="font-medium text-gray-700 w-32">
+                    {surgery.type}
+                  </span>
                   <input
                     type="number"
                     min="1"
                     placeholder="e.g. 15"
                     value={surgery.count}
                     onChange={(e) => {
-                      const newSurgeries = [...formik.values.typeOfSurgeryPerformed];
+                      const newSurgeries = [
+                        ...formik.values.typeOfSurgeryPerformed,
+                      ];
                       newSurgeries[index].count = e.target.value;
-                      formik.setFieldValue("typeOfSurgeryPerformed", newSurgeries);
+                      formik.setFieldValue(
+                        "typeOfSurgeryPerformed",
+                        newSurgeries,
+                      );
                     }}
-                    onBlur={() => formik.setFieldTouched(`typeOfSurgeryPerformed[${index}].count`, true)}
+                    onBlur={() =>
+                      formik.setFieldTouched(
+                        `typeOfSurgeryPerformed[${index}].count`,
+                        true,
+                      )
+                    }
                     onWheel={(e) => e.target.blur()}
                     className="px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 w-24 no-spinner"
                   />
@@ -573,13 +809,15 @@ const FPO = ({ formik }) => {
               value: h.hospitalName,
             }))}
             value={
-              formik.values.hospitalsAssociatedWith?.map(h => ({
+              formik.values.hospitalsAssociatedWith?.map((h) => ({
                 label: h.hospitalName,
                 value: h.hospitalName,
               })) || []
             }
             onChange={handleHospitalChange}
-            onBlur={() => formik.setFieldTouched("hospitalsAssociatedWith", true)}
+            onBlur={() =>
+              formik.setFieldTouched("hospitalsAssociatedWith", true)
+            }
             placeholder="Select hospitals..."
             className="w-full"
             styles={selectStyles}
@@ -605,20 +843,30 @@ const FPO = ({ formik }) => {
             </h3>
 
             <div className="mb-5">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Available Days</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Available Days
+              </label>
               <ReactSelect
                 isMulti
                 options={daysOptions}
                 value={
-                  hospital.days?.map(day => ({
+                  hospital.days?.map((day) => ({
                     label: day,
                     value: day,
                   })) || []
                 }
-                onBlur={() => formik.setFieldTouched(`hospitalsAssociatedWith[${index}].days`, true)}
+                onBlur={() =>
+                  formik.setFieldTouched(
+                    `hospitalsAssociatedWith[${index}].days`,
+                    true,
+                  )
+                }
                 onChange={(selectedOptions) => {
-                  const selectedDays = selectedOptions.map(opt => opt.value);
-                  formik.setFieldValue(`hospitalsAssociatedWith[${index}].days`, selectedDays);
+                  const selectedDays = selectedOptions.map((opt) => opt.value);
+                  formik.setFieldValue(
+                    `hospitalsAssociatedWith[${index}].days`,
+                    selectedDays,
+                  );
                 }}
                 placeholder="Select available days..."
                 className="w-full"
@@ -629,12 +877,15 @@ const FPO = ({ formik }) => {
                     borderRadius: "0.75rem",
                     borderColor: "#d1d5db",
                     boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
-                    '&:hover': {
-                      borderColor: '#9ca3af',
+                    "&:hover": {
+                      borderColor: "#9ca3af",
                     },
                     ...(formik.touched.hospitalsAssociatedWith?.[index]?.days &&
-                      formik.errors.hospitalsAssociatedWith?.[index]?.days
-                      ? { borderColor: "#ef4444", boxShadow: "0 0 0 1px #ef4444" }
+                    formik.errors.hospitalsAssociatedWith?.[index]?.days
+                      ? {
+                          borderColor: "#ef4444",
+                          boxShadow: "0 0 0 1px #ef4444",
+                        }
                       : {}),
                   }),
                   menu: (base) => ({
@@ -681,9 +932,9 @@ const FPO = ({ formik }) => {
             options={
               Array.isArray(employees)
                 ? employees.map((d) => ({
-                  label: d.salesPersonName,
-                  value: d.salesPersonName
-                }))
+                    label: d.salesPersonName,
+                    value: d.salesPersonName,
+                  }))
                 : []
             }
             value={
@@ -692,7 +943,9 @@ const FPO = ({ formik }) => {
                   label: d.salesPersonName,
                   value: d.salesPersonName,
                 }))
-                .find((option) => option.value === formik.values.salesPersonName) || null
+                .find(
+                  (option) => option.value === formik.values.salesPersonName,
+                ) || null
             }
             onChange={(selected) => {
               formik.setFieldValue("salesPersonName", selected?.value || "");

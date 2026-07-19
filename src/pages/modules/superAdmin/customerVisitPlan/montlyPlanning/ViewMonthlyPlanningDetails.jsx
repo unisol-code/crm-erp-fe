@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import BreadCrumb from "../../../../../components/uiComponents/breadcrumb/BreadCrumb";
 import { useTheme } from "../../../../../hooks/theme/useTheme";
 import { useParams } from "react-router-dom";
-import useMonthlyPlanning from "../../../../../hooks/salesExecutiveHook/customerVisitPlan/useMonthlyPlanning";
+import useMonthlyPlanning from "../../../../../hooks/superAdminHook/customerVisitPlan/useMonthlyPlanning";
 import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderSpinner";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -427,13 +427,15 @@ function ViewMonthlyPlanningDetails() {
       <BreadCrumb
         linkText={[
           { text: "Customer Visit Plan" },
-          { text: "Monthly Planning", href: "/sales-executive/monthly-planning" },
+          { text: "Monthly Planning", href: "/admin/sales-executive/monthly-planning" },
           {
             text: "View Monthly Planning",
-            href: `/sales-executive/monthly-planning/view-monthly-planning/${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}`,
+            href: `/admin/sales-executive/monthly-planning/view-monthly-planning/${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}`,
           },
-          { text: `View ${monthlyPlanningDetails?.month} ${monthlyPlanningDetails?.year} Planning`, href: `/sales-executive/monthly-planning/view-month-wise/${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}` },
-          { text: `View ${formatDate(data.createPlanningForDate)} Planning`, href: `/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${formatDate(data.createPlanningForDate)}` },
+          { text: `View ${monthlyPlanningDetails?.month} ${monthlyPlanningDetails?.year} Planning`,
+           href: `/admin/sales-executive/monthly-planning/view-month-wise/${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}` },
+          { text: `View ${formatDate(data.createPlanningForDate)} Planning`,
+           href: `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${formatDate(data.createPlanningForDate)}` },
           { text: "View Monthly Planning Details" },
         ]}
       />
@@ -922,16 +924,16 @@ function ViewMonthlyPlanningDetails() {
                   )}
                 </div>
               )}
-
+{/* no requrment for ADMIN */}
               {/* Save Button */}
-              <div className="flex justify-end pt-4 border-t border-gray-200">
+              {/* <div className="flex justify-end pt-4 border-t border-gray-200">
                 <Button
                   type="submit"
                   // disabled={!canEditMeetingDetails}
                   variant={1}
                   text="Save Details"
                 />
-              </div>
+              </div> */}
             </form>
           {/* // ) : (
           //   <div className="p-8 text-center bg-yellow-50 m-6 rounded-lg">

@@ -40,10 +40,11 @@ const MonthlyPlanning = () => {
 
   setDateError("");
 
-  if (id) {
+  // if (id) {
     fetchMonthlyPlanningList(id, page, limit, fromDate, toDate);
-  }
+  // }
 }, [id, page, limit, fromDate, toDate]);
+console.log("id", id);
 
   // useEffect(() => {
   //   const from = new Date(fromDate);
@@ -64,7 +65,7 @@ const MonthlyPlanning = () => {
 
   const handleViewClick = (id,month, year) => {
     navigate(
-      `/admin/sales-executive/monthly-planning/view-month-wise/${id}`
+      `/admin/sales-executive/monthly-planning/view-month-wise/${id}?month=${month}&year=${year}`
     );
   };
 

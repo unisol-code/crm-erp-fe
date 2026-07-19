@@ -362,7 +362,7 @@ const ViewMonthlyPlanning = () => {
                             onClick={() => {
                               resetMonthlyPlanningDetails();
                               navigate(
-                                `/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/${entry._id}`,
+                                `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/${entry._id}`,
                               );
                             }}
                           >

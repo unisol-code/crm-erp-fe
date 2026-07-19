@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../../../../../hooks/theme/useTheme';
 import useMonthlyPlanning from '../../../../../hooks/superAdminHook/customerVisitPlan/useMonthlyPlanning';
 import BreadCrumb from '../../../../../components/uiComponents/breadcrumb/BreadCrumb';
@@ -11,14 +11,17 @@ import Button from '../../../../../components/uiComponents/button/Button';
 import LoaderSpinner from '../../../../../components/uiComponents/loader/LoaderSpinner';
 
 const ViewMonthWisePlanning = () => {
-    const { loading, fetchMonthWisePlanning, monthWisePlanning, resetMonthlyPlanningDetails } = useMonthlyPlanning();
-    const { month, year } = useParams();
+    const { loading, fetchMonthWisePlanning, monthWisePlanning, resetMonthlyPlanningDetails ,fetchMonthlySummary, monthlySummary} = useMonthlyPlanning();
+   const [selectedCard, setSelectedCard] = useState();
+    const { id } = useParams();
+    const [searchParams] = useSearchParams();
+    const month = searchParams.get("month");
+    const year = searchParams.get("year");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const { theme } = useTheme();
     const navigate = useNavigate();
-    const { id } = useParams();
-
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const onPageChange = (data) => {
         setPage(data);
     };
@@ -26,10 +29,22 @@ const ViewMonthWisePlanning = () => {
     const onItemsPerPageChange = (data) => {
         setLimit(data);
     };
+    console.log("id, month, year", id, month, year);
 
     useEffect(() => {
         fetchMonthWisePlanning(id ,page, limit, month, year);
-    }, [id, page, limit]);
+    }, [id, page, limit, month, year]);
+
+    //    useEffect(() => {
+    //     fetchMonthlySummary(id , month, year);
+    // }, [id, month, year]);
+
+    const handleCardClick = (type) => {
+    setSelectedCard(type);
+
+    fetchMonthlySummary(id, month, year, type);
+     setIsModalOpen(true);
+};
 
     // Format date and time
     const formatDateTime = (dateStr) => {
@@ -63,32 +78,78 @@ const ViewMonthWisePlanning = () => {
     };
 
     // Stats cards data
+    // const stats = [
+    //     {
+    //         label: "Total Hospital Coverage",
+    //         value: monthWisePlanning?.totalItems || 0,
+    //         icon: HiOutlineDocumentText,
+    //         color: "blue"
+    //     },
+    //     {
+    //         label: "Total Doctor Coverage",
+    //         value: monthWisePlanning?.data?.reduce((sum, item) => sum + (item.noOfCalls || 0), 0) || 0,
+    //         icon: FiPhone,
+    //         color: "green"
+    //     },
+    //     {
+    //         label: "Total Products Coverage",
+    //         value: monthWisePlanning?.data?.reduce((sum, item) => sum + getUniqueProductsCount(item.products), 0) || 0,
+    //         icon: FiPackage,
+    //         color: "purple"
+    //     },
+    //     {
+    //         label: "Total Quantity",
+    //         value: monthWisePlanning?.data?.reduce((sum, item) => sum + getTotalQuantity(item.products), 0) || 0,
+    //         icon: FiBox,
+    //         color: "orange"
+    //     },
+    // ];
     const stats = [
-        {
-            label: "Total Plans",
-            value: monthWisePlanning?.totalItems || 0,
-            icon: HiOutlineDocumentText,
-            color: "blue"
-        },
-        {
-            label: "Total Calls",
-            value: monthWisePlanning?.data?.reduce((sum, item) => sum + (item.noOfCalls || 0), 0) || 0,
-            icon: FiPhone,
-            color: "green"
-        },
-        {
-            label: "Unique Products",
-            value: monthWisePlanning?.data?.reduce((sum, item) => sum + getUniqueProductsCount(item.products), 0) || 0,
-            icon: FiPackage,
-            color: "purple"
-        },
-        {
-            label: "Total Quantity",
-            value: monthWisePlanning?.data?.reduce((sum, item) => sum + getTotalQuantity(item.products), 0) || 0,
-            icon: FiBox,
-            color: "orange"
-        },
-    ];
+    {
+        id: "hospital",
+        label: "Total Hospital Coverage",
+        value: monthWisePlanning?.totalItems || 0,
+        icon: HiOutlineDocumentText,
+        color: "blue",
+         clickable: true,
+    },
+    {
+        id: "doctor",
+        label: "Total Doctor Coverage",
+        value:
+            monthWisePlanning?.data?.reduce(
+                (sum, item) => sum + item.noOfCalls,
+                0
+            ) || 0,
+        icon: FiPhone,
+        color: "green",
+         clickable: true,
+    },
+    {
+        id: "product",
+        label: "Total Products Coverage",
+        value:
+            monthWisePlanning?.data?.reduce(
+                (sum, item) => sum + getUniqueProductsCount(item.products),
+                0
+            ) || 0,
+        icon: FiPackage,
+        color: "purple",
+         clickable: true,
+    },
+    {
+        id: "quantity",
+        label: "Total Quantity",
+        value:
+            monthWisePlanning?.data?.reduce(
+                (sum, item) => sum + getTotalQuantity(item.products),
+                0
+            ) || 0,
+        icon: FiBox,
+        color: "orange",
+         clickable: false,
+    },
+];
 
     const getStatStyles = (color) => {
         const styles = {
@@ -108,7 +169,7 @@ const ViewMonthWisePlanning = () => {
                     { text: "Customer Visit Plan" },
                     {
                         text: "Monthly Planning",
-                        href: "/sales-executive/monthly-planning",
+                        href: `/admin/sales-executive/monthly-planning/${id}?month=${month}&year=${year}`,
                     },
                     { text: `View ${month} ${year} Planning` },
                 ]}
@@ -119,12 +180,12 @@ const ViewMonthWisePlanning = () => {
                         {month && year ? `${month} ${year}` : "Monthly"} Planning Overview
                     </h1>
 
-                    <Button
+                    {/* <Button
                         onClick={() => navigate("/sales-executive/monthly-planning/create-monthly-plan")}
                         variant={1}
                         text="+ Create Monthly Plan"
                         className="shadow-md hover:shadow-lg transition-all"
-                    />
+                    /> */}
                 </div>
 
                 {/* Stats Cards */}
@@ -133,10 +194,31 @@ const ViewMonthWisePlanning = () => {
                         const Icon = stat.icon;
                         const style = getStatStyles(stat.color);
                         return (
+                            // <div
+                            //     key={idx}
+                            //     className={`${style.bg} rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200`}
+                            // >
                             <div
-                                key={idx}
-                                className={`${style.bg} rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200`}
-                            >
+    key={idx}
+ onClick={() => stat.clickable && handleCardClick(stat.id)}
+ className={`
+    ${style.bg}
+    rounded-xl
+    p-4
+    shadow-sm
+    transition-all
+    ${
+        stat.clickable
+            ? "cursor-pointer hover:shadow-lg hover:scale-105"
+            : "cursor-not-allowed opacity-60"
+    }
+    ${
+        selectedCard === stat.id && stat.clickable
+            ? "ring-2 ring-blue-500"
+            : ""
+    }
+`}
+>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-500 text-sm font-medium">{stat.label}</p>
@@ -153,6 +235,121 @@ const ViewMonthWisePlanning = () => {
                     })}
                 </div>
             </div>
+            {/* <div className="bg-white rounded-xl shadow-lg mt-6 p-5">
+
+    <h2 className="text-xl font-semibold mb-4">
+
+        {selectedCard === "hospital" && "Hospital Coverage"}
+
+        {selectedCard === "doctor" && "Doctor Coverage"}
+
+        {selectedCard === "product" && "Products"}
+
+        {selectedCard === "quantity" && "Quantity"}
+
+    </h2>
+
+    {monthlySummary?.[selectedCard]?.map((item, index) => {
+
+        if (selectedCard === "hospital") {
+            return (
+                <div
+                    key={index}
+                    className="flex justify-between py-2 border-b"
+                >
+                    <span>{item.name}</span>
+                    <span>{item.totalCalls} Call</span>
+                </div>
+            );
+        }
+
+        if (selectedCard === "doctor") {
+            return (
+                <div
+                    key={index}
+                    className="flex justify-between py-2 border-b"
+                >
+                 <span>{item.name}</span>
+                    <span>{item.totalCalls} Call</span>
+                </div>
+            );
+        }
+
+                if (selectedCard === "product") {
+            return (
+                <div
+                    key={index}
+                    className="flex justify-between py-2 border-b"
+                >
+                     <span>{item.name}</span>
+                    <span>{item.totalCalls} Call</span>
+                </div>
+            );
+        }
+
+        return null;
+    })}
+</div> */}
+{isModalOpen && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[80vh] overflow-hidden">
+
+            {/* Header */}
+            <div
+                className="flex justify-between items-center px-6 py-4 border-b"
+                style={{ backgroundColor: theme.secondaryColor }}
+            >
+                <h2
+                    className="text-xl font-semibold"
+                    style={{ color: theme.primaryColor }}
+                >
+                    {selectedCard?.charAt(0).toUpperCase() +
+                        selectedCard?.slice(1)}{" "}
+                    Details
+                </h2>
+
+                <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="text-2xl font-bold hover:text-red-500"
+                >
+                    ×
+                </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+
+                {loading ? (
+                    <LoaderSpinner />
+                ) : monthlySummary?.[selectedCard]?.length > 0 ? (
+                    monthlySummary[selectedCard].map((item, index) => (
+                        <div
+                            key={index}
+                            className="flex justify-between items-center p-3 mb-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition"
+                        >
+                            <div>
+                                <h3 className="font-semibold text-gray-800">
+                                    {item.name}
+                                </h3>
+                            </div>
+
+                            <div
+                                className="px-3 py-1 rounded-full text-white font-semibold"
+                                style={{ backgroundColor: theme.primaryColor }}
+                            >
+                                {item.totalCalls} Calls
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-center text-gray-500 py-10">
+                        No Data Available
+                    </div>
+                )}
+            </div>
+        </div>
+    </div>
+)}
 
             {/* Table Card */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
@@ -255,7 +452,7 @@ const ViewMonthWisePlanning = () => {
                                                     onClick={() => {
                                                         resetMonthlyPlanningDetails();
                                                         navigate(
-                                                            `/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${entry.date}`,
+                                                            `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${id}/${entry.date}`,
                                                         );
                                                     }}
                                                 >
