@@ -45,9 +45,9 @@ const MonthlyPlanning = () => {
   //   fetchMonthlyPlanningList(page, limit, fromDate, toDate);
   // }, [fromDate, toDate, page, limit]);
 
-  const handleViewClick = (month, year) => {
+  const handleViewClick = (salesId, month, year) => {
     navigate(
-      `/sales-executive/monthly-planning/view-month-wise/${month}/${year}`
+      `/sales-executive/monthly-planning/view-month-wise/${salesId}/${month}/${year}`
     );
   };
 
@@ -156,7 +156,7 @@ const MonthlyPlanning = () => {
                     </td>
                     <td className="p-4 text-center text-[19px] align-middle">
                       <button
-                        onClick={() => { resetOneMonthPlanningList(); handleViewClick(plan.month, plan.year) }}
+                        onClick={() => { resetOneMonthPlanningList(); handleViewClick(plan.sales_id,plan.month, plan.year) }}
                         className="text-black hover:bg-blue-200 rounded-full w-8 h-8 flex items-center justify-center"
                         aria-label="View details"
                       >

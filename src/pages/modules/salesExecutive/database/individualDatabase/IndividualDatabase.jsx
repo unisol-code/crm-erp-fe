@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ReactSelect from "react-select";
 import {
   Box,
   IconButton,
@@ -39,6 +40,7 @@ function IndividualDatabase() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+   const [selectedSegment, setSelectedSegment] = useState(null);
   const [typeOfProfile, setTypeOfProfile] = useState("Farmer");
   const [openRequestModal, setOpenRequestModal] = useState(false);
   const [requestId, setRequestId] = useState(null);
@@ -49,7 +51,7 @@ function IndividualDatabase() {
     loading: dropLoading,
     profile,
     enviroprofile,
-    profileState,
+    profileState, fetchSegment,segment,
     enviroindiviualdropdown,
   } = useDropdown();
 
@@ -83,14 +85,33 @@ function IndividualDatabase() {
 
   /* ===================== FETCH DROPDOWN ===================== */
   useEffect(() => {
-    if (isEnviroSolution) {
-      enviroindiviualdropdown();
-      setSelectedDoctor(null);
-      setTypeOfProfile("Farmer");
-    } else {
-      profileState();
-      setTypeOfProfile(null);
-    }
+    // if (isEnviroSolution) {
+    //   enviroindiviualdropdown();
+    //   setSelectedDoctor(null);
+    //   setTypeOfProfile("Farmer");
+    // } else {
+    //   profileState();
+    //   setTypeOfProfile(null);
+    // }
+      if (isEnviroSolution) {
+    enviroindiviualdropdown();
+    setTypeOfProfile("Farmer");
+    setSelectedDoctor(null);
+  } else {
+    // Segment list lao
+    fetchSegment();
+
+    // Default segment
+    setSelectedSegment("Clinical");
+
+    // Clinical ke profiles lao
+    profileState("Clinical");
+
+    // Default doctor
+    setSelectedDoctor("Surgeon");
+
+    setTypeOfProfile(null);
+  }
   }, [isEnviroSolution]);
 
   /* ===================== DEFAULT DROPDOWN ===================== */
@@ -179,7 +200,27 @@ function IndividualDatabase() {
     }
     setPage(1);
   };
+    const handleSegmentChange = (option) => {
+  const segmentValue = option?.value || null;
 
+  setSelectedSegment(segmentValue);
+
+  // doctor reset
+  setSelectedDoctor(null);
+
+  // selected segment ke profiles lao
+  if (segmentValue) {
+    profileState(segmentValue);
+  }
+
+  setPage(1);
+};
+  const segmentOptions = Array.isArray(segment)
+  ? segment.map((item) => ({
+      label: item,
+      value: item,
+    }))
+  : [];
   const options = Array.isArray(dropdownOptions)
     ? dropdownOptions.map((item) => ({
       label: item,
@@ -253,7 +294,7 @@ function IndividualDatabase() {
   /* ===================== UI ===================== */
   return (
     <>
-      <TableHeader
+      {/* <TableHeader
         theme={theme}
         title="Individual Database"
         onAddClick={() =>
@@ -268,7 +309,102 @@ function IndividualDatabase() {
           isLoading: dropLoading,
         }}
         onExportClick={handleExport}
-      />
+      /> */}
+      <div className="">
+        {/* ================= TOP HEADING =================
+        <div className="text-center mb-5">
+          <h2
+            className="text-3xl font-bold"
+            style={{ color: theme.primaryColor }}
+          >
+            Individual Database
+          </h2>
+      
+          <div
+            className="w-full h-1 mx-auto mt-2 rounded-full"
+            style={{ backgroundColor: theme.primaryColor }}
+          />
+        </div> */}
+      
+        {/* ================= CONTROLS ROW ================= */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      
+            {/* LEFT: Dropdowns */}
+            <div className="flex flex-col sm:flex-row gap-3">
+      
+              {/* Segment Dropdown */}
+              {!isEnviroSolution && (
+                <div className="w-full sm:w-56">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Segment
+                  </label>
+      
+                  <ReactSelect
+                    options={segmentOptions}
+                    value={
+                      segmentOptions.find(
+                        (opt) => opt.value === selectedSegment
+                      ) || null
+                    }
+                    onChange={handleSegmentChange}
+                    placeholder="Select Segment"
+                    isLoading={dropLoading}
+                  />
+                </div>
+              )}
+      
+              {/* Doctor/Profile Dropdown */}
+              <div className="w-full sm:w-56">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {isEnviroSolution ? "Profile Type" : "Doctor Type"}
+                </label>
+      
+                <ReactSelect
+                  options={options}
+                  value={
+                    options.find(
+                      (opt) =>
+                        opt.value ===
+                        (isEnviroSolution ? typeOfProfile : selectedDoctor)
+                    ) || null
+                  }
+                  onChange={handleChange}
+                  placeholder={
+                    isEnviroSolution
+                      ? "Select Profile"
+                      : "Select Doctor Type"
+                  }
+                  isLoading={dropLoading}
+                />
+              </div>
+            </div>
+      
+            {/* RIGHT: Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 lg:justify-end">
+              <button
+                onClick={handleExport}
+                className="px-5 py-2.5 rounded-lg text-white font-medium shadow-sm hover:opacity-90 transition"
+                style={{ backgroundColor: theme.primaryColor }}
+              >
+                Export
+              </button>
+      
+              <button
+                onClick={() => navigate("/database/add-newindividual")}
+                className="px-5 py-2.5 rounded-lg text-white font-medium shadow-sm hover:opacity-90 transition whitespace-nowrap"
+                style={{ backgroundColor: theme.primaryColor }}
+              >
+                Add New Individual
+              </button>
+            </div>
+          </div>
+        </div>
+         <div
+            className="w-full h-1 mx-auto mt-2 rounded-full"
+            style={{ backgroundColor: theme.primaryColor }}
+          />
+      </div>
 
       <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
         <Table>

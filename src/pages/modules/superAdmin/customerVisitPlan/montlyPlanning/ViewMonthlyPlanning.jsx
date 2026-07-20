@@ -147,11 +147,14 @@ const ViewMonthlyPlanning = () => {
       <BreadCrumb
         linkText={[
           { text: "Customer Visit Plan" },
+          {text:"Employee List" ,
+                href: "/admin/sales-executive/employee-list" },
           {
             text: "Monthly Planning",
-            href: "/sales-executive/monthly-planning",
+            href: `/admin/sales-executive/monthly-planning/${id}`,
           },
-          { text: `View ${oneMonthPlanningList?.month} ${oneMonthPlanningList?.year} Planning`, href: `/sales-executive/monthly-planning/view-month-wise/${oneMonthPlanningList?.month}/${oneMonthPlanningList?.year}` },
+          { text: `View ${oneMonthPlanningList?.month} ${oneMonthPlanningList?.year} Planning`,
+           href: `/admin/sales-executive/monthly-planning/view-month-wise/${id}?${oneMonthPlanningList?.month}/${oneMonthPlanningList?.year}` },
           { text: `View ${date} Planning` },
         ]}
       />

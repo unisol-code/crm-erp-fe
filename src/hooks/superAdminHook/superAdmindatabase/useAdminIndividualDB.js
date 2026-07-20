@@ -28,12 +28,13 @@ const useAdminIndividualDB = () => {
     useRecoilState(getAdminIndividualDashboardAtom);
   const navigate = useNavigate();
 
-  const fetchAdminAllIndividual = async (page, limit) => {
+  const fetchAdminAllIndividual = async (page, limit,typeOfDoctorProfile ) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
         page: page,
         limit: limit,
+        typeOfDoctorProfile: typeOfDoctorProfile,
       });
       const res = await fetchData({
         method: "GET",

@@ -225,7 +225,7 @@ const useMonthlyPlanning = () => {
         deleteMonthlyPlanning,
         updateMonthlyPlanning,
         fetchMonthWisePlanning,
-        monthWisePlanning
+        monthWisePlanning,fetchMonthlySummary,monthlySummary
     };
 };
 
