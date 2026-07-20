@@ -108,7 +108,7 @@ const ViewMonthWisePlanning = () => {
     {
         id: "hospital",
         label: "Total Hospital Coverage",
-        value: monthWisePlanning?.totalItems || 0,
+        value: monthWisePlanning?.totalHospitals || 0,
         icon: HiOutlineDocumentText,
         color: "blue",
          clickable: true,
@@ -117,10 +117,7 @@ const ViewMonthWisePlanning = () => {
         id: "doctor",
         label: "Total Doctor Coverage",
         value:
-            monthWisePlanning?.data?.reduce(
-                (sum, item) => sum + item.noOfCalls,
-                0
-            ) || 0,
+            monthWisePlanning?.totalDoctors|| 0,
         icon: FiPhone,
         color: "green",
          clickable: true,
@@ -129,10 +126,7 @@ const ViewMonthWisePlanning = () => {
         id: "product",
         label: "Total Products Coverage",
         value:
-            monthWisePlanning?.data?.reduce(
-                (sum, item) => sum + getUniqueProductsCount(item.products),
-                0
-            ) || 0,
+            monthWisePlanning?.totalItems || 0,
         icon: FiPackage,
         color: "purple",
          clickable: true,
@@ -141,10 +135,7 @@ const ViewMonthWisePlanning = () => {
         id: "quantity",
         label: "Total Quantity",
         value:
-            monthWisePlanning?.data?.reduce(
-                (sum, item) => sum + getTotalQuantity(item.products),
-                0
-            ) || 0,
+            monthWisePlanning?.totalQuantity|| 0,
         icon: FiBox,
         color: "orange",
          clickable: false,
@@ -167,9 +158,11 @@ const ViewMonthWisePlanning = () => {
             <BreadCrumb
                 linkText={[
                     { text: "Customer Visit Plan" },
+                    {text:"Employee List" ,
+                          href: "/admin/sales-executive/employee-list" },
                     {
                         text: "Monthly Planning",
-                        href: `/admin/sales-executive/monthly-planning/${id}?month=${month}&year=${year}`,
+                        href: `/admin/sales-executive/monthly-planning/${id}`,
                     },
                     { text: `View ${month} ${year} Planning` },
                 ]}

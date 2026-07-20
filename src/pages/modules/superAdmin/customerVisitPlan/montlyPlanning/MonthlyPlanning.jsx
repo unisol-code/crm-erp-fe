@@ -76,7 +76,7 @@ console.log("id", id);
         linkText={[
           { text: "Customer Visit Plan" },
             //  { text: "Employee List"},
-          { text: "Employee List" ,  href: "/admin/sales-executive/monthly-planning" },
+          { text: "Employee List" ,  href: "/admin/sales-executive/employee-list" },
           { text: "Monthly Planning" },
         ]}
       />

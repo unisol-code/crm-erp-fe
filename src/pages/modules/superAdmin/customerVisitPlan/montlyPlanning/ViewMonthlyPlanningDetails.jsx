@@ -421,16 +421,22 @@ function ViewMonthlyPlanningDetails() {
       </div>
     );
   }
+  console.log("iddd", id);
+
 
   return (
     <div className="w-full min-h-screen">
+      {/* Breadcrums mai updation hai employee  id nahi mili hai milne ke bad hong wo  */}
       <BreadCrumb
         linkText={[
           { text: "Customer Visit Plan" },
-          { text: "Monthly Planning", href: "/admin/sales-executive/monthly-planning" },
+          {text: "Employee List",
+            href: "/admin/sales-executive/employee-list"},
+          { text: "Monthly Planning",
+             href: `/admin/sales-executive/monthly-planning/${id}` },
           {
             text: "View Monthly Planning",
-            href: `/admin/sales-executive/monthly-planning/view-monthly-planning/${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}`,
+            href: `/admin/sales-executive/monthly-planning/view-monthly-planning/${id}?${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}`,
           },
           { text: `View ${monthlyPlanningDetails?.month} ${monthlyPlanningDetails?.year} Planning`,
            href: `/admin/sales-executive/monthly-planning/view-month-wise/${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}` },

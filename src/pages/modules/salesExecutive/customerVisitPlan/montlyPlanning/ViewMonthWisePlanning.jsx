@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams,useSearchParams } from 'react-router-dom';
 import { useTheme } from '../../../../../hooks/theme/useTheme';
 import useMonthlyPlanning from '../../../../../hooks/salesExecutiveHook/customerVisitPlan/useMonthlyPlanning';
 import BreadCrumb from '../../../../../components/uiComponents/breadcrumb/BreadCrumb';
@@ -11,13 +11,15 @@ import Button from '../../../../../components/uiComponents/button/Button';
 import LoaderSpinner from '../../../../../components/uiComponents/loader/LoaderSpinner';
 
 const ViewMonthWisePlanning = () => {
-    const { loading, fetchMonthWisePlanning, monthWisePlanning, resetMonthlyPlanningDetails } = useMonthlyPlanning();
+    const { loading, fetchMonthWisePlanning, monthWisePlanning,fetchMonthlySummary, monthlySummary, resetMonthlyPlanningDetails } = useMonthlyPlanning();
+     const [selectedCard, setSelectedCard] = useState();
+        const { id } = useParams();
     const { month, year } = useParams();
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const { theme } = useTheme();
     const navigate = useNavigate();
-
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const onPageChange = (data) => {
         setPage(data);
     };
@@ -29,6 +31,13 @@ const ViewMonthWisePlanning = () => {
     useEffect(() => {
         fetchMonthWisePlanning(page, limit, month, year);
     }, [page, limit]);
+
+        const handleCardClick = (type) => {
+    setSelectedCard(type);
+
+    fetchMonthlySummary(id, month, year, type);
+     setIsModalOpen(true);
+};
 
     // Format date and time
     const formatDateTime = (dateStr) => {
@@ -63,32 +72,43 @@ const ViewMonthWisePlanning = () => {
 
     // Stats cards data
     const stats = [
-        {
-            // label: "Total Plans",
-             label: "Total Hospital Coverage",
-            value: monthWisePlanning?.totalItems || 0,
-            icon: HiOutlineDocumentText,
-            color: "blue"
-        },
-        {
-            label: "Total Doctors Coverage",
-            value: monthWisePlanning?.data?.reduce((sum, item) => sum + (item.noOfCalls || 0), 0) || 0,
-            icon: FiPhone,
-            color: "green"
-        },
-        {
-            label: "Total Products Coverage",
-            value: monthWisePlanning?.data?.reduce((sum, item) => sum + getUniqueProductsCount(item.products), 0) || 0,
-            icon: FiPackage,
-            color: "purple"
-        },
-        {
-            label: "Total Quantity",
-            value: monthWisePlanning?.data?.reduce((sum, item) => sum + getTotalQuantity(item.products), 0) || 0,
-            icon: FiBox,
-            color: "orange"
-        },
-    ];
+    {
+        id: "hospital",
+        label: "Total Hospital Coverage",
+        value: monthWisePlanning?.totalHospitals || 0,
+        icon: HiOutlineDocumentText,
+        color: "blue",
+         clickable: true,
+    },
+    {
+        id: "doctor",
+        label: "Total Doctor Coverage",
+        value:
+            monthWisePlanning?.totalDoctors|| 0,
+        icon: FiPhone,
+        color: "green",
+         clickable: true,
+    },
+    {
+        id: "product",
+        label: "Total Products Coverage",
+        value:
+            monthWisePlanning?.totalItems || 0,
+        icon: FiPackage,
+        color: "purple",
+         clickable: true,
+    },
+    {
+        id: "quantity",
+        label: "Total Quantity",
+        value:
+            monthWisePlanning?.totalQuantity|| 0,
+        icon: FiBox,
+        color: "orange",
+         clickable: false,
+    },
+];
+
 
     const getStatStyles = (color) => {
         const styles = {
@@ -127,16 +147,37 @@ const ViewMonthWisePlanning = () => {
                     />
                 </div>
 
-                {/* Stats Cards */}
+                   {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                     {stats.map((stat, idx) => {
                         const Icon = stat.icon;
                         const style = getStatStyles(stat.color);
                         return (
+                            // <div
+                            //     key={idx}
+                            //     className={`${style.bg} rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200`}
+                            // >
                             <div
-                                key={idx}
-                                className={`${style.bg} rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200`}
-                            >
+    key={idx}
+ onClick={() => stat.clickable && handleCardClick(stat.id)}
+ className={`
+    ${style.bg}
+    rounded-xl
+    p-4
+    shadow-sm
+    transition-all
+    ${
+        stat.clickable
+            ? "cursor-pointer hover:shadow-lg hover:scale-105"
+            : "cursor-not-allowed opacity-60"
+    }
+    ${
+        selectedCard === stat.id && stat.clickable
+            ? "ring-2 ring-blue-500"
+            : ""
+    }
+`}
+>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-gray-500 text-sm font-medium">{stat.label}</p>
@@ -153,7 +194,66 @@ const ViewMonthWisePlanning = () => {
                     })}
                 </div>
             </div>
+{isModalOpen && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[80vh] overflow-hidden">
 
+            {/* Header */}
+            <div
+                className="flex justify-between items-center px-6 py-4 border-b"
+                style={{ backgroundColor: theme.secondaryColor }}
+            >
+                <h2
+                    className="text-xl font-semibold"
+                    style={{ color: theme.primaryColor }}
+                >
+                    {selectedCard?.charAt(0).toUpperCase() +
+                        selectedCard?.slice(1)}{" "}
+                    Details
+                </h2>
+
+                <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="text-2xl font-bold hover:text-red-500"
+                >
+                    ×
+                </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+
+                {loading ? (
+                    <LoaderSpinner />
+                ) : monthlySummary?.[selectedCard]?.length > 0 ? (
+                    monthlySummary[selectedCard].map((item, index) => (
+                        <div
+                            key={index}
+                            className="flex justify-between items-center p-3 mb-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition"
+                        >
+                            <div>
+                                <h3 className="font-semibold text-gray-800">
+                                    {item.name}
+                                </h3>
+                            </div>
+
+                            <div
+                                className="px-3 py-1 rounded-full text-white font-semibold"
+                                style={{ backgroundColor: theme.primaryColor }}
+                            >
+                                {item.totalCalls} Calls
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-center text-gray-500 py-10">
+                        No Data Available
+                    </div>
+                )}
+            </div>
+        </div>
+    </div>
+)}
             {/* Table Card */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
                 {/* Table */}
