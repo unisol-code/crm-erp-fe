@@ -179,7 +179,7 @@ const useAdminIndividualDB = () => {
     loading,
     getAdminAllIndividualList,
     getAdminIndividualDataByID,
-    getAdminIndividualByID,
+    getAdminIndividualByID, 
     updateAdminIndividual,
     deleteAdminIndividual,
     resetAdminIndividualByID,

@@ -53,7 +53,11 @@ const physicianInitialValues = {
   opdDays: [],
   hospitalsAssociatedWith: [],
   visitTarget: "",
-  visitAchievement: "",
+  visitAchievement: "",   VisitDetails: {
+  startTime: "",
+  endTime: "",
+  duration: ""
+}
 };
 
 const surgonInitialValues = {
@@ -100,6 +104,7 @@ const surgonInitialValues = {
   },
   visitTarget: "",
   visitAchievement: "",
+  
 };
 
 const nonClinicalInitialValues = {
@@ -136,7 +141,11 @@ const nonClinicalInitialValues = {
   dob: "",
   weddingAnniversary: "",
   visitTarget: "",
-  visitAchievement: "",
+  visitAchievement: "",  VisitDetails: {
+  startTime: "",
+  endTime: "",
+  duration: ""
+}
 };
 
 // Validation Schemas
@@ -488,7 +497,7 @@ const AddNewIndividual = () => {
   const navigate = useNavigate();
   useEffect(() => {
     fetchSegment();
-    profileState();
+    // profileState();
   }, []);
   useEffect(() => {
     if (id) {
@@ -524,8 +533,8 @@ const AddNewIndividual = () => {
         return { ...surgonInitialValues, ...editData };
       case "Non Clinical":
         return { ...nonClinicalInitialValues, ...editData };
-      default:
-        return {};
+       default:
+      return { ...nonClinicalInitialValues, ...editData };
     }
   };
 
@@ -538,7 +547,7 @@ const AddNewIndividual = () => {
       case "Non Clinical":
         return nonClinicalSchema;
       default:
-        return Yup.object({});
+      return nonClinicalSchema;
     }
   };
   const formatDate = (date) => {
@@ -562,7 +571,7 @@ const AddNewIndividual = () => {
       case "Non Clinical":
         return <NonClinical {...commonProps} />;
       default:
-        return null;
+      return <NonClinical {...commonProps} />;
     }
   };
   console.log(segment);
@@ -602,7 +611,19 @@ const AddNewIndividual = () => {
                     : []
                 }
                 value={selectedSector}
-                onChange={(selected) => setSelectedSector(selected)}
+                // onChange={(selected) => setSelectedSector(selected)}
+                onChange={(selected) => {
+  // set selected segment
+  setSelectedSector(selected);
+
+  // clear previous profile
+  setSelectedDoctor(null);
+
+  // hit profile API with selected segment
+  if (selected?.value) {
+    profileState(selected.value);
+  }
+}}
                 placeholder="Select Segment"
                 isClearable
                 isDisabled={isEdit || isView}

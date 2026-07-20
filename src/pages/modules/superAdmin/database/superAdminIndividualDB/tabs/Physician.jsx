@@ -39,6 +39,7 @@ const InputWithError = ({ label, name, formik, type = "text", ...props }) => {
 const Gov = ({ formik }) => {
   const [selectedDesignation, setSelectedDesignation] = useState(null);
   const [selectProfiles, setSelectedProfiles] = useState(null);
+  const [selectedStateCode, setSelectedStateCode] = useState("");
   const {
     fetchDesignation,
     designation,
@@ -58,7 +59,9 @@ const Gov = ({ formik }) => {
     loading,
     fetchAllStateName,
     fetchAllEmployees,
-    employees
+    employees,
+      fetchDistrictList,
+  districtList
   } = useDropdown();
 
   const relationshipOptions = [
@@ -84,11 +87,11 @@ const Gov = ({ formik }) => {
   //   { label: "Hospital 3", value: "Hospital 3" },
   // ];
 
-  const handleSelectCity = (stateCode) => {
-    if (stateCode) {
-      fetchAllCities(stateCode);
-    }
-  };
+  // const handleSelectCity = (stateCode) => {
+  //   if (stateCode) {
+  //     fetchAllCities(stateCode);
+  //   }
+  // };
 
   const handleHospitalChange = (selectedOptions) => {
     const currentHospitals = formik.values.hospitalsAssociatedWith || [];
@@ -123,6 +126,52 @@ const Gov = ({ formik }) => {
     { label: "Saturday", value: "Saturday" },
     { label: "Sunday", value: "Sunday" },
   ];
+
+  const calculateDuration = (startTime, endTime) => {
+  if (!startTime || !endTime) return '';
+
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+
+  let start = sh * 60 + sm;
+  let end = eh * 60 + em;
+
+  // Handle overnight meetings
+  if (end < start) {
+    end += 24 * 60;
+  }
+
+  const diff = end - start;
+
+  const hours = Math.floor(diff / 60);
+  const minutes = diff % 60;
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours} Hour${hours > 1 ? 's' : ''} ${minutes} Minute${minutes > 1 ? 's' : ''}`;
+  }
+
+  if (hours > 0) {
+    return `${hours} Hour${hours > 1 ? 's' : ''}`;
+  }
+
+  return `${minutes} Minute${minutes > 1 ? 's' : ''}`;
+};
+
+useEffect(() => {
+  const start = formik.values?.VisitDetails?.startTime;
+  const end = formik.values?.VisitDetails?.endTime;
+
+  if (start && end) {
+    const duration = calculateDuration(start, end);
+
+    if (duration !== formik.values.VisitDetails.duration) {
+      formik.setFieldValue('VisitDetails.duration', duration);
+    }
+  }
+}, [
+  formik.values?.VisitDetails?.startTime,
+  formik.values?.VisitDetails?.endTime,
+]);
 
   const selectStyles = {
     control: (base, state) => ({
@@ -319,7 +368,7 @@ const Gov = ({ formik }) => {
         />
 
         {/* State */}
-        <div>
+        {/* <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">
             State
           </label>
@@ -356,7 +405,95 @@ const Gov = ({ formik }) => {
               {formik.errors.state}
             </div>
           )}
-        </div>
+        </div> */}
+
+        <ReactSelect
+  className="w-full"
+  isLoading={loading}
+  styles={selectStyles}
+  options={
+    Array.isArray(allStateName)
+      ? allStateName.map((state) => ({
+          label: state.stateName,
+          value: state.stateName,
+          stateCode: state.stateCode,
+        }))
+      : []
+  }
+  value={
+    allStateName
+      ?.map((state) => ({
+        label: state.stateName,
+        value: state.stateName,
+        stateCode: state.stateCode,
+      }))
+      .find((option) => option.value === formik.values.state) || null
+  }
+  onChange={(selected) => {
+    // Save state name
+    formik.setFieldValue("state", selected?.value || "");
+
+    // Save state code
+    setSelectedStateCode(selected?.stateCode || "");
+
+    // Reset dependent fields
+    formik.setFieldValue("district", "");
+    formik.setFieldValue("cityTownVillage", "");
+
+    // Fetch districts
+    fetchDistrictList(selected?.value);
+  }}
+  onBlur={() => formik.setFieldTouched("state", true)}
+  placeholder="Select State"
+  isClearable
+/>
+
+<div>
+  <label className="block mb-1 text-sm font-medium text-gray-700">
+    District
+  </label>
+
+  <ReactSelect
+    className="w-full"
+    isLoading={loading}
+    styles={selectStyles}
+    isDisabled={!formik.values.state}
+    options={
+      Array.isArray(districtList)
+        ? districtList.map((district) => ({
+            label: district,
+            value: district,
+          }))
+        : []
+    }
+    value={
+      districtList
+        ?.map((district) => ({
+          label: district,
+          value: district,
+        }))
+        .find((option) => option.value === formik.values.district) || null
+    }
+    onChange={(selected) => {
+      formik.setFieldValue("district", selected?.value || "");
+
+      // Reset city when district changes
+      formik.setFieldValue("cityTownVillage", "");
+
+      // Fetch cities for selected district
+      fetchAllCities(selectedStateCode, selected?.value);
+    }}
+    onBlur={() => formik.setFieldTouched("district", true)}
+    placeholder="Select District"
+    isClearable
+  />
+
+  {formik.touched.district && formik.errors.district && (
+    <div className="text-red-500 text-xs mt-1">
+      {formik.errors.district}
+    </div>
+  )}
+</div>
 
         {/* City */}
         <div>
@@ -400,12 +537,13 @@ const Gov = ({ formik }) => {
           )}
         </div>
 
-        <Input
+        {/* <Input
           placeholder="Enter District"
           label="District"
           name="district"
           formik={formik}
-        />
+        /> */}
+        
         <Input
           placeholder="Enter Pin Code"
           label="Pin Code"
@@ -644,6 +782,32 @@ const Gov = ({ formik }) => {
         )}
         <Input label="Visit Target" placeholder="Enter Visit Target" name="visitTarget" type="number" formik={formik} />
         <Input label="Visit Achievement" placeholder="Enter Visit Achievement" name="visitAchievement" type="number" formik={formik} />
+       {/* ✅ Visit Details */}
+<div className="md:col-span-2">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <Input
+      label="Meeting Start Time"
+      name="VisitDetails.startTime"
+      type="time"
+      formik={formik}
+    />
+
+    <Input
+      label="Meeting End Time"
+      name="VisitDetails.endTime"
+      type="time"
+      formik={formik}
+    />
+
+    <Input
+      label="Meeting Duration"
+      name="VisitDetails.duration"
+      placeholder="30 Minutes"
+      formik={formik}
+      readOnly
+    />
+  </div>
+</div>
         <Select
           placeholder="Enter OPD Days"
           label="OPD Days"

@@ -17,7 +17,7 @@ const SuperAdminPreviewNewIndividual = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { id } = useParams();
-  const { getAdminIndividualDataByID, getindividualByID, loading } = useIndividuals();
+  const { getAdminIndividualDataByID, getAdminIndividualByID, loading } = useIndividuals();
 
   useEffect(() => {
     getAdminIndividualDataByID(id);
@@ -36,8 +36,8 @@ const SuperAdminPreviewNewIndividual = () => {
     return `${start} - ${end}`;
   };
 
-  console.log("the data is:", getindividualByID);
-  console.log("dobbbbbbbb", getindividualByID?.dob);
+  console.log("the data is:", getAdminIndividualByID);
+  console.log("dobbbbbbbb", getAdminIndividualByID?.dob);
 
   return (
     <div className="w-full min-h-screen">
@@ -66,41 +66,41 @@ const SuperAdminPreviewNewIndividual = () => {
               <div className="p-4 mb-6 bg-white rounded-b shadow">
                 <h2 className="mb-4 text-lg font-semibold uppercase">Profile</h2>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-                  <Item label="Full Name" value={getindividualByID?.fullName || "N/A"} />
-                  {getindividualByID?.typeOfDoctorProfile === "Non Clinical" && (
-                    <Item label="Department" value={getindividualByID?.department || "N/A"} />
+                  <Item label="Full Name" value={getAdminIndividualByID?.data?.individualDetails?.fullName || "N/A"} />
+                  {getAdminIndividualByID?.data?.individualDetails?.typeOfDoctorProfile === "Non Clinical" && (
+                    <Item label="Department" value={getAdminIndividualByID?.data?.individualDetails?.department || "N/A"} />
                   )}
-                  <Item label="Designation" value={getindividualByID?.designation || "N/A"} />
-                  {getindividualByID?.typeOfDoctorProfile !== "Non Clinical" && (
-                    <Item label="Speciality" value={getindividualByID?.speciality || "N/A"} />
+                  <Item label="Designation" value={getAdminIndividualByID?.data?.individualDetails?.designation || "N/A"} />
+                  {getAdminIndividualByID?.data?.individualDetails?.typeOfDoctorProfile !== "Non Clinical" && (
+                    <Item label="Speciality" value={getAdminIndividualByID?.data?.individualDetails?.speciality || "N/A"} />
                   )}
-                  <Item label="Segment" value={getindividualByID?.segment || "N/A"} />
+                  <Item label="Segment" value={getAdminIndividualByID?.data?.individualDetails?.segment || "N/A"} />
                   <Item
                     label="Visit Target"
-                    value={getindividualByID?.visitTarget || "N/A"}
+                    value={getAdminIndividualByID?.data?.individualDetails?.visitTarget || "N/A"}
                   />
                   <Item
                     label="Visit Achievement"
-                    value={getindividualByID?.visitAchievement || "N/A"}
+                    value={getAdminIndividualByID?.data?.individualDetails?.visitAchievement || "N/A"}
                   />
                   <Item
                     label="Type Of Individual Profile"
-                    value={getindividualByID?.typeOfDoctorProfile || "N/A"}
+                    value={getAdminIndividualByID?.data?.individualDetails?.typeOfDoctorProfile || "N/A"}
                   />
-                  <Item label="Category" value={getindividualByID?.category || "N/A"} />
-                  {getindividualByID?.typeOfDoctorProfile === "Physician" && (
-                    <Item label="Type of Profile" value={getindividualByID?.profileType || "N/A"} />
+                  <Item label="Category" value={getAdminIndividualByID?.data?.individualDetails?.category || "N/A"} />
+                  {getAdminIndividualByID?.data?.individualDetails?.typeOfDoctorProfile === "Physician" && (
+                    <Item label="Type of Profile" value={getAdminIndividualByID?.data?.individualDetails?.profileType || "N/A"} />
                   )}
-                  {getindividualByID?.typeOfDoctorProfile === "Physician" && (
+                  {getAdminIndividualByID?.data?.individualDetails?.typeOfDoctorProfile === "Physician" && (
                     <Item
                       label="Total No of Patients Examined per Day"
-                      value={getindividualByID?.totalNoOfPatientExaminPerDay || "N/A"}
+                      value={getAdminIndividualByID?.data?.individualDetails?.totalNoOfPatientExaminPerDay || "N/A"}
                     />
                   )}
-                  {getindividualByID?.typeOfDoctorProfile === "Physician" && (
+                  {getAdminIndividualByID?.data?.individualDetails?.typeOfDoctorProfile === "Physician" && (
                     <Item
                       label="Total No of Patients Admission per Day"
-                      value={getindividualByID?.totalNoOfPatientAdmissionPerDay || "N/A"}
+                      value={getAdminIndividualByID?.data?.individualDetails?.totalNoOfPatientAdmissionPerDay || "N/A"}
                     />
                   )}
                 </div>
@@ -110,18 +110,18 @@ const SuperAdminPreviewNewIndividual = () => {
               <div className="p-4 mb-6 bg-white rounded shadow">
                 <h2 className="mb-4 text-lg font-semibold uppercase">Contacts</h2>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-                  <Item label="Contact No" value={getindividualByID?.contactNo} />
+                  <Item label="Contact No" value={getAdminIndividualByID?.data?.individualDetails?.contactNo || "N/A"} />
                   <Item
                     label="Alternate Contact No"
-                    value={getindividualByID?.alternateContactNo}
+                    value={getAdminIndividualByID?.data?.individualDetails?.alternateContactNo || "N/A"}
                   />
                   <Item
                     label="Official Email"
-                    value={getindividualByID?.officialEmail}
+                    value={getAdminIndividualByID?.data?.individualDetails?.officialEmail || "N/A"}
                   />
                   <Item
                     label="Personal Email"
-                    value={getindividualByID?.personalEmail}
+                    value={getAdminIndividualByID?.data?.individualDetails?.personalEmail || "N/A"}
                   />
                 </div>
               </div>
@@ -134,26 +134,26 @@ const SuperAdminPreviewNewIndividual = () => {
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
                   <Item
                     label="DOB"
-                    value={handleDateFormat(getindividualByID?.dob)}
+                    value={handleDateFormat(getAdminIndividualByID?.data?.individualDetails?.dob)}
                   />
-                  <Item label="Hobbies" value={getindividualByID?.hobbies || "N/A"} />
+                  <Item label="Hobbies" value={getAdminIndividualByID?.data?.individualDetails?.hobbies || "N/A"} />
                   <Item
                     label="Relationship Status"
-                    value={getindividualByID?.relationshipStatus}
+                    value={getAdminIndividualByID?.data?.individualDetails?.relationshipStatus || "N/A"}
                   />
-                  {getindividualByID?.relationshipStatus === "Married" && (
+                  {getAdminIndividualByID?.data?.individualDetails?.relationshipStatus === "Married" && (
                     <>
-                      <Item label="Spouse Name" value={getindividualByID?.spouseName} />
+                      <Item label="Spouse Name" value={getAdminIndividualByID?.data?.individualDetails?.spouseName || "N/A"} />
                       <Item
                         label="Wedding Anniversary"
-                        value={handleDateFormat(getindividualByID?.weddingAnniversary)}
+                        value={handleDateFormat(getAdminIndividualByID?.data?.individualDetails?.weddingAnniversary)}
                       />
 
                     </>
                   )}
                   <Item
                     label="Academic Interest"
-                    value={getindividualByID?.academicInterest}
+                    value={getAdminIndividualByID?.data?.individualDetails?.academicInterest || "N/A"}
                   />
 
                 </div>
@@ -165,28 +165,28 @@ const SuperAdminPreviewNewIndividual = () => {
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
                   <Item
                     label="Residence Address"
-                    value={getindividualByID?.residenceAddress}
+                    value={getAdminIndividualByID?.data?.individualDetails?.residenceAddress || "N/A"}
                   />
                   <Item
                     label="City/Town/Village"
-                    value={getindividualByID?.cityTownVillage}
+                    value={getAdminIndividualByID?.data?.individualDetails?.cityTownVillage || "N/A"}
                   />
-                  <Item label="District" value={getindividualByID?.district} />
-                  <Item label="State" value={getindividualByID?.state} />
-                  <Item label="Pincode" value={getindividualByID?.pincode} />
-                  <Item label="Landmark" value={getindividualByID?.landmark} />
+                  <Item label="District" value={getAdminIndividualByID?.data?.individualDetails?.district || "N/A"} />
+                  <Item label="State" value={getAdminIndividualByID?.data?.individualDetails?.state || "N/A"} />
+                  <Item label="Pincode" value={getAdminIndividualByID?.data?.individualDetails?.pincode || "N/A"} />
+                  <Item label="Landmark" value={getAdminIndividualByID?.data?.individualDetails?.landmark || "N/A"} />
                 </div>
               </div>
 
-              {(getindividualByID?.typeOfDoctorProfile === "Physician" ||
-                getindividualByID?.typeOfDoctorProfile === "Surgeon") &&
-                Array.isArray(getindividualByID?.hospitalsAssociatedWith) && (
+              {(getAdminIndividualByID?.data?.individualDetails?.typeOfDoctorProfile === "Physician" ||
+                getAdminIndividualByID?.data?.individualDetails?.typeOfDoctorProfile === "Surgeon") &&
+                Array.isArray(getAdminIndividualByID?.data?.individualDetails?.hospitalsAssociatedWith) && (
                   <div className="p-4 mb-6 bg-white rounded shadow">
                     <h2 className="mb-4 text-lg font-semibold uppercase">
                       Hospitals Associated With
                     </h2>
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                      {getindividualByID.hospitalsAssociatedWith.map((hosp, idx) => (
+                      {getAdminIndividualByID?.data?.individualDetails?.hospitalsAssociatedWith.map((hosp, idx) => (
                         <div key={hosp?._id || idx} className="p-3 rounded border">
                           <Item label="Hospital Name" value={hosp?.hospitalName} />
                           <Item
@@ -199,13 +199,13 @@ const SuperAdminPreviewNewIndividual = () => {
                     </div>
                   </div>
                 )}
-              {getindividualByID?.typeOfDoctorProfile === "Physician" &&
-                Array.isArray(getindividualByID?.opdDays) && (
+              {getAdminIndividualByID?.data?.individualDetails?.typeOfDoctorProfile === "Physician" &&
+                Array.isArray(getAdminIndividualByID?.data?.individualDetails?.opdDays) && (
                   <div className="p-4 mb-6 bg-white rounded shadow">
                     <h2 className="mb-4 text-lg font-semibold uppercase">OPD Days</h2>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-6">
-                      {getindividualByID.opdDays.length > 0 ? (
-                        getindividualByID.opdDays.map((day, idx) => (
+                      {getAdminIndividualByID?.data?.individualDetails?.opdDays.length > 0 ? (
+                        getAdminIndividualByID?.data?.individualDetails?.opdDays.map((day, idx) => (
                           <Item key={idx} label={`Day ${idx + 1}`} value={day} />
                         ))
                       ) : "N/A"}
@@ -213,15 +213,15 @@ const SuperAdminPreviewNewIndividual = () => {
                   </div>
                 )}
 
-              {getindividualByID?.typeOfDoctorProfile === "Surgeon" &&
-                Array.isArray(getindividualByID?.surgeryDays) && (
+              {getAdminIndividualByID?.data?.individualDetails?.typeOfDoctorProfile === "Surgeon" &&
+                Array.isArray(getAdminIndividualByID?.data?.individualDetails?.surgeryDays) && (
                   <div className="p-4 mb-6 bg-white rounded shadow">
                     <h2 className="mb-4 text-lg font-semibold uppercase">
                       Surgery Days
                     </h2>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-6">
-                      {getindividualByID.surgeryDays.length > 0 ? (
-                        getindividualByID.surgeryDays.map((day, idx) => (
+                      {getAdminIndividualByID?.data?.individualDetails?.surgeryDays.length > 0 ? (
+                        getAdminIndividualByID?.data?.individualDetails?.surgeryDays.map((day, idx) => (
                           <Item key={idx} label={`Day ${idx + 1}`} value={day} />
                         ))
                       ) : (
@@ -232,13 +232,13 @@ const SuperAdminPreviewNewIndividual = () => {
                 )}
 
 
-              {getindividualByID?.typeOfDoctorProfile === "Surgeon" && Array.isArray(getindividualByID?.typeOfSurgeryPerformed) && (
+              {getAdminIndividualByID?.data?.individualDetails?.typeOfDoctorProfile === "Surgeon" && Array.isArray(getAdminIndividualByID?.data?.individualDetails?.typeOfSurgeryPerformed) && (
                 <div className="p-4 mb-6 bg-white rounded shadow">
                   <h2 className="mb-4 text-lg font-semibold uppercase">
                     Types Of Surgery Performed
                   </h2>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {getindividualByID.typeOfSurgeryPerformed.map((surg, idx) => (
+                    {getAdminIndividualByID?.data?.individualDetails?.typeOfSurgeryPerformed.map((surg, idx) => (
                       <div key={surg?._id || idx} className="p-3 rounded border">
                         <Item label="Type" value={surg?.type} />
                         <Item
@@ -259,22 +259,22 @@ const SuperAdminPreviewNewIndividual = () => {
               {/* <div className="p-4 mb-6 bg-white rounded shadow">
                 <h2 className="mb-4 text-lg font-semibold uppercase">Meta</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-                  <Item label="Sales ID" value={getindividualByID?.sales_id} />
+                  <Item label="Sales ID" value={getAdminIndividualByID?.sales_id} />
                   <Item
                     label="Visit Achievement"
                     value={
-                      typeof getindividualByID?.visitAchievement === "number"
-                        ? String(getindividualByID?.visitAchievement)
-                        : getindividualByID?.visitAchievement
+                      typeof getAdminIndividualByID?.visitAchievement === "number"
+                        ? String(getAdminIndividualByID?.visitAchievement)
+                        : getAdminIndividualByID?.visitAchievement
                     }
                   />
                   <Item
                     label="Created At"
-                    value={handleDateFormat(getindividualByID?.createdAt)}
+                    value={handleDateFormat(getAdminIndividualByID?.createdAt)}
                   />
                   <Item
                     label="Updated At"
-                    value={handleDateFormat(getindividualByID?.updatedAt)}
+                    value={handleDateFormat(getAdminIndividualByID?.updatedAt)}
                   />
                 </div>
               </div> */}
@@ -287,24 +287,24 @@ const SuperAdminPreviewNewIndividual = () => {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                   <Item
                     label="Graduation Institute"
-                    value={getindividualByID?.graduation?.instituteName}
+                    value={getAdminIndividualByID?.data?.individualDetails?.graduation?.instituteName}
                   />
                   <Item
                     label="Graduation Year"
                     value={
-                      typeof getindividualByID?.graduation?.yearOfPassing === "number"
-                        ? String(getindividualByID?.graduation?.yearOfPassing)
-                        : getindividualByID?.graduation?.yearOfPassing
+                      typeof getAdminIndividualByID?.data?.individualDetails?.graduation?.yearOfPassing === "number"
+                        ? String(getAdminIndividualByID?.data?.individualDetails?.graduation?.yearOfPassing)
+                        : getAdminIndividualByID?.data?.individualDetails?.graduation?.yearOfPassing
                     }
                   />
                   <Item
                     label="Post Graduation Institute"
-                    value={getindividualByID?.postGraduation?.instituteName || "N/A"}
+                    value={getAdminIndividualByID?.data?.individualDetails?.postGraduation?.instituteName || "N/A"}
                   />
                   <Item
                     label="Post Graduation Year"
                     value={
-                      getindividualByID?.postGraduation?.yearOfPassing || "N/A"
+                      getAdminIndividualByID?.data?.individualDetails?.postGraduation?.yearOfPassing || "N/A"
                     }
                   />
                 </div>
@@ -317,7 +317,7 @@ const SuperAdminPreviewNewIndividual = () => {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                   <Item
                     label="Sales Person Name"
-                    value={getindividualByID?.salesPersonName}
+                    value={getAdminIndividualByID?.data?.salesPersonName || "N/A"}
                   />
                 </div>
               </div>

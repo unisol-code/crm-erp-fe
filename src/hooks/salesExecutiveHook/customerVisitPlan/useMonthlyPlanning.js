@@ -3,7 +3,7 @@ import { useState } from "react";
 import useFetch from "../../useFetch";
 import conf from "../../../config/index";
 import { toast } from "react-toastify";
-import { monthlyPlanningDetailsStateAtom, monthlyPlanningListStateAtom, monthWisePlanningStateAtom, oneMonthPlanningStateAtom } from "../../../state/mothlyPlanningState/monthlyPlanningState";
+import { monthlyPlanningDetailsStateAtom, monthlyPlanningListStateAtom, monthWisePlanningStateAtom, oneMonthPlanningStateAtom ,monthlySummaryStateAtom} from "../../../state/mothlyPlanningState/monthlyPlanningState";
 import Swal from "sweetalert2";
 import { confirmAlert } from "../../../utils/alertToast";
 
@@ -14,7 +14,7 @@ const useMonthlyPlanning = () => {
     const [oneMonthPlanningList, setOneMonthPlanningList] = useRecoilState(oneMonthPlanningStateAtom);
     const [monthlyPlanningDetails, setMonthlyPlanningDetails] = useRecoilState(monthlyPlanningDetailsStateAtom)
     const [monthWisePlanning, setMonthWisePlanning] = useRecoilState(monthWisePlanningStateAtom);
-
+   const [monthlySummary, setMonthlySummary] = useRecoilState(monthlySummaryStateAtom);
     const fetchMonthlyPlanningList = async (page, limit, fromDate, toDate) => {
         setLoading(true);
         try {
@@ -55,6 +55,32 @@ const useMonthlyPlanning = () => {
             setLoading(false);
         }
     };
+
+         const fetchMonthlySummary = async (id, month, year, type) => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            if (month) params.append("month", month);
+            if (year) params.append("year", year);
+            // if (type) params.append("type", type);
+                    if (type) {
+            params.append(type, "true");
+        }
+            const res = await fetchData({
+                method: "GET",
+                url: `${conf.apiBaseUrl}monthlyPlanning/totalCallRecordsforHospitalandDoctor/${id}?${params.toString()}`
+            });
+            if (res) {
+                setMonthlySummary(res);
+            }
+        } catch (err) {
+            console.error("Error while fetching monthly summary:", err);
+            toast.error("Failed to fetch monthly summary");
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const fetchOneMonthPlanningList = async (page, limit, month, year, doctorName, organizationName, createPlanningForDate) => {
         setOneMonthPlanningList(null);
