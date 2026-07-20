@@ -57,6 +57,11 @@ const physicianInitialValues = {
   visitTarget: "",
   visitAchievement: "",
   salesPersonName: "",
+    VisitDetails: {
+    startTime: '',
+    endTime: '',
+    duration: '',
+  },
 };
 
 const surgonInitialValues = {
@@ -135,6 +140,11 @@ const nonClinicalInitialValues = {
   dob: "",
   weddingAnniversary: "",
   visitTarget: "",
+  VisitDetails: {
+  startTime: '',
+  endTime: '',
+  duration: '',
+},
   visitAchievement: "",
   salesPersonName: "",
 };
@@ -250,6 +260,11 @@ const physicianSchema = Yup.object({
   visitTarget: Yup.number().required("Visit Target is required"),
   visitAchievement: Yup.number().required("Visit Achievement is required"),
   salesPersonName: Yup.string().required("Sales Person name is required"),
+  VisitDetails: Yup.object().shape({
+  startTime: Yup.string().required('Start Time is required'),
+  endTime: Yup.string().required('End Time is required'),
+  duration: Yup.string().required('Duration is required'),
+}),
 });
 
 const surgonSchema = Yup.object({
@@ -445,6 +460,11 @@ const nonClinicalSchema = Yup.object({
     otherwise: (schema) => schema.notRequired(),
   }),
   visitTarget: Yup.number().required("Visit Target is required"),
+  VisitDetails: Yup.object().shape({
+  startTime: Yup.string().required('Start Time is required'),
+  endTime: Yup.string().required('End Time is required'),
+  duration: Yup.string().required('Duration is required'),
+}),
   visitAchievement: Yup.number().required("Visit Achievement is required"),
   salesPersonName: Yup.string().required("Sales Person name required"),
 });
@@ -482,18 +502,29 @@ const AddNewIndividualform = () => {
   } = useAdminIndividualDB();
   const [editData, setEditData] = useState(null);
   const navigate = useNavigate();
+  // useEffect(() => {
+  //   if (!companyResolved) return;
+
+  //   fetchSegment();
+
+  //   if (isEnviroSolution) {
+  //     enviroindiviualdropdown(); // ✅ enviro
+  //   } else {
+  //     profileState(selected.value); // ✅ healthcare   { UPDATED BY HARSHAL NOW FOR ALL}
+  //   }
+  // }, [companyResolved, isEnviroSolution]);
+
   useEffect(() => {
-    if (!companyResolved) return;
+  if (!companyResolved) return;
 
-    fetchSegment();
+  // only fetch segment list on page load
+  fetchSegment();
 
-    if (isEnviroSolution) {
-      enviroindiviualdropdown(); // ✅ enviro
-    } else {
-      profileState(); // ✅ healthcare
-    }
-  }, [companyResolved, isEnviroSolution]);
-
+  // if enviro company, load enviro profiles
+  if (isEnviroSolution) {
+    enviroindiviualdropdown();
+  }
+}, [companyResolved, isEnviroSolution]);
 
   useEffect(() => {
     setSelectedDoctor(null);
@@ -529,8 +560,8 @@ const AddNewIndividualform = () => {
         return { ...surgonInitialValues, ...editData };
       case "Non Clinical":
         return { ...nonClinicalInitialValues, ...editData };
-      default:
-        return {};
+     default:
+      return { ...nonClinicalInitialValues, ...editData };
     }
   };
 
@@ -542,8 +573,9 @@ const AddNewIndividualform = () => {
         return surgonSchema;
       case "Non Clinical":
         return nonClinicalSchema;
-      default:
-        return Yup.object({});
+    // Any other profile -> use Non Clinical validation
+    default:
+      return nonClinicalSchema;
     }
   };
   const formatDate = (date) => {
@@ -565,8 +597,9 @@ const AddNewIndividualform = () => {
         return <Surgon formik={formik} />;
       case "Non Clinical":
         return <NonClinical formik={formik} />;
-      default:
-        return null;
+     // Any other profile -> show Non Clinical form
+    default:
+      return <NonClinical formik={formik} />;
     }
   };
   console.log(segment);
@@ -614,7 +647,19 @@ const AddNewIndividualform = () => {
                     : []
                 }
                 value={selectedSector}
-                onChange={(selected) => setSelectedSector(selected)}
+                // onChange={(selected) => setSelectedSector(selected)}
+onChange={(selected) => {
+  // set selected segment
+  setSelectedSector(selected);
+
+  // clear previously selected profile
+  setSelectedDoctor(null);
+
+  // If company is NOT Enviro, fetch profiles by selected segment
+  if (!isEnviroSolution && selected?.value) {
+    profileState(selected.value);
+  }
+}}
                 placeholder="Select Segment"
                 isClearable
                 styles={{

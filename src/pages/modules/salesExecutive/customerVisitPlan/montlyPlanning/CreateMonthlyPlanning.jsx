@@ -320,6 +320,10 @@ const CreateMonthlyPlanning = () => {
       customDoctor: "",
       productToBePromoted: [],
       callObjective: "",
+      designation: "",
+       speciality: "",
+         visitingHours: "",
+  meetingDuration: "",
     },
     validationSchema: getValidationSchema(),
     onSubmit: async (values, { resetForm, setSubmitting }) => {
@@ -582,10 +586,21 @@ const CreateMonthlyPlanning = () => {
     })) || []),
     { label: "Other", value: "Other" },
   ];
+  // const doctorOptions = [
+  //   ...formatOptions(doctorList),
+  //   { label: "Other", value: "Other" },
+  // ];
   const doctorOptions = [
-    ...formatOptions(doctorList),
-    { label: "Other", value: "Other" },
-  ];
+  ...(doctorList?.map((doctor) => ({
+    label: doctor.fullName,
+    value: doctor.fullName,
+    designation: doctor.designation,
+    speciality: doctor.speciality,
+    visitDetails: doctor.visitDetails,
+
+  })) || []),
+  { label: "Other", value: "Other" },
+];
   const productOptions = formatOptions(productList);
   const callObjectiveOptions = formatOptions(
     [
@@ -897,6 +912,19 @@ const CreateMonthlyPlanning = () => {
                 )}
                 onChange={(selected) => {
                   formik.setFieldValue("nameOfDoctor", selected?.value || "");
+                    formik.setFieldValue("designation", selected?.designation || "");
+                      formik.setFieldValue("speciality", selected?.speciality || "");
+                        formik.setFieldValue(
+    "visitingHours",
+    selected?.visitDetails
+      ? `${selected.visitDetails.startTime} - ${selected.visitDetails.endTime}`
+      : ""
+  );
+
+  formik.setFieldValue(
+    "meetingDuration",
+    selected?.visitDetails?.duration || ""
+  );
                   formik.setFieldValue("customDoctor", "");
                 }}
                 onBlur={() => formik.setFieldTouched("nameOfDoctor", true)}
@@ -937,7 +965,65 @@ const CreateMonthlyPlanning = () => {
                 </p>
               )}
             </div>
+            <div className="flex flex-col">
+  <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+    Designation
+  </label>
 
+  <input
+    type="text"
+    value={formik.values.designation}
+    readOnly
+    className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
+    placeholder="Designation"
+  />
+</div>
+<div className="flex flex-col">
+  <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+    Speciality
+  </label>
+
+  <input
+    type="text"
+    value={formik.values.speciality}
+    readOnly
+    className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
+    placeholder="Speciality"
+  />
+</div>
+<div className="flex flex-col">
+  <label className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+    Visiting Hours
+  </label>
+
+  <input
+    type="text"
+    value={formik.values.visitingHours}
+    readOnly
+    className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
+    placeholder="Visiting Hours"
+  />
+</div>
+<div className="flex flex-col">
+  <label className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+    Duration
+  </label>
+
+  <input
+    type="text"
+    value={formik.values.meetingDuration}
+    readOnly
+    className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
+    placeholder="Duration"
+  />
+</div>
+<div className="md:col-span-2">
+  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+    <p className="text-sm font-medium text-amber-800">
+      💡 Have you considered your Travel Time, Breakfast, Lunch, dinner or Tea schedule before planning your visits?
+    </p>
+  </div>
+</div>
             <div className="flex flex-col">
               <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 <Package

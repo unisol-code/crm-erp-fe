@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../hooks/theme/useTheme";
-import { LayoutDashboard } from "lucide-react";
+import { CalendarCheck, LayoutDashboard } from "lucide-react";
 import { IoPeopleCircleOutline } from "react-icons/io5";
 import { Info } from "lucide-react";
 import contactUs from "../../../assets/images/contactUs.png";
@@ -48,6 +48,26 @@ function Sidebar({ collapsed, setCollapsed }) {
       icon: <Database className="w-6 h-6" />,
       name: "Database",
       path: "/database",
+    }, {
+      id: 5,
+      icon: <CalendarCheck className="w-6 h-6" />,
+      name: "Customer Visit Plan",
+      hasSubMenu: true,
+      subItems: [
+        {
+          id: 31,
+          name: "Monthly Planning",
+          path: "/admin/sales-executive/employee-list",
+        },
+        { id: 32, name: "Target Sheet",
+          //  path: "/sales-executive/target-sheet"
+           },
+        {
+          id: 33,
+          name: "Territory Snapshot",
+          // path: "/admin/sales-executive/territory-snapshot",
+        },
+      ],
     },
     {
       id: 4,

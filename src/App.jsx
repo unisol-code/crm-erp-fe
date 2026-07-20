@@ -43,6 +43,19 @@ import {
 } from "./pages/modules/salesExecutive/customerVisitPlan/montlyPlanning/index";
 
 import {
+  EmployeeList,
+  EmployeeMonthlyPlanning,
+  EmployeeViewMonthlyPlanning,
+  // EmployeeCreateMonthlyPlanning,
+  EmployeePreviewMonthlyPlanning,
+  EmployeeViewMonthlyPlanningDetails,
+  EmployeeUpdateMonthlyPlanning,
+  EmployeeViewMonthWisePlanning,
+} from "./pages/modules/superAdmin/customerVisitPlan/montlyPlanning/index";
+
+
+
+import {
   TargetSheet,
   TargetSheetForm,
   PreviewTargetSheet,
@@ -464,7 +477,64 @@ function App() {
               </SuperAdminLayout>
             }
           />
+          {/* ADMIN SALES EXECUTIVE */}
+                   <Route
+            path="/admin/sales-executive/employee-list"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+               <EmployeeList />
+              </SuperAdminLayout>
+            }
+          />
+        
+          <Route
+            path="/admin/sales-executive/monthly-planning/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+               <EmployeeMonthlyPlanning />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/admin/sales-executive/monthly-planning/view-month-wise/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EmployeeViewMonthWisePlanning />
+              </SuperAdminLayout>
+            }
+          />
         </Route>
+                 <Route
+            path="/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/:id/:date"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EmployeeViewMonthlyPlanning />
+              </SuperAdminLayout>
+            }
+          />
+                 <Route
+            path="/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EmployeeViewMonthlyPlanningDetails />
+              </SuperAdminLayout>
+            }
+          />
 
         {/* <Route
           path="/organization-details/:id"

@@ -30,6 +30,7 @@ const InputWithError = ({ label, name, formik, type = "text", ...props }) => {
 
 const Farmers = ({ formik }) => {
   const [selectedDesignation, setSelectedDesignation] = useState(null);
+  const [selectedStateCode, setSelectedStateCode] = useState("");
   const {
     fetchDesignation,
     designation,
@@ -49,7 +50,8 @@ const Farmers = ({ formik }) => {
     cities,
     fetchAllStateName,
     employees,
-    fetchAllEmployees
+    fetchAllEmployees,  fetchDistrictList,
+  districtList
   } = useDropdown();
 
   const relationshipOptions = [
@@ -57,11 +59,12 @@ const Farmers = ({ formik }) => {
     { label: "Married", value: "Married" },
     { label: "Divorced", value: "Divorced" },
   ];
-  const handleSelectCity = (stateCode) => {
-    if (stateCode) {
-      fetchAllCities(stateCode);
-    }
-  };
+  // const handleSelectCity = (stateCode) => {
+  //   if (stateCode) {
+  //     fetchAllCities(stateCode);
+  //   }
+  // };
+
 
   const selectStyles = {
     control: (base, state) => ({
@@ -83,6 +86,52 @@ const Farmers = ({ formik }) => {
       boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
     }),
   };
+
+  const calculateDuration = (startTime, endTime) => {
+  if (!startTime || !endTime) return '';
+
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+
+  let start = sh * 60 + sm;
+  let end = eh * 60 + em;
+
+  // Handle overnight meetings
+  if (end < start) {
+    end += 24 * 60;
+  }
+
+  const diff = end - start;
+
+  const hours = Math.floor(diff / 60);
+  const minutes = diff % 60;
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours} Hour${hours > 1 ? 's' : ''} ${minutes} Minute${minutes > 1 ? 's' : ''}`;
+  }
+
+  if (hours > 0) {
+    return `${hours} Hour${hours > 1 ? 's' : ''}`;
+  }
+
+  return `${minutes} Minute${minutes > 1 ? 's' : ''}`;
+};
+
+useEffect(() => {
+  const start = formik.values?.VisitDetails?.startTime;
+  const end = formik.values?.VisitDetails?.endTime;
+
+  if (start && end) {
+    const duration = calculateDuration(start, end);
+
+    if (duration !== formik.values.VisitDetails.duration) {
+      formik.setFieldValue('VisitDetails.duration', duration);
+    }
+  }
+}, [
+  formik.values?.VisitDetails?.startTime,
+  formik.values?.VisitDetails?.endTime,
+]);
 
   useEffect(() => {
     fetchDesignation();
@@ -259,43 +308,90 @@ const Farmers = ({ formik }) => {
         </div>
         <Input placeholder="Enter Residence Address" label="Residence Address" name="residenceAddress" formik={formik} />
         {/* State */}
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">
-            State
-          </label>
-          <ReactSelect
-            isLoading={loading}
-            options={
-              Array.isArray(allStateName)
-                ? allStateName.map((state) => ({
-                  label: state.stateName,
-                  value: state.stateCode,
-                }))
-                : []
-            }
-            value={
-              allStateName
-                ?.map((state) => ({
-                  label: state.stateName,
-                  value: state.stateCode,
-                }))
-                .find((option) => option.value === formik.values.state) || null
-            }
-            onChange={(selected) => {
-              formik.setFieldValue("state", selected?.value || "");
-              handleSelectCity(selected?.value);
-            }}
-            onBlur={() => formik.setFieldTouched("state", true)}
-            placeholder="Select State"
-            isClearable
-            styles={selectStyles}
-          />
-          {formik.touched.state && formik.errors.state && (
-            <div className="text-red-500 text-xs mt-1">
-              {formik.errors.state}
-            </div>
-          )}
-        </div>
+<ReactSelect
+  isLoading={loading}
+  styles={selectStyles}
+  options={
+    Array.isArray(allStateName)
+      ? allStateName.map((state) => ({
+          label: state.stateName,
+          value: state.stateName, // ✅ save state name
+          stateCode: state.stateCode,
+        }))
+      : []
+  }
+  value={
+    allStateName
+      ?.map((state) => ({
+        label: state.stateName,
+        value: state.stateName,
+        stateCode: state.stateCode,
+      }))
+      .find((option) => option.value === formik.values.state) || null
+  }
+  onChange={(selected) => {
+    // Save state name
+    formik.setFieldValue("state", selected?.value || "");
+
+    // Save state code separately
+    setSelectedStateCode(selected?.stateCode || "");
+
+    // Reset dependent fields
+    formik.setFieldValue("district", "");
+    formik.setFieldValue("cityTownVillage", "");
+
+    // Fetch districts
+    fetchDistrictList(selected?.value);
+  }}
+  onBlur={() => formik.setFieldTouched("state", true)}
+  placeholder="Select State"
+  isClearable
+/>
+<div>
+  <label className="block mb-1 text-sm font-medium text-gray-700">
+    District
+  </label>
+
+  <ReactSelect
+    isLoading={loading}
+    styles={selectStyles}
+    isDisabled={!formik.values.state}
+    options={
+      Array.isArray(districtList)
+        ? districtList.map((district) => ({
+            label: district,
+            value: district,
+          }))
+        : []
+    }
+    value={
+      districtList
+        ?.map((district) => ({
+          label: district,
+          value: district,
+        }))
+        .find((option) => option.value === formik.values.district) || null
+    }
+    onChange={(selected) => {
+      formik.setFieldValue("district", selected?.value || "");
+
+      // Reset city
+      formik.setFieldValue("cityTownVillage", "");
+
+      // Fetch cities for selected district
+      fetchAllCities(selectedStateCode, selected?.value);
+    }}
+    onBlur={() => formik.setFieldTouched("district", true)}
+    placeholder="Select District"
+    isClearable
+  />
+
+  {formik.touched.district && formik.errors.district && (
+    <div className="text-red-500 text-xs mt-1">
+      {formik.errors.district}
+    </div>
+  )}
+</div>
 
         {/* City */}
         <div>
@@ -337,7 +433,7 @@ const Farmers = ({ formik }) => {
             </div>
           )}
         </div>
-        <Input placeholder="Enter District" label="District" name="district" formik={formik} />
+        {/* <Input placeholder="Enter District" label="District" name="district" formik={formik} /> */}
         <Input placeholder="Enter Pin Code" label="Pin Code" name="pincode" formik={formik} />
         <Input placeholder="Enter Landmark" label="Landmark" name="landmark" formik={formik} />
 
@@ -459,6 +555,40 @@ const Farmers = ({ formik }) => {
         <Input label="DOB" name="dob" type="date" formik={formik} />
         <Input label="Visit Target" placeholder="Enter Visit Target" name="visitTarget" type="number" formik={formik} />
         <Input label="Visit Achievement" placeholder="Enter Visit Achievement" name="visitAchievement" type="number" formik={formik} />
+{/* ✅ Visit Details */}
+<div className="md:col-span-2">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <Input
+      label="Meeting Start Time"
+      name="VisitDetails.startTime"
+      type="time"
+      formik={formik}
+    />
+
+    <Input
+      label="Meeting End Time"
+      name="VisitDetails.endTime"
+      type="time"
+      formik={formik}
+    />
+
+    <Input
+      label="Meeting Duration"
+      name="VisitDetails.duration"
+      placeholder="30 Minutes"
+      formik={formik}
+      readOnly
+    />
+  </div>
+</div>
+
+<Input
+  label="Visit Achievement"
+  placeholder="Enter Visit Achievement"
+  name="visitAchievement"
+  type="number"
+  formik={formik}
+/>
         {/* Sales Person */}
         <div>
           <label className="block mb-2 text-sm font-medium text-gray-700">
