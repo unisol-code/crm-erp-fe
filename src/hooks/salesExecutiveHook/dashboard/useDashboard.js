@@ -2,7 +2,7 @@ import { useRecoilState } from "recoil";
 import { useState } from "react";
 import useFetch from "../../useFetch";
 import conf from "../../../config/index";
-import { priorDoctorsAtom, priorDoctorsByIdAtom, territorySnapshotAtom, topCustomersAtom, topSpecialitiesAtom } from "../../../state/salesExecutiveState/dashboard/dashboardState";
+import { priorDoctorsAtom, priorDoctorsByIdAtom, territorySnapshotAtom, todaySpecialAtom, topCustomersAtom, topSpecialitiesAtom } from "../../../state/salesExecutiveState/dashboard/dashboardState";
 
 const useDashboard = () => {
   const [fetchData] = useFetch();
@@ -11,8 +11,8 @@ const useDashboard = () => {
   const [territorySnapshot, setTerritorySnapshot] = useRecoilState(territorySnapshotAtom);
   const [topSpecialities, setTopSpecialities] = useRecoilState(topSpecialitiesAtom);
   const [topCustomers, setTopCustomers] = useRecoilState(topCustomersAtom);
-  const [priorDoctorsById, setPriorDoctorsById] = useRecoilState(priorDoctorsByIdAtom) 
-
+  const [priorDoctorsById, setPriorDoctorsById] = useRecoilState(priorDoctorsByIdAtom) ;
+ const[todaySpecial, setTodaySpecial] = useRecoilState(todaySpecialAtom);
   const fetchPriorDoctors = async (page, limit) => {
     setLoading(true);
     try {
@@ -124,11 +124,29 @@ const useDashboard = () => {
       setLoading(false);
     }
   }
+   const fetchTodaySpecial = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}individual/today-special-days`,
+      });
+      if (res) {
+        setTodaySpecial(res);
+      }
+    } catch (error) {
+      console.error("Error while fetching Today Special:", error);
+    }
+    finally {
+      setLoading(false);
+    }
+  }
+
 
   return {
     fetchPriorDoctors, loading, priorDoctors, fetchTerritorySnapshot, territorySnapshot,
     fetchTopSpecialities, topSpecialities, fetchTopCustomers, topCustomers, fetchPriorDoctorsById,
-    priorDoctorsById
+    priorDoctorsById,fetchTodaySpecial, todaySpecial
   };
 }
 

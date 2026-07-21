@@ -44,3 +44,9 @@ export const businessSnapShotAtom = atom({
   default: [],
   effects_UNSTABLE: [persistAtom],
 })
+
+export const todaySpecialAtom = atom({
+  key: "todaySpecial",
+  default: [],
+  effects_UNSTABLE: [persistAtom],
+})

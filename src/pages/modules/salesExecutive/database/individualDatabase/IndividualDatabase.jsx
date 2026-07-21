@@ -391,7 +391,7 @@ function IndividualDatabase() {
               </button>
       
               <button
-                onClick={() => navigate("/database/add-newindividual")}
+                onClick={() => navigate("/sales-executive/database/individual")}
                 className="px-5 py-2.5 rounded-lg text-white font-medium shadow-sm hover:opacity-90 transition whitespace-nowrap"
                 style={{ backgroundColor: theme.primaryColor }}
               >
