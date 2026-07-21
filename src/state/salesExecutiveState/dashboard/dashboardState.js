@@ -33,3 +33,9 @@ export const priorDoctorsByIdAtom = atom({
     default: null,
     effects_UNSTABLE: [persistAtom],
 });
+
+export const todaySpecialAtom = atom({
+  key: "todaySpecialAtom",
+    default: [],
+    effects_UNSTABLE: [persistAtom],
+});

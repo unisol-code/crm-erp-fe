@@ -31,6 +31,8 @@ const InputWithError = ({ label, name, formik, type = "text", ...props }) => {
 const NonClinical = ({ formik,isReadOnly  }) => {
   const [selectedDesignation, setSelectedDesignation] = useState(null);
   const [selectedStateCode, setSelectedStateCode] = useState("");
+  const [showOtherDepartment, setShowOtherDepartment] = useState(false);
+const [otherDepartment, setOtherDepartment] = useState('');
   const {
     fetchDesignation,
     designation,
@@ -45,6 +47,8 @@ const NonClinical = ({ formik,isReadOnly  }) => {
     designationForNonClinical,
     fetchDepartmentForNonClinical,
     departmentForNonClinical,
+    fetchDepartmentForNonClinicalNew,
+    newDepartmentForNonClinical,
     allStateName,
     fetchAllCities,
     cities,
@@ -92,7 +96,8 @@ const NonClinical = ({ formik,isReadOnly  }) => {
     fetchHobbies();
     fetchHospitalAssociatedWith();
     fetchDesignationForNonClinical();
-    fetchDepartmentForNonClinical();
+    // fetchDepartmentForNonClinical();
+    fetchDepartmentForNonClinicalNew();
     fetchAllStateName();
   }, []);
 
@@ -140,6 +145,8 @@ useEffect(() => {
   formik.values?.VisitDetails?.startTime,
   formik.values?.VisitDetails?.endTime,
 ]);
+
+console.log("non clinic",newDepartmentForNonClinical)
 
   return (
     <div className="">
@@ -231,28 +238,58 @@ useEffect(() => {
 
           <ReactSelect
             options={
-              Array.isArray(departmentForNonClinical)
-                ? departmentForNonClinical.map((d) => ({ label: d, value: d }))
+              Array.isArray(newDepartmentForNonClinical)
+                ? newDepartmentForNonClinical.map((d) => ({ label: d.name, value: d.name }))
                 : []
             }
             isLoading={loading}
             styles={selectStyles}
             value={
-              Array.isArray(departmentForNonClinical)
-                ? departmentForNonClinical
-                  .map((d) => ({ label: d, value: d }))
+              Array.isArray(newDepartmentForNonClinical)
+                ? newDepartmentForNonClinical
+                  .map((d) => ({ label: d.name, value: d.name }))
                   .find((opt) => opt.value === formik.values.department) || null
                 : null
             }
+            // onChange={(selected) => {
+            //   formik.setFieldValue("department", selected?.value || "");
+            // }}
             onChange={(selected) => {
-              formik.setFieldValue("department", selected?.value || "");
-            }}
+  const value = selected?.value || '';
+
+  // Agar Other select hua
+  if (value === 'Other') {
+    setShowOtherDepartment(true);
+    setOtherDepartment('');
+    formik.setFieldValue('department', '');
+  } else {
+    setShowOtherDepartment(false);
+    setOtherDepartment('');
+    formik.setFieldValue('department', value);
+  }
+}}
             onBlur={() => formik.setFieldTouched("department", true)}
             placeholder="Select Department"
             isClearable
           />
 
+{showOtherDepartment && (
+  <div className="mt-3">
+    <input
+      type="text"
+      placeholder="Add Other Department"
+      value={otherDepartment}
+      onChange={(e) => {
+        const value = e.target.value;
+        setOtherDepartment(value);
 
+        // Formik me custom value bhejo
+        formik.setFieldValue('department', value);
+      }}
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
+)}
           {formik.touched.department && formik.errors.department && (
             <div className="text-red-500 text-xs mt-1">{formik.errors.department}</div>
           )}

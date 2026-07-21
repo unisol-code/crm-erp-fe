@@ -38,6 +38,7 @@ const Dashboard = () => {
     fetchFinancialYear,
     fetchCalendarYear,
     calendarYear,
+    fetchTodaySpecial, todaySpecial
   } = useDashboard();
 
   const { switchTheme, theme } = useTheme();
@@ -214,7 +215,7 @@ const Dashboard = () => {
         fetchCalendarYear(),
         fetchTopProducts(),
         fetchEarningByItem(),
-        fetchTopCustomer(),
+        fetchTopCustomer(),fetchTodaySpecial()
       ]);
     };
 
@@ -355,6 +356,8 @@ const Dashboard = () => {
     const years = parseInt(yearsStr.trim().split(" ")[0], 10);
     return `${years} year${years !== 1 ? "s" : ""}`;
   };
+  const todayEntries = Object.entries(todaySpecial?.today || {});
+const upcomingEntries = Object.entries(todaySpecial?.upcoming || {});
   return (
     <div className="p-2">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -394,7 +397,238 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+{(todayEntries.length > 0 || upcomingEntries.length > 0) && (
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
 
+    {/* TODAY SPECIAL */}
+    <div
+      className="rounded-3xl p-5 text-white shadow-xl border"
+      style={{
+        background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.accentColor} 100%)`,
+        borderColor: theme.highlightColor,
+      }}
+    >
+
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-sm opacity-90">Today's Special</p>
+          <h3 className="text-2xl font-bold">🎉 Celebrations Today</h3>
+        </div>
+
+        <div
+          className="backdrop-blur px-4 py-2 rounded-full border"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            borderColor: 'rgba(255,255,255,0.25)',
+          }}
+        >
+          <span className="font-bold">
+            {todayEntries.reduce((acc, [, arr]) => acc + arr.length, 0)}
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+        {todayEntries.map(([companyName, people]) => (
+          <div key={companyName} className="space-y-2">
+
+            {/* Company Header */}
+            <div className="flex items-center gap-2">
+              <div
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: '#ffffff' }}
+              ></div>
+
+              <h4 className="font-semibold text-white/95">
+                {companyName}
+              </h4>
+            </div>
+
+            {people.map((person) => (
+              <div
+                key={person.individualId}
+                className="rounded-2xl p-3 flex items-center gap-3 border"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.12)',
+                  borderColor: 'rgba(255,255,255,0.18)',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+
+                {/* Avatar */}
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shrink-0"
+                  style={{
+                    backgroundColor: '#ffffff',
+                    color: theme.accentColor,
+                  }}
+                >
+                  {person.fullName?.charAt(0) || 'D'}
+                </div>
+
+                {/* Details */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">
+                    {person.fullName}
+                  </p>
+
+                  <div className="flex items-center gap-2 text-sm text-white/90">
+                    <span>📍 {person.city}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-1">
+                    <span
+                      className="px-2 py-0.5 rounded-full text-xs font-medium"
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.18)',
+                        color: '#ffffff',
+                      }}
+                    >
+                      {person.eventName}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Emoji */}
+                <div className="text-3xl shrink-0">
+                  {person.eventName === 'Birthday' ? '🎂' : '🎉'}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* UPCOMING SPECIAL */}
+    <div
+      className="rounded-3xl p-5 shadow-xl border"
+      style={{
+        backgroundColor: '#ffffff',
+        borderColor: theme.highlightColor,
+      }}
+    >
+
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-sm text-gray-500">Upcoming Events</p>
+          <h3
+            className="text-2xl font-bold"
+            style={{ color: theme.accentColor }}
+          >
+            📅 Coming Soon
+          </h3>
+        </div>
+
+        <div
+          className="px-4 py-2 rounded-full font-bold"
+          style={{
+            backgroundColor: theme.secondaryColor,
+            color: theme.accentColor,
+          }}
+        >
+          {upcomingEntries.reduce((acc, [, arr]) => acc + arr.length, 0)}
+        </div>
+      </div>
+
+      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+        {upcomingEntries.map(([companyName, people]) => (
+          <div key={companyName} className="space-y-2">
+
+            {/* Company Header */}
+            <div className="flex items-center gap-2">
+              <div
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: theme.primaryColor }}
+              ></div>
+
+              <h4
+                className="font-semibold"
+                style={{ color: theme.accentColor }}
+              >
+                {companyName}
+              </h4>
+            </div>
+
+            {people.map((person) => {
+              const eventDate = new Date(person.eventDate);
+              const today = new Date();
+              const diffTime = eventDate - today;
+              const daysLeft = Math.max(
+                0,
+                Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+              );
+
+              return (
+                <div
+                  key={person.individualId}
+                  className="p-4 rounded-2xl border transition-all duration-200 hover:shadow-md"
+                  style={{
+                    borderColor: theme.highlightColor,
+                    backgroundColor: theme.backgroundColor,
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="w-11 h-11 rounded-full flex items-center justify-center font-bold shrink-0"
+                        style={{
+                          backgroundColor: theme.secondaryColor,
+                          color: theme.accentColor,
+                        }}
+                      >
+                        {person.fullName?.charAt(0) || 'U'}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-800 truncate">
+                          {person.fullName}
+                        </p>
+
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <span>📍 {person.city}</span>
+                        </div>
+
+                        <div className="mt-1">
+                          <span
+                            className="px-2 py-0.5 rounded-full text-xs font-medium"
+                            style={{
+                              backgroundColor: theme.secondaryColor,
+                              color: theme.accentColor,
+                            }}
+                          >
+                            {person.eventName}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <p
+                        className="text-sm font-bold"
+                        style={{ color: theme.accentColor }}
+                      >
+                        {new Date(person.eventDate).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </p>
+
+                      <p className="text-xs text-gray-500 mt-1">
+                        {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
       <div className="flex gap-4 pb-4">
         {/* Left Column - 63% */}
         <div className="w-[63%] space-y-4">
@@ -647,6 +881,7 @@ const Dashboard = () => {
         </div>
         {/* business snapshot */}
       </div>
+      
       <div>
         <BusinessSnapshot />
       </div>

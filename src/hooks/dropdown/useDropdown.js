@@ -116,6 +116,7 @@ const useDropdown = () => {
     useRecoilState(designationForNonClinicalAtom);
   const [departmentForNonClinical, setDepartmentFOrNonClinical] =
     useRecoilState(departmentForNonClinicalAtom);
+    const[newDepartmentForNonClinical, setNewDepartmentFOrNonClinical] = useRecoilState(departmentForNonClinicalAtom);
   const [employees, setEmployees] = useRecoilState(employeeAtom);
 
   const [productsToPromote, setProductsToPromote] = useRecoilState(
@@ -911,8 +912,7 @@ const useDropdown = () => {
       }
     } catch (error) {
       console.error(
-        "Error while fetching designation for non-clinical dropDown:",
-        err
+        "Error while fetching designation for non-clinical dropDown:",error
       );
     } finally {
       setLoading(false);
@@ -938,6 +938,27 @@ const useDropdown = () => {
     }
   };
 
+
+   const fetchDepartmentForNonClinicalNew = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}drop-down/getAllDepartments`,
+      });
+      if (res) {
+        setNewDepartmentFOrNonClinical(res);
+      }
+    } catch (error) {
+      console.error(
+        "Error while fetching department for non-clinical dropDown:",
+        err
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   const fetchkitchenqueone = async () => {
     setLoading(true);
     try {
@@ -1175,7 +1196,8 @@ const useDropdown = () => {
     fetchDesignationForNonClinical,
     designationForNonClinical,
     fetchDepartmentForNonClinical,
-    departmentForNonClinical,
+    departmentForNonClinical,fetchDepartmentForNonClinicalNew,
+    newDepartmentForNonClinical,
     fetchSegment,
     fetchDistrictList,
     districtList,

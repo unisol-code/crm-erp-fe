@@ -2,7 +2,7 @@ import { useRecoilState } from "recoil";
 import { useState } from "react";
 import useFetch from "../useFetch";
 import conf from "../../config/index";
-import { allCompanyAtom, calendarYearAtom, earningByItemAtom, financialYearAtom, topCustomerAtom, topProductsAtom, businessSnapShotAtom } from "../../state/dashboardState/dashboardState";
+import { allCompanyAtom, calendarYearAtom, earningByItemAtom, financialYearAtom, topCustomerAtom, topProductsAtom, businessSnapShotAtom, todaySpecialAtom } from "../../state/dashboardState/dashboardState";
 
 const useDashboard = () => {
   const [fetchData] = useFetch();
@@ -14,6 +14,7 @@ const useDashboard = () => {
   const [topCustomer, setTopCustomer] = useRecoilState(topCustomerAtom);
   const [earningByItem, setEarningByItem] = useRecoilState(earningByItemAtom);
   const [businessSnapShot, setBusinessSnapShot] = useRecoilState(businessSnapShotAtom);
+  const [todaySpecial, setTodaySpecial] = useRecoilState(todaySpecialAtom);
   const fetchAllCompany = async () => {
     setLoading(true);
     try {
@@ -149,12 +150,30 @@ const useDashboard = () => {
       setLoading(false);
     }
   }
+
+  const fetchTodaySpecial = async () => {
+    setLoading(true);
+    try { 
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}dashboard/today-special-days`,
+      });
+      if (res) {
+        setTodaySpecial(res);
+      }
+    } catch (error) {
+      console.error("Error while fetching Today's Special:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading, financialYear, fetchFinancialYear,
     fetchAllCompany, allCompany, fetchCalendarYear, calendarYear,
     fetchTopProducts, topProducts, fetchTopCustomer, topCustomer,
     fetchEarningByItem, earningByItem,
-    fetchBusinessSnapShot, businessSnapShot
+    fetchBusinessSnapShot, businessSnapShot, fetchTodaySpecial, todaySpecial
   };
 };
 

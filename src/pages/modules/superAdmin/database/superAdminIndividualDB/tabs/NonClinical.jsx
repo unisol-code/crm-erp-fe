@@ -31,6 +31,8 @@ const InputWithError = ({ label, name, formik, type = "text", ...props }) => {
 const Farmers = ({ formik }) => {
   const [selectedDesignation, setSelectedDesignation] = useState(null);
   const [selectedStateCode, setSelectedStateCode] = useState("");
+    const [showOtherDepartment, setShowOtherDepartment] = useState(false);
+  const [otherDepartment, setOtherDepartment] = useState('');
   const {
     fetchDesignation,
     designation,
@@ -43,8 +45,10 @@ const Farmers = ({ formik }) => {
     loading,
     fetchDesignationForNonClinical,
     designationForNonClinical,
-    fetchDepartmentForNonClinical,
-    departmentForNonClinical,
+    // fetchDepartmentForNonClinical,
+    // departmentForNonClinical,
+    fetchDepartmentForNonClinicalNew,
+    newDepartmentForNonClinical,
     allStateName,
     fetchAllCities,
     cities,
@@ -140,7 +144,8 @@ useEffect(() => {
     fetchHobbies();
     fetchHospitalAssociatedWith();
     fetchDesignationForNonClinical();
-    fetchDepartmentForNonClinical();
+    // fetchDepartmentForNonClinical();
+    fetchDepartmentForNonClinicalNew();
     fetchAllStateName();
     fetchAllEmployees();
   }, []);
@@ -233,7 +238,7 @@ useEffect(() => {
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">Department</label>
 
-          <ReactSelect
+          {/* <ReactSelect
             options={
               Array.isArray(departmentForNonClinical)
                 ? departmentForNonClinical.map((d) => ({ label: d, value: d }))
@@ -254,7 +259,61 @@ useEffect(() => {
             onBlur={() => formik.setFieldTouched("department", true)}
             placeholder="Select Department"
             isClearable
-          />
+          /> */}
+                    <ReactSelect
+                      options={
+                        Array.isArray(newDepartmentForNonClinical)
+                          ? newDepartmentForNonClinical.map((d) => ({ label: d.name, value: d.name }))
+                          : []
+                      }
+                      isLoading={loading}
+                      styles={selectStyles}
+                      value={
+                        Array.isArray(newDepartmentForNonClinical)
+                          ? newDepartmentForNonClinical
+                            .map((d) => ({ label: d.name, value: d.name }))
+                            .find((opt) => opt.value === formik.values.department) || null
+                          : null
+                      }
+                      // onChange={(selected) => {
+                      //   formik.setFieldValue("department", selected?.value || "");
+                      // }}
+                      onChange={(selected) => {
+            const value = selected?.value || '';
+          
+            // Agar Other select hua
+            if (value === 'Other') {
+              setShowOtherDepartment(true);
+              setOtherDepartment('');
+              formik.setFieldValue('department', '');
+            } else {
+              setShowOtherDepartment(false);
+              setOtherDepartment('');
+              formik.setFieldValue('department', value);
+            }
+          }}
+                      onBlur={() => formik.setFieldTouched("department", true)}
+                      placeholder="Select Department"
+                      isClearable
+                    />
+          
+          {showOtherDepartment && (
+            <div className="mt-3">
+              <input
+                type="text"
+                placeholder="Add Other Department"
+                value={otherDepartment}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setOtherDepartment(value);
+          
+                  // Formik me custom value bhejo
+                  formik.setFieldValue('department', value);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
 
 
           {formik.touched.department && formik.errors.department && (
