@@ -483,7 +483,7 @@ const ViewMonthWisePlanning = () => {
                 {!loading && monthWisePlanning?.data?.length > 0 && (
                     <Pagination
                         currentPage={monthWisePlanning?.currentPage}
-                        totalItems={monthWisePlanning?.totalItems}
+                        totalItems={monthWisePlanning?.totalPlans}
                         itemsPerPage={limit}
                         totalPages={monthWisePlanning?.totalPages}
                         onPageChange={onPageChange}

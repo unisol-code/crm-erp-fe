@@ -203,6 +203,7 @@ function ViewMonthlyPlanningDetails() {
   }, [id]);
 
   const data = monthlyPlanningDetails?.data || {};
+  const employeeId = monthlyPlanningDetails?.employeeId;
   console.log("Monthly Planning Details:", monthlyPlanningDetails);
 
   // Get validation flags using useMemo for performance
@@ -433,15 +434,15 @@ function ViewMonthlyPlanningDetails() {
           {text: "Employee List",
             href: "/admin/sales-executive/employee-list"},
           { text: "Monthly Planning",
-             href: `/admin/sales-executive/monthly-planning/${id}` },
+             href: `/admin/sales-executive/monthly-planning/${employeeId}` },
           {
             text: "View Monthly Planning",
-            href: `/admin/sales-executive/monthly-planning/view-monthly-planning/${id}?${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}`,
+            href: `/admin/sales-executive/monthly-planning/view-month-wise/${employeeId}?month=${monthlyPlanningDetails?.month}&year=${monthlyPlanningDetails?.year}`,
           },
           { text: `View ${monthlyPlanningDetails?.month} ${monthlyPlanningDetails?.year} Planning`,
-           href: `/admin/sales-executive/monthly-planning/view-month-wise/${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}` },
+           href: `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${employeeId}/${formatDate(data.createPlanningForDate)}` },
           { text: `View ${formatDate(data.createPlanningForDate)} Planning`,
-           href: `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${formatDate(data.createPlanningForDate)}` },
+           href: `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${employeeId}/${formatDate(data.createPlanningForDate)}` },
           { text: "View Monthly Planning Details" },
         ]}
       />

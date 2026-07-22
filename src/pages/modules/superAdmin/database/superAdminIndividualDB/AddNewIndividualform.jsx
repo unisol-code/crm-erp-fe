@@ -53,6 +53,7 @@ const physicianInitialValues = {
   dob: "",
   weddingAnniversary: "",
   opdDays: [],
+  // hospitalName: "",
   hospitalsAssociatedWith: [],
   visitTarget: "",
   visitAchievement: "",
@@ -108,7 +109,7 @@ const surgonInitialValues = {
 
 const nonClinicalInitialValues = {
   segment: "",
-  typeOfDoctorProfile: "Non Clinical",
+  typeOfDoctorProfile: "",
   fullName: "",
   designation: "",
   otherDesignation: "",
@@ -146,7 +147,9 @@ const nonClinicalInitialValues = {
   duration: '',
 },
   visitAchievement: "",
-  salesPersonName: "",
+  salesPersonName: "",  
+   hospitalName: "", 
+  hospitalsAssociatedWith: [],
 };
 
 // Validation Schemas
@@ -559,9 +562,9 @@ const AddNewIndividualform = () => {
       case "Surgeon":
         return { ...surgonInitialValues, ...editData };
       case "Non Clinical":
-        return { ...nonClinicalInitialValues, ...editData };
+        return { ...nonClinicalInitialValues, typeOfDoctorProfile: selectedDoctor?.value, ...editData };
      default:
-      return { ...nonClinicalInitialValues, ...editData };
+      return { ...nonClinicalInitialValues, typeOfDoctorProfile: selectedDoctor?.value, ...editData };
     }
   };
 
@@ -734,6 +737,17 @@ onChange={(selected) => {
                       : values.designation,
                     otherDesignation: undefined,
                   };
+                  if (selectedSector?.value === "Healthcare Management" && values.hospitalName) {
+  payload.hospitalsAssociatedWith = [
+    {
+      hospitalName: values.hospitalName,
+    },
+  ];
+} else {
+  payload.hospitalsAssociatedWith = [];
+}
+
+console.log("Payload:", payload);
                   if (selectedDoctor?.value === "Physician") {
                     const { officialEmail, personalEmail, ...rest } = values;
                     payload.physician = {
@@ -750,13 +764,31 @@ onChange={(selected) => {
                       surgery: values.surgery,
                     };
                   } else if (selectedDoctor?.value === "Non Clinical") {
-                    const { officialEmail, personalEmail, ...rest } = values;
+                    const { officialEmail, personalEmail,hospitalName, ...rest } = values;
                     payload.nonClinical = {
                       ...rest,
                       dob: formatDate(values.dob),
                       weddingAnniversary: formatDate(values.weddingAnniversary),
                       surgeryDays: values.surgeryDays,
+      //        hospitalsAssociatedWith:
+      // selectedSector?.value === "Healthcare Management" && hospitalName
+      //   ? [
+      //       {
+      //         hospitalName: hospitalName,
+      //       },
+      //     ]
+      //   : [],
+                       
                     };
+//                                if (selectedSector?.value === 'Healthcare Management') {
+//   payload.hospitalsAssociatedWith = [
+//     {
+//       hospitalName: values.hospitalName,
+//     },
+//   ];
+// } else {
+//   payload.hospitalsAssociatedWith = [];
+// }
                   }
 
                   console.log("Payload:", payload);
