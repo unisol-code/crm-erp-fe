@@ -109,7 +109,7 @@ const surgonInitialValues = {
 
 const nonClinicalInitialValues = {
   segment: "",
-  typeOfDoctorProfile: "Non Clinical",
+  typeOfDoctorProfile: "",
   fullName: "",
   designation: "",
   otherDesignation: "",
@@ -141,11 +141,14 @@ const nonClinicalInitialValues = {
   dob: "",
   weddingAnniversary: "",
   visitTarget: "",
-  visitAchievement: "",  VisitDetails: {
+  visitAchievement: "", 
+   VisitDetails: {
   startTime: "",
   endTime: "",
-  duration: ""
-}
+  duration: "",
+},
+ hospitalName: "", 
+  hospitalsAssociatedWith: [],
 };
 
 // Validation Schemas
@@ -532,9 +535,10 @@ const AddNewIndividual = () => {
       case "Surgeon":
         return { ...surgonInitialValues, ...editData };
       case "Non Clinical":
-        return { ...nonClinicalInitialValues, ...editData };
+        return { ...nonClinicalInitialValues,
+           typeOfDoctorProfile: selectedDoctor?.value, ...editData };
        default:
-      return { ...nonClinicalInitialValues, ...editData };
+      return { ...nonClinicalInitialValues, typeOfDoctorProfile: selectedDoctor?.value, ...editData };
     }
   };
 
@@ -562,7 +566,7 @@ const AddNewIndividual = () => {
   };
 
   const renderDoctorProfile = (formik) => {
-    const commonProps = { formik, isReadOnly };
+    const commonProps = { formik, isReadOnly ,selectedSector  };
     switch (selectedDoctor?.value) {
       case "Physician":
         return <Physician {...commonProps} />;
@@ -744,6 +748,15 @@ const AddNewIndividual = () => {
                       surgeryDays: values.surgeryDays,
                     };
                   }
+                  if (selectedSector?.value === 'Healthcare Management') {
+  payload.hospitalsAssociatedWith = [
+    {
+      hospitalName: values.hospitalName,
+    },
+  ];
+} else {
+  payload.hospitalsAssociatedWith = [];
+}
 
                   console.log("Payload:", payload);
                   if (id) {

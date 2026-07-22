@@ -93,7 +93,7 @@ const ViewMonthWisePlanning = () => {
         id: "product",
         label: "Total Products Coverage",
         value:
-            monthWisePlanning?.totalItems || 0,
+            monthWisePlanning?.totalProducts || 0,
         icon: FiPackage,
         color: "purple",
          clickable: true,
@@ -393,7 +393,7 @@ const ViewMonthWisePlanning = () => {
                 {!loading && monthWisePlanning?.data?.length > 0 && (
                     <Pagination
                         currentPage={monthWisePlanning?.currentPage}
-                        totalItems={monthWisePlanning?.totalItems}
+                        totalItems={monthWisePlanning?.totalPlans}
                         itemsPerPage={limit}
                         totalPages={monthWisePlanning?.totalPages}
                         onPageChange={onPageChange}

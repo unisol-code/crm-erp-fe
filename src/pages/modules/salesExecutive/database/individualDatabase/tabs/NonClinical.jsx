@@ -28,7 +28,7 @@ const InputWithError = ({ label, name, formik, type = "text", ...props }) => {
   );
 };
 
-const NonClinical = ({ formik,isReadOnly  }) => {
+const NonClinical = ({ formik,isReadOnly,selectedSector   }) => {
   const [selectedDesignation, setSelectedDesignation] = useState(null);
   const [selectedStateCode, setSelectedStateCode] = useState("");
   const [showOtherDepartment, setShowOtherDepartment] = useState(false);
@@ -294,6 +294,16 @@ console.log("non clinic",newDepartmentForNonClinical)
             <div className="text-red-500 text-xs mt-1">{formik.errors.department}</div>
           )}
         </div>
+        {selectedSector?.value === 'Healthcare Management' && (
+  <Input
+    label='Hospital Name'
+    placeholder='Enter Hospital Name'
+    name='hospitalName'
+    formik={formik}
+     disabled={isReadOnly}
+  />
+)}
+
         <Input label="Contact No" placeholder="Enter Contact No." name="contactNo" formik={formik} />
         <Input label="Alternate Contact No" placeholder="Enter Alternate Contact No." name="alternateContactNo" formik={formik} />
         <Input label="Official Email" placeholder="Enter Official Email" name="officialEmail" type="email" formik={formik} />

@@ -388,6 +388,10 @@ const CreateMonthlyPlanning = () => {
               customDoctor: "",
               productToBePromoted: [],
               callObjective: "",
+                designation: '',
+    speciality: '',
+    visitingHours: '',
+    meetingDuration: '',
             }
           });
           // Clear any validation errors
@@ -424,6 +428,10 @@ const CreateMonthlyPlanning = () => {
               customDoctor: "",
               productToBePromoted: [],
               callObjective: "",
+                    designation: '',
+    speciality: '',
+    visitingHours: '',
+    meetingDuration: '',
             }
           });
           // Clear any validation errors
