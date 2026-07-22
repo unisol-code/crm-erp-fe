@@ -566,7 +566,8 @@ const AddNewIndividual = () => {
   };
 
   const renderDoctorProfile = (formik) => {
-    const commonProps = { formik, isReadOnly ,selectedSector  };
+    //we have added selectedSector and selectedDoctor to the props of NonClinical component to access the selected values in that component
+    const commonProps = { formik, isReadOnly ,selectedSector ,selectedDoctor };
     switch (selectedDoctor?.value) {
       case "Physician":
         return <Physician {...commonProps} />;
