@@ -28,7 +28,7 @@ const InputWithError = ({ label, name, formik, type = "text", ...props }) => {
   );
 };
 
-const NonClinical = ({ formik,isReadOnly,selectedSector   }) => {
+const NonClinical = ({ formik,isReadOnly,selectedSector,selectedDoctor   }) => {
   const [selectedDesignation, setSelectedDesignation] = useState(null);
   const [selectedStateCode, setSelectedStateCode] = useState("");
   const [showOtherDepartment, setShowOtherDepartment] = useState(false);
@@ -100,6 +100,7 @@ const [otherDepartment, setOtherDepartment] = useState('');
     fetchDepartmentForNonClinicalNew();
     fetchAllStateName();
   }, []);
+  console.log("speciality", designation);
 
   const calculateDuration = (startTime, endTime) => {
   if (!startTime || !endTime) return '';
@@ -151,7 +152,8 @@ console.log("non clinic",newDepartmentForNonClinical)
   return (
     <div className="">
       <h1 className="text-2xl font-bold text-gray-800 mb-8 pb-4 border-b border-gray-200">
-        NON CLINICAL INFORMATION
+        {/* NON CLINICAL INFORMATION  */}
+         {selectedDoctor?.label ? ` ${selectedDoctor.label.toUpperCase()} INFORMATION` : ""}
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
