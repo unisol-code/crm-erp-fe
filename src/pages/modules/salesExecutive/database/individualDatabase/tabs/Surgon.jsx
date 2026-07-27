@@ -595,13 +595,13 @@ useEffect(() => {
   </div>
 </div>
 
-<Input
-  label="Visit Achievement"
+{/* <Input
+  label="Visit Target"
   placeholder="Enter Visit Achievement"
-  name="visitAchievement"
+  name="visitTarget"
   type="number"
   formik={formik}
-/>
+/> */}
         <Input label="Visit Achievement" placeholder="Enter Visit Achievement" name="visitAchievement" type="number" formik={formik} />
         <Select
           placeholder="Enter Surgery Days"
