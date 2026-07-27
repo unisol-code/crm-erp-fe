@@ -102,6 +102,7 @@ import ViewEnviroAdminIndForm from "./pages/modules/superAdmin/database/superAdm
 import EnviroAdminOrgAddEditDB from "./pages/modules/superAdmin/database/superAdminOrganizationDB/enviroAdminOrgDB/EnviroAdminOrgAddEditDB";
 import EnviroEmpOrgAddEditDB from "./pages/modules/salesExecutive/database/organizationalDatabase/enviroEmpOrgDB/EnviroEmpOrgAddEditDB";
 import EnviroOrgRequestActions from "./pages/modules/superAdmin/database/superAdminOrganizationDB/enviroAdminOrgDB/EnviroOrgRequestActions";
+import AllSalesAnalytics from "./pages/modules/superAdmin/AllSalesAnalytics/index"
 
 function App() {
   const [activeTab, setActiveTab] = useState("/crm-dashboard");
@@ -474,6 +475,18 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <ViewSalesReport />
+              </SuperAdminLayout>
+            }
+          />
+
+              <Route
+            path="/sales-analyticsAll"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <AllSalesAnalytics/>
               </SuperAdminLayout>
             }
           />

@@ -76,6 +76,13 @@ function Sidebar({ collapsed, setCollapsed }) {
       hasSubMenu: true,
       subItems: [{ id: 41, name: "Sales Analytics", path: "/sales-analytics" }],
     },
+     {
+      id: 6,
+      icon: <ChartColumnBig className="w-6 h-6" />,
+      name: "Analytics",
+      path: "/sales-analyticsAll", 
+
+    },
   ];
 
   const handleToggle = (id, subItems = [], parentPath = []) => {
