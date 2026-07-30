@@ -329,6 +329,10 @@ useEffect(() => {
         </div>
         <Input placeholder="Enter Residence Address" label="Residence Address" name="residenceAddress" formik={formik} />
         {/* State */}
+        <div>
+           <label className="block mb-1 text-sm font-medium text-gray-700">
+    State
+  </label>
 <ReactSelect
   className="w-full"
   isLoading={loading}
@@ -366,6 +370,7 @@ useEffect(() => {
   placeholder="Select State"
   isClearable
 />
+</div>
 <div>
   <label className="block mb-1 text-sm font-medium text-gray-700">
     District

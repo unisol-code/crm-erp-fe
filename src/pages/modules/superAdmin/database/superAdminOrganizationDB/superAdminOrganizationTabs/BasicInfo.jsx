@@ -139,20 +139,23 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
 
   // ✅ Auto-fetch districts and cities when editing/viewing
   useEffect(() => {
-    const stateCode = formik.values?.Basic?.state;
-    if (stateCode) {
-      setSelectedStateCode(stateCode);
-      fetchDistrictList(stateCode);
+    const stateName = formik.values?.Basic?.state;
+    if (stateName) {
+      const matchedState = allStateName?.find((s) => s.stateName === stateName);
+      if (matchedState) {
+        setSelectedStateCode(matchedState.stateCode);
+        fetchDistrictList(matchedState.stateCode);
+      }
     }
-  }, [formik.values?.Basic?.state]);
+  }, [formik.values?.Basic?.state, allStateName]);
 
   useEffect(() => {
-    const stateCode = formik.values?.Basic?.state;
+    const stateName = formik.values?.Basic?.state;
     const district = formik.values?.Basic?.district;
-    if (stateCode && district) {
-      fetchAllCities(stateCode, district);
+    if (stateName && district && selectedStateCode) {
+      fetchAllCities(selectedStateCode, district);
     }
-  }, [formik.values?.Basic?.state, formik.values?.Basic?.district]);
+  }, [formik.values?.Basic?.state, formik.values?.Basic?.district, selectedStateCode]);
 
   return (
     <div className="p-4">
@@ -230,14 +233,16 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
             options={
               Array.isArray(allStateName)
                 ? allStateName.map((state) => ({
-                  label: state.stateName,
-                  value: state.stateCode,
-                }))
+                    label: state.stateName,
+                    value: state.stateName,
+                  }))
                 : []
             }
             onChange={(val) => {
-              setSelectedStateCode(val);
-              handleselectDistrict(val);
+              formik.setFieldValue("Basic.state", val || "");
+              const matchedState = allStateName?.find((s) => s.stateName === val);
+              setSelectedStateCode(matchedState?.stateCode || "");
+              handleselectDistrict(matchedState?.stateCode || "");
             }}
           />
 

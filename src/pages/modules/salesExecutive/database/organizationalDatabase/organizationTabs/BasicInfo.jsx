@@ -204,42 +204,86 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
             />
           )}
 
-          <Select
-            label="State"
-            name="Basic.state"
-            isReadOnly={isReadOnly}
-            formik={formik}
-            options={
-              Array.isArray(allStateName)
-                ? allStateName.map((state) => ({
-                  label: state.stateName,
-                  value: state.stateCode,
-                }))
-                : []
-            }
-            onChange={(val) => {
-              setSelectedStateCode(val);
-              handleselectDistrict(val);
-            }}
-          />
+          <div className="flex flex-col w-full mb-4">
+            <label className="text-sm font-medium text-gray-700 mb-1">
+              State
+            </label>
+            <ReactSelect
+              name="Basic.state"
+              isReadOnly={isReadOnly}
+              options={
+                Array.isArray(allStateName)
+                  ? allStateName.map((state) => ({
+                      label: state.stateName,
+                      value: state.stateName,
+                      stateCode: state.stateCode,
+                    }))
+                  : []
+              }
+              value={
+                allStateName
+                  ?.map((state) => ({
+                    label: state.stateName,
+                    value: state.stateName,
+                    stateCode: state.stateCode,
+                  }))
+                  .find((opt) => opt.value === formik.values?.Basic?.state) ||
+                null
+              }
+              onChange={(selected) => {
+                formik.setFieldValue("Basic.state", selected?.value || "");
+                setSelectedStateCode(selected?.stateCode || "");
+                handleselectDistrict(selected?.value || "");
+              }}
+              onBlur={() => formik.setFieldTouched("Basic.state", true)}
+              placeholder="Select State"
+              isClearable
+            />
+            {formik.touched?.Basic?.state && formik.errors?.Basic?.state && (
+              <span className="text-red-500 text-xs mt-1">
+                {formik.errors.Basic.state}
+              </span>
+            )}
+          </div>
 
-          <Select
-            label="District"
-            name="Basic.district"
-            isReadOnly={isReadOnly}
-            formik={formik}
-            options={
-              Array.isArray(districtList)
-                ? districtList.map((district) => ({
-                  label: district,
-                  value: district,
-                }))
-                : []
-            }
-            onChange={(val) => {
-              handleSelectCity(val);
-            }}
-          />
+          <div className="flex flex-col w-full mb-4">
+            <label className="text-sm font-medium text-gray-700 mb-1">
+              District
+            </label>
+            <ReactSelect
+              name="Basic.district"
+              isReadOnly={isReadOnly}
+              options={
+                Array.isArray(districtList)
+                  ? districtList.map((district) => ({
+                      label: district,
+                      value: district,
+                    }))
+                  : []
+              }
+              value={
+                districtList
+                  ?.map((district) => ({
+                    label: district,
+                    value: district,
+                  }))
+                  .find((opt) => opt.value === formik.values?.Basic?.district) ||
+                null
+              }
+              onChange={(selected) => {
+                formik.setFieldValue("Basic.district", selected?.value || "");
+                handleSelectCity(selected?.value || "");
+              }}
+              onBlur={() => formik.setFieldTouched("Basic.district", true)}
+              placeholder="Select district"
+              isClearable
+            />
+            {formik.touched?.Basic?.district && formik.errors?.Basic?.district && (
+              <span className="text-red-500 text-xs mt-1">
+                {formik.errors.Basic.district}
+              </span>
+            )}
+          </div>
 
           <Select
             label="Region"
