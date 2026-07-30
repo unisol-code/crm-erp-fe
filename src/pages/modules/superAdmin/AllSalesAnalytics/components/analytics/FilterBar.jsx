@@ -110,8 +110,8 @@ const NoOptionsMessage = () => (
   </div>
 );
 
-export function FilterBar() {
-  const { 
+export function FilterBar({ selectedTab = 'overview' }) {
+  const {
     filters,
     updateFilter,
     resetFilters,
@@ -252,6 +252,30 @@ export function FilterBar() {
     }
   }, [filters.segment]);
 
+  const fetchActiveTabData = () => {
+    switch (selectedTab) {
+      case 'overview':
+        fetchOverviewDataRef.current();
+        fetchSalesPerformanceRef.current();
+        fetchOrganizationAnalyticsRef.current();
+        fetchSpecialityAnalyticsRef.current();
+        fetchTargetAnalyticsRef.current();
+        break;
+      case 'doctors':
+        fetchDoctorAnalyticsRef.current();
+        break;
+      case 'executives':
+        fetchSalesPerformanceRef.current();
+        break;
+      case 'hospitals':
+      case 'organizations':
+        fetchOrganizationAnalyticsRef.current();
+        break;
+      default:
+        break;
+    }
+  };
+
   // ✅ Debounced fetch function
   const fetchAllData = () => {
     if (isFetchingRef.current) return;
@@ -263,12 +287,7 @@ export function FilterBar() {
     }
     
     debounceTimerRef.current = setTimeout(() => {
-      fetchOverviewDataRef.current();
-      fetchSalesPerformanceRef.current();
-      fetchOrganizationAnalyticsRef.current();
-      fetchSpecialityAnalyticsRef.current();
-      fetchTargetAnalyticsRef.current();
-       fetchDoctorAnalyticsRef.current();
+      fetchActiveTabData();
       isFetchingRef.current = false;
       debounceTimerRef.current = null;
     }, 300); // ✅ 300ms debounce
@@ -301,12 +320,7 @@ export function FilterBar() {
     }
     isFetchingRef.current = false;
     
-    fetchOverviewDataRef.current();
-    fetchSalesPerformanceRef.current();
-    fetchOrganizationAnalyticsRef.current();
-        fetchSpecialityAnalyticsRef.current();
-            fetchTargetAnalyticsRef.current();
-              fetchDoctorAnalyticsRef.current();
+    fetchActiveTabData();
   };
 
   const handleResetFilters = () => {
@@ -319,14 +333,9 @@ export function FilterBar() {
     }
     isFetchingRef.current = false;
     
-    // After reset, fetch all data with empty filters
+    // After reset, fetch data for the active tab with empty filters
     setTimeout(() => {
-      fetchOverviewDataRef.current();
-      fetchSalesPerformanceRef.current();
-      fetchOrganizationAnalyticsRef.current();
-       fetchSpecialityAnalyticsRef.current();
-          fetchTargetAnalyticsRef.current();
-           fetchDoctorAnalyticsRef.current();
+      fetchActiveTabData();
     }, 100);
   };
 

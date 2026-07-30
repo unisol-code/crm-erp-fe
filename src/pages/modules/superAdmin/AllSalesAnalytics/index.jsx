@@ -41,35 +41,48 @@ function AllSalesAnalytics() {
   const [hospitalLimit, setHospitalLimit] = useState(10);
   const [hospitalSearch, setHospitalSearch] = useState("");
 
-  // ✅ Fetch data on mount - ONLY ONCE
+  // ✅ Fetch data based on active tab only
   useEffect(() => {
-    const loadData = async () => {
+    const fetchTabData = async () => {
       try {
-        console.log('📊 Fetching Overview Data...');
-        await fetchOverviewData();
-        
-        console.log('📈 Fetching Sales Performance...');
-        await fetchSalesPerformance();
-  
-        console.log('🏥 Fetching Organization Analytics...');
-        await fetchOrganizationAnalytics({
-          page: hospitalPage,
-          limit: hospitalLimit
-        });
-               console.log('🔬 Fetching Speciality Analytics...');
-        await fetchSpecialityAnalytics(); // ✅ Add this
-
-        console.log("TARGET ANALYTICS");
-        await fetchTargetAnalytics();
-        console.log('👨‍⚕️ Fetching Doctor Analytics...');
-        await fetchDoctorAnalytics();
+        switch (selectedTab) {
+          case 'overview':
+            await fetchOverviewData();
+            await fetchSalesPerformance();
+            await fetchOrganizationAnalytics({
+              page: hospitalPage,
+              limit: hospitalLimit,
+            });
+            await fetchSpecialityAnalytics();
+            await fetchTargetAnalytics();
+            break;
+          case 'doctors':
+            await fetchDoctorAnalytics();
+            break;
+          case 'executives':
+            await fetchSalesPerformance();
+            break;
+          case 'hospitals':
+            await fetchOrganizationAnalytics({
+              page: hospitalPage,
+              limit: hospitalLimit,
+            });
+            break;
+          case 'organizations':
+            await fetchOrganizationAnalytics({
+              page: hospitalPage,
+              limit: hospitalLimit,
+            });
+            break;
+          default:
+            break;
+        }
       } catch (error) {
         console.error('Error loading data:', error);
       }
     };
-    
-    loadData();
-  }, []); // ✅ Empty dependency array - runs once
+    fetchTabData();
+  }, [selectedTab]); // ✅ Re-fetch when tab changes
 
   // ✅ Handle pagination changes - ONLY when user interacts
   const handleHospitalPageChange = (page) => {
@@ -240,9 +253,9 @@ function AllSalesAnalytics() {
           </p>
         </div>
 
-        {/* Filter Bar */}
+{/* Filter Bar */}
         <div className="mb-4">
-          <FilterBar />
+          <FilterBar selectedTab={selectedTab} />
         </div>
 
         {/* Tab Navigation */}
