@@ -101,7 +101,7 @@ const initialValues = {
   majorCropsHandled: "",
   annualTurnover: "",
   majorRevenueSources: [],
-  majorRevenueSourcesOthers: [],
+  majorRevenueSourcesOthers: "",
   keyBuyerTypes: [],
   topChallenges: "",
   topPriorities: "",
