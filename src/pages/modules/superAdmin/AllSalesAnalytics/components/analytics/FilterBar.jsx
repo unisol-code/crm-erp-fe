@@ -1,7 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+// FilterBar.jsx
+
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import * as LucideIcons from "lucide-react";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import Select from "react-select";
+import useAllSalesAnalytics from "../../../../../../hooks/superAdminHook/allSalesAnalytics/useAllSalesAnalytics";
 import { 
   Button, 
   DropdownMenu,
@@ -34,44 +37,6 @@ const getYearOptions = () => {
   }
   return years;
 };
-
-const toSelectOptions = (arr) => arr.map(item => ({ value: item, label: item }));
-
-const STATE_FALLBACK = toSelectOptions([
-  "Maharashtra", "Gujarat", "Karnataka", "Tamil Nadu", 
-  "Rajasthan", "Delhi", "Uttar Pradesh", "West Bengal"
-]);
-
-const DISTRICT_FALLBACK = toSelectOptions([
-  "Mumbai", "Pune", "Nagpur", "Nashik", "Thane", "Aurangabad",
-  "Kolhapur", "Solapur", "Amravati", "Nanded"
-]);
-
-const CITY_FALLBACK = toSelectOptions([
-  "Mumbai", "Pune", "Nagpur", "Nashik", "Thane", "Aurangabad",
-  "Kolhapur", "Solapur", "Amravati", "Nanded"
-]);
-
-const SEGMENT_FALLBACK = toSelectOptions([
-  "Tier 1", "Tier 2", "Tier 3", "Government", "Private"
-]);
-
-const SPECIALITY_OPTIONS = toSelectOptions([
-  "General Surgery", "Urology", "Cardiology", "Neurology", 
-  "Orthopedics", "ENT", "Ophthalmology", "Dermatology",
-  "Gynecology", "Pediatrics"
-]);
-
-const PROFILE_FALLBACK = toSelectOptions([
-  "Senior Consultant", "Consultant", "Associate Consultant",
-  "HOD", "Senior Resident", "Junior Resident", "Fellow"
-]);
-
-const SALES_PERSON_OPTIONS = toSelectOptions([
-  "Priya Sharma", "Rahul Joshi", "Sneha Patil", 
-  "Vikram Singh", "Ananya Reddy", "Amit Kumar",
-  "Neha Gupta", "Rajesh Mishra"
-]);
 
 const customSelectStyles = {
   control: (provided, state) => ({
@@ -145,20 +110,58 @@ const NoOptionsMessage = () => (
   </div>
 );
 
-export function FilterBar({ filters, onFilterChange, onReset, onApplyFilters }) {
+export function FilterBar() {
+  const { 
+    filters,
+    updateFilter,
+    resetFilters,
+    fetchOverviewData,
+    fetchSalesPerformance,
+    fetchOrganizationAnalytics, fetchSpecialityAnalytics,fetchTargetAnalytics, fetchDoctorAnalytics,
+    loading
+  } = useAllSalesAnalytics();
+
+  // ✅ Use refs to prevent unnecessary re-renders
+  const fetchOverviewDataRef = useRef(fetchOverviewData);
+  const fetchSalesPerformanceRef = useRef(fetchSalesPerformance);
+  const fetchOrganizationAnalyticsRef = useRef(fetchOrganizationAnalytics);
+    const fetchSpecialityAnalyticsRef = useRef(fetchSpecialityAnalytics);
+    const fetchTargetAnalyticsRef = useRef(fetchTargetAnalytics);
+      const fetchDoctorAnalyticsRef = useRef(fetchDoctorAnalytics);
+  const updateFilterRef = useRef(updateFilter);
+  const resetFiltersRef = useRef(resetFilters);
+
+  // ✅ Add a flag to prevent multiple rapid calls
+  const isFetchingRef = useRef(false);
+  const debounceTimerRef = useRef(null);
+
+  useEffect(() => {
+    fetchOverviewDataRef.current = fetchOverviewData;
+    fetchSalesPerformanceRef.current = fetchSalesPerformance;
+    fetchOrganizationAnalyticsRef.current = fetchOrganizationAnalytics;
+     fetchSpecialityAnalyticsRef.current = fetchSpecialityAnalytics;
+       fetchTargetAnalyticsRef.current = fetchTargetAnalytics;
+       fetchDoctorAnalyticsRef.current = fetchDoctorAnalytics;
+    updateFilterRef.current = updateFilter;
+    resetFiltersRef.current = resetFilters;
+  }, [fetchOverviewData, fetchSalesPerformance, fetchOrganizationAnalytics, updateFilter, resetFilters]);
+
   const { 
     fetchAllStateName, allStateName,
     fetchDistrictList, districtList,
     fetchAllCities, cities,
     fetchSegment, segment,
     profileState, profile,
-    fetchTypeOfProfile, typeOfProfile,fetchAllEmployees,employees,
+    fetchTypeOfProfile, typeOfProfile,
+    fetchAllEmployees, employees,
+    fetchSpecialityIndividual, getspeciality
   } = useDropdown();
 
   const [selectedStateCode, setSelectedStateCode] = useState(null);
 
+  // All useMemo remain the same
   const stateSelectOptions = useMemo(() => {
-    if (!Array.isArray(allStateName) || allStateName.length === 0) return STATE_FALLBACK;
+    if (!Array.isArray(allStateName) || allStateName.length === 0) return [];
     return allStateName.map(state => ({
       value: state.stateName || state,
       label: state.stateName || state,
@@ -167,7 +170,7 @@ export function FilterBar({ filters, onFilterChange, onReset, onApplyFilters }) 
   }, [allStateName]);
 
   const districtSelectOptions = useMemo(() => {
-    if (!Array.isArray(districtList) || districtList.length === 0) return DISTRICT_FALLBACK;
+    if (!Array.isArray(districtList) || districtList.length === 0) return [];
     return districtList.map(district => ({
       value: district,
       label: district,
@@ -175,7 +178,7 @@ export function FilterBar({ filters, onFilterChange, onReset, onApplyFilters }) 
   }, [districtList]);
 
   const citySelectOptions = useMemo(() => {
-    if (!Array.isArray(cities) || cities.length === 0) return CITY_FALLBACK;
+    if (!Array.isArray(cities) || cities.length === 0) return [];
     return cities.map(city => ({
       value: city,
       label: city,
@@ -183,15 +186,23 @@ export function FilterBar({ filters, onFilterChange, onReset, onApplyFilters }) 
   }, [cities]);
 
   const segmentSelectOptions = useMemo(() => {
-    if (!Array.isArray(segment) || segment.length === 0) return SEGMENT_FALLBACK;
+    if (!Array.isArray(segment) || segment.length === 0) return [];
     return segment.map(seg => ({
       value: seg,
       label: seg,
     }));
   }, [segment]);
 
+  const specialitySelectOptions = useMemo(() => {
+    if (!Array.isArray(getspeciality) || getspeciality.length === 0) return [];
+    return getspeciality.map(spec => ({
+      value: spec,
+      label: spec,
+    }));
+  }, [getspeciality]);
+
   const profileSelectOptions = useMemo(() => {
-    if (!Array.isArray(profile) || profile.length === 0) return PROFILE_FALLBACK;
+    if (!Array.isArray(profile) || profile.length === 0) return [];
     return profile.map(prof => ({
       value: prof,
       label: prof,
@@ -199,7 +210,7 @@ export function FilterBar({ filters, onFilterChange, onReset, onApplyFilters }) 
   }, [profile]);
 
   const typeOfProfileSelectOptions = useMemo(() => {
-    if (!Array.isArray(typeOfProfile) || typeOfProfile.length === 0) return PROFILE_FALLBACK;
+    if (!Array.isArray(typeOfProfile) || typeOfProfile.length === 0) return [];
     return typeOfProfile.map(prof => ({
       value: prof,
       label: prof,
@@ -214,11 +225,13 @@ export function FilterBar({ filters, onFilterChange, onReset, onApplyFilters }) 
     }));
   }, [employees]);
 
+  // All useEffect remain the same
   useEffect(() => {
     fetchAllStateName();
     fetchSegment();
     fetchTypeOfProfile();
     fetchAllEmployees();
+    fetchSpecialityIndividual();
   }, []);
 
   useEffect(() => {
@@ -239,25 +252,82 @@ export function FilterBar({ filters, onFilterChange, onReset, onApplyFilters }) 
     }
   }, [filters.segment]);
 
+  // ✅ Debounced fetch function
+  const fetchAllData = () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    
+    // Clear any pending timeout
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      fetchOverviewDataRef.current();
+      fetchSalesPerformanceRef.current();
+      fetchOrganizationAnalyticsRef.current();
+      fetchSpecialityAnalyticsRef.current();
+      fetchTargetAnalyticsRef.current();
+       fetchDoctorAnalyticsRef.current();
+      isFetchingRef.current = false;
+      debounceTimerRef.current = null;
+    }, 300); // ✅ 300ms debounce
+  };
+
+  // ✅ Use refs in handlers
   const handleSelectChange = (key, selectedOption) => {
     const value = selectedOption ? selectedOption.value : "";
-    onFilterChange(key, value);
+    updateFilterRef.current(key, value);
 
     if (key === "state") {
       const selectedState = stateSelectOptions.find(opt => opt.value === value);
       setSelectedStateCode(selectedState ? (selectedState.stateCode || selectedState.value) : value);
-      onFilterChange("district", "");
-      onFilterChange("city", "");
+      updateFilterRef.current("district", "");
+      updateFilterRef.current("city", "");
     }
     if (key === "district") {
-      onFilterChange("city", "");
+      updateFilterRef.current("city", "");
     }
+    
+    // ✅ Use debounced fetch
+    fetchAllData();
   };
 
   const handleApplyFilters = () => {
-    if (onApplyFilters) {
-      onApplyFilters();
+    // ✅ Clear any pending debounce and fetch immediately
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
     }
+    isFetchingRef.current = false;
+    
+    fetchOverviewDataRef.current();
+    fetchSalesPerformanceRef.current();
+    fetchOrganizationAnalyticsRef.current();
+        fetchSpecialityAnalyticsRef.current();
+            fetchTargetAnalyticsRef.current();
+              fetchDoctorAnalyticsRef.current();
+  };
+
+  const handleResetFilters = () => {
+    resetFiltersRef.current();
+    
+    // ✅ Clear any pending debounce
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    isFetchingRef.current = false;
+    
+    // After reset, fetch all data with empty filters
+    setTimeout(() => {
+      fetchOverviewDataRef.current();
+      fetchSalesPerformanceRef.current();
+      fetchOrganizationAnalyticsRef.current();
+       fetchSpecialityAnalyticsRef.current();
+          fetchTargetAnalyticsRef.current();
+           fetchDoctorAnalyticsRef.current();
+    }, 100);
   };
 
   const getSelectedOption = (item) => {
@@ -323,7 +393,7 @@ export function FilterBar({ filters, onFilterChange, onReset, onApplyFilters }) 
     { 
       key: "speciality", 
       label: "Speciality",
-      options: SPECIALITY_OPTIONS,
+      options: specialitySelectOptions,
       placeholder: "All specialities",
       value: filters.speciality,
       isMulti: false,
@@ -358,10 +428,10 @@ export function FilterBar({ filters, onFilterChange, onReset, onApplyFilters }) 
             <h2 className="text-sm font-semibold text-[#5A2D1A]">Filters</h2>
           </div>
           <span className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={onReset} className="rounded-lg text-[#6B4226] hover:bg-[#F5E0D6]">
+            <Button variant="ghost" size="sm" onClick={handleResetFilters} className="rounded-lg text-[#6B4226] hover:bg-[#F5E0D6]">
               <LucideIcons.RotateCcw size={14} /> Reset
             </Button>
-            <Button size="sm" onClick={handleApplyFilters} className="rounded-lg bg-[#C6693C] hover:bg-[#A54A29] text-white shadow-sm shadow-[#C6693C]/20">
+            <Button size="sm" onClick={handleApplyFilters} disabled={loading} className="rounded-lg bg-[#C6693C] hover:bg-[#A54A29] text-white shadow-sm shadow-[#C6693C]/20">
               Apply Filters
             </Button>
             <DropdownMenu>
