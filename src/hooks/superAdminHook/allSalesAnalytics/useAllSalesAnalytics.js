@@ -17,6 +17,7 @@ import {
   specialityDataStateAtom,
   targetDataStateAtom,
   doctorDataStateAtom, // ✅ Add this
+   doctorListStateAtom,  salesPersonDataStateAtom,  organizationDashboardDataStateAtom,
 } from "../../../state/allSalesAnalyticState/allSalesAnalyticsState";
 
 const useAllSalesAnalytics = () => {
@@ -32,6 +33,9 @@ const useAllSalesAnalytics = () => {
   const [specialityData, setSpecialityData] = useRecoilState(specialityDataStateAtom);
   const [targetData, setTargetData] = useRecoilState(targetDataStateAtom);
   const [doctorData, setDoctorData] = useRecoilState(doctorDataStateAtom); // ✅ New state
+  const [doctorListData, setDoctorListData] = useRecoilState(doctorListStateAtom);
+  const [salesPersonData, setSalesPersonData] = useRecoilState(salesPersonDataStateAtom);
+  const [organizationDashboardData, setOrganizationDashboardData] = useRecoilState(organizationDashboardDataStateAtom);
 
   const filtersRef = useRef(filters);
 
@@ -326,6 +330,131 @@ const fetchDoctorAnalytics = useCallback(async (filterParams = {}) => {
     setLoading(false);
   }
 }, [fetchData, setDoctorData, setError]);
+
+// ============== API 7: FETCH DOCTOR LIST ==============
+const fetchDoctorList = useCallback(async (filterParams = {}) => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const allFilters = { ...filtersRef.current, ...filterParams };
+    
+    const params = new URLSearchParams();
+    if (allFilters.state) params.append("state", allFilters.state);
+    if (allFilters.district) params.append("district", allFilters.district);
+    if (allFilters.city) params.append("city", allFilters.city);
+    if (allFilters.segment) params.append("segment", allFilters.segment);
+    if (allFilters.speciality) params.append("speciality", allFilters.speciality);
+    if (allFilters.typeOfDoctorProfile) params.append("typeOfDoctorProfile", allFilters.typeOfDoctorProfile);
+    if (allFilters.page) params.append("page", String(allFilters.page || 1));
+    if (allFilters.limit) params.append("limit", String(allFilters.limit || 10));
+
+    const url = `${conf.apiBaseUrl}dashboard/IndividualDataAnalyticsDetails${
+      params.toString() ? `?${params.toString()}` : ""
+    }`;
+
+    const res = await fetchData({
+      method: "GET",
+      url: url,
+    });
+
+    if (res && res.success) {
+      setDoctorListData(res);
+      return res;
+    } else {
+      throw new Error(res?.message || "Failed to fetch doctor list");
+    }
+  } catch (err) {
+    console.error("Error while fetching doctor list:", err);
+    setError(err.message || "Failed to fetch doctor list");
+    toast.error(err.response?.data?.message || "Failed to fetch doctor list");
+    return null;
+  } finally {
+    setLoading(false);
+  }
+}, [fetchData, setDoctorListData, setError]);
+
+// ============== API 8: FETCH SALES PERSON ANALYTICS ==============
+const fetchSalesPersonAnalytics = useCallback(async (filterParams = {}) => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const allFilters = { ...filtersRef.current, ...filterParams };
+    
+    const params = new URLSearchParams();
+    if (allFilters.state) params.append("state", allFilters.state);
+    if (allFilters.district) params.append("district", allFilters.district);
+    if (allFilters.city) params.append("city", allFilters.city);
+    if (allFilters.segment) params.append("segment", allFilters.segment);
+
+    const url = `${conf.apiBaseUrl}dashboard/SalesPersonAnalytics${
+      params.toString() ? `?${params.toString()}` : ""
+    }`;
+
+    const res = await fetchData({
+      method: "GET",
+      url: url,
+    });
+
+    if (res && res.success) {
+      setSalesPersonData(res);
+      return res;
+    } else {
+      throw new Error(res?.message || "Failed to fetch sales person analytics");
+    }
+  } catch (err) {
+    console.error("Error while fetching sales person analytics:", err);
+    setError(err.message || "Failed to fetch sales person analytics");
+    toast.error(err.response?.data?.message || "Failed to fetch sales person analytics");
+    return null;
+  } finally {
+    setLoading(false);
+  }
+}, [fetchData, setSalesPersonData, setError]);
+
+// ============== API 9: FETCH ORGANIZATION DASHBOARD ANALYTICS ==============
+const fetchOrganizationDashboardAnalytics = useCallback(async (filterParams = {}) => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const allFilters = { ...filtersRef.current, ...filterParams };
+    
+    const params = new URLSearchParams();
+    if (allFilters.state) params.append("state", allFilters.state);
+    if (allFilters.district) params.append("district", allFilters.district);
+    if (allFilters.city) params.append("city", allFilters.city);
+    if (allFilters.segment) params.append("segment", allFilters.segment);
+    if (allFilters.speciality) params.append("speciality", allFilters.speciality);
+    if (allFilters.typeOfDoctorProfile) params.append("typeOfDoctorProfile", allFilters.typeOfDoctorProfile);
+
+    const url = `${conf.apiBaseUrl}dashboard/OrganizationDashboardAnalytics${
+      params.toString() ? `?${params.toString()}` : ""
+    }`;
+
+    const res = await fetchData({
+      method: "GET",
+      url: url,
+    });
+
+    if (res && res.success) {
+      setOrganizationDashboardData(res);
+      return res;
+    } else {
+      throw new Error(res?.message || "Failed to fetch organization dashboard analytics");
+    }
+  } catch (err) {
+    console.error("Error while fetching organization dashboard analytics:", err);
+    setError(err.message || "Failed to fetch organization dashboard analytics");
+    toast.error(err.response?.data?.message || "Failed to fetch organization dashboard analytics");
+    return null;
+  } finally {
+    setLoading(false);
+  }
+}, [fetchData, setOrganizationDashboardData, setError]);
+
+
   // ============== FILTER MANAGEMENT ==============
   const resetFilters = useCallback(() => {
     const clearedFilters = {
@@ -427,6 +556,18 @@ const fetchDoctorAnalytics = useCallback(async (filterParams = {}) => {
     doctorData,
     fetchDoctorAnalytics,
     resetDoctorData,
+
+      doctorListData,
+  fetchDoctorList,
+  resetDoctorListData: () => setDoctorListData(null),
+
+   salesPersonData,
+  fetchSalesPersonAnalytics,
+  resetSalesPersonData: () => setSalesPersonData(null),
+
+    organizationDashboardData,
+  fetchOrganizationDashboardAnalytics,
+  resetOrganizationDashboardData: () => setOrganizationDashboardData(null),
   };
 };
 

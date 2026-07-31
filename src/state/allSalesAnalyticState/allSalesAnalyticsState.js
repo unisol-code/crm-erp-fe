@@ -172,3 +172,11 @@ export const executiveDataStateAtom = atom(createPersistedAtom("executiveDataSta
 
 // Selected Tab State
 export const selectedTabStateAtom = atom(createPersistedAtom("selectedTabState", "overview"));
+
+export const doctorListStateAtom = atom(createPersistedAtom("doctorListState", null));
+// state/allSalesAnalyticsState/allSalesAnalyticsState.js
+
+// ✅ Sales Person Data State
+export const salesPersonDataStateAtom = atom(createPersistedAtom("salesPersonDataState", null));
+
+export const organizationDashboardDataStateAtom = atom(createPersistedAtom("organizationDashboardDataState", null));

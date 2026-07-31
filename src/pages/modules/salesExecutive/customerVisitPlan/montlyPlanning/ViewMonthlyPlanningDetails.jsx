@@ -430,10 +430,10 @@ function ViewMonthlyPlanningDetails() {
           { text: "Monthly Planning", href: "/sales-executive/monthly-planning" },
           {
             text: "View Monthly Planning",
-            href: `/sales-executive/monthly-planning/view-monthly-planning/${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}`,
+            href: `/sales-executive/monthly-planning/view-month-wise/${monthlyPlanningDetails?.data?.sales_id}/${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}`,
           },
-          { text: `View ${monthlyPlanningDetails?.month} ${monthlyPlanningDetails?.year} Planning`, href: `/sales-executive/monthly-planning/view-month-wise/${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}` },
-          { text: `View ${formatDate(data.createPlanningForDate)} Planning`, href: `/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${formatDate(data.createPlanningForDate)}` },
+          { text: `View ${monthlyPlanningDetails?.month} ${monthlyPlanningDetails?.year} Planning`, href: `/sales-executive/monthly-planning/view-month-wise/${monthlyPlanningDetails?.data?.sales_id}/${monthlyPlanningDetails?.month}/${monthlyPlanningDetails?.year}` },
+          { text: `View ${formatDate(data.createPlanningForDate)} Planning`, href: `/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${monthlyPlanningDetails?.data?.sales_id}/${formatDate(data.createPlanningForDate)}` },
           { text: "View Monthly Planning Details" },
         ]}
       />

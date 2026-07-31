@@ -24,7 +24,9 @@ const ViewMonthlyPlanning = () => {
   } = useMonthlyPlanning();
   // const { month, year } = useParams();
   const { date } = useParams();
+  const  {id} =useParams();
   console.log("Date:", date);
+    console.log("ID:", id);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [showFilter, setShowFilter] = useState(false);
@@ -149,7 +151,7 @@ const ViewMonthlyPlanning = () => {
             text: "Monthly Planning",
             href: "/sales-executive/monthly-planning",
           },
-          { text: `View ${oneMonthPlanningList?.month} ${oneMonthPlanningList?.year} Planning`, href: `/sales-executive/monthly-planning/view-month-wise/${oneMonthPlanningList?.month}/${oneMonthPlanningList?.year}` },
+          { text: `View ${oneMonthPlanningList?.month} ${oneMonthPlanningList?.year} Planning`, href: `/sales-executive/monthly-planning/view-month-wise/${id}/${oneMonthPlanningList?.month}/${oneMonthPlanningList?.year}` },
           { text: `View ${date} Planning` },
         ]}
       />
