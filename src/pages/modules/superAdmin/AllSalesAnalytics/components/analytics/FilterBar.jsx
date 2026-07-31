@@ -117,7 +117,12 @@ export function FilterBar({ selectedTab = 'overview' }) {
     resetFilters,
     fetchOverviewData,
     fetchSalesPerformance,
-    fetchOrganizationAnalytics, fetchSpecialityAnalytics,fetchTargetAnalytics, fetchDoctorAnalytics,
+    fetchOrganizationAnalytics,
+    fetchSpecialityAnalytics,
+    fetchTargetAnalytics,
+    fetchDoctorAnalytics,
+    fetchDoctorList, // ✅ Add this
+     fetchSalesPersonAnalytics,fetchOrganizationDashboardAnalytics,
     loading
   } = useAllSalesAnalytics();
 
@@ -125,9 +130,12 @@ export function FilterBar({ selectedTab = 'overview' }) {
   const fetchOverviewDataRef = useRef(fetchOverviewData);
   const fetchSalesPerformanceRef = useRef(fetchSalesPerformance);
   const fetchOrganizationAnalyticsRef = useRef(fetchOrganizationAnalytics);
-    const fetchSpecialityAnalyticsRef = useRef(fetchSpecialityAnalytics);
-    const fetchTargetAnalyticsRef = useRef(fetchTargetAnalytics);
-      const fetchDoctorAnalyticsRef = useRef(fetchDoctorAnalytics);
+  const fetchSpecialityAnalyticsRef = useRef(fetchSpecialityAnalytics);
+  const fetchTargetAnalyticsRef = useRef(fetchTargetAnalytics);
+  const fetchDoctorAnalyticsRef = useRef(fetchDoctorAnalytics);
+  const fetchDoctorListRef = useRef(fetchDoctorList); // ✅ Add this
+  const fetchSalesPersonAnalyticsRef = useRef(fetchSalesPersonAnalytics);
+  const fetchOrganizationDashboardAnalyticsRef = useRef(fetchOrganizationDashboardAnalytics);
   const updateFilterRef = useRef(updateFilter);
   const resetFiltersRef = useRef(resetFilters);
 
@@ -139,12 +147,13 @@ export function FilterBar({ selectedTab = 'overview' }) {
     fetchOverviewDataRef.current = fetchOverviewData;
     fetchSalesPerformanceRef.current = fetchSalesPerformance;
     fetchOrganizationAnalyticsRef.current = fetchOrganizationAnalytics;
-     fetchSpecialityAnalyticsRef.current = fetchSpecialityAnalytics;
-       fetchTargetAnalyticsRef.current = fetchTargetAnalytics;
-       fetchDoctorAnalyticsRef.current = fetchDoctorAnalytics;
+    fetchSpecialityAnalyticsRef.current = fetchSpecialityAnalytics;
+    fetchTargetAnalyticsRef.current = fetchTargetAnalytics;
+    fetchDoctorAnalyticsRef.current = fetchDoctorAnalytics;
+    fetchDoctorListRef.current = fetchDoctorList; // ✅ Add this
     updateFilterRef.current = updateFilter;
     resetFiltersRef.current = resetFilters;
-  }, [fetchOverviewData, fetchSalesPerformance, fetchOrganizationAnalytics, updateFilter, resetFilters]);
+  }, [fetchOverviewData, fetchSalesPerformance, fetchOrganizationAnalytics, fetchSpecialityAnalytics, fetchTargetAnalytics, fetchDoctorAnalytics, fetchDoctorList, updateFilter, resetFilters]);
 
   const { 
     fetchAllStateName, allStateName,
@@ -252,6 +261,7 @@ export function FilterBar({ selectedTab = 'overview' }) {
     }
   }, [filters.segment]);
 
+  // ✅ Updated fetchActiveTabData to include doctor list
   const fetchActiveTabData = () => {
     switch (selectedTab) {
       case 'overview':
@@ -263,13 +273,19 @@ export function FilterBar({ selectedTab = 'overview' }) {
         break;
       case 'doctors':
         fetchDoctorAnalyticsRef.current();
+        fetchDoctorListRef.current({
+          page: 1,
+          limit: 10,
+        }); // ✅ Fetch doctor list with filters
         break;
       case 'executives':
         fetchSalesPerformanceRef.current();
+        fetchSalesPersonAnalyticsRef.current();
         break;
       case 'hospitals':
       case 'organizations':
         fetchOrganizationAnalyticsRef.current();
+        fetchOrganizationDashboardAnalyticsRef.current();
         break;
       default:
         break;

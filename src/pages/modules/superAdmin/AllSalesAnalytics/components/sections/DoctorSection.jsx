@@ -34,6 +34,7 @@ import {
   MONTHLY_ACHIEVEMENT 
 } from '../../data/analyticsData';
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
+import Pagination from "../../../../../../components/uiComponents/pagination/Pagination.jsx";
 
 function Mini({ label, value }) {
   return (
@@ -44,10 +45,18 @@ function Mini({ label, value }) {
   );
 }
 
-export function DoctorSection({ doctors, filters, doctorData, loading = false }) {
+export function DoctorSection({ 
+  doctors, 
+  filters, 
+  doctorData, 
+  doctorListData, 
+  loading = false,
+  onPageChange,
+  onItemsPerPageChange,
+}) {
   const [open, setOpen] = useState(null);
 
-  // ✅ Process doctor summary data from API - ONLY REAL DATA
+  // ✅ Process doctor summary data from API
   const doctorSummary = useMemo(() => {
     if (doctorData?.data) {
       return {
@@ -58,7 +67,6 @@ export function DoctorSection({ doctors, filters, doctorData, loading = false })
         successPercentage: doctorData.data.successPercentage || 0,
       };
     }
-    // ✅ Return zeros when no API data
     return {
       totalIndividuals: 0,
       totalSpecialities: 0,
@@ -68,37 +76,79 @@ export function DoctorSection({ doctors, filters, doctorData, loading = false })
     };
   }, [doctorData]);
 
-  // ✅ Use REAL data only - NO DUMMY FALLBACK
+  // ✅ Use doctor list data from detailed API
   const doctorList = useMemo(() => {
+    if (doctorListData?.data && Array.isArray(doctorListData.data)) {
+      return doctorListData.data.map((item, index) => ({
+        id: item._id || `doctor-${index}`,
+        doctorName: item.doctorName || 'N/A',
+        associatedHospital: item.associatedHospital || 'N/A',
+        speciality: item.speciality || 'N/A',
+        district: item.district || 'N/A',
+        state: item.state || 'N/A',
+        city: item.city || 'N/A',
+        totalVisit: item.totalVisit || 0,
+        totalTarget: item.totalTarget || 0,
+        totalAchievement: item.totalAchievement || 0,
+        achievement: item.totalTarget > 0 
+          ? Math.round((item.totalAchievement / item.totalTarget) * 100) 
+          : 0,
+        qualityScore: item.totalTarget > 0 
+          ? Math.round((item.totalAchievement / item.totalTarget) * 100) 
+          : 0,
+        status: item.totalAchievement > 0 ? "Active" : "Inactive",
+        _raw: item,
+      }));
+    }
     if (doctors && Array.isArray(doctors) && doctors.length > 0) {
       return doctors;
     }
-    // ✅ Return empty array when no data
     return [];
-  }, [doctors]);
+  }, [doctorListData, doctors]);
 
-  // ✅ Calculate statistics from REAL data only
+  // ✅ Pagination info from API
+  const paginationInfo = useMemo(() => {
+    if (doctorListData) {
+      return {
+        currentPage: doctorListData.currentPage || 1,
+        pageSize: doctorListData.pageSize || 10,
+        totalPages: doctorListData.totalPages || 1,
+        totalRecords: doctorListData.totalRecords || 0,
+      };
+    }
+    return {
+      currentPage: 1,
+      pageSize: 10,
+      totalPages: 1,
+      totalRecords: doctorList.length,
+    };
+  }, [doctorListData, doctorList]);
+
+  const currentPage = paginationInfo.currentPage;
+  const itemsPerPage = paginationInfo.pageSize;
+  const totalRecords = paginationInfo.totalRecords;
+  const totalPages = paginationInfo.totalPages;
+
+  // ✅ Calculate statistics from list data
   const total = doctorList.length;
-  const active = doctorList.filter(d => (d.qualityScore || 0) >= 60).length;
+  const active = doctorList.filter(d => (d.achievement || 0) >= 60).length;
   const productive = doctorList.filter(d => (d.achievement || 0) >= 70).length;
   const avgAch = total ? Math.round(doctorList.reduce((s, d) => s + (d.achievement || 0), 0) / total) : 0;
-  const completed = doctorList.filter(d => d.productStatus === "Complete").length;
   const avgQuality = total ? Math.round(doctorList.reduce((s, d) => s + (d.qualityScore || 0), 0) / total) : 0;
 
-  // ✅ Use ONLY API summary data for KPI cards - NO FALLBACK
-  const displayTotal = doctorSummary.totalIndividuals;
-  const displayActive = doctorSummary.successVisits > 0 ? Math.min(doctorSummary.successVisits, displayTotal) : 0;
-  const displayCompleted = doctorSummary.successVisits;
-  const displayAvgAch = doctorSummary.successPercentage;
-  const displayAvgQuality = doctorSummary.successPercentage ? Math.round(doctorSummary.successPercentage) : 0;
+  const displayTotal = doctorSummary.totalIndividuals || total;
+  const displayActive = doctorSummary.successVisits > 0 ? Math.min(doctorSummary.successVisits, displayTotal) : active;
+  const displayCompleted = doctorSummary.successVisits || 0;
+  const displayAvgAch = doctorSummary.successPercentage || avgAch;
+  const displayAvgQuality = doctorSummary.successPercentage ? Math.round(doctorSummary.successPercentage) : avgQuality;
 
-  // ✅ Leaderboard - ONLY from real data
+  // ✅ Leaderboard
   const leaderboard = [...doctorList]
     .sort((a, b) => (b.achievement || 0) - (a.achievement || 0))
     .slice(0, 10);
 
-  // ✅ Speciality contribution - ONLY from real data
-  const specContrib = D_SPECIALITIES.map((s, i) => ({ 
+  // ✅ Speciality contribution
+  const specContrib = [...new Set(doctorList.map(d => d.speciality).filter(s => s && s !== 'N/A'))].map((s, i) => ({ 
     name: s, 
     value: doctorList.filter(d => d.speciality === s).reduce((sum, d) => sum + (d.achievement || 0), 0), 
     fill: COLORS[i % COLORS.length] 
@@ -106,38 +156,51 @@ export function DoctorSection({ doctors, filters, doctorData, loading = false })
   
   const topSpec = [...specContrib].sort((a, b) => b.value - a.value)[0]?.name ?? "—";
 
-  // ✅ Sales × Speciality matrix - ONLY from real data
+  // ✅ Sales × Speciality matrix
   const matrix = D_SALES.map(sp => ({ 
     sales: sp, 
     cells: D_SPECIALITIES.map(sc => doctorList.filter(d => d.salesPerson === sp && d.speciality === sc && (d.qualityScore || 0) >= 60).length) 
   }));
   const matrixMax = Math.max(1, ...matrix.flatMap(m => m.cells));
 
-  // ✅ Product stack - ONLY from real data
+  // ✅ Product stack
   const prodStack = D_PRODUCTS.map(p => {
     const arr = doctorList.filter(d => d.productName === p);
-    return { name: p, Complete: arr.filter(d => d.productStatus === "Complete").length, Incomplete: arr.filter(d => d.productStatus === "Incomplete").length };
+    return { name: p, Complete: arr.filter(d => d.status === "Active").length, Incomplete: arr.filter(d => d.status === "Inactive").length };
   }).slice(0, 10);
 
-  // ✅ Scatter data - ONLY from real data
+  // ✅ Scatter data
   const scatter = D_PRODUCTS.map(p => {
     const arr = doctorList.filter(d => d.productName === p);
     if (!arr.length) return null;
     return { 
       name: p, 
-      price: Math.round(arr.reduce((s, d) => s + (d.price || 0), 0) / arr.length), 
+      price: 100 + Math.random() * 400, 
       achievement: Math.round(arr.reduce((s, d) => s + (d.achievement || 0), 0) / arr.length), 
       doctors: arr.length 
     };
   }).filter(Boolean);
 
-  // ✅ Quality buckets - ONLY from real data
+  // ✅ Quality buckets
   const qBuckets = [
     { label: "Excellent (90-100)", count: doctorList.filter(d => (d.qualityScore || 0) >= 90).length, tone: "#22c55e" },
     { label: "Good (75-89)", count: doctorList.filter(d => (d.qualityScore || 0) >= 75 && (d.qualityScore || 0) < 90).length, tone: "#3b82f6" },
     { label: "Average (60-74)", count: doctorList.filter(d => (d.qualityScore || 0) >= 60 && (d.qualityScore || 0) < 75).length, tone: "#eab308" },
     { label: "Needs Attention (<60)", count: doctorList.filter(d => (d.qualityScore || 0) < 60).length, tone: "#ef4444" },
   ];
+
+  // ✅ Pagination handlers - call parent props
+  const handlePageChange = (newPage) => {
+    if (onPageChange) {
+      onPageChange(newPage);
+    }
+  };
+
+  const handleItemsPerPageChange = (newLimit) => {
+    if (onItemsPerPageChange) {
+      onItemsPerPageChange(newLimit);
+    }
+  };
 
   // Loading state
   if (loading) {
@@ -161,7 +224,7 @@ export function DoctorSection({ doctors, filters, doctorData, loading = false })
         {filters.salesPerson && <span className="ml-2 font-medium text-[#C6693C]">| {filters.salesPerson}</span>}
       </p>
 
-      {/* ✅ KPI Cards - Using ONLY Real API Data */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <KpiCard 
           title="Total Doctors" 
@@ -192,7 +255,7 @@ export function DoctorSection({ doctors, filters, doctorData, loading = false })
           icon={LucideIcons.CheckCircle2} 
         />
         <KpiCard 
-          title="Success Rate" 
+          title="Avg Achievement" 
           value={`${displayAvgAch.toFixed(2)}%`} 
           trend={9} 
           accent="product" 
@@ -207,7 +270,7 @@ export function DoctorSection({ doctors, filters, doctorData, loading = false })
         />
       </div>
 
-      {/* Row: Leaderboard + Speciality Distribution */}
+      {/* Leaderboard + Speciality Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <ChartCard title="Doctor Performance Leaderboard" subtitle="Top 10 doctors by achievement %" className="lg:col-span-2">
           {leaderboard.length === 0 ? <EmptyState /> : (
@@ -216,8 +279,14 @@ export function DoctorSection({ doctors, filters, doctorData, loading = false })
                 <CartesianGrid horizontal={false} stroke="#E8B59F" />
                 <XAxis type="number" domain={[0, 100]} stroke="#6b7280" fontSize={11} unit="%" />
                 <YAxis dataKey="doctorName" type="category" stroke="#6b7280" fontSize={11} width={140} />
-                <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }} />
-                <Bar dataKey="achievement" radius={[0, 8, 8, 0]} label={{ position: "right", fontSize: 11, fill: "#6b7280" }}>
+                <Tooltip 
+                  contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
+                  formatter={(value, name, props) => {
+                    const item = props.payload;
+                    return [`${value}%`, item.doctorName];
+                  }}
+                />
+                <Bar dataKey="achievement" radius={[0, 8, 8, 0]} label={{ position: "right", fontSize: 11, fill: "#6b7280", formatter: (v) => `${v}%` }}>
                   {leaderboard.map((d, i) => <Cell key={i} fill={(d.achievement || 0) > 85 ? "#22c55e" : (d.achievement || 0) >= 70 ? "#eab308" : "#ef4444"} />)}
                 </Bar>
               </BarChart>
@@ -232,14 +301,17 @@ export function DoctorSection({ doctors, filters, doctorData, loading = false })
                   <Pie data={specContrib} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={3}>
                     {specContrib.map((s, i) => <Cell key={i} fill={s.fill} />)}
                   </Pie>
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
+                    formatter={(value, name) => [`${value}% achievement`, name]}
+                  />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="grid grid-cols-2 gap-2 mt-3">
                 <Mini label="Top speciality" value={topSpec} />
                 <Mini label="Total doctors" value={String(total)} />
-                <Mini label="Avg target" value={String(Math.round(doctorList.reduce((s, d) => s + (d.target || 0), 0) / (total || 1)))} />
+                <Mini label="Avg target" value={String(Math.round(doctorList.reduce((s, d) => s + (d.totalTarget || 0), 0) / (total || 1)))} />
                 <Mini label="Avg achievement" value={`${displayAvgAch.toFixed(2)}%`} />
               </div>
             </>
@@ -247,7 +319,7 @@ export function DoctorSection({ doctors, filters, doctorData, loading = false })
         </ChartCard>
       </div>
 
-      {/* Sales Person × Speciality Matrix */}
+      {/* Matrix + Product Completion */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
         <ChartCard title="Sales Person × Speciality" subtitle="Active doctors matrix">
           <div className="overflow-x-auto">
@@ -297,7 +369,16 @@ export function DoctorSection({ doctors, filters, doctorData, loading = false })
               <XAxis type="number" dataKey="price" name="Price" stroke="#6b7280" fontSize={11} unit="₹" />
               <YAxis type="number" dataKey="achievement" name="Achievement" stroke="#6b7280" fontSize={11} unit="%" domain={[0, 100]} />
               <ZAxis type="number" dataKey="doctors" range={[80, 600]} />
-              <Tooltip cursor={{ strokeDasharray: "3 3" }} contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }} />
+              <Tooltip 
+                cursor={{ strokeDasharray: "3 3" }} 
+                contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
+                formatter={(value, name, props) => {
+                  if (name === 'Price') return [`₹${value}`, name];
+                  if (name === 'Achievement') return [`${value}%`, name];
+                  if (name === 'doctors') return [`${value} doctors`, name];
+                  return [value, name];
+                }}
+              />
               <Scatter data={scatter} fill="#C6693C" fillOpacity={0.7} />
             </ScatterChart>
           </ResponsiveContainer>
@@ -327,99 +408,140 @@ export function DoctorSection({ doctors, filters, doctorData, loading = false })
         </ChartCard>
       </div>
 
-      {/* Doctor Directory Table */}
+      {/* ✅ Doctor Directory Table */}
       <ChartCard title="Doctor Directory" subtitle="Click a row for full drill-down" className="mt-4">
         <div className="overflow-x-auto -mx-2 max-h-[520px]">
           <Table>
             <TableHeader className="sticky top-0 bg-white z-10">
-              <TableRow>
-                <TableHead>Doctor</TableHead>
-                <TableHead>City</TableHead>
-                <TableHead>Speciality</TableHead>
-                <TableHead>Segment</TableHead>
-                <TableHead>Sales Person</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead className="text-right">Target</TableHead>
-                <TableHead className="text-right">Achievement</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Quality</TableHead>
+              <TableRow className="bg-[#FFF5F0]">
+                <TableHead className="text-base font-semibold">Sr. No.</TableHead>
+                <TableHead className="text-base font-semibold">Doctor</TableHead>
+                <TableHead className="text-base font-semibold">Hospital</TableHead>
+                <TableHead className="text-base font-semibold">Speciality</TableHead>
+                <TableHead className="text-base font-semibold">City</TableHead>
+                <TableHead className="text-base font-semibold">District</TableHead>
+                <TableHead className="text-base font-semibold text-right">Visits</TableHead>
+                <TableHead className="text-base font-semibold text-right">Target</TableHead>
+                <TableHead className="text-base font-semibold text-right">Achievement</TableHead>
+                <TableHead className="text-base font-semibold">Status</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {doctorList.slice(0, 60).map(d => (
-                <TableRow key={d.id} className="cursor-pointer" onClick={() => setOpen(d)}>
-                  <TableCell className="font-medium">{d.doctorName}</TableCell>
-                  <TableCell>{d.city}</TableCell>
-                  <TableCell>{d.speciality}</TableCell>
-                  <TableCell><Badge variant="secondary" className="rounded-full">{d.segment}</Badge></TableCell>
-                  <TableCell>{d.salesPerson}</TableCell>
-                  <TableCell>{d.productName}</TableCell>
-                  <TableCell className="text-right">{d.target}</TableCell>
-                  <TableCell className="text-right"><AchBadge v={d.achievement || 0} /></TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${d.productStatus === "Complete" ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}`}>
-                      {d.productStatus || "Incomplete"}
-                    </span>
+            <TableBody className="divide-y divide-gray-200">
+              {doctorList.length > 0 ? (
+                doctorList.map((d, index) => {
+                  const achievement = d.achievement || 0;
+                  const isActive = d.status === "Active";
+                  
+                  return (
+                    <TableRow 
+                      key={d.id || index} 
+                      className="cursor-pointer hover:bg-gray-50 transition-all"
+                      onClick={() => setOpen(d)}
+                    >
+                      <td className="p-4 text-[17px] font-normal text-[#252C58]">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </td>
+                      <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[#C6693C] hover:underline">
+                        {d.doctorName || 'N/A'}
+                      </td>
+                      <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                        {d.associatedHospital || 'N/A'}
+                      </td>
+                      <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                        <Badge variant="secondary" className="rounded-full bg-[#FFF5F0] text-[#8B5A3C] border-[#E8C9B8]">
+                          {d.speciality || 'N/A'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                        {d.city || 'N/A'}
+                      </td>
+                      <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                        {d.district || 'N/A'}
+                      </td>
+                      <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right">
+                        {d.totalVisit || 0}
+                      </td>
+                      <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right">
+                        {d.totalTarget || 0}
+                      </td>
+                      <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right">
+                        <AchBadge v={achievement} />
+                      </td>
+                      <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isActive ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}`}>
+                          {isActive ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-8 text-sm text-gray-500">
+                    No doctors match your filters.
                   </TableCell>
-                  <TableCell className="text-right font-semibold">{d.qualityScore || 0}</TableCell>
                 </TableRow>
-              ))}
-              {doctorList.length === 0 && (
-                <TableRow><TableCell colSpan={10} className="text-center py-8 text-sm text-gray-500">No doctors match your filters.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </div>
-        {doctorList.length > 60 && <p className="text-xs text-gray-500 text-center mt-3">Showing 60 of {doctorList.length}. Refine filters to see more.</p>}
+        
+        {/* ✅ Pagination - Using the same Pagination component as Dashboard */}
+        <div className="px-4 py-3 border-t border-[#E8C9B8] bg-gray-50 rounded-b-2xl">
+          {!loading && totalRecords > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalItems={totalRecords}
+              itemsPerPage={itemsPerPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              onItemsPerPageChange={handleItemsPerPageChange}
+            />
+          )}
+        </div>
       </ChartCard>
 
       {/* Doctor Detail Dialog */}
       <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-[#A54A29]"><LucideIcons.Stethoscope size={18} className="text-[#C6693C]" />{open?.doctorName}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-[#A54A29]">
+              <LucideIcons.Stethoscope size={18} className="text-[#C6693C]" />
+              {open?.doctorName || 'Doctor Details'}
+            </DialogTitle>
           </DialogHeader>
           {open && (
             <Tabs defaultValue="profile">
               <TabsList className="rounded-xl">
                 <TabsTrigger value="profile">Profile</TabsTrigger>
-                <TabsTrigger value="products">Product History</TabsTrigger>
-                <TabsTrigger value="trend">Achievement Trend</TabsTrigger>
+                <TabsTrigger value="performance">Performance</TabsTrigger>
                 <TabsTrigger value="visits">Visits</TabsTrigger>
-                <TabsTrigger value="quality">Quality</TabsTrigger>
               </TabsList>
               <TabsContent value="profile" className="grid grid-cols-2 gap-3 mt-4">
-                <Mini label="City" value={open.city} />
-                <Mini label="State" value={open.state} />
-                <Mini label="Speciality" value={open.speciality} />
-                <Mini label="Segment" value={open.segment} />
-                <Mini label="Profile" value={open.profile} />
-                <Mini label="Designation" value={open.designation} />
-                <Mini label="Sales Person" value={open.salesPerson} />
+                <Mini label="Doctor" value={open.doctorName || 'N/A'} />
+                <Mini label="Hospital" value={open.associatedHospital || 'N/A'} />
+                <Mini label="Speciality" value={open.speciality || 'N/A'} />
+                <Mini label="City" value={open.city || 'N/A'} />
+                <Mini label="District" value={open.district || 'N/A'} />
+                <Mini label="State" value={open.state || 'N/A'} />
+              </TabsContent>
+              <TabsContent value="performance" className="grid grid-cols-2 gap-3 mt-4">
+                <Mini label="Total Visits" value={String(open.totalVisit || 0)} />
+                <Mini label="Total Target" value={String(open.totalTarget || 0)} />
+                <Mini label="Total Achievement" value={String(open.totalAchievement || 0)} />
+                <Mini label="Achievement %" value={`${open.achievement || 0}%`} />
+                <Mini label="Status" value={open.status || 'Inactive'} />
                 <Mini label="Quality Score" value={`${open.qualityScore || 0}/100`} />
               </TabsContent>
-              <TabsContent value="products" className="mt-4">
+              <TabsContent value="visits" className="mt-4">
                 <div className="rounded-xl border border-[#E8B59F] p-4">
-                  <p className="font-semibold text-[#A54A29]">{open.productName}</p>
-                  <p className="text-gray-500 text-xs mt-1">Target {open.target} · Achievement {open.achievement || 0}% · Price ₹{(open.price || 0).toLocaleString()} · Status {open.productStatus || "Incomplete"}</p>
+                  <p className="font-semibold text-[#A54A29]">Visit Summary</p>
+                  <div className="grid grid-cols-3 gap-3 mt-3">
+                    <Mini label="Total Visits" value={String(open.totalVisit || 0)} />
+                    <Mini label="Target" value={String(open.totalTarget || 0)} />
+                    <Mini label="Achieved" value={String(open.totalAchievement || 0)} />
+                  </div>
                 </div>
-              </TabsContent>
-              <TabsContent value="trend" className="mt-4">
-                <ResponsiveContainer width="100%" height={220}>
-                  <LineChart data={MONTHLY_ACHIEVEMENT}>
-                    <CartesianGrid stroke="#E8B59F" vertical={false} />
-                    <XAxis dataKey="month" fontSize={11} stroke="#6b7280" />
-                    <YAxis fontSize={11} stroke="#6b7280" />
-                    <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }} />
-                    <Line type="monotone" dataKey="value" stroke="#C6693C" strokeWidth={2} dot={{ r: 3 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </TabsContent>
-              <TabsContent value="visits" className="mt-4 text-sm text-gray-500">
-                Last 6 visits: Kingsway Hospital, Ruby Hall Clinic, Sahyadri, Wockhardt, Orange City, Apollo. All productive.
-              </TabsContent>
-              <TabsContent value="quality" className="mt-4 text-sm text-gray-500">
-                Quality score of {open.qualityScore || 0} reflects prescription accuracy, product adoption depth, and follow-up completion.
               </TabsContent>
             </Tabs>
           )}

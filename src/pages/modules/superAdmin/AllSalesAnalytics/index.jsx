@@ -1,6 +1,6 @@
 // index.jsx
 
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo, useEffect, useState, useCallback } from "react";
 import * as LucideIcons from "lucide-react";
 import { FilterBar } from './components/analytics/FilterBar';
 import { DashboardSection } from './components/sections/DashboardSection';
@@ -24,11 +24,18 @@ function AllSalesAnalytics() {
     fetchOverviewData,
     fetchSalesPerformance,
     fetchOrganizationAnalytics,
-     fetchSpecialityAnalytics,specialityData, 
-      fetchTargetAnalytics, targetData,
-      fetchDoctorAnalytics, doctorData,
+    fetchSpecialityAnalytics,
+    specialityData,
+    fetchTargetAnalytics,
+    targetData,
+    fetchDoctorAnalytics,
+    doctorData,
     organizationData,
     overviewData,
+    doctorListData,
+    fetchDoctorList, salesPersonData,
+  fetchSalesPersonAnalytics,  organizationDashboardData,
+  fetchOrganizationDashboardAnalytics,
     resetFilters,
     kpis,
     executiveData,
@@ -36,10 +43,27 @@ function AllSalesAnalytics() {
     error,
   } = useAllSalesAnalytics();
 
-  // State for pagination
+  // State for hospital pagination
   const [hospitalPage, setHospitalPage] = useState(1);
   const [hospitalLimit, setHospitalLimit] = useState(10);
   const [hospitalSearch, setHospitalSearch] = useState("");
+
+  // ✅ Doctor pagination state
+  const [doctorPage, setDoctorPage] = useState(1);
+  const [doctorLimit, setDoctorLimit] = useState(10);
+
+  // ✅ Function to fetch doctor data with current pagination
+  const loadDoctorData = useCallback(async () => {
+    try {
+      await fetchDoctorAnalytics();
+      await fetchDoctorList({
+        page: doctorPage,
+        limit: doctorLimit,
+      });
+    } catch (error) {
+      console.error('Error loading doctor data:', error);
+    }
+  }, [fetchDoctorAnalytics, fetchDoctorList, doctorPage, doctorLimit]);
 
   // ✅ Fetch data based on active tab only
   useEffect(() => {
@@ -57,10 +81,11 @@ function AllSalesAnalytics() {
             await fetchTargetAnalytics();
             break;
           case 'doctors':
-            await fetchDoctorAnalytics();
+            await loadDoctorData();
             break;
           case 'executives':
             await fetchSalesPerformance();
+             await fetchSalesPersonAnalytics();
             break;
           case 'hospitals':
             await fetchOrganizationAnalytics({
@@ -73,6 +98,8 @@ function AllSalesAnalytics() {
               page: hospitalPage,
               limit: hospitalLimit,
             });
+               await fetchOrganizationDashboardAnalytics();
+           
             break;
           default:
             break;
@@ -82,9 +109,26 @@ function AllSalesAnalytics() {
       }
     };
     fetchTabData();
-  }, [selectedTab]); // ✅ Re-fetch when tab changes
+  }, [selectedTab]); // ✅ Only trigger on tab change
 
-  // ✅ Handle pagination changes - ONLY when user interacts
+  // ✅ Separate useEffect for doctor pagination changes
+  useEffect(() => {
+    if (selectedTab === 'doctors') {
+      loadDoctorData();
+    }
+  }, [doctorPage, doctorLimit, selectedTab, loadDoctorData]);
+
+  // ✅ Doctor pagination handlers
+  const handleDoctorPageChange = (page) => {
+    setDoctorPage(page);
+  };
+
+  const handleDoctorLimitChange = (limit) => {
+    setDoctorLimit(limit);
+    setDoctorPage(1);
+  };
+
+  // ✅ Handle hospital pagination changes
   const handleHospitalPageChange = (page) => {
     setHospitalPage(page);
     fetchOrganizationAnalytics({
@@ -105,7 +149,6 @@ function AllSalesAnalytics() {
   const handleHospitalSearch = (searchTerm) => {
     setHospitalSearch(searchTerm);
     setHospitalPage(1);
-    // If your API supports search parameter
     fetchOrganizationAnalytics({
       page: 1,
       limit: hospitalLimit,
@@ -157,9 +200,7 @@ function AllSalesAnalytics() {
     };
   }, [safeFilters]);
 
-  // Prepare executives data - already comes from the hook
-  // const executives = executiveData && executiveData.length > 0 ? executiveData : EXECUTIVES;
-    const executives = executiveData && executiveData.length > 0 ? executiveData : [];
+  const executives = executiveData && executiveData.length > 0 ? executiveData : [];
 
   const tabs = [
     { 
@@ -173,7 +214,7 @@ function AllSalesAnalytics() {
         executives={executives} 
         organizationData={organizationData}
         specialityData={specialityData} 
-         targetData={targetData} 
+        targetData={targetData} 
         loading={loading}
         onPageChange={handleHospitalPageChange}
         onItemsPerPageChange={handleHospitalLimitChange}
@@ -184,16 +225,24 @@ function AllSalesAnalytics() {
       id: "doctors", 
       label: "Doctors", 
       icon: LucideIcons.Stethoscope,
-      component: <DoctorSection doctors={filteredData.doctors} filters={filters}
-        doctorData={doctorData} 
+      component: <DoctorSection 
+        doctors={filteredData.doctors} 
+        filters={filters}
+        doctorData={doctorData}
+        doctorListData={doctorListData}
         loading={loading}
-       />
+        onPageChange={handleDoctorPageChange}
+        onItemsPerPageChange={handleDoctorLimitChange}
+      />
     },
     { 
       id: "executives", 
       label: "Sales Executives", 
       icon: LucideIcons.Users,
-      component: <ExecutiveSection executives={executives} filters={filters} />
+      component: <ExecutiveSection
+       executives={executives}
+        salesPersonData={salesPersonData}
+       filters={filters} />
     },
     { 
       id: "hospitals", 
@@ -205,11 +254,14 @@ function AllSalesAnalytics() {
       id: "organizations", 
       label: "Organizations", 
       icon: LucideIcons.Building,
-      component: <OrganizationSection orgs={filteredData.orgs} filters={filters} />
+      component: <OrganizationSection 
+      orgs={filteredData.orgs} 
+       organizationDashboardData={organizationDashboardData}
+      filters={filters} 
+      />
     },
   ];
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#FFF5F0] via-[#FDF0EA] to-[#FBE9E7] flex items-center justify-center">
@@ -221,7 +273,6 @@ function AllSalesAnalytics() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#FFF5F0] via-[#FDF0EA] to-[#FBE9E7] flex items-center justify-center">
@@ -243,7 +294,6 @@ function AllSalesAnalytics() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FFF5F0] via-[#FDF0EA] to-[#FBE9E7]">
       <div className="px-4 md:px-6 lg:px-8 pt-6 pb-10">
-        {/* Header */}
         <div className="mb-4">
           <h1 className="text-2xl md:text-3xl font-bold text-[#5A2D1A] tracking-tight">
             Employee Analytics
@@ -253,12 +303,10 @@ function AllSalesAnalytics() {
           </p>
         </div>
 
-{/* Filter Bar */}
         <div className="mb-4">
           <FilterBar selectedTab={selectedTab} />
         </div>
 
-        {/* Tab Navigation */}
         <div className="flex flex-wrap gap-1 border-b border-[#E8C9B8] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">
           {tabs.map((tab) => {
             const isActive = selectedTab === tab.id;
@@ -288,7 +336,6 @@ function AllSalesAnalytics() {
           })}
         </div>
 
-        {/* Tab Content */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-[#E8C9B8] shadow-xl shadow-[#C6693C]/5 p-6 min-h-[500px]">
           {tabs.find(tab => tab.id === selectedTab)?.component}
         </div>

@@ -652,7 +652,7 @@ function App() {
             }
           />
           <Route
-            path="/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/:date"
+            path="/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/:id/:date"
             element={
               <SalesExecutiveLayout
                 activeTab={activeTab}
