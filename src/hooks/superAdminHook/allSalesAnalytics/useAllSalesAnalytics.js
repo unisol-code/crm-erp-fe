@@ -17,7 +17,8 @@ import {
   specialityDataStateAtom,
   targetDataStateAtom,
   doctorDataStateAtom, // ✅ Add this
-   doctorListStateAtom,  salesPersonDataStateAtom,  organizationDashboardDataStateAtom,
+   doctorListStateAtom,  salesPersonDataStateAtom,  organizationDashboardDataStateAtom,   organizationProductDataStateAtom,
+   organizationListDataStateAtom,salesPersonTargetDataStateAtom
 } from "../../../state/allSalesAnalyticState/allSalesAnalyticsState";
 
 const useAllSalesAnalytics = () => {
@@ -36,7 +37,9 @@ const useAllSalesAnalytics = () => {
   const [doctorListData, setDoctorListData] = useRecoilState(doctorListStateAtom);
   const [salesPersonData, setSalesPersonData] = useRecoilState(salesPersonDataStateAtom);
   const [organizationDashboardData, setOrganizationDashboardData] = useRecoilState(organizationDashboardDataStateAtom);
-
+const [organizationProductData, setOrganizationProductData] = useRecoilState(organizationProductDataStateAtom);
+const [organizationListData, setOrganizationListData] = useRecoilState(organizationListDataStateAtom);
+const [salesPersonTargetData, setSalesPersonTargetData] = useRecoilState(salesPersonTargetDataStateAtom);
   const filtersRef = useRef(filters);
 
   // Update ref when filters change
@@ -454,6 +457,138 @@ const fetchOrganizationDashboardAnalytics = useCallback(async (filterParams = {}
   }
 }, [fetchData, setOrganizationDashboardData, setError]);
 
+// ============== API 10: FETCH ORGANIZATION PRODUCT ANALYTICS ==============
+const fetchOrganizationProductAnalytics = useCallback(async (filterParams = {}) => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const allFilters = { ...filtersRef.current, ...filterParams };
+    
+    const params = new URLSearchParams();
+    if (allFilters.state) params.append("state", allFilters.state);
+    if (allFilters.district) params.append("district", allFilters.district);
+    if (allFilters.city) params.append("city", allFilters.city);
+    if (allFilters.segment) params.append("segment", allFilters.segment);
+    if (allFilters.typeOfHospital) params.append("typeOfHospital", allFilters.typeOfHospital);
+    if (allFilters.typeOfOrgOrHospital) params.append("typeOfOrgOrHospital", allFilters.typeOfOrgOrHospital);
+    if (allFilters.salesPerson) params.append("salesPerson", allFilters.salesPerson);
+    if (allFilters.page) params.append("page", String(allFilters.page || 1));
+    if (allFilters.pageSize) params.append("pageSize", String(allFilters.pageSize || 10));
+
+    const url = `${conf.apiBaseUrl}dashboard/OrganizationProductAnalytics${
+      params.toString() ? `?${params.toString()}` : ""
+    }`;
+
+    const res = await fetchData({
+      method: "GET",
+      url: url,
+    });
+
+    if (res && res.success) {
+      setOrganizationProductData(res);
+      return res;
+    } else {
+      throw new Error(res?.message || "Failed to fetch organization product analytics");
+    }
+  } catch (err) {
+    console.error("Error while fetching organization product analytics:", err);
+    setError(err.message || "Failed to fetch organization product analytics");
+    toast.error(err.response?.data?.message || "Failed to fetch organization product analytics");
+    return null;
+  } finally {
+    setLoading(false);
+  }
+}, [fetchData, setOrganizationProductData, setError]);
+
+// ============== API 11: FETCH ORGANIZATION LIST ANALYTICS ==============
+const fetchOrganizationListAnalytics = useCallback(async (filterParams = {}) => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const allFilters = { ...filtersRef.current, ...filterParams };
+    
+    const params = new URLSearchParams();
+    if (allFilters.state) params.append("state", allFilters.state);
+    if (allFilters.district) params.append("district", allFilters.district);
+    if (allFilters.city) params.append("city", allFilters.city);
+    if (allFilters.segment) params.append("segment", allFilters.segment);
+    if (allFilters.typeOfHospital) params.append("typeOfHospital", allFilters.typeOfHospital);
+    if (allFilters.typeOfOrgOrHospital) params.append("typeOfOrgOrHospital", allFilters.typeOfOrgOrHospital);
+    if (allFilters.salesPerson) params.append("salesPerson", allFilters.salesPerson);
+    if (allFilters.page) params.append("page", String(allFilters.page || 1));
+    if (allFilters.pageSize) params.append("pageSize", String(allFilters.pageSize || 10));
+
+    const url = `${conf.apiBaseUrl}dashboard/OrganizationDashboardAnalyticsList${
+      params.toString() ? `?${params.toString()}` : ""
+    }`;
+
+    const res = await fetchData({
+      method: "GET",
+      url: url,
+    });
+
+    if (res && res.success) {
+      setOrganizationListData(res);
+      return res;
+    } else {
+      throw new Error(res?.message || "Failed to fetch organization list");
+    }
+  } catch (err) {
+    console.error("Error while fetching organization list:", err);
+    setError(err.message || "Failed to fetch organization list");
+    toast.error(err.response?.data?.message || "Failed to fetch organization list");
+    return null;
+  } finally {
+    setLoading(false);
+  }
+}, [fetchData, setOrganizationListData, setError]);
+
+
+// ============== API 12: FETCH SALES PERSON TARGET ANALYTICS ==============
+const fetchSalesPersonTargetAnalytics = useCallback(async (filterParams = {}) => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const allFilters = { ...filtersRef.current, ...filterParams };
+    
+    const params = new URLSearchParams();
+    if (allFilters.month) params.append("month", allFilters.month);
+    if (allFilters.year) params.append("year", allFilters.year);
+    if (allFilters.state) params.append("state", allFilters.state);
+    if (allFilters.district) params.append("district", allFilters.district);
+    if (allFilters.city) params.append("city", allFilters.city);
+    if (allFilters.segment) params.append("segment", allFilters.segment);
+    if (allFilters.page) params.append("page", String(allFilters.page || 1));
+    if (allFilters.limit) params.append("limit", String(allFilters.limit || 10));
+
+    const url = `${conf.apiBaseUrl}dashboard/SalesPersonTargetAnalytics${
+      params.toString() ? `?${params.toString()}` : ""
+    }`;
+
+    const res = await fetchData({
+      method: "GET",
+      url: url,
+    });
+
+    if (res && res.success) {
+      setSalesPersonTargetData(res);
+      return res;
+    } else {
+      throw new Error(res?.message || "Failed to fetch sales person target analytics");
+    }
+  } catch (err) {
+    console.error("Error while fetching sales person target analytics:", err);
+    setError(err.message || "Failed to fetch sales person target analytics");
+    toast.error(err.response?.data?.message || "Failed to fetch sales person target analytics");
+    return null;
+  } finally {
+    setLoading(false);
+  }
+}, [fetchData, setSalesPersonTargetData, setError]);
+
 
   // ============== FILTER MANAGEMENT ==============
   const resetFilters = useCallback(() => {
@@ -568,6 +703,18 @@ const fetchOrganizationDashboardAnalytics = useCallback(async (filterParams = {}
     organizationDashboardData,
   fetchOrganizationDashboardAnalytics,
   resetOrganizationDashboardData: () => setOrganizationDashboardData(null),
+
+    organizationProductData,
+  fetchOrganizationProductAnalytics,
+  resetOrganizationProductData: () => setOrganizationProductData(null),
+
+   organizationListData,
+  fetchOrganizationListAnalytics,
+  resetOrganizationListData: () => setOrganizationListData(null),
+
+  salesPersonTargetData,
+  fetchSalesPersonTargetAnalytics,
+  resetSalesPersonTargetData: () => setSalesPersonTargetData(null),
   };
 };
 

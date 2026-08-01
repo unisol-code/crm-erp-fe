@@ -8,6 +8,7 @@ import { DoctorSection } from './components/sections/DoctorSection';
 import { ExecutiveSection } from './components/sections/ExecutiveSection';
 import { HospitalSection } from './components/sections/HospitalSection';
 import { OrganizationSection } from './components/sections/OrganizationSection';
+// import { OrganizationProductSection } from './components/sections/OrganizationProductSection';
 import useAllSalesAnalytics from "../../../../hooks/superAdminHook/allSalesAnalytics/useAllSalesAnalytics";
 import { 
   HOSPITALS, 
@@ -35,7 +36,10 @@ function AllSalesAnalytics() {
     doctorListData,
     fetchDoctorList, salesPersonData,
   fetchSalesPersonAnalytics,  organizationDashboardData,
-  fetchOrganizationDashboardAnalytics,
+  fetchOrganizationDashboardAnalytics,   organizationProductData,
+  fetchOrganizationProductAnalytics,  organizationListData,
+  fetchOrganizationListAnalytics,  salesPersonTargetData,
+  fetchSalesPersonTargetAnalytics,
     resetFilters,
     kpis,
     executiveData,
@@ -51,6 +55,15 @@ function AllSalesAnalytics() {
   // ✅ Doctor pagination state
   const [doctorPage, setDoctorPage] = useState(1);
   const [doctorLimit, setDoctorLimit] = useState(10);
+
+  const [productPage, setProductPage] = useState(1);
+const [productPageSize, setProductPageSize] = useState(10);
+
+const [orgListPage, setOrgListPage] = useState(1);
+const [orgListPageSize, setOrgListPageSize] = useState(10);
+
+const [targetPage, setTargetPage] = useState(1);
+const [targetPageSize, setTargetPageSize] = useState(10);
 
   // ✅ Function to fetch doctor data with current pagination
   const loadDoctorData = useCallback(async () => {
@@ -85,7 +98,11 @@ function AllSalesAnalytics() {
             break;
           case 'executives':
             await fetchSalesPerformance();
-             await fetchSalesPersonAnalytics();
+            //  await fetchSalesPersonAnalytics();
+              await fetchSalesPersonTargetAnalytics({
+    page: targetPage,
+    limit: targetPageSize,
+  });
             break;
           case 'hospitals':
             await fetchOrganizationAnalytics({
@@ -99,7 +116,14 @@ function AllSalesAnalytics() {
               limit: hospitalLimit,
             });
                await fetchOrganizationDashboardAnalytics();
-           
+                await fetchOrganizationProductAnalytics({
+    page: productPage,
+    pageSize: productPageSize,
+  });
+    await fetchOrganizationListAnalytics({
+    page: orgListPage,
+    pageSize: orgListPageSize,
+  });
             break;
           default:
             break;
@@ -155,6 +179,58 @@ function AllSalesAnalytics() {
       search: searchTerm,
     });
   };
+
+const handleProductPageChange = (page) => {
+  setProductPage(page);
+  fetchOrganizationProductAnalytics({
+    page: page,
+    pageSize: productPageSize,
+  });
+};
+
+const handleProductPageSizeChange = (pageSize) => {
+  setProductPageSize(pageSize);
+  setProductPage(1);
+  fetchOrganizationProductAnalytics({
+    page: 1,
+    pageSize: pageSize,
+  });
+};
+
+const handleOrgListPageChange = (page) => {
+  setOrgListPage(page);
+  fetchOrganizationListAnalytics({
+    page: page,
+    pageSize: orgListPageSize,
+  });
+};
+
+const handleOrgListPageSizeChange = (pageSize) => {
+  setOrgListPageSize(pageSize);
+  setOrgListPage(1);
+  fetchOrganizationListAnalytics({
+    page: 1,
+    pageSize: pageSize,
+  });
+};
+
+
+const handleTargetPageChange = (page) => {
+  setTargetPage(page);
+  fetchSalesPersonTargetAnalytics({
+    page: page,
+    limit: targetPageSize,
+  });
+};
+
+const handleTargetPageSizeChange = (pageSize) => {
+  setTargetPageSize(pageSize);
+  setTargetPage(1);
+  fetchSalesPersonTargetAnalytics({
+    page: 1,
+    limit: pageSize,
+  });
+};
 
   const safeFilters = filters || {
     month: "",
@@ -240,25 +316,37 @@ function AllSalesAnalytics() {
       label: "Sales Executives", 
       icon: LucideIcons.Users,
       component: <ExecutiveSection
-       executives={executives}
-        salesPersonData={salesPersonData}
-       filters={filters} />
+  executives={executives}
+  salesPersonData={salesPersonData}
+  salesPersonTargetData={salesPersonTargetData}
+  filters={filters}
+  loading={loading}
+  onTargetPageChange={handleTargetPageChange}
+  onTargetItemsPerPageChange={handleTargetPageSizeChange}
+/>
     },
-    { 
-      id: "hospitals", 
-      label: "Hospitals", 
-      icon: LucideIcons.Building2,
-      component: <HospitalSection hospitals={filteredData.hospitals} filters={filters} />
-    },
+    // { 
+    //   id: "hospitals", 
+    //   label: "Hospitals", 
+    //   icon: LucideIcons.Building2,
+    //   component: <HospitalSection hospitals={filteredData.hospitals} filters={filters} />
+    // },
     { 
       id: "organizations", 
       label: "Organizations", 
       icon: LucideIcons.Building,
-      component: <OrganizationSection 
-      orgs={filteredData.orgs} 
-       organizationDashboardData={organizationDashboardData}
-      filters={filters} 
-      />
+        component: <OrganizationSection
+  orgs={filteredData.orgs}
+  organizationDashboardData={organizationDashboardData}
+  organizationProductData={organizationProductData}
+  organizationListData={organizationListData}
+  filters={filters}
+  loading={loading}
+  onProductPageChange={handleProductPageChange}
+  onProductItemsPerPageChange={handleProductPageSizeChange}
+  onOrganizationListPageChange={handleOrgListPageChange}
+  onOrganizationListItemsPerPageChange={handleOrgListPageSizeChange}
+/>
     },
   ];
 

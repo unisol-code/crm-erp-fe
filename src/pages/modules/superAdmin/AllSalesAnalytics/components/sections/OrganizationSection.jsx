@@ -7,7 +7,7 @@ import {
   RadialBar, RadialBarChart, ResponsiveContainer, Tooltip, 
   XAxis, YAxis, Scatter, ScatterChart, ZAxis, ReferenceLine
 } from "recharts";
-import { ChartCard, KpiCard, EmptyState } from '../analytics';
+import { ChartCard, KpiCard, EmptyState, AchievementBadge } from '../analytics';
 import { 
   Badge, 
   Table, 
@@ -26,7 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
   SelectContent,
-  SelectItem
+  SelectItem,
+  Input,
 } from '../common';
 import { 
   COLORS, 
@@ -35,6 +36,7 @@ import {
   PENETRATION_FUNNEL 
 } from '../../data/analyticsData';
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
+import Pagination from "../../../../../../components/uiComponents/pagination/Pagination.jsx";
 
 function MiniStat({ label, value, icon, tone, subtitle }) {
   return (
@@ -49,6 +51,38 @@ function MiniStat({ label, value, icon, tone, subtitle }) {
         {value}
       </p>
       {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+    </div>
+  );
+}
+
+function ProductCard({ product, organizationName }) {
+  const achievementColor = product.achievementPercentage >= 100 ? "text-green-600" :
+                          product.achievementPercentage >= 75 ? "text-yellow-600" :
+                          "text-red-600";
+
+  return (
+    <div className="bg-white rounded-lg border border-[#E8C9B8] p-3 hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-[#5A2D1A] truncate flex-1 mr-2">{product.productName}</p>
+        <Badge className={`rounded-full ${achievementColor} bg-opacity-10 whitespace-nowrap`}>
+          {product.achievementPercentage}%
+        </Badge>
+      </div>
+      <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+        <span>🎯 Target: {product.monthlyTarget}</span>
+        <span>✅ Achieved: {product.monthlyAchievement}</span>
+      </div>
+      <div className="mt-2 w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${Math.min(product.achievementPercentage, 100)}%`,
+            backgroundColor: product.achievementPercentage >= 100 ? "#22c55e" :
+                           product.achievementPercentage >= 75 ? "#eab308" :
+                           "#ef4444"
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -107,9 +141,17 @@ function M({ label, value }) {
 export function OrganizationSection({ 
   orgs, 
   filters, 
-  organizationDashboardData, 
-  loading = false 
+  organizationDashboardData,
+  organizationProductData,
+  loading = false,
+  onProductPageChange,
+  onProductItemsPerPageChange,
+  // ✅ New props for organization list
+  organizationListData,
+  onOrganizationListPageChange,
+  onOrganizationListItemsPerPageChange,
 }) {
+  const [activeTab, setActiveTab] = useState("overview");
   const [state, setState] = useState("");
   const [district, setDistrict] = useState("");
   const [city, setCity] = useState("");
@@ -118,6 +160,8 @@ export function OrganizationSection({
   const [status, setStatus] = useState("");
   const [drill, setDrill] = useState(null);
   const [distMetric, setDistMetric] = useState("hospitals");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedOrg, setSelectedOrg] = useState(null);
 
   // ✅ Process organization dashboard data from API
   const dashboardStats = useMemo(() => {
@@ -148,7 +192,113 @@ export function OrganizationSection({
     };
   }, [organizationDashboardData]);
 
-  // ✅ Calculate derived metrics
+  // ✅ Process organization product data
+  const orgProductList = useMemo(() => {
+    if (organizationProductData?.data && Array.isArray(organizationProductData.data)) {
+      return organizationProductData.data;
+    }
+    return [];
+  }, [organizationProductData]);
+
+  // ✅ Process organization list data - NEW
+  const organizationList = useMemo(() => {
+    if (organizationListData?.data && Array.isArray(organizationListData.data)) {
+      return organizationListData.data;
+    }
+    return [];
+  }, [organizationListData]);
+
+  // ✅ Organization list pagination info
+  const listPagination = useMemo(() => {
+    if (organizationListData) {
+      return {
+        currentPage: organizationListData.currentPage || 1,
+        pageSize: organizationListData.pageSize || 10,
+        totalPages: organizationListData.totalPages || 1,
+        totalRecords: organizationListData.totalRecords || 0,
+      };
+    }
+    return {
+      currentPage: 1,
+      pageSize: 10,
+      totalPages: 1,
+      totalRecords: 0,
+    };
+  }, [organizationListData]);
+
+  // ✅ Product pagination info
+  const productPagination = useMemo(() => {
+    if (organizationProductData) {
+      return {
+        currentPage: organizationProductData.currentPage || 1,
+        pageSize: organizationProductData.pageSize || 10,
+        totalPages: organizationProductData.totalPages || 1,
+        totalRecords: organizationProductData.totalRecords || 0,
+      };
+    }
+    return {
+      currentPage: 1,
+      pageSize: 10,
+      totalPages: 1,
+      totalRecords: 0,
+    };
+  }, [organizationProductData]);
+
+  // ✅ Filter products by search term
+  const filteredProductData = useMemo(() => {
+    if (!searchTerm) return orgProductList;
+    const term = searchTerm.toLowerCase();
+    return orgProductList.filter(item =>
+      item.organizationName?.toLowerCase().includes(term) ||
+      item.products?.some(p => p.productName?.toLowerCase().includes(term))
+    );
+  }, [orgProductList, searchTerm]);
+
+  // ✅ Product summary statistics
+  const productStats = useMemo(() => {
+    const totalOrgs = filteredProductData.length;
+    const totalProducts = filteredProductData.reduce((sum, org) => sum + (org.products?.length || 0), 0);
+    const totalTarget = filteredProductData.reduce((sum, org) => sum + (org.totalMonthlyTarget || 0), 0);
+    const totalAchieved = filteredProductData.reduce((sum, org) => sum + (org.totalMonthlyAchievement || 0), 0);
+    const avgAchievement = totalTarget > 0 ? Math.round((totalAchieved / totalTarget) * 100) : 0;
+    const highPerformers = filteredProductData.filter(org => org.achievementPercentage >= 100).length;
+
+    return {
+      totalOrgs,
+      totalProducts,
+      totalTarget,
+      totalAchieved,
+      avgAchievement,
+      highPerformers,
+    };
+  }, [filteredProductData]);
+
+  // ✅ Achievement distribution for chart
+  const achievementDistribution = useMemo(() => {
+    const buckets = {
+      "Excellent (≥100%)": 0,
+      "Good (75-99%)": 0,
+      "Average (50-74%)": 0,
+      "Needs Attention (<50%)": 0,
+    };
+
+    filteredProductData.forEach(org => {
+      const pct = org.achievementPercentage || 0;
+      if (pct >= 100) buckets["Excellent (≥100%)"]++;
+      else if (pct >= 75) buckets["Good (75-99%)"]++;
+      else if (pct >= 50) buckets["Average (50-74%)"]++;
+      else buckets["Needs Attention (<50%)"]++;
+    });
+
+    const colors = ["#22c55e", "#eab308", "#f97316", "#ef4444"];
+    return Object.entries(buckets).map(([name, value], index) => ({
+      name,
+      value,
+      fill: colors[index % colors.length],
+    }));
+  }, [filteredProductData]);
+
+  // ✅ Derived metrics
   const derivedMetrics = useMemo(() => {
     const total = dashboardStats.totalOrganizations || 1;
     return {
@@ -165,7 +315,7 @@ export function OrganizationSection({
     };
   }, [dashboardStats]);
 
-  // ✅ Hospital type distribution for chart
+  // ✅ Hospital type data
   const hospitalTypeData = useMemo(() => {
     return [
       { name: "Government", value: dashboardStats.govtHospitals, fill: "#3b82f6" },
@@ -173,7 +323,7 @@ export function OrganizationSection({
     ].filter(d => d.value > 0);
   }, [dashboardStats]);
 
-  // ✅ Infrastructure metrics for display
+  // ✅ Infrastructure metrics
   const infrastructureMetrics = useMemo(() => {
     return [
       { 
@@ -203,7 +353,7 @@ export function OrganizationSection({
     ];
   }, [dashboardStats, derivedMetrics]);
 
-  // ✅ Filtered orgs for district data
+  // ✅ Filtered orgs
   const filtered = useMemo(() => orgs || [], [orgs]);
 
   const resetFilters = () => {
@@ -215,7 +365,7 @@ export function OrganizationSection({
     setStatus("");
   };
 
-  // ✅ District data for chart
+  // ✅ District data
   const districtData = useMemo(() => {
     const districts = ["Mumbai", "Pune", "Nagpur", "Nashik", "Thane", "Aurangabad", "Solapur", "Amravati"];
     return districts.map(d => {
@@ -230,7 +380,7 @@ export function OrganizationSection({
     }).filter(d => d.hospitals > 0);
   }, [filtered]);
 
-  // ✅ Scatter data for infrastructure
+  // ✅ Scatter data
   const scatterData = useMemo(() => {
     return filtered.map(o => ({ 
       name: o.organizationName, 
@@ -240,7 +390,7 @@ export function OrganizationSection({
     }));
   }, [filtered]);
 
-  // ✅ Revenue opportunity data
+  // ✅ Revenue data
   const revenue = useMemo(() => {
     return [...filtered].map(o => {
       const est = (o.quantity || 0) * (o.price || 0);
@@ -248,6 +398,48 @@ export function OrganizationSection({
       return { ...o, estimatedRevenue: est, opportunityScore: score };
     }).sort((a, b) => b.opportunityScore - a.opportunityScore).slice(0, 15);
   }, [filtered]);
+
+  // Product pagination handlers
+  const handleProductPageChange = (page) => {
+    if (onProductPageChange) {
+      onProductPageChange(page);
+    }
+  };
+
+  const handleProductItemsPerPageChange = (pageSize) => {
+    if (onProductItemsPerPageChange) {
+      onProductItemsPerPageChange(pageSize);
+    }
+  };
+
+  // ✅ Organization list pagination handlers
+  const handleListPageChange = (page) => {
+    if (onOrganizationListPageChange) {
+      onOrganizationListPageChange(page);
+    }
+  };
+
+  const handleListItemsPerPageChange = (pageSize) => {
+    if (onOrganizationListItemsPerPageChange) {
+      onOrganizationListItemsPerPageChange(pageSize);
+    }
+  };
+
+  // ✅ Helper to render specialities
+  const renderSpecialities = (specialities) => {
+    if (!specialities || specialities.length === 0) return 'N/A';
+    const valid = specialities.filter(s => s && s.trim() !== '');
+    if (valid.length === 0) return 'N/A';
+    return valid.join(', ');
+  };
+
+  // ✅ Helper to render surgery types
+  const renderSurgeries = (surgeries) => {
+    if (!surgeries || surgeries.length === 0) return 'N/A';
+    const valid = surgeries.filter(s => s.surgeryType && s.surgeryType.trim() !== '' && s.count > 0);
+    if (valid.length === 0) return 'N/A';
+    return valid.map(s => `${s.surgeryType}: ${s.count}`).join(', ');
+  };
 
   // Loading state
   if (loading) {
@@ -261,8 +453,8 @@ export function OrganizationSection({
     );
   }
 
-  // ✅ No data state
-  if (!organizationDashboardData && filtered.length === 0) {
+  // No data state
+  if (!organizationDashboardData && filtered.length === 0 && orgProductList.length === 0 && organizationList.length === 0) {
     return (
       <div>
         <h2 className="text-2xl font-semibold tracking-tight text-[#A54A29] mb-2">
@@ -281,330 +473,615 @@ export function OrganizationSection({
         Organization Analytics
       </h2>
       <p className="text-sm text-gray-600 mb-6">
-        Hospital infrastructure, capacity, and surgery analytics
+        Hospital infrastructure, capacity, surgery analytics & product performance
         {filters.state && <span className="ml-2 font-medium text-[#C6693C]">Filtered by: {filters.state}</span>}
         {filters.district && <span className="ml-2 font-medium text-[#C6693C]">| {filters.district}</span>}
         {filters.city && <span className="ml-2 font-medium text-[#C6693C]">| {filters.city}</span>}
       </p>
 
-      {/* Filters Section */}
-      <div className="rounded-3xl bg-white border border-[#E8B59F] shadow-sm p-4 mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <LucideIcons.Filter size={16} className="text-[#C6693C]" />
-          <h2 className="text-sm font-semibold text-[#A54A29]">Organization Filters</h2>
-          <span className="ml-auto">
-            <Button variant="ghost" size="sm" onClick={resetFilters} className="rounded-xl">
-              <LucideIcons.RotateCcw size={14} /> Reset
-            </Button>
-          </span>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
-          <Sel label="State" value={state} onChange={setState} options={D_STATES} />
-          <Sel label="District" value={district} onChange={setDistrict} options={["Mumbai", "Pune", "Nagpur", "Nashik", "Thane"]} />
-          <Sel label="City" value={city} onChange={setCity} options={["Mumbai", "Pune", "Nagpur"]} />
-          <Sel label="Type" value={type} onChange={setType} options={["Government", "Private", "Trust"]} />
-          <Sel label="Speciality" value={hSpec} onChange={setHSpec} options={D_SPECIALITIES} />
-          <Sel label="Product Status" value={status} onChange={setStatus} options={["Complete", "Incomplete"]} />
-          <Sel label="Quarter" value="" onChange={() => {}} options={["Q1", "Q2", "Q3", "Q4"]} />
-          <Sel label="Year" value="" onChange={() => {}} options={["2024", "2025", "2026"]} />
-        </div>
-      </div>
-
-      {/* Main KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <KpiCard 
-          title="Total Organizations" 
-          value={dashboardStats.totalOrganizations.toLocaleString()} 
-          trend={8} 
-          accent="info" 
-          icon={LucideIcons.Building2} 
-        />
-        <KpiCard 
-          title="Total Individuals" 
-          value={dashboardStats.totalIndividuals.toLocaleString()} 
-          trend={12} 
-          accent="success" 
-          icon={LucideIcons.Users} 
-        />
-        <KpiCard 
-          title="Total Specialities" 
-          value={dashboardStats.totalSpecialities.toLocaleString()} 
-          trend={6} 
-          accent="product" 
-          icon={LucideIcons.Stethoscope} 
-        />
-        <KpiCard 
-          title="Total Surgeries" 
-          value={dashboardStats.totalSurgeries.toLocaleString()} 
-          trend={9} 
-          accent="target" 
-          icon={LucideIcons.Activity} 
-        />
-      </div>
-
-      {/* Hospital Type Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <ChartCard 
-          title="Hospital Type Distribution" 
-          subtitle="Government vs Private hospitals"
-          className="lg:col-span-1"
+      {/* Custom Tabs */}
+      <div className="flex flex-wrap gap-1 border-b border-[#E8C9B8] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">
+        <button
+          onClick={() => setActiveTab("overview")}
+          className={`
+            flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap
+            rounded-lg
+            ${activeTab === "overview"
+              ? 'bg-[#C6693C] text-white shadow-md shadow-[#C6693C]/20'
+              : 'text-[#6B4226] hover:bg-[#F5E0D6] hover:text-[#C6693C]'
+            }
+          `}
         >
-          {hospitalTypeData.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie 
-                  data={hospitalTypeData} 
-                  dataKey="value" 
-                  nameKey="name" 
-                  innerRadius={55} 
-                  outerRadius={95} 
-                  paddingAngle={3}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={{ stroke: '#E8B59F', strokeWidth: 1 }}
-                >
-                  {hospitalTypeData.map((item, i) => (
-                    <Cell key={i} fill={item.fill} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
-                  formatter={(value, name) => [`${value} hospitals`, name]}
-                />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
+          <LucideIcons.LayoutDashboard size={18} />
+          Overview
+          {activeTab === "overview" && (
+            <span className="ml-1 px-2 py-0.5 text-xs bg-white/20 text-white rounded-full">
+              Active
+            </span>
           )}
-          <div className="grid grid-cols-2 gap-2 mt-3">
-            <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
-              <p className="text-xs text-blue-600 font-medium">🏛️ Government</p>
-              <p className="text-xl font-bold text-blue-700">{dashboardStats.govtHospitals}</p>
-              <p className="text-xs text-blue-500">{derivedMetrics.govtPercentage}%</p>
-            </div>
-            <div className="bg-green-50 rounded-xl p-3 text-center border border-green-100">
-              <p className="text-xs text-green-600 font-medium">🏥 Private</p>
-              <p className="text-xl font-bold text-green-700">{dashboardStats.privateHospitals}</p>
-              <p className="text-xs text-green-500">{derivedMetrics.privatePercentage}%</p>
-            </div>
-          </div>
-        </ChartCard>
-
-        {/* Infrastructure Summary */}
-        <ChartCard 
-          title="Infrastructure Summary" 
-          subtitle="Capacity overview"
-          className="lg:col-span-2"
+        </button>
+        <button
+          onClick={() => setActiveTab("hospitals")}
+          className={`
+            flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap
+            rounded-lg
+            ${activeTab === "hospitals"
+              ? 'bg-[#C6693C] text-white shadow-md shadow-[#C6693C]/20'
+              : 'text-[#6B4226] hover:bg-[#F5E0D6] hover:text-[#C6693C]'
+            }
+          `}
         >
-          <div className="grid grid-cols-2 gap-3">
-            {infrastructureMetrics.map((metric, index) => (
-              <MiniStat
-                key={index}
-                label={metric.label}
-                value={metric.value}
-                icon={metric.icon}
-                subtitle={metric.subtitle}
-                tone={index === 2 ? "info" : "success"}
+          <LucideIcons.Building2 size={18} />
+          Hospitals
+          {activeTab === "hospitals" && (
+            <span className="ml-1 px-2 py-0.5 text-xs bg-white/20 text-white rounded-full">
+              Active
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("products")}
+          className={`
+            flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap
+            rounded-lg
+            ${activeTab === "products"
+              ? 'bg-[#C6693C] text-white shadow-md shadow-[#C6693C]/20'
+              : 'text-[#6B4226] hover:bg-[#F5E0D6] hover:text-[#C6693C]'
+            }
+          `}
+        >
+          <LucideIcons.Package size={18} />
+          Products
+          {activeTab === "products" && (
+            <span className="ml-1 px-2 py-0.5 text-xs bg-white/20 text-white rounded-full">
+              Active
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Overview Tab Content */}
+      {activeTab === "overview" && (
+        <div className="mt-4">
+          {/* Main KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <KpiCard 
+              title="Total Organizations" 
+              value={dashboardStats.totalOrganizations.toLocaleString()} 
+              trend={8} 
+              accent="info" 
+              icon={LucideIcons.Building2} 
+            />
+            <KpiCard 
+              title="Total Individuals" 
+              value={dashboardStats.totalIndividuals.toLocaleString()} 
+              trend={12} 
+              accent="success" 
+              icon={LucideIcons.Users} 
+            />
+            <KpiCard 
+              title="Total Specialities" 
+              value={dashboardStats.totalSpecialities.toLocaleString()} 
+              trend={6} 
+              accent="product" 
+              icon={LucideIcons.Stethoscope} 
+            />
+            <KpiCard 
+              title="Total Surgeries" 
+              value={dashboardStats.totalSurgeries.toLocaleString()} 
+              trend={9} 
+              accent="target" 
+              icon={LucideIcons.Activity} 
+            />
+          </div>
+
+          {/* Hospital Type Distribution */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+            <ChartCard 
+              title="Hospital Type Distribution" 
+              subtitle="Government vs Private hospitals"
+              className="lg:col-span-1"
+            >
+              {hospitalTypeData.length === 0 ? (
+                <EmptyState />
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie 
+                      data={hospitalTypeData} 
+                      dataKey="value" 
+                      nameKey="name" 
+                      innerRadius={55} 
+                      outerRadius={95} 
+                      paddingAngle={3}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={{ stroke: '#E8B59F', strokeWidth: 1 }}
+                    >
+                      {hospitalTypeData.map((item, i) => (
+                        <Cell key={i} fill={item.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
+                      formatter={(value, name) => [`${value} hospitals`, name]}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+                  <p className="text-xs text-blue-600 font-medium">🏛️ Government</p>
+                  <p className="text-xl font-bold text-blue-700">{dashboardStats.govtHospitals}</p>
+                  <p className="text-xs text-blue-500">{derivedMetrics.govtPercentage}%</p>
+                </div>
+                <div className="bg-green-50 rounded-xl p-3 text-center border border-green-100">
+                  <p className="text-xs text-green-600 font-medium">🏥 Private</p>
+                  <p className="text-xl font-bold text-green-700">{dashboardStats.privateHospitals}</p>
+                  <p className="text-xs text-green-500">{derivedMetrics.privatePercentage}%</p>
+                </div>
+              </div>
+            </ChartCard>
+
+            {/* Infrastructure Summary */}
+            <ChartCard 
+              title="Infrastructure Summary" 
+              subtitle="Capacity overview"
+              className="lg:col-span-2"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                {infrastructureMetrics.map((metric, index) => (
+                  <MiniStat
+                    key={index}
+                    label={metric.label}
+                    value={metric.value}
+                    icon={metric.icon}
+                    subtitle={metric.subtitle}
+                    tone={index === 2 ? "info" : "success"}
+                  />
+                ))}
+              </div>
+            </ChartCard>
+          </div>
+
+          {/* Additional Statistics */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
+            <div className="bg-gradient-to-r from-[#C6693C]/10 to-[#C6693C]/5 rounded-xl p-4 border border-[#C6693C]/20 text-center">
+              <p className="text-xs text-[#8B5A3C] font-medium">🏥 Avg Beds/Hospital</p>
+              <p className="text-2xl font-bold text-[#5A2D1A]">{derivedMetrics.avgBedsPerHospital}</p>
+            </div>
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-xl p-4 border border-blue-200 text-center">
+              <p className="text-xs text-blue-600 font-medium">🛏️ Avg ICU/Hospital</p>
+              <p className="text-2xl font-bold text-blue-700">{derivedMetrics.avgICUPerHospital}</p>
+            </div>
+            <div className="bg-gradient-to-r from-green-50 to-green-100/50 rounded-xl p-4 border border-green-200 text-center">
+              <p className="text-xs text-green-600 font-medium">🔬 Avg OT/Hospital</p>
+              <p className="text-2xl font-bold text-green-700">{derivedMetrics.avgOTPerHospital}</p>
+            </div>
+            <div className="bg-gradient-to-r from-purple-50 to-purple-100/50 rounded-xl p-4 border border-purple-200 text-center">
+              <p className="text-xs text-purple-600 font-medium">📊 Surgeries/Hospital</p>
+              <p className="text-2xl font-bold text-purple-700">{derivedMetrics.surgeriesPerHospital}</p>
+            </div>
+          </div>
+
+
+        </div>
+      )}
+
+      {/* Hospitals Tab - NEW */}
+      {activeTab === "hospitals" && (
+        <div className="mt-4">
+          {/* Hospital List KPI Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <KpiCard
+              title="Total Hospitals"
+              value={listPagination.totalRecords}
+              trend={0}
+              accent="info"
+              icon={LucideIcons.Building2}
+            />
+            <KpiCard
+              title="Total Beds"
+              value={organizationList.reduce((sum, h) => sum + (h.totalBeds || 0), 0)}
+              trend={0}
+              accent="success"
+              icon={LucideIcons.Bed}
+            />
+            <KpiCard
+              title="Total ICU Beds"
+              value={organizationList.reduce((sum, h) => sum + (h.totalICUBeds || 0), 0)}
+              trend={0}
+              accent="product"
+              icon={LucideIcons.HeartPulse}
+            />
+            <KpiCard
+              title="Total OT"
+              value={organizationList.reduce((sum, h) => sum + (h.totalOperationTheatres || 0), 0)}
+              trend={0}
+              accent="target"
+              icon={LucideIcons.Scissors}
+            />
+          </div>
+
+          {/* Hospital Directory Table */}
+          <ChartCard title="Hospital Directory" subtitle="Complete hospital list with infrastructure details">
+            <div className="overflow-x-auto -mx-2">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-[#FFF5F0]">
+                    <TableHead className="text-base font-semibold">#</TableHead>
+                    <TableHead className="text-base font-semibold">Hospital</TableHead>
+                    <TableHead className="text-base font-semibold">Type</TableHead>
+                    <TableHead className="text-base font-semibold">Category</TableHead>
+                    <TableHead className="text-base font-semibold">Specialities</TableHead>
+                    <TableHead className="text-base font-semibold text-right">Beds</TableHead>
+                    <TableHead className="text-base font-semibold text-right">ICU</TableHead>
+                    <TableHead className="text-base font-semibold text-right">OT</TableHead>
+                    <TableHead className="text-base font-semibold">Surgeries</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {organizationList.length > 0 ? (
+                    organizationList.map((hospital, index) => (
+                      <TableRow key={index} className="hover:bg-gray-50 transition-all">
+                        <td className="p-4 text-[17px] font-normal text-[#252C58]">
+                          {(listPagination.currentPage - 1) * listPagination.pageSize + index + 1}
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[#C6693C]">
+                          {hospital.hospitalName || 'N/A'}
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                          <Badge className={`rounded-full ${hospital.typeOfOrgOrHospital === 'Govt' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                            {hospital.typeOfOrgOrHospital || 'N/A'}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                          <Badge variant="secondary" className="rounded-full bg-[#FFF5F0] border-[#E8C9B8]">
+                            {hospital.typeOfHospital || 'N/A'}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap max-w-[150px]">
+                          <div className="flex flex-wrap gap-1">
+                            {hospital.specialities && hospital.specialities.length > 0 ? (
+                              hospital.specialities.filter(s => s && s.trim() !== '').slice(0, 2).map((s, idx) => (
+                                <span key={idx} className="px-2 py-0.5 bg-[#FFF5F0] text-[#8B5A3C] text-xs rounded-full border border-[#E8C9B8]">
+                                  {s}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-gray-400 text-sm">N/A</span>
+                            )}
+                            {hospital.specialities && hospital.specialities.filter(s => s && s.trim() !== '').length > 2 && (
+                              <span className="text-xs text-gray-400">+{hospital.specialities.filter(s => s && s.trim() !== '').length - 2}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right">
+                          {hospital.totalBeds || 0}
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right">
+                          {hospital.totalICUBeds || 0}
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right">
+                          {hospital.totalOperationTheatres || 0}
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                          {hospital.surgeries && hospital.surgeries.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {hospital.surgeries.filter(s => s.surgeryType && s.surgeryType.trim() !== '' && s.count > 0).slice(0, 1).map((s, idx) => (
+                                <span key={idx} className="px-2 py-0.5 bg-[#FFF5F0] text-[#C6693C] text-xs rounded-full border border-[#E8C9B8]">
+                                  {s.surgeryType}: {s.count}
+                                </span>
+                              ))}
+                              {hospital.surgeries.filter(s => s.surgeryType && s.surgeryType.trim() !== '' && s.count > 0).length > 1 && (
+                                <span className="text-xs text-gray-400">+{hospital.surgeries.filter(s => s.surgeryType && s.surgeryType.trim() !== '' && s.count > 0).length - 1}</span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">N/A</span>
+                          )}
+                        </td>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8 text-sm text-gray-500">
+                        No hospitals match your filters.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Hospital List Pagination */}
+            <div className="px-4 py-3 border-t border-[#E8C9B8] bg-gray-50 rounded-b-2xl">
+              {listPagination.totalRecords > 0 && (
+                <Pagination
+                  currentPage={listPagination.currentPage}
+                  totalItems={listPagination.totalRecords}
+                  itemsPerPage={listPagination.pageSize}
+                  totalPages={listPagination.totalPages}
+                  onPageChange={handleListPageChange}
+                  onItemsPerPageChange={handleListItemsPerPageChange}
+                />
+              )}
+            </div>
+          </ChartCard>
+        </div>
+      )}
+
+      {/* Products Tab Content */}
+      {activeTab === "products" && (
+        <div className="mt-4">
+          {/* Product KPI Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+            <KpiCard
+              title="Organizations"
+              value={productStats.totalOrgs}
+              trend={0}
+              accent="info"
+              icon={LucideIcons.Building2}
+            />
+            <KpiCard
+              title="Total Products"
+              value={productStats.totalProducts}
+              trend={0}
+              accent="product"
+              icon={LucideIcons.Package}
+            />
+            <KpiCard
+              title="Total Target"
+              value={productStats.totalTarget}
+              trend={0}
+              accent="target"
+              icon={LucideIcons.Target}
+            />
+            <KpiCard
+              title="Total Achieved"
+              value={productStats.totalAchieved}
+              trend={0}
+              accent="success"
+              icon={LucideIcons.CheckCircle2}
+            />
+            <KpiCard
+              title="Avg Achievement"
+              value={`${productStats.avgAchievement}%`}
+              trend={0}
+              accent="product"
+              icon={LucideIcons.TrendingUp}
+            />
+          </div>
+
+          {/* Product Performance - Fixed Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+            <ChartCard title="Performance Distribution" subtitle="Achievement buckets" className="lg:col-span-1">
+              {achievementDistribution.filter(d => d.value > 0).length === 0 ? (
+                <EmptyState />
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={achievementDistribution}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={50}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                      labelLine={{ stroke: '#E8B59F', strokeWidth: 1 }}
+                    >
+                      {achievementDistribution.map((entry, index) => (
+                        <Cell key={index} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
+                      formatter={(value, name) => [`${value} organizations`, name]}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </ChartCard>
+
+            <ChartCard title="Product Performance" subtitle="Quick overview" className="lg:col-span-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-gradient-to-br from-[#C6693C]/10 to-[#C6693C]/5 rounded-xl p-3 text-center border border-[#C6693C]/20">
+                  <p className="text-2xl font-bold text-[#C6693C]">{productStats.totalOrgs}</p>
+                  <p className="text-xs text-gray-500 truncate">Organizations</p>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-3 text-center border border-blue-200">
+                  <p className="text-2xl font-bold text-blue-600">{productStats.totalProducts}</p>
+                  <p className="text-xs text-gray-500 truncate">Products</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-3 text-center border border-green-200">
+                  <p className="text-2xl font-bold text-green-600">{productStats.totalAchieved}</p>
+                  <p className="text-xs text-gray-500 truncate">Achieved</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-3 text-center border border-purple-200">
+                  <p className="text-2xl font-bold text-purple-600">{productStats.avgAchievement}%</p>
+                  <p className="text-xs text-gray-500 truncate">Avg Achievement</p>
+                </div>
+              </div>
+            </ChartCard>
+          </div>
+
+          {/* Search */}
+          <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+            <div className="relative w-64">
+              <LucideIcons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <Input
+                placeholder="Search organization or product..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 rounded-xl border-[#E8C9B8] focus:ring-[#C6693C]"
               />
-            ))}
+            </div>
+            <p className="text-sm text-gray-500">
+              {filteredProductData.length} organizations found
+            </p>
           </div>
-        </ChartCard>
-      </div>
 
-      {/* Additional Statistics */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
-        <div className="bg-gradient-to-r from-[#C6693C]/10 to-[#C6693C]/5 rounded-xl p-4 border border-[#C6693C]/20 text-center">
-          <p className="text-xs text-[#8B5A3C] font-medium">🏥 Avg Beds/Hospital</p>
-          <p className="text-2xl font-bold text-[#5A2D1A]">{derivedMetrics.avgBedsPerHospital}</p>
-        </div>
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-xl p-4 border border-blue-200 text-center">
-          <p className="text-xs text-blue-600 font-medium">🛏️ Avg ICU/Hospital</p>
-          <p className="text-2xl font-bold text-blue-700">{derivedMetrics.avgICUPerHospital}</p>
-        </div>
-        <div className="bg-gradient-to-r from-green-50 to-green-100/50 rounded-xl p-4 border border-green-200 text-center">
-          <p className="text-xs text-green-600 font-medium">🔬 Avg OT/Hospital</p>
-          <p className="text-2xl font-bold text-green-700">{derivedMetrics.avgOTPerHospital}</p>
-        </div>
-        <div className="bg-gradient-to-r from-purple-50 to-purple-100/50 rounded-xl p-4 border border-purple-200 text-center">
-          <p className="text-xs text-purple-600 font-medium">📊 Surgeries/Hospital</p>
-          <p className="text-2xl font-bold text-purple-700">{derivedMetrics.surgeriesPerHospital}</p>
-        </div>
-      </div>
+          {/* Product Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+            {filteredProductData.map((org, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-2xl border border-[#E8C9B8] p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => setSelectedOrg(selectedOrg === index ? null : index)}
+              >
+                {/* Organization Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-[#5A2D1A] truncate max-w-[60%]">
+                    {org.organizationName}
+                  </h4>
+                  <Badge className={`rounded-full whitespace-nowrap ${
+                    org.achievementPercentage >= 100 ? 'bg-green-500/15 text-green-500' : 
+                    org.achievementPercentage >= 75 ? 'bg-yellow-500/15 text-yellow-600' : 
+                    'bg-red-500/15 text-red-500'
+                  }`}>
+                    {org.achievementPercentage}%
+                  </Badge>
+                </div>
 
-      {/* District Coverage Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <ChartCard title="District Coverage" subtitle="Click a bar to drill down" className="lg:col-span-2" action={
-          <div className="flex gap-1 flex-wrap">
-            {["hospitals", "beds", "surgeries", "achievement"].map(m => (
-              <button key={m} onClick={() => setDistMetric(m)} className={`text-xs px-3 py-1.5 rounded-full border capitalize ${distMetric === m ? "bg-[#C6693C] text-white border-[#C6693C]" : "border-[#E8B59F] text-gray-500 hover:bg-[#FFC4A2]"}`}>{m}</button>
-            ))}
-          </div>
-        }>
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={districtData} margin={{ left: 0, right: 8 }}>
-              <CartesianGrid vertical={false} stroke="#E8B59F" />
-              <XAxis dataKey="district" stroke="#6b7280" fontSize={11} />
-              <YAxis stroke="#6b7280" fontSize={11} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }} />
-              <Bar dataKey={distMetric} radius={[8, 8, 0, 0]} onClick={(d) => setDrill(d.district)}>
-                {districtData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} cursor="pointer" />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        {/* Hospital Infrastructure Intelligence */}
-        <ChartCard title="Hospital Infrastructure Intelligence" subtitle="Beds vs annual surgeries (quadrant view)">
-          <div className="relative">
-            <ResponsiveContainer width="100%" height={340}>
-              <ScatterChart margin={{ left: 8, right: 16, top: 8, bottom: 8 }}>
-                <CartesianGrid stroke="#E8B59F" />
-                <XAxis type="number" dataKey="beds" name="Beds" stroke="#6b7280" fontSize={11} />
-                <YAxis type="number" dataKey="surgeries" name="Surgeries" stroke="#6b7280" fontSize={11} />
-                <ZAxis range={[60, 60]} />
-                <ReferenceLine x={300} stroke="#E8B59F" strokeDasharray="4 4" />
-                <ReferenceLine y={600} stroke="#E8B59F" strokeDasharray="4 4" />
-                <Tooltip cursor={{ strokeDasharray: "3 3" }} contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }} />
-                <Scatter data={scatterData} fill="#C6693C" fillOpacity={0.6} />
-              </ScatterChart>
-            </ResponsiveContainer>
-            <div className="absolute top-2 right-3 text-[10px] text-green-500 font-semibold">Strategic Accounts</div>
-            <div className="absolute top-2 left-16 text-[10px] text-blue-500 font-semibold">Efficient High-Value</div>
-            <div className="absolute bottom-10 right-3 text-[10px] text-yellow-500 font-semibold">Growth Opportunity</div>
-            <div className="absolute bottom-10 left-16 text-[10px] text-gray-500 font-semibold">Low Priority</div>
-          </div>
-        </ChartCard>
-      </div>
-
-      {/* Target vs Achievement Gauges */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <ChartCard title="Target vs Achievement" subtitle="Monthly · Quarterly · Yearly" className="lg:col-span-2">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Gauge label="Monthly" target={100} pct={derivedMetrics.surgeriesPerHospital > 0 ? Math.min(100, derivedMetrics.surgeriesPerHospital) : 45} />
-            <Gauge label="Quarterly" target={300} pct={derivedMetrics.surgeriesPerHospital > 0 ? Math.min(100, derivedMetrics.surgeriesPerHospital + 4) : 50} />
-            <Gauge label="Yearly" target={1200} pct={derivedMetrics.surgeriesPerHospital > 0 ? Math.min(100, derivedMetrics.surgeriesPerHospital - 6) : 40} />
-          </div>
-        </ChartCard>
-
-        {/* Product Penetration Funnel */}
-        <ChartCard title="Product Penetration Funnel" subtitle="Stage-wise conversion">
-          <div className="space-y-2">
-            {PENETRATION_FUNNEL.map((f, i) => {
-              const max = PENETRATION_FUNNEL[0].value;
-              const width = (f.value / max) * 100;
-              const conv = i === 0 ? null : Math.round((f.value / PENETRATION_FUNNEL[i - 1].value) * 100);
-              return (
-                <div key={f.stage}>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-medium text-[#A54A29]">{f.stage}</span>
-                    <span className="text-gray-500">{f.value}{conv !== null && <span className="ml-2 text-[#C6693C]">{conv}%</span>}</span>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-3 gap-2 text-center text-sm mb-3">
+                  <div className="bg-[#FFF8F5] rounded-lg p-2">
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Target</p>
+                    <p className="font-semibold text-[#5A2D1A]">{org.totalMonthlyTarget}</p>
                   </div>
-                  <div className="h-6 rounded-lg bg-[#FBE9E7] overflow-hidden">
-                    <div className="h-full rounded-lg transition-all" style={{ width: `${width}%`, background: `linear-gradient(90deg, ${COLORS[i % COLORS.length]}, color-mix(in oklch, ${COLORS[i % COLORS.length]} 60%, white))` }} />
+                  <div className="bg-[#FFF8F5] rounded-lg p-2">
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Achieved</p>
+                    <p className="font-semibold text-green-600">{org.totalMonthlyAchievement}</p>
+                  </div>
+                  <div className="bg-[#FFF8F5] rounded-lg p-2">
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wide">Products</p>
+                    <p className="font-semibold text-[#C6693C]">{org.products?.length || 0}</p>
                   </div>
                 </div>
-              );
-            })}
+
+                {/* Progress Bar */}
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(org.achievementPercentage || 0, 100)}%`,
+                      backgroundColor: org.achievementPercentage >= 100 ? "#22c55e" :
+                                     org.achievementPercentage >= 75 ? "#eab308" :
+                                     "#ef4444"
+                    }}
+                  />
+                </div>
+
+                {/* Expand/Collapse Indicator */}
+                <div className="mt-2 text-center">
+                  <span className="text-xs text-gray-400">
+                    {selectedOrg === index ? '▼ Hide products' : '▶ Click to view products'}
+                  </span>
+                </div>
+
+                {/* Expanded Products */}
+                {selectedOrg === index && org.products && org.products.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-[#E8C9B8] space-y-2 max-h-60 overflow-y-auto">
+                    <p className="text-xs font-semibold text-[#8B5A3C] uppercase tracking-wider sticky top-0 bg-white py-1">
+                      Products ({org.products.length})
+                    </p>
+                    {org.products.map((product, pIdx) => (
+                      <ProductCard key={pIdx} product={product} organizationName={org.organizationName} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+            {filteredProductData.length === 0 && (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                No organizations match your search.
+              </div>
+            )}
           </div>
-        </ChartCard>
-      </div>
 
-      {/* Revenue Opportunity Table */}
-      <ChartCard title="Revenue Opportunity" subtitle="Top 15 organizations by opportunity score" className="mt-4">
-        <div className="overflow-x-auto -mx-2">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Organization</TableHead>
-                <TableHead>District</TableHead>
-                <TableHead className="text-right">Beds</TableHead>
-                <TableHead className="text-right">Annual Surgeries</TableHead>
-                <TableHead className="text-right">Qty</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="text-right">Est. Revenue</TableHead>
-                <TableHead className="text-right">Opportunity</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {revenue.map(o => (
-                <TableRow key={o.id}>
-                  <TableCell className="font-medium text-[#A54A29]">{o.organizationName}</TableCell>
-                  <TableCell>{o.district}</TableCell>
-                  <TableCell className="text-right">{o.beds}</TableCell>
-                  <TableCell className="text-right">{o.totalSurgeriesCalendarYear}</TableCell>
-                  <TableCell className="text-right">{o.quantity}</TableCell>
-                  <TableCell className="text-right">₹{o.price?.toLocaleString()}</TableCell>
-                  <TableCell className="text-right font-semibold text-[#A54A29]">₹{o.estimatedRevenue?.toLocaleString()}</TableCell>
-                  <TableCell className="text-right"><Badge className="rounded-full bg-[#C6693C]/10 text-[#C6693C] hover:bg-[#C6693C]/15">{o.opportunityScore}</Badge></TableCell>
-                  <TableCell className="text-right">
-                    <span className="text-[#C6693C] text-sm font-medium inline-flex items-center hover:underline">
-                      View <LucideIcons.ChevronRight size={14} />
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {revenue.length === 0 && <TableRow><TableCell colSpan={9} className="text-center py-8 text-sm text-gray-500">No organizations match your filters.</TableCell></TableRow>}
-            </TableBody>
-          </Table>
-        </div>
-      </ChartCard>
+          {/* Product Table */}
+          <ChartCard title="Product Directory" subtitle="Detailed product view">
+            <div className="overflow-x-auto -mx-2">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-[#FFF5F0]">
+                    <TableHead className="text-base font-semibold">#</TableHead>
+                    <TableHead className="text-base font-semibold">Organization</TableHead>
+                    <TableHead className="text-base font-semibold text-center">Products</TableHead>
+                    <TableHead className="text-base font-semibold text-right">Target</TableHead>
+                    <TableHead className="text-base font-semibold text-right">Achieved</TableHead>
+                    <TableHead className="text-base font-semibold text-right">Achievement %</TableHead>
+                    <TableHead className="text-base font-semibold">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProductData.map((org, index) => {
+                    const pct = org.achievementPercentage || 0;
+                    const status = pct >= 100 ? "Excellent" :
+                                  pct >= 75 ? "Good" :
+                                  pct >= 50 ? "Average" : "Needs Attention";
+                    const statusColor = pct >= 100 ? "bg-green-500/15 text-green-500" :
+                                       pct >= 75 ? "bg-yellow-500/15 text-yellow-600" :
+                                       pct >= 50 ? "bg-orange-500/15 text-orange-600" :
+                                       "bg-red-500/15 text-red-500";
 
-      {/* Quick Stats Table */}
-      <div className="mt-6 bg-white rounded-2xl border border-[#E8C9B8] shadow-md overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#E8C9B8]">
-          <h3 className="text-lg font-semibold text-[#5A2D1A]">Organization Overview</h3>
-          <p className="text-xs text-[#8B5A3C]">Complete summary of all organizations</p>
+                    return (
+                      <TableRow key={index} className="hover:bg-gray-50 transition-all">
+                        <td className="p-4 text-[17px] font-normal text-[#252C58]">
+                          {(productPagination.currentPage - 1) * productPagination.pageSize + index + 1}
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[#C6693C] max-w-[150px] truncate">
+                          {org.organizationName}
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap text-center">
+                          {org.products?.length || 0}
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right">
+                          {org.totalMonthlyTarget}
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right text-green-600">
+                          {org.totalMonthlyAchievement}
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right">
+                          <AchievementBadge value={pct} />
+                        </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+                            {status}
+                          </span>
+                        </td>
+                      </TableRow>
+                    );
+                  })}
+                  {filteredProductData.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-sm text-gray-500">
+                        No organizations match your filters.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Product Pagination */}
+            <div className="px-4 py-3 border-t border-[#E8C9B8] bg-gray-50 rounded-b-2xl">
+              {productPagination.totalRecords > 0 && (
+                <Pagination
+                  currentPage={productPagination.currentPage}
+                  totalItems={productPagination.totalRecords}
+                  itemsPerPage={productPagination.pageSize}
+                  totalPages={productPagination.totalPages}
+                  onPageChange={handleProductPageChange}
+                  onItemsPerPageChange={handleProductItemsPerPageChange}
+                />
+              )}
+            </div>
+          </ChartCard>
         </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#FFF5F0]">
-                <TableHead className="text-base font-semibold">Metric</TableHead>
-                <TableHead className="text-base font-semibold text-right">Value</TableHead>
-                <TableHead className="text-base font-semibold text-right">Per Organization</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-gray-200">
-              <TableRow>
-                <td className="p-4 text-[15px] font-medium text-[#5A2D1A]">Total Organizations</td>
-                <td className="p-4 text-[15px] text-right font-semibold text-[#C6693C]">{dashboardStats.totalOrganizations}</td>
-                <td className="p-4 text-[15px] text-right text-gray-500">-</td>
-              </TableRow>
-              <TableRow>
-                <td className="p-4 text-[15px] font-medium text-[#5A2D1A]">Total Individuals</td>
-                <td className="p-4 text-[15px] text-right font-semibold text-[#C6693C]">{dashboardStats.totalIndividuals.toLocaleString()}</td>
-                <td className="p-4 text-[15px] text-right text-gray-500">{Math.round(dashboardStats.totalIndividuals / (dashboardStats.totalOrganizations || 1))} avg</td>
-              </TableRow>
-              <TableRow>
-                <td className="p-4 text-[15px] font-medium text-[#5A2D1A]">Total Beds</td>
-                <td className="p-4 text-[15px] text-right font-semibold text-[#C6693C]">{dashboardStats.totalBeds.toLocaleString()}</td>
-                <td className="p-4 text-[15px] text-right text-gray-500">{derivedMetrics.avgBedsPerHospital}</td>
-              </TableRow>
-              <TableRow>
-                <td className="p-4 text-[15px] font-medium text-[#5A2D1A]">ICU Beds</td>
-                <td className="p-4 text-[15px] text-right font-semibold text-[#C6693C]">{dashboardStats.totalICUBeds.toLocaleString()}</td>
-                <td className="p-4 text-[15px] text-right text-gray-500">{derivedMetrics.avgICUPerHospital}</td>
-              </TableRow>
-              <TableRow>
-                <td className="p-4 text-[15px] font-medium text-[#5A2D1A]">Operation Theatres</td>
-                <td className="p-4 text-[15px] text-right font-semibold text-[#C6693C]">{dashboardStats.totalOperationTheatres.toLocaleString()}</td>
-                <td className="p-4 text-[15px] text-right text-gray-500">{derivedMetrics.avgOTPerHospital}</td>
-              </TableRow>
-              <TableRow>
-                <td className="p-4 text-[15px] font-medium text-[#5A2D1A]">Total Specialities</td>
-                <td className="p-4 text-[15px] text-right font-semibold text-[#C6693C]">{dashboardStats.totalSpecialities}</td>
-                <td className="p-4 text-[15px] text-right text-gray-500">{Math.round(dashboardStats.totalSpecialities / (dashboardStats.totalOrganizations || 1))} avg</td>
-              </TableRow>
-              <TableRow>
-                <td className="p-4 text-[15px] font-medium text-[#5A2D1A]">Total Surgeries</td>
-                <td className="p-4 text-[15px] text-right font-semibold text-[#C6693C]">{dashboardStats.totalSurgeries.toLocaleString()}</td>
-                <td className="p-4 text-[15px] text-right text-gray-500">{derivedMetrics.surgeriesPerHospital}</td>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+      )}
 
       {/* District Drill-down Sheet */}
       <Sheet open={!!drill} onOpenChange={(o) => !o && setDrill(null)}>

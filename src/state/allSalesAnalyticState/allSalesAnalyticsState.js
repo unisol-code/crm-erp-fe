@@ -180,3 +180,9 @@ export const doctorListStateAtom = atom(createPersistedAtom("doctorListState", n
 export const salesPersonDataStateAtom = atom(createPersistedAtom("salesPersonDataState", null));
 
 export const organizationDashboardDataStateAtom = atom(createPersistedAtom("organizationDashboardDataState", null));
+
+export const organizationProductDataStateAtom = atom(createPersistedAtom("organizationProductDataState", null));
+
+export const organizationListDataStateAtom = atom(createPersistedAtom("organizationListDataState", null));
+
+export const salesPersonTargetDataStateAtom = atom(createPersistedAtom("salesPersonTargetDataState", null));
