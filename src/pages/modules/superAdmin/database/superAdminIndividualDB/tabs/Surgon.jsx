@@ -49,6 +49,8 @@ const FPO = ({ formik }) => {
     hobbies,
     fetchHospitalAssociatedWith,
     hospitalsAssociatedWith,
+    fetchAllRegion,
+    region,
     allStateName,
     fetchAllCities,
     cities,
@@ -93,6 +95,7 @@ const FPO = ({ formik }) => {
     fetchCategorys();
     fetchHobbies();
     fetchHospitalAssociatedWith();
+    fetchAllRegion();
     fetchAllStateName();
     fetchAllEmployees();
   }, []);
@@ -145,50 +148,50 @@ const FPO = ({ formik }) => {
   ];
 
   const calculateDuration = (startTime, endTime) => {
-  if (!startTime || !endTime) return "";
+    if (!startTime || !endTime) return "";
 
-  const [sh, sm] = startTime.split(":").map(Number);
-  const [eh, em] = endTime.split(":").map(Number);
+    const [sh, sm] = startTime.split(":").map(Number);
+    const [eh, em] = endTime.split(":").map(Number);
 
-  let start = sh * 60 + sm;
-  let end = eh * 60 + em;
+    let start = sh * 60 + sm;
+    let end = eh * 60 + em;
 
-  // Handle overnight meetings
-  if (end < start) {
-    end += 24 * 60;
-  }
-
-  const diff = end - start;
-
-  const hours = Math.floor(diff / 60);
-  const minutes = diff % 60;
-
-  if (hours > 0 && minutes > 0) {
-    return `${hours} Hour${hours > 1 ? "s" : ""} ${minutes} Minute${minutes > 1 ? "s" : ""}`;
-  }
-
-  if (hours > 0) {
-    return `${hours} Hour${hours > 1 ? "s" : ""}`;
-  }
-
-  return `${minutes} Minute${minutes > 1 ? "s" : ""}`;
-};
-
-useEffect(() => {
-  const start = formik.values?.VisitDetails?.startTime;
-  const end = formik.values?.VisitDetails?.endTime;
-
-  if (start && end) {
-    const duration = calculateDuration(start, end);
-
-    if (duration !== formik.values.VisitDetails.duration) {
-      formik.setFieldValue("VisitDetails.duration", duration);
+    // Handle overnight meetings
+    if (end < start) {
+      end += 24 * 60;
     }
-  }
-}, [
-  formik.values?.VisitDetails?.startTime,
-  formik.values?.VisitDetails?.endTime,
-]);
+
+    const diff = end - start;
+
+    const hours = Math.floor(diff / 60);
+    const minutes = diff % 60;
+
+    if (hours > 0 && minutes > 0) {
+      return `${hours} Hour${hours > 1 ? "s" : ""} ${minutes} Minute${minutes > 1 ? "s" : ""}`;
+    }
+
+    if (hours > 0) {
+      return `${hours} Hour${hours > 1 ? "s" : ""}`;
+    }
+
+    return `${minutes} Minute${minutes > 1 ? "s" : ""}`;
+  };
+
+  useEffect(() => {
+    const start = formik.values?.VisitDetails?.startTime;
+    const end = formik.values?.VisitDetails?.endTime;
+
+    if (start && end) {
+      const duration = calculateDuration(start, end);
+
+      if (duration !== formik.values.VisitDetails.duration) {
+        formik.setFieldValue("VisitDetails.duration", duration);
+      }
+    }
+  }, [
+    formik.values?.VisitDetails?.startTime,
+    formik.values?.VisitDetails?.endTime,
+  ]);
   return (
     <div className="">
       <h1 className="text-2xl font-bold text-gray-800 mb-8 pb-4 border-b border-gray-200">
@@ -360,6 +363,53 @@ useEffect(() => {
           name="residenceAddress"
           formik={formik}
         />
+        {/* Region */}
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">
+            Region
+          </label>
+          <ReactSelect
+            className="w-full"
+            isLoading={loading}
+            styles={selectStyles}
+            options={
+              Array.isArray(region)
+                ? region.map((item) => ({
+                    label: item,
+                    value: item,
+                  }))
+                : []
+            }
+            value={
+              Array.isArray(region)
+                ? region
+                    .map((item) => ({
+                      label: item,
+                      value: item,
+                    }))
+                    .find((option) => option.value === formik.values.region) ||
+                  null
+                : null
+            }
+            onChange={(selected) => {
+              formik.setFieldValue("region", selected?.value || "");
+              formik.setFieldValue("state", "");
+              formik.setFieldValue("district", "");
+              formik.setFieldValue("cityTownVillage", "");
+              setSelectedStateCode("");
+              fetchAllStateName(selected?.value || "");
+            }}
+            onBlur={() => formik.setFieldTouched("region", true)}
+            placeholder="Select Region"
+            isClearable
+          />
+          {formik.touched.region && formik.errors.region && (
+            <div className="text-red-500 text-xs mt-1">
+              {formik.errors.region}
+            </div>
+          )}
+        </div>
+
         {/* State */}
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -369,34 +419,29 @@ useEffect(() => {
             className="w-full"
             isLoading={loading}
             styles={selectStyles}
+            isDisabled={!formik.values.region}
             options={
               Array.isArray(allStateName)
                 ? allStateName.map((state) => ({
-                    label: state.stateName,
-                    value: state.stateName,
-                    stateCode: state.stateCode,
+                    label: state.name,
+                    value: state.name,
+                    stateCode: state.code,
                   }))
                 : []
             }
             value={
               allStateName
                 ?.map((state) => ({
-                  label: state.stateName,
-                  value: state.stateName,
+                  label: state.name,
+                  value: state.name,
                 }))
                 .find((option) => option.value === formik.values.state) || null
             }
-            // onChange={(selected) => {
-            //   formik.setFieldValue("state", selected?.value || "");
-            //   handleSelectState(selected?.value);
-            // }}
             onChange={(selected) => {
               formik.setFieldValue("state", selected?.value || "");
-
-              // State Code save karo
-              setSelectedStateCode(selected?.stateCode);
-
-              // District fetch karo
+              formik.setFieldValue("district", "");
+              formik.setFieldValue("cityTownVillage", "");
+              setSelectedStateCode(selected?.stateCode || "");
               fetchDistrictList(selected?.value);
             }}
             onBlur={() => formik.setFieldTouched("state", true)}

@@ -43,12 +43,15 @@ const Surgon = ({ formik,isReadOnly  }) => {
     hobbies,
     fetchHospitalAssociatedWith,
     hospitalsAssociatedWith,
+    fetchAllRegion,
+    region,
     allStateName,
     fetchAllCities,
     cities,
     loading,
-    fetchAllStateName,fetchDistrictList,
-  districtList
+    fetchAllStateName,
+    fetchDistrictList,
+    districtList
   } = useDropdown();
 
   const selectStyles = {
@@ -84,6 +87,7 @@ const Surgon = ({ formik,isReadOnly  }) => {
     fetchCategorys();
     fetchHobbies();
     fetchHospitalAssociatedWith();
+    fetchAllRegion();
     fetchAllStateName();
   }, []);
 
@@ -328,6 +332,47 @@ useEffect(() => {
           </div>
         </div>
         <Input placeholder="Enter Residence Address" label="Residence Address" name="residenceAddress" formik={formik} />
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">
+            Region
+          </label>
+          <ReactSelect
+            className="w-full"
+            isLoading={loading}
+            styles={selectStyles}
+            options={
+              Array.isArray(region)
+                ? region.map((item) => ({
+                    label: item.name || item,
+                    value: item.name || item,
+                  }))
+                : []
+            }
+            value={
+              Array.isArray(region)
+                ? region
+                    .map((item) => ({
+                      label: item.name || item,
+                      value: item.name || item,
+                    }))
+                    .find((option) => option.value === formik.values.region) || null
+                : null
+            }
+            onChange={(selected) => {
+              formik.setFieldValue("region", selected?.value || "");
+              formik.setFieldValue("state", "");
+              formik.setFieldValue("district", "");
+              formik.setFieldValue("cityTownVillage", "");
+              fetchAllStateName(selected?.value || "");
+            }}
+            onBlur={() => formik.setFieldTouched("region", true)}
+            placeholder="Select Region"
+            isClearable
+          />
+          {formik.touched.region && formik.errors.region && (
+            <div className="text-red-500 text-xs mt-1">{formik.errors.region}</div>
+          )}
+        </div>
         {/* State */}
         <div>
            <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -337,21 +382,22 @@ useEffect(() => {
   className="w-full"
   isLoading={loading}
   styles={selectStyles}
+  isDisabled={!formik.values.region}
   options={
     Array.isArray(allStateName)
       ? allStateName.map((state) => ({
-          label: state.stateName,
-          value: state.stateName,
-          stateCode: state.stateCode,
+          label: state.name || state.stateName,
+          value: state.name || state.stateName,
+          stateCode: state.code || state.stateCode,
         }))
       : []
   }
   value={
     allStateName
       ?.map((state) => ({
-        label: state.stateName,
-        value: state.stateName,
-        stateCode: state.stateCode,
+        label: state.name || state.stateName,
+        value: state.name || state.stateName,
+        stateCode: state.code || state.stateCode,
       }))
       .find((option) => option.value === formik.values.state) || null
   }
@@ -425,7 +471,7 @@ useEffect(() => {
             className="w-full"
             isLoading={loading}
             styles={selectStyles}
-            isDisabled={!formik.values.state}
+            isDisabled={!formik.values.district}
             options={
               Array.isArray(cities)
                 ? cities.map((city) => ({

@@ -141,10 +141,10 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
   useEffect(() => {
     const stateName = formik.values?.Basic?.state;
     if (stateName) {
-      const matchedState = allStateName?.find((s) => s.stateName === stateName);
+      const matchedState = allStateName?.find((s) => s.name === stateName || s.stateName === stateName);
       if (matchedState) {
-        setSelectedStateCode(matchedState.stateCode);
-        fetchDistrictList(matchedState.stateCode);
+        setSelectedStateCode(matchedState.code || matchedState.stateCode || "");
+        fetchDistrictList(matchedState.code || matchedState.stateCode || "");
       }
     }
   }, [formik.values?.Basic?.state, allStateName]);
@@ -226,6 +226,29 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
           )}
 
           <Select
+            label="Region"
+            name="Basic.region"
+            isReadOnly={isReadOnly}
+            formik={formik}
+            options={
+              Array.isArray(region)
+                ? region.map((reg) => ({
+                  label: reg,
+                  value: reg,
+                }))
+                : []
+            }
+            onChange={(val) => {
+              formik.setFieldValue("Basic.region", val || "");
+              formik.setFieldValue("Basic.state", "");
+              formik.setFieldValue("Basic.district", "");
+              formik.setFieldValue("Basic.city", "");
+              setSelectedStateCode("");
+              fetchAllStateName(val || "");
+            }}
+          />
+
+          <Select
             label="State"
             name="Basic.state"
             isReadOnly={isReadOnly}
@@ -233,16 +256,18 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
             options={
               Array.isArray(allStateName)
                 ? allStateName.map((state) => ({
-                    label: state.stateName,
-                    value: state.stateName,
+                    label: state.name || state.stateName,
+                    value: state.name || state.stateName,
                   }))
                 : []
             }
             onChange={(val) => {
               formik.setFieldValue("Basic.state", val || "");
-              const matchedState = allStateName?.find((s) => s.stateName === val);
-              setSelectedStateCode(matchedState?.stateCode || "");
-              handleselectDistrict(matchedState?.stateCode || "");
+              const matchedState = allStateName?.find(
+                (s) => (s.name || s.stateName) === val
+              );
+              setSelectedStateCode(matchedState?.code || matchedState?.stateCode || "");
+              handleselectDistrict(matchedState?.code || matchedState?.stateCode || "");
             }}
           />
 
@@ -264,20 +289,6 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
             }}
           />
 
-          <Select
-            label="Region"
-            name="Basic.region"
-            isReadOnly={isReadOnly}
-            formik={formik}
-            options={
-              Array.isArray(region)
-                ? region.map((reg) => ({
-                  label: reg,
-                  value: reg,
-                }))
-                : []
-            }
-          />
           <Select
             label="City"
             name="Basic.city"

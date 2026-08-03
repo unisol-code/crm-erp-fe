@@ -74,6 +74,7 @@ const surgonInitialValues = {
   hobbies: "",
   specifyHobby: "",
   residenceAddress: "",
+  region: "",
   cityTownVillage: "",
   // district: "",
   state: "",
@@ -121,6 +122,7 @@ const nonClinicalInitialValues = {
   hobbies: "",
   specifyHobby: "",
   residenceAddress: "",
+  region: "",
   cityTownVillage: "",
   district: "",
   state: "",
@@ -140,6 +142,8 @@ const nonClinicalInitialValues = {
   spouseName: "",
   dob: "",
   weddingAnniversary: "",
+   hospitalName: "", 
+  hospitalsAssociatedWith: [],
   visitTarget: "",
   visitAchievement: "", 
    VisitDetails: {
@@ -147,8 +151,7 @@ const nonClinicalInitialValues = {
   endTime: "",
   duration: "",
 },
- hospitalName: "", 
-  hospitalsAssociatedWith: [],
+
 };
 
 // Validation Schemas
@@ -183,6 +186,7 @@ const physicianSchema = Yup.object({
       : schema.notRequired();
   }),
   // residenceAddress: Yup.string().required("Residence is required"),
+  region: Yup.string().required("Region is required"),
   cityTownVillage: Yup.string().required("City/Town/Village is required"),
   district: Yup.string().required("District is required"),
   state: Yup.string().required("State is required"),
@@ -293,6 +297,7 @@ const surgonSchema = Yup.object({
       : schema.notRequired();
   }),
   // residenceAddress: Yup.string().required("Residence address is required"),
+  region: Yup.string().required("Region is required"),
   cityTownVillage: Yup.string().required("City/Town/Village is required"),
   // district: Yup.string().required("District is required"),
   state: Yup.string().required("State is required"),
@@ -414,6 +419,7 @@ const nonClinicalSchema = Yup.object({
       : schema.notRequired();
   }),
   residenceAddress: Yup.string().required("Residence address is required"),
+  region: Yup.string().required("Region is required"),
   cityTownVillage: Yup.string().required("City/Town/Village is required"),
   district: Yup.string().required("District is required"),
   state: Yup.string().required("State is required"),
@@ -724,7 +730,23 @@ const AddNewIndividual = () => {
                       ? values.otherDesignation
                       : values.designation,
                     otherDesignation: undefined,
+                    hospitalName: values.hospitalName || "",
+                    // hospitalsAssociatedWith = values.hospitalName || [],
                   };
+
+   //its AN TEMPERORY FIX FOR NON CLINICAL DOCTOR TYPE, WE NEED TO REMOVE HOSPITAL NAME AND ADD HOSPITALS ASSOCIATED WITH ARRAY IN THE PAYLOAD
+                  if (selectedDoctor?.value === "Non Clinical") {
+  payload.hospitalsAssociatedWith = values.hospitalName
+    ? [{ hospitalName: values.hospitalName }]
+    : [];
+
+  delete payload.hospitalName;
+}
+                  // if (selectedDoctor?.value === "Non Clinical") {
+                  //   delete payload.hospitalName;
+                  //   delete payload.hospitalsAssociatedWith;
+                  // }
+
                   if (selectedDoctor?.value === "Physician") {
                     const { officialEmail, personalEmail, ...rest } = values;
                     payload.physician = {
@@ -741,23 +763,21 @@ const AddNewIndividual = () => {
                       surgery: values.surgery,
                     };
                   } else if (selectedDoctor?.value === "Non Clinical") {
-                    const { officialEmail, personalEmail, ...rest } = values;
+                    const { officialEmail, personalEmail, hospitalName, ...rest } = values;
                     payload.nonClinical = {
                       ...rest,
                       dob: formatDate(values.dob),
                       weddingAnniversary: formatDate(values.weddingAnniversary),
                       surgeryDays: values.surgeryDays,
+                      hospitalsAssociatedWith: [
+                              {
+                                hospitalName,
+                              },
+                            ]
+                         
                     };
                   }
-                  if (selectedSector?.value === 'Healthcare Management') {
-  payload.hospitalsAssociatedWith = [
-    {
-      hospitalName: values.hospitalName,
-    },
-  ];
-} else {
-  payload.hospitalsAssociatedWith = [];
-}
+ 
 
                   console.log("Payload:", payload);
                   if (id) {

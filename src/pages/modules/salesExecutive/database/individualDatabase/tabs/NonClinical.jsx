@@ -49,11 +49,14 @@ const [otherDepartment, setOtherDepartment] = useState('');
     departmentForNonClinical,
     fetchDepartmentForNonClinicalNew,
     newDepartmentForNonClinical,
+    fetchAllRegion,
+    region,
     allStateName,
     fetchAllCities,
     cities,
-    fetchAllStateName,  fetchDistrictList,
-  districtList
+    fetchAllStateName,
+    fetchDistrictList,
+    districtList
 
   } = useDropdown();
 
@@ -98,6 +101,7 @@ const [otherDepartment, setOtherDepartment] = useState('');
     fetchDesignationForNonClinical();
     // fetchDepartmentForNonClinical();
     fetchDepartmentForNonClinicalNew();
+    fetchAllRegion();
     fetchAllStateName();
   }, []);
   console.log("speciality", designation);
@@ -352,6 +356,47 @@ console.log("non clinic",newDepartmentForNonClinical)
 
         </div>
         <Input placeholder="Enter Residence Address" label="Residence Address" name="residenceAddress" formik={formik} />
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">
+            Region
+          </label>
+          <ReactSelect
+            className="w-full"
+            isLoading={loading}
+            styles={selectStyles}
+            options={
+              Array.isArray(region)
+                ? region.map((item) => ({
+                    label: item.name || item,
+                    value: item.name || item,
+                  }))
+                : []
+            }
+            value={
+              Array.isArray(region)
+                ? region
+                    .map((item) => ({
+                      label: item.name || item,
+                      value: item.name || item,
+                    }))
+                    .find((option) => option.value === formik.values.region) || null
+                : null
+            }
+            onChange={(selected) => {
+              formik.setFieldValue("region", selected?.value || "");
+              formik.setFieldValue("state", "");
+              formik.setFieldValue("district", "");
+              formik.setFieldValue("cityTownVillage", "");
+              fetchAllStateName(selected?.value || "");
+            }}
+            onBlur={() => formik.setFieldTouched("region", true)}
+            placeholder="Select Region"
+            isClearable
+          />
+          {formik.touched.region && formik.errors.region && (
+            <div className="text-red-500 text-xs mt-1">{formik.errors.region}</div>
+          )}
+        </div>
         {/* State */}
 <div>
   <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -361,21 +406,22 @@ console.log("non clinic",newDepartmentForNonClinical)
   <ReactSelect
     isLoading={loading}
     styles={selectStyles}
+    isDisabled={!formik.values.region}
     options={
       Array.isArray(allStateName)
         ? allStateName.map((state) => ({
-            label: state.stateName,
-            value: state.stateName,
-            stateCode: state.stateCode,
+            label: state.name || state.stateName,
+            value: state.name || state.stateName,
+            stateCode: state.code || state.stateCode,
           }))
         : []
     }
     value={
       allStateName
         ?.map((state) => ({
-          label: state.stateName,
-          value: state.stateName,
-          stateCode: state.stateCode,
+          label: state.name || state.stateName,
+          value: state.name || state.stateName,
+          stateCode: state.code || state.stateCode,
         }))
         .find((option) => option.value === formik.values.state) || null
     }

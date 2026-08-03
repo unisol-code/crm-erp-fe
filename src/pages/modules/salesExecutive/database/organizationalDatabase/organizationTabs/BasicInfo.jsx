@@ -206,26 +206,70 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
 
           <div className="flex flex-col w-full mb-4">
             <label className="text-sm font-medium text-gray-700 mb-1">
+              Region
+            </label>
+            <ReactSelect
+              name="Basic.region"
+              isDisabled={isReadOnly}
+              options={
+                Array.isArray(region)
+                  ? region.map((reg) => ({
+                      label: reg.name || reg,
+                      value: reg.name || reg,
+                    }))
+                  : []
+              }
+              value={
+                Array.isArray(region)
+                  ? region
+                      .map((reg) => ({
+                        label: reg.name || reg,
+                        value: reg.name || reg,
+                      }))
+                      .find((opt) => opt.value === formik.values?.Basic?.region) ||
+                    null
+                  : null
+              }
+              onChange={(selected) => {
+                formik.setFieldValue("Basic.region", selected?.value || "");
+                formik.setFieldValue("Basic.state", "");
+                formik.setFieldValue("Basic.district", "");
+                formik.setFieldValue("Basic.city", "");
+                fetchAllStateName(selected?.value || "");
+              }}
+              onBlur={() => formik.setFieldTouched("Basic.region", true)}
+              placeholder="Select Region"
+              isClearable
+            />
+            {formik.touched?.Basic?.region && formik.errors?.Basic?.region && (
+              <span className="text-red-500 text-xs mt-1">
+                {formik.errors.Basic.region}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col w-full mb-4">
+            <label className="text-sm font-medium text-gray-700 mb-1">
               State
             </label>
             <ReactSelect
               name="Basic.state"
-              isReadOnly={isReadOnly}
+              isDisabled={isReadOnly || !formik.values?.Basic?.region}
               options={
                 Array.isArray(allStateName)
                   ? allStateName.map((state) => ({
-                      label: state.stateName,
-                      value: state.stateName,
-                      stateCode: state.stateCode,
+                      label: state.name || state.stateName,
+                      value: state.name || state.stateName,
+                      stateCode: state.code || state.stateCode,
                     }))
                   : []
               }
               value={
                 allStateName
                   ?.map((state) => ({
-                    label: state.stateName,
-                    value: state.stateName,
-                    stateCode: state.stateCode,
+                    label: state.name || state.stateName,
+                    value: state.name || state.stateName,
+                    stateCode: state.code || state.stateCode,
                   }))
                   .find((opt) => opt.value === formik.values?.Basic?.state) ||
                 null
@@ -233,6 +277,8 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
               onChange={(selected) => {
                 formik.setFieldValue("Basic.state", selected?.value || "");
                 setSelectedStateCode(selected?.stateCode || "");
+                formik.setFieldValue("Basic.district", "");
+                formik.setFieldValue("Basic.city", "");
                 handleselectDistrict(selected?.value || "");
               }}
               onBlur={() => formik.setFieldTouched("Basic.state", true)}
@@ -252,7 +298,7 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
             </label>
             <ReactSelect
               name="Basic.district"
-              isReadOnly={isReadOnly}
+              isDisabled={isReadOnly || !formik.values?.Basic?.state}
               options={
                 Array.isArray(districtList)
                   ? districtList.map((district) => ({
@@ -272,6 +318,7 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
               }
               onChange={(selected) => {
                 formik.setFieldValue("Basic.district", selected?.value || "");
+                formik.setFieldValue("Basic.city", "");
                 handleSelectCity(selected?.value || "");
               }}
               onBlur={() => formik.setFieldTouched("Basic.district", true)}
@@ -285,34 +332,43 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
             )}
           </div>
 
-          <Select
-            label="Region"
-            name="Basic.region"
-            isReadOnly={isReadOnly}
-            formik={formik}
-            options={
-              Array.isArray(region)
-                ? region.map((reg) => ({
-                  label: reg,
-                  value: reg,
-                }))
-                : []
-            }
-          />
-          <Select
-            label="City"
-            name="Basic.city"
-            isReadOnly={isReadOnly}
-            formik={formik}
-            options={
-              Array.isArray(cities)
-                ? cities.map((city) => ({
-                  label: city,
-                  value: city,
-                }))
-                : []
-            }
-          />
+          <div className="flex flex-col w-full mb-4">
+            <label className="text-sm font-medium text-gray-700 mb-1">
+              City
+            </label>
+            <ReactSelect
+              name="Basic.city"
+              isDisabled={isReadOnly || !formik.values?.Basic?.district}
+              options={
+                Array.isArray(cities)
+                  ? cities.map((city) => ({
+                      label: city,
+                      value: city,
+                    }))
+                  : []
+              }
+              value={
+                cities
+                  ?.map((city) => ({
+                    label: city,
+                    value: city,
+                  }))
+                  .find((opt) => opt.value === formik.values?.Basic?.city) ||
+                null
+              }
+              onChange={(selected) => {
+                formik.setFieldValue("Basic.city", selected?.value || "");
+              }}
+              onBlur={() => formik.setFieldTouched("Basic.city", true)}
+              placeholder="Select City"
+              isClearable
+            />
+            {formik.touched?.Basic?.city && formik.errors?.Basic?.city && (
+              <span className="text-red-500 text-xs mt-1">
+                {formik.errors.Basic.city}
+              </span>
+            )}
+          </div>
           <Input
             label="Email Address"
             name="Basic.emailAddress"

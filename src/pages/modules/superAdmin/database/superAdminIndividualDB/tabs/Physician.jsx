@@ -53,6 +53,8 @@ const Gov = ({ formik }) => {
     hobbies,
     fetchHospitalAssociatedWith,
     hospitalsAssociatedWith,
+    fetchAllRegion,
+    region,
     allStateName,
     fetchAllCities,
     cities,
@@ -60,8 +62,8 @@ const Gov = ({ formik }) => {
     fetchAllStateName,
     fetchAllEmployees,
     employees,
-      fetchDistrictList,
-  districtList
+    fetchDistrictList,
+    districtList,
   } = useDropdown();
 
   const relationshipOptions = [
@@ -77,6 +79,7 @@ const Gov = ({ formik }) => {
     fetchProfiles();
     fetchHobbies();
     fetchHospitalAssociatedWith();
+    fetchAllRegion();
     fetchAllStateName();
     fetchAllEmployees();
   }, []);
@@ -367,86 +370,82 @@ useEffect(() => {
           formik={formik}
         />
 
-        {/* State */}
-        {/* <div>
+        {/* Region */}
+        <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">
-            State
+            Region
           </label>
           <ReactSelect
             className="w-full"
             isLoading={loading}
             styles={selectStyles}
             options={
-              Array.isArray(allStateName)
-                ? allStateName.map((state) => ({
-                  label: state.stateName,
-                  value: state.stateCode,
-                }))
+              Array.isArray(region)
+                ? region.map((item) => ({ label: item, value: item }))
                 : []
             }
             value={
-              allStateName
-                ?.map((state) => ({
-                  label: state.stateName,
-                  value: state.stateCode,
-                }))
-                .find((option) => option.value === formik.values.state) || null
+              Array.isArray(region)
+                ? region
+                    .map((item) => ({ label: item, value: item }))
+                    .find((option) => option.value === formik.values.region) || null
+                : null
             }
             onChange={(selected) => {
-              formik.setFieldValue("state", selected?.value || "");
-              handleSelectCity(selected?.value);
+              formik.setFieldValue("region", selected?.value || "");
+              formik.setFieldValue("state", "");
+              formik.setFieldValue("district", "");
+              formik.setFieldValue("cityTownVillage", "");
+              setSelectedStateCode("");
+              fetchAllStateName(selected?.value || "");
             }}
-            onBlur={() => formik.setFieldTouched("state", true)}
-            placeholder="Select State"
+            onBlur={() => formik.setFieldTouched("region", true)}
+            placeholder="Select Region"
             isClearable
           />
-          {formik.touched.state && formik.errors.state && (
-            <div className="text-red-500 text-xs mt-1">
-              {formik.errors.state}
-            </div>
+          {formik.touched.region && formik.errors.region && (
+            <div className="text-red-500 text-xs mt-1">{formik.errors.region}</div>
           )}
-        </div> */}
-
+        </div>
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">
+            State
+          </label>
         <ReactSelect
   className="w-full"
   isLoading={loading}
   styles={selectStyles}
+  isDisabled={!formik.values.region}
   options={
     Array.isArray(allStateName)
       ? allStateName.map((state) => ({
-          label: state.stateName,
-          value: state.stateName,
-          stateCode: state.stateCode,
+          label: state.name,
+          value: state.name,
+          stateCode: state.code,
         }))
       : []
   }
   value={
     allStateName
       ?.map((state) => ({
-        label: state.stateName,
-        value: state.stateName,
-        stateCode: state.stateCode,
+        label: state.name,
+        value: state.name,
+        stateCode: state.code,
       }))
       .find((option) => option.value === formik.values.state) || null
   }
   onChange={(selected) => {
-    // Save state name
     formik.setFieldValue("state", selected?.value || "");
-
-    // Save state code
     setSelectedStateCode(selected?.stateCode || "");
-
-    // Reset dependent fields
     formik.setFieldValue("district", "");
     formik.setFieldValue("cityTownVillage", "");
-
-    // Fetch districts
     fetchDistrictList(selected?.value);
   }}
   onBlur={() => formik.setFieldTouched("state", true)}
   placeholder="Select State"
   isClearable
 />
+</div>
 
 <div>
   <label className="block mb-1 text-sm font-medium text-gray-700">
