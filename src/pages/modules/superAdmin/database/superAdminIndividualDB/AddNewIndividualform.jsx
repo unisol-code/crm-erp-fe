@@ -33,6 +33,7 @@ const physicianInitialValues = {
   cityTownVillage: "",
   district: "",
   state: "",
+  region: "",
   pincode: "",
   landmark: "",
   category: "",
@@ -82,6 +83,7 @@ const surgonInitialValues = {
   cityTownVillage: "",
   district: "",
   state: "",
+  region: "",
   pincode: "",
   landmark: "",
   category: "",
@@ -124,6 +126,7 @@ const nonClinicalInitialValues = {
   cityTownVillage: "",
   district: "",
   state: "",
+  region: "",
   pincode: "",
   landmark: "",
   category: "",
@@ -188,6 +191,7 @@ const physicianSchema = Yup.object({
   cityTownVillage: Yup.string().required("City/Town/Village is required"),
   district: Yup.string().required("District is required"),
   state: Yup.string().required("State is required"),
+  region: Yup.string().required("Region is required"),
   pincode: Yup.string()
     .required("Pincode is required")
     .matches(/^(?!0{6})[0-9]{6}$/, "Must be a valid 6-digit pincode"),
@@ -304,6 +308,7 @@ const surgonSchema = Yup.object({
   cityTownVillage: Yup.string().required("City/Town/Village is required"),
   district: Yup.string().required("District is required"),
   state: Yup.string().required("State is required"),
+  region: Yup.string().required("Region is required"),
   pincode: Yup.string()
     .required("Pincode is required")
     .matches(/^(?!0{6})[0-9]{6}$/, "Must be a valid 6-digit pincode"),
@@ -421,6 +426,7 @@ const nonClinicalSchema = Yup.object({
   cityTownVillage: Yup.string().required("City/Town/Village is required"),
   district: Yup.string().required("District is required"),
   state: Yup.string().required("State is required"),
+  region: Yup.string().required("Region is required"),
   pincode: Yup.string()
     .required("Pincode is required")
     .matches(/^(?!0{6})[0-9]{6}$/, "Must be a valid 6-digit pincode"),
@@ -597,7 +603,7 @@ const AddNewIndividualform = () => {
       case "Physician":
         return <Physician formik={formik} />;
       case "Surgeon":
-        return <Surgon formik={formik} />;
+        return <Surgon formik={formik} />;  
       case "Non Clinical":
         return <NonClinical formik={formik} />;
      // Any other profile -> show Non Clinical form
@@ -737,17 +743,17 @@ onChange={(selected) => {
                       : values.designation,
                     otherDesignation: undefined,
                   };
-                  if (selectedSector?.value === "Healthcare Management" && values.hospitalName) {
-  payload.hospitalsAssociatedWith = [
-    {
-      hospitalName: values.hospitalName,
-    },
-  ];
-} else {
-  payload.hospitalsAssociatedWith = [];
-}
+//                   if (selectedSector?.value === "Healthcare Management" && values.hospitalName) {
+//   payload.hospitalsAssociatedWith = [
+//     {
+//       hospitalName: values.hospitalName,
+//     },
+//   ];
+// } else {
+//   payload.hospitalsAssociatedWith = [];
+// }
 
-console.log("Payload:", payload);
+// console.log("Payload:", payload);
                   if (selectedDoctor?.value === "Physician") {
                     const { officialEmail, personalEmail, ...rest } = values;
                     payload.physician = {
@@ -770,14 +776,12 @@ console.log("Payload:", payload);
                       dob: formatDate(values.dob),
                       weddingAnniversary: formatDate(values.weddingAnniversary),
                       surgeryDays: values.surgeryDays,
-      //        hospitalsAssociatedWith:
-      // selectedSector?.value === "Healthcare Management" && hospitalName
-      //   ? [
-      //       {
-      //         hospitalName: hospitalName,
-      //       },
-      //     ]
-      //   : [],
+             hospitalsAssociatedWith: [
+            {
+              hospitalName: hospitalName || [],
+            },
+          ]
+        ,
                        
                     };
 //                                if (selectedSector?.value === 'Healthcare Management') {

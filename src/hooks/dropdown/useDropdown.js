@@ -590,18 +590,19 @@ const useDropdown = () => {
     }
   };
 
-  const fetchAllStateName = async () => {
+  const fetchAllStateName = async (regionName = "") => {
     setLoading(true);
     try {
+      const query = regionName ? `?region=${encodeURIComponent(regionName)}` : "";
       const res = await fetchData({
         method: "GET",
-        url: `${conf.apiBaseUrl}drop-down/getAllStates`,
+        url: `${conf.apiBaseUrl}drop-down/getAllStates${query}`,
       });
       if (res) {
-        setAllStateName(res?.data);
+        setAllStateName(res?.data || []);
       }
     } catch (error) {
-      console.error("Error while fetching All State list:", err);
+      console.error("Error while fetching All State list:", error);
     } finally {
       setLoading(false);
     }
@@ -741,10 +742,10 @@ const useDropdown = () => {
         url: `${conf.apiBaseUrl}drop-down/getAllRegion`,
       });
       if (res) {
-        setRegion(res?.data);
+        setRegion(res?.data || []);
       }
     } catch (error) {
-      console.error("Error while fetching All Region DropDown:", err);
+      console.error("Error while fetching All Region DropDown:", error);
     } finally {
       setLoading(false);
     }

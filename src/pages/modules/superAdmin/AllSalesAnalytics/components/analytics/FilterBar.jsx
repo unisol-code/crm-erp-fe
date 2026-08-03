@@ -123,6 +123,7 @@ export function FilterBar({ selectedTab = 'overview' }) {
     fetchDoctorAnalytics,
     fetchDoctorList, // ✅ Add this
      fetchSalesPersonAnalytics,fetchOrganizationDashboardAnalytics,
+     fetchOrganizationProductAnalytics, fetchOrganizationListAnalytics,  fetchSalesPersonTargetAnalytics,
     loading
   } = useAllSalesAnalytics();
 
@@ -136,6 +137,9 @@ export function FilterBar({ selectedTab = 'overview' }) {
   const fetchDoctorListRef = useRef(fetchDoctorList); // ✅ Add this
   const fetchSalesPersonAnalyticsRef = useRef(fetchSalesPersonAnalytics);
   const fetchOrganizationDashboardAnalyticsRef = useRef(fetchOrganizationDashboardAnalytics);
+  const fetchOrganizationProductAnalyticsRef = useRef(fetchOrganizationProductAnalytics);
+  const fetchOrganizationListAnalyticsRef = useRef(fetchOrganizationListAnalytics);
+  const fetchSalesPersonTargetAnalyticsRef = useRef(fetchSalesPersonTargetAnalytics);
   const updateFilterRef = useRef(updateFilter);
   const resetFiltersRef = useRef(resetFilters);
 
@@ -151,9 +155,10 @@ export function FilterBar({ selectedTab = 'overview' }) {
     fetchTargetAnalyticsRef.current = fetchTargetAnalytics;
     fetchDoctorAnalyticsRef.current = fetchDoctorAnalytics;
     fetchDoctorListRef.current = fetchDoctorList; // ✅ Add this
+     fetchOrganizationProductAnalyticsRef.current = fetchOrganizationProductAnalytics;
     updateFilterRef.current = updateFilter;
     resetFiltersRef.current = resetFilters;
-  }, [fetchOverviewData, fetchSalesPerformance, fetchOrganizationAnalytics, fetchSpecialityAnalytics, fetchTargetAnalytics, fetchDoctorAnalytics, fetchDoctorList, updateFilter, resetFilters]);
+  }, [fetchOverviewData, fetchSalesPerformance, fetchOrganizationAnalytics,fetchOrganizationProductAnalytics, fetchSpecialityAnalytics, fetchTargetAnalytics, fetchDoctorAnalytics, fetchDoctorList, updateFilter, resetFilters]);
 
   const { 
     fetchAllStateName, allStateName,
@@ -280,13 +285,16 @@ export function FilterBar({ selectedTab = 'overview' }) {
         break;
       case 'executives':
         fetchSalesPerformanceRef.current();
-        fetchSalesPersonAnalyticsRef.current();
+        // fetchSalesPersonAnalyticsRef.current();
+        fetchSalesPersonTargetAnalyticsRef.current();
         break;
       case 'hospitals':
-      case 'organizations':
-        fetchOrganizationAnalyticsRef.current();
-        fetchOrganizationDashboardAnalyticsRef.current();
-        break;
+case 'organizations':
+  fetchOrganizationAnalyticsRef.current();
+  fetchOrganizationDashboardAnalyticsRef.current();
+  fetchOrganizationProductAnalyticsRef.current();
+    fetchOrganizationListAnalyticsRef.current();
+  break;
       default:
         break;
     }
