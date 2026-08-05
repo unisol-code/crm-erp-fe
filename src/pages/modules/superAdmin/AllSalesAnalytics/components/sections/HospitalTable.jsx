@@ -64,7 +64,7 @@ export function HospitalTable({
         {validSpecialities.slice(0, 2).map((spec, idx) => (
           <span
             key={idx}
-            className="px-2 py-1 bg-[#FFF5F0] text-[#C6693C] text-xs rounded-full border border-[#E8C9B8]"
+            className="px-2 py-1 bg-[var(--theme-bg-light)] text-[var(--theme-primary)] text-xs rounded-full border border-[var(--theme-border)]"
           >
             {spec.speciality}
           </span>
@@ -91,10 +91,10 @@ export function HospitalTable({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {validSpecialities.map((spec, idx) => (
-          <div key={idx} className="bg-white p-4 rounded-lg border border-[#E8C9B8]">
+          <div key={idx} className="bg-white p-4 rounded-lg border border-[var(--theme-border)]">
             <div className="flex justify-between items-center mb-2">
-              <h4 className="font-semibold text-[#C6693C]">{spec.speciality}</h4>
-              <span className="px-2 py-1 bg-[#C6693C]/10 text-[#C6693C] text-xs rounded-full">
+              <h4 className="font-semibold text-[var(--theme-primary)]">{spec.speciality}</h4>
+              <span className="px-2 py-1 bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] text-xs rounded-full">
                 Total: {spec.totalSurgeries || 0}
               </span>
             </div>
@@ -115,34 +115,34 @@ export function HospitalTable({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E8C9B8] shadow-md overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[var(--theme-border)] shadow-md overflow-hidden">
       {/* Header with Search */}
-      <div className="flex items-center justify-between gap-4 flex-wrap p-4 border-b border-[#E8C9B8]">
+      <div className="flex items-center justify-between gap-4 flex-wrap p-4 border-b border-[var(--theme-border)]">
         <div>
-          <h2 className="text-lg font-bold text-[#5A2D1A]">Hospitals</h2>
-          <p className="text-xs text-[#8B5A3C]">
+          <h2 className="text-lg font-bold text-[var(--theme-text-primary)]">Hospitals</h2>
+          <p className="text-xs text-[var(--theme-text-secondary)]">
             Total {totalRecords} hospitals found
           </p>
         </div>
-        <div className="relative w-56 max-w-full">
+        {/* <div className="relative w-56 max-w-full">
           <LucideIcons.Search
             size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#C6693C]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--theme-primary)]"
           />
           <Input
             placeholder="Search hospital or city"
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className="pl-9 rounded-xl bg-white border-[#E8B59F] focus:ring-[#C6693C]"
+            className="pl-9 rounded-xl bg-white border-[var(--theme-bg-sidebar)] focus:ring-[var(--theme-primary)]"
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#FFF5F0]">
+            <TableRow className="bg-[var(--theme-bg-light)]">
               <TableHead className="text-base font-semibold">Sr. No.</TableHead>
               <TableHead className="text-base font-semibold">Hospital</TableHead>
               <TableHead className="text-base font-semibold">Type</TableHead>
@@ -172,11 +172,11 @@ export function HospitalTable({
                     <td className="p-4 text-[17px] font-normal text-[#252C58]">
                       {(currentPage - 1) * pageSize + index + 1}
                     </td>
-                    <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[#C6693C]">
+                    <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[var(--theme-primary)]">
                       {hospital.hospitalName}
                     </td>
                     <td className="px-4 py-3 text-[15px] whitespace-nowrap">
-                      <span className="px-2 py-1 bg-[#FFF5F0] rounded-full text-xs">
+                      <span className="px-2 py-1 bg-[var(--theme-bg-light)] rounded-full text-xs">
                         {hospital.hospitalType || 'N/A'}
                       </span>
                     </td>
@@ -205,7 +205,7 @@ export function HospitalTable({
                       {hospital.specialities && hospital.specialities.length > 0 && (
                         <button
                           onClick={() => toggleExpand(hospital._id)}
-                          className="px-3 py-1 bg-[#C6693C] text-white text-xs rounded-lg hover:bg-[#A54A29] transition-colors flex items-center gap-1 mx-auto"
+                          className="px-3 py-1 bg-[var(--theme-primary)] text-white text-xs rounded-lg hover:bg-[var(--theme-accent)] transition-colors flex items-center gap-1 mx-auto"
                         >
                           {expandedRow === hospital._id ? (
                             <>
@@ -225,11 +225,11 @@ export function HospitalTable({
 
                   {/* ✅ Expanded Row with Surgery Details */}
                   {expandedRow === hospital._id && (
-                    <TableRow className="bg-[#FFF8F5]">
+                    <TableRow className="bg-[var(--theme-card-bg)]">
                       <TableCell colSpan={11} className="px-6 py-4">
                         <div>
-                          <h4 className="text-sm font-semibold text-[#5A2D1A] mb-3 flex items-center gap-2">
-                            <LucideIcons.Stethoscope size={18} className="text-[#C6693C]" />
+                          <h4 className="text-sm font-semibold text-[var(--theme-text-primary)] mb-3 flex items-center gap-2">
+                            <LucideIcons.Stethoscope size={18} className="text-[var(--theme-primary)]" />
                             Surgery Details - {hospital.hospitalName}
                           </h4>
                           {renderSurgeryDetails(hospital.specialities)}
@@ -254,7 +254,7 @@ export function HospitalTable({
       </div>
 
       {/* Pagination */}
-      <div className="px-4 py-3 border-t border-[#E8C9B8] bg-gray-50">
+      <div className="px-4 py-3 border-t border-[var(--theme-border)] bg-gray-50">
         {!loading && hospitals.length > 0 && (
           <Pagination
             currentPage={currentPage}

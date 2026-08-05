@@ -38,8 +38,8 @@ import Pagination from "../../../../../../components/uiComponents/pagination/Pag
 
 function Mini({ label, value }) {
   return (
-    <div className="rounded-xl border border-[#E8B59F] p-3 bg-[#FBE9E7]">
-      <p className="text-[11px] text-[#A54A29] uppercase tracking-wide">{label}</p>
+    <div className="rounded-xl border border-[var(--theme-bg-sidebar)] p-3 bg-[var(--theme-primary-bg)]">
+      <p className="text-[11px] text-[var(--theme-accent)] uppercase tracking-wide">{label}</p>
       <p className="text-sm font-semibold mt-0.5">{value}</p>
     </div>
   );
@@ -51,6 +51,7 @@ export function DoctorSection({
   doctorData, 
   doctorListData, 
   loading = false,
+  tableLoading = false,
   onPageChange,
   onItemsPerPageChange,
 }) {
@@ -208,7 +209,7 @@ export function DoctorSection({
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <LoaderSpinner />
-          <p className="mt-4 text-[#8B5A3C] font-medium">Loading doctor data...</p>
+          <p className="mt-4 text-[var(--theme-text-secondary)] font-medium">Loading doctor data...</p>
         </div>
       </div>
     );
@@ -216,12 +217,12 @@ export function DoctorSection({
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold tracking-tight text-[#A54A29] mb-2">Doctor Analytics</h2>
+      <h2 className="text-2xl font-semibold tracking-tight text-[var(--theme-accent)] mb-2">Doctor Analytics</h2>
       <p className="text-sm text-gray-600 mb-6">
         Doctor-wise performance and product engagement intelligence
-        {filters.speciality && <span className="ml-2 font-medium text-[#C6693C]">Filtered by: {filters.speciality}</span>}
-        {filters.segment && <span className="ml-2 font-medium text-[#C6693C]">| {filters.segment}</span>}
-        {filters.salesPerson && <span className="ml-2 font-medium text-[#C6693C]">| {filters.salesPerson}</span>}
+        {filters.speciality && <span className="ml-2 font-medium text-[var(--theme-primary)]">Filtered by: {filters.speciality}</span>}
+        {filters.segment && <span className="ml-2 font-medium text-[var(--theme-primary)]">| {filters.segment}</span>}
+        {filters.salesPerson && <span className="ml-2 font-medium text-[var(--theme-primary)]">| {filters.salesPerson}</span>}
       </p>
 
       {/* KPI Cards */}
@@ -276,11 +277,11 @@ export function DoctorSection({
           {leaderboard.length === 0 ? <EmptyState /> : (
             <ResponsiveContainer width="100%" height={360}>
               <BarChart data={leaderboard} layout="vertical" margin={{ left: 8, right: 24 }}>
-                <CartesianGrid horizontal={false} stroke="#E8B59F" />
+                <CartesianGrid horizontal={false} stroke="var(--theme-bg-sidebar)" />
                 <XAxis type="number" domain={[0, 100]} stroke="#6b7280" fontSize={11} unit="%" />
                 <YAxis dataKey="doctorName" type="category" stroke="#6b7280" fontSize={11} width={140} />
                 <Tooltip 
-                  contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
+                  contentStyle={{ borderRadius: 12, border: "1px solid var(--theme-bg-sidebar)", background: "#ffffff" }}
                   formatter={(value, name, props) => {
                     const item = props.payload;
                     return [`${value}%`, item.doctorName];
@@ -302,7 +303,7 @@ export function DoctorSection({
                     {specContrib.map((s, i) => <Cell key={i} fill={s.fill} />)}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
+                    contentStyle={{ borderRadius: 12, border: "1px solid var(--theme-bg-sidebar)", background: "#ffffff" }}
                     formatter={(value, name) => [`${value}% achievement`, name]}
                   />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
@@ -320,7 +321,7 @@ export function DoctorSection({
       </div>
 
       {/* Matrix + Product Completion */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
         <ChartCard title="Sales Person × Speciality" subtitle="Active doctors matrix">
           <div className="overflow-x-auto">
             <table className="w-full text-xs border-separate border-spacing-1">
@@ -335,7 +336,7 @@ export function DoctorSection({
                   <tr key={row.sales}>
                     <td className="font-medium p-2">{row.sales}</td>
                     {row.cells.map((v, i) => (
-                      <td key={i} className="p-2 text-center rounded-md font-semibold" style={{ background: `color-mix(in oklch, #C6693C ${(v / matrixMax) * 70}%, transparent)` }}>
+                      <td key={i} className="p-2 text-center rounded-md font-semibold" style={{ background: `color-mix(in oklch, var(--theme-primary) ${(v / matrixMax) * 70}%, transparent)` }}>
                         {v}
                       </td>
                     ))}
@@ -348,30 +349,30 @@ export function DoctorSection({
         <ChartCard title="Product Completion Intelligence" subtitle="Complete vs Incomplete adoption">
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={prodStack} margin={{ left: 0, right: 8 }}>
-              <CartesianGrid vertical={false} stroke="#E8B59F" />
+              <CartesianGrid vertical={false} stroke="var(--theme-bg-sidebar)" />
               <XAxis dataKey="name" stroke="#6b7280" fontSize={10} angle={-25} textAnchor="end" height={60} />
               <YAxis stroke="#6b7280" fontSize={11} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }} />
+              <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--theme-bg-sidebar)", background: "#ffffff" }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="Complete" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
               <Bar dataKey="Incomplete" stackId="a" fill="#ef4444" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
-      </div>
+      </div> */}
 
       {/* Price vs Achievement + Quality Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <ChartCard title="Price vs Achievement" subtitle="Bubble = # doctors" className="lg:col-span-2">
           <ResponsiveContainer width="100%" height={320}>
             <ScatterChart margin={{ left: 8, right: 16, top: 8, bottom: 8 }}>
-              <CartesianGrid stroke="#E8B59F" />
+              <CartesianGrid stroke="var(--theme-bg-sidebar)" />
               <XAxis type="number" dataKey="price" name="Price" stroke="#6b7280" fontSize={11} unit="₹" />
               <YAxis type="number" dataKey="achievement" name="Achievement" stroke="#6b7280" fontSize={11} unit="%" domain={[0, 100]} />
               <ZAxis type="number" dataKey="doctors" range={[80, 600]} />
               <Tooltip 
                 cursor={{ strokeDasharray: "3 3" }} 
-                contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
+                contentStyle={{ borderRadius: 12, border: "1px solid var(--theme-bg-sidebar)", background: "#ffffff" }}
                 formatter={(value, name, props) => {
                   if (name === 'Price') return [`₹${value}`, name];
                   if (name === 'Achievement') return [`${value}%`, name];
@@ -379,41 +380,41 @@ export function DoctorSection({
                   return [value, name];
                 }}
               />
-              <Scatter data={scatter} fill="#C6693C" fillOpacity={0.7} />
+              <Scatter data={scatter} fill="var(--theme-primary)" fillOpacity={0.7} />
             </ScatterChart>
           </ResponsiveContainer>
         </ChartCard>
         <ChartCard title="Quality Analytics" subtitle="Average doctor quality">
           <div className="relative h-40">
             <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart innerRadius="70%" outerRadius="100%" data={[{ name: "q", value: displayAvgQuality, fill: "#C6693C" }]} startAngle={225} endAngle={-45}>
-                <RadialBar background={{ fill: "#E8B59F" }} dataKey="value" cornerRadius={20} />
+              <RadialBarChart innerRadius="70%" outerRadius="100%" data={[{ name: "q", value: displayAvgQuality, fill: "var(--theme-primary)" }]} startAngle={225} endAngle={-45}>
+                <RadialBar background={{ fill: "var(--theme-bg-sidebar)" }} dataKey="value" cornerRadius={20} />
               </RadialBarChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 grid place-items-center pointer-events-none">
               <div className="text-center">
-                <p className="text-3xl font-bold text-[#C6693C]">{displayAvgQuality}</p>
+                <p className="text-3xl font-bold text-[var(--theme-primary)]">{displayAvgQuality}</p>
                 <p className="text-[11px] text-gray-500">/ 100</p>
               </div>
             </div>
           </div>
           <div className="space-y-2 mt-3">
             {qBuckets.map(b => (
-              <div key={b.label} className="flex items-center justify-between text-sm px-3 py-2 rounded-xl bg-[#FBE9E7] border border-[#E8B59F]">
+              <div key={b.label} className="flex items-center justify-between text-sm px-3 py-2 rounded-xl bg-[var(--theme-primary-bg)] border border-[var(--theme-bg-sidebar)]">
                 <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: b.tone }} />{b.label}</span>
                 <span className="font-semibold">{b.count}</span>
               </div>
             ))}
           </div>
         </ChartCard>
-      </div>
+      </div> */}
 
       {/* ✅ Doctor Directory Table */}
       <ChartCard title="Doctor Directory" subtitle="Click a row for full drill-down" className="mt-4">
         <div className="overflow-x-auto -mx-2 max-h-[520px]">
           <Table>
             <TableHeader className="sticky top-0 bg-white z-10">
-              <TableRow className="bg-[#FFF5F0]">
+              <TableRow className="bg-[var(--theme-bg-light)]">
                 <TableHead className="text-base font-semibold">Sr. No.</TableHead>
                 <TableHead className="text-base font-semibold">Doctor</TableHead>
                 <TableHead className="text-base font-semibold">Hospital</TableHead>
@@ -427,7 +428,15 @@ export function DoctorSection({
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-200">
-              {doctorList.length > 0 ? (
+              {tableLoading ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="p-8 text-center">
+                    <div className="flex justify-center items-center w-full">
+                      <LoaderSpinner />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : doctorList.length > 0 ? (
                 doctorList.map((d, index) => {
                   const achievement = d.achievement || 0;
                   const isActive = d.status === "Active";
@@ -441,14 +450,14 @@ export function DoctorSection({
                       <td className="p-4 text-[17px] font-normal text-[#252C58]">
                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </td>
-                      <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[#C6693C] hover:underline">
+                      <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[var(--theme-primary)] hover:underline">
                         {d.doctorName || 'N/A'}
                       </td>
                       <td className="px-4 py-3 text-[15px] whitespace-nowrap">
                         {d.associatedHospital || 'N/A'}
                       </td>
                       <td className="px-4 py-3 text-[15px] whitespace-nowrap">
-                        <Badge variant="secondary" className="rounded-full bg-[#FFF5F0] text-[#8B5A3C] border-[#E8C9B8]">
+                        <Badge variant="secondary" className="rounded-full bg-[var(--theme-bg-light)] text-[var(--theme-text-secondary)] border-[var(--theme-border)]">
                           {d.speciality || 'N/A'}
                         </Badge>
                       </td>
@@ -487,7 +496,7 @@ export function DoctorSection({
         </div>
         
         {/* ✅ Pagination - Using the same Pagination component as Dashboard */}
-        <div className="px-4 py-3 border-t border-[#E8C9B8] bg-gray-50 rounded-b-2xl">
+        <div className="px-4 py-3 border-t border-[var(--theme-border)] bg-gray-50 rounded-b-2xl">
           {!loading && totalRecords > 0 && (
             <Pagination
               currentPage={currentPage}
@@ -505,8 +514,8 @@ export function DoctorSection({
       <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-[#A54A29]">
-              <LucideIcons.Stethoscope size={18} className="text-[#C6693C]" />
+            <DialogTitle className="flex items-center gap-2 text-[var(--theme-accent)]">
+              <LucideIcons.Stethoscope size={18} className="text-[var(--theme-primary)]" />
               {open?.doctorName || 'Doctor Details'}
             </DialogTitle>
           </DialogHeader>
@@ -534,8 +543,8 @@ export function DoctorSection({
                 <Mini label="Quality Score" value={`${open.qualityScore || 0}/100`} />
               </TabsContent>
               <TabsContent value="visits" className="mt-4">
-                <div className="rounded-xl border border-[#E8B59F] p-4">
-                  <p className="font-semibold text-[#A54A29]">Visit Summary</p>
+                <div className="rounded-xl border border-[var(--theme-bg-sidebar)] p-4">
+                  <p className="font-semibold text-[var(--theme-accent)]">Visit Summary</p>
                   <div className="grid grid-cols-3 gap-3 mt-3">
                     <Mini label="Total Visits" value={String(open.totalVisit || 0)} />
                     <Mini label="Target" value={String(open.totalTarget || 0)} />

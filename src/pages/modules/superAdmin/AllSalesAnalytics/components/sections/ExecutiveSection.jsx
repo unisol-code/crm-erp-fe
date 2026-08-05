@@ -24,14 +24,14 @@ import Pagination from "../../../../../../components/uiComponents/pagination/Pag
 
 function MiniStat({ label, value, icon, tone }) {
   return (
-    <div className="rounded-xl border border-[#E8C9B8] p-3 bg-[#FFF8F5]">
+    <div className="rounded-xl border border-[var(--theme-border)] p-3 bg-[var(--theme-card-bg)]">
       <div className="flex items-center gap-2">
-        {icon && <span className="text-[#C6693C]">{icon}</span>}
-        <p className="text-[10px] font-semibold text-[#8B5A3C] uppercase tracking-wider">
+        {icon && <span className="text-[var(--theme-primary)]">{icon}</span>}
+        <p className="text-[10px] font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
           {label}
         </p>
       </div>
-      <p className={`text-lg font-bold mt-0.5 ${tone === "success" ? "text-green-600" : "text-[#5A2D1A]"}`}>
+      <p className={`text-lg font-bold mt-0.5 ${tone === "success" ? "text-green-600" : "text-[var(--theme-text-primary)]"}`}>
         {value || 0}
       </p>
     </div>
@@ -45,9 +45,9 @@ function TargetCard({ target }) {
                           "text-red-600";
 
   return (
-    <div className="bg-white rounded-lg border border-[#E8C9B8] p-3 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg border border-[var(--theme-border)] p-3 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-medium text-[#5A2D1A] truncate flex-1 mr-2">
+        <p className="text-sm font-medium text-[var(--theme-text-primary)] truncate flex-1 mr-2">
           {target?.doctorName || 'N/A'}
         </p>
         <Badge className={`rounded-full ${achievementColor} bg-opacity-10 whitespace-nowrap`}>
@@ -114,6 +114,8 @@ export function ExecutiveSection({
     }
     return executives || [];
   }, [salesPersonData, executives]);
+
+  console.log("sales persons", salesPersons);
 
   // ✅ Process sales person target data
   const targetList = useMemo(() => {
@@ -247,7 +249,7 @@ export function ExecutiveSection({
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <LoaderSpinner />
-          <p className="mt-4 text-[#8B5A3C] font-medium">Loading executive data...</p>
+          <p className="mt-4 text-[var(--theme-text-secondary)] font-medium">Loading executive data...</p>
         </div>
       </div>
     );
@@ -257,7 +259,7 @@ export function ExecutiveSection({
   if ((!salesPersons || salesPersons.length === 0) && (!targetList || targetList.length === 0)) {
     return (
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-[#A54A29] mb-2">
+        <h2 className="text-2xl font-semibold tracking-tight text-[var(--theme-accent)] mb-2">
           Sales Executive Performance
         </h2>
         <div className="flex items-center justify-center h-64 text-gray-400">
@@ -272,28 +274,28 @@ export function ExecutiveSection({
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-[#A54A29]">
+          <h2 className="text-2xl font-semibold tracking-tight text-[var(--theme-accent)]">
             Sales Executive Performance
           </h2>
           <p className="text-sm text-gray-600 mt-1">
             {summaryStats.total || 0} executives · {summaryStats.activePersons || 0} active · {summaryStats.totalVisits || 0} total visits
-            {filters?.state && <span className="ml-2 font-medium text-[#C6693C]">| {filters.state}</span>}
-            {filters?.district && <span className="ml-2 font-medium text-[#C6693C]">| {filters.district}</span>}
-            {filters?.month && <span className="ml-2 font-medium text-[#C6693C]">| {filters.month}</span>}
+            {filters?.state && <span className="ml-2 font-medium text-[var(--theme-primary)]">| {filters.state}</span>}
+            {filters?.district && <span className="ml-2 font-medium text-[var(--theme-primary)]">| {filters.district}</span>}
+            {filters?.month && <span className="ml-2 font-medium text-[var(--theme-primary)]">| {filters.month}</span>}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-1 border-b border-[#E8C9B8] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">
+      <div className="flex flex-wrap gap-1 border-b border-[var(--theme-border)] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">
         <button
           onClick={() => setActiveTab("overview")}
           className={`
             flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap
             rounded-lg
             ${activeTab === "overview"
-              ? 'bg-[#C6693C] text-white shadow-md shadow-[#C6693C]/20'
-              : 'text-[#6B4226] hover:bg-[#F5E0D6] hover:text-[#C6693C]'
+              ? 'bg-[var(--theme-primary)] text-white shadow-md shadow-[var(--theme-primary)]/20'
+              : 'text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-hover)] hover:text-[var(--theme-primary)]'
             }
           `}
         >
@@ -311,8 +313,8 @@ export function ExecutiveSection({
             flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap
             rounded-lg
             ${activeTab === "targets"
-              ? 'bg-[#C6693C] text-white shadow-md shadow-[#C6693C]/20'
-              : 'text-[#6B4226] hover:bg-[#F5E0D6] hover:text-[#C6693C]'
+              ? 'bg-[var(--theme-primary)] text-white shadow-md shadow-[var(--theme-primary)]/20'
+              : 'text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-hover)] hover:text-[var(--theme-primary)]'
             }
           `}
         >
@@ -335,7 +337,7 @@ export function ExecutiveSection({
               size="sm" 
               variant={viewMode === 'grid' ? 'default' : 'outline'}
               onClick={() => setViewMode('grid')}
-              className={`rounded-lg ${viewMode === 'grid' ? 'bg-[#C6693C] text-white' : 'border-[#E8C9B8]'}`}
+              className={`rounded-lg ${viewMode === 'grid' ? 'bg-[var(--theme-primary)] text-white' : 'border-[var(--theme-border)]'}`}
             >
               <LucideIcons.Grid size={14} /> Grid
             </Button>
@@ -343,7 +345,7 @@ export function ExecutiveSection({
               size="sm" 
               variant={viewMode === 'table' ? 'default' : 'outline'}
               onClick={() => setViewMode('table')}
-              className={`rounded-lg ${viewMode === 'table' ? 'bg-[#C6693C] text-white' : 'border-[#E8C9B8]'}`}
+              className={`rounded-lg ${viewMode === 'table' ? 'bg-[var(--theme-primary)] text-white' : 'border-[var(--theme-border)]'}`}
             >
               <LucideIcons.List size={14} /> Table
             </Button>
@@ -390,25 +392,25 @@ export function ExecutiveSection({
 
           {/* Top Performer Highlight */}
           {topPerformer && (
-            <div className="bg-gradient-to-r from-[#C6693C]/10 to-[#C6693C]/5 rounded-2xl p-4 border border-[#C6693C]/20 mb-6">
+            <div className="bg-gradient-to-r from-[var(--theme-primary)]/10 to-[var(--theme-primary)]/5 rounded-2xl p-4 border border-[var(--theme-primary)]/20 mb-6">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-full bg-[#C6693C] grid place-items-center text-white text-xl font-bold">
+                  <div className="h-14 w-14 rounded-full bg-[var(--theme-primary)] grid place-items-center text-white text-xl font-bold">
                     {topPerformer.name?.charAt(0) || '?'}
                   </div>
                   <div>
-                    <p className="text-sm text-[#8B5A3C] font-medium">🏆 Top Performer</p>
-                    <p className="text-xl font-bold text-[#5A2D1A]">{topPerformer.name || 'N/A'}</p>
-                    <p className="text-sm text-[#C6693C]">{topPerformer.company || 'N/A'}</p>
+                    <p className="text-sm text-[var(--theme-text-secondary)] font-medium">🏆 Top Performer</p>
+                    <p className="text-xl font-bold text-[var(--theme-text-primary)]">{topPerformer.name || 'N/A'}</p>
+                    <p className="text-sm text-[var(--theme-primary)]">{topPerformer.company || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-[#C6693C]">{topPerformer.successPercentage || 0}%</p>
+                    <p className="text-2xl font-bold text-[var(--theme-primary)]">{topPerformer.successPercentage || 0}%</p>
                     <p className="text-xs text-gray-500">Success Rate</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-[#5A2D1A]">{topPerformer.totalVisits || 0}</p>
+                    <p className="text-2xl font-bold text-[var(--theme-text-primary)]">{topPerformer.totalVisits || 0}</p>
                     <p className="text-xs text-gray-500">Total Visits</p>
                   </div>
                   <div className="text-center">
@@ -429,21 +431,21 @@ export function ExecutiveSection({
                   return (
                     <div 
                       key={index}
-                      className={`bg-white rounded-2xl border ${isTopPerformer ? 'border-[#C6693C] shadow-md shadow-[#C6693C]/10' : 'border-[#E8C9B8]'} p-4 hover:shadow-lg transition-shadow cursor-pointer`}
+                      className={`bg-white rounded-2xl border ${isTopPerformer ? 'border-[var(--theme-primary)] shadow-md shadow-[var(--theme-primary)]/10' : 'border-[var(--theme-border)]'} p-4 hover:shadow-lg transition-shadow cursor-pointer`}
                       onClick={() => setSelectedPerson(selectedPerson === index ? null : index)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className={`h-10 w-10 rounded-full ${isTopPerformer ? 'bg-[#C6693C]' : 'bg-[#FFF5F0]'} grid place-items-center ${isTopPerformer ? 'text-white' : 'text-[#C6693C]'} font-semibold`}>
+                          <div className={`h-10 w-10 rounded-full ${isTopPerformer ? 'bg-[var(--theme-primary)]' : 'bg-[var(--theme-bg-light)]'} grid place-items-center ${isTopPerformer ? 'text-white' : 'text-[var(--theme-primary)]'} font-semibold`}>
                             {person?.name?.charAt(0) || '?'}
                           </div>
                           <div>
-                            <p className="font-medium text-[#5A2D1A]">{person?.name || 'N/A'}</p>
+                            <p className="font-medium text-[var(--theme-text-primary)]">{person?.name || 'N/A'}</p>
                             <p className="text-xs text-gray-500">{person?.company || 'N/A'}</p>
                           </div>
                         </div>
                         {isTopPerformer && (
-                          <Badge className="bg-[#C6693C]/10 text-[#C6693C] border-[#C6693C]/20 rounded-full">
+                          <Badge className="bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] border-[var(--theme-primary)]/20 rounded-full">
                             🏆 Top
                           </Badge>
                         )}
@@ -451,7 +453,7 @@ export function ExecutiveSection({
 
                       <div className="grid grid-cols-3 gap-2 mt-3">
                         <div className="text-center">
-                          <p className="text-sm font-bold text-[#5A2D1A]">{person?.totalVisits || 0}</p>
+                          <p className="text-sm font-bold text-[var(--theme-text-primary)]">{person?.totalVisits || 0}</p>
                           <p className="text-[9px] text-gray-500 uppercase">Visits</p>
                         </div>
                         <div className="text-center">
@@ -459,13 +461,13 @@ export function ExecutiveSection({
                           <p className="text-[9px] text-gray-500 uppercase">Success</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-[#C6693C]">{person?.successPercentage || 0}%</p>
+                          <p className="text-sm font-bold text-[var(--theme-primary)]">{person?.successPercentage || 0}%</p>
                           <p className="text-[9px] text-gray-500 uppercase">Rate</p>
                         </div>
                       </div>
 
                       {selectedPerson === index && (
-                        <div className="mt-3 pt-3 border-t border-[#E8C9B8]">
+                        <div className="mt-3 pt-3 border-t border-[var(--theme-border)]">
                           <div className="grid grid-cols-2 gap-2">
                             <MiniStat 
                               label="Hospitals" 
@@ -508,7 +510,7 @@ export function ExecutiveSection({
             <ChartCard title="Executive Directory" subtitle="Complete performance overview">
               <div className="overflow-x-auto -mx-2">
                 <Table>
-                  <TableHeader className="bg-[#FFF5F0]">
+                  <TableHeader className="bg-[var(--theme-bg-light)]">
                     <TableRow>
                       <TableHead className="text-base font-semibold">#</TableHead>
                       <TableHead className="text-base font-semibold">Executive</TableHead>
@@ -530,13 +532,13 @@ export function ExecutiveSection({
                         return (
                           <TableRow 
                             key={index} 
-                            className={`hover:bg-gray-50 transition-all ${isTopPerformer ? 'bg-[#FFF5F0]' : ''}`}
+                            className={`hover:bg-gray-50 transition-all ${isTopPerformer ? 'bg-[var(--theme-bg-light)]' : ''}`}
                           >
                             <td className="p-4 text-[17px] font-normal text-[#252C58]">
                               {index + 1}
-                              {isTopPerformer && <span className="ml-1 text-[#C6693C]">🏆</span>}
+                              {isTopPerformer && <span className="ml-1 text-[var(--theme-primary)]">🏆</span>}
                             </td>
-                            <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[#C6693C]">
+                            <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[var(--theme-primary)]">
                               {person?.name || 'N/A'}
                             </td>
                             <td className="px-4 py-3 text-[15px] whitespace-nowrap">
@@ -634,14 +636,14 @@ export function ExecutiveSection({
                       outerRadius={90}
                       paddingAngle={2}
                       label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
-                      labelLine={{ stroke: '#E8B59F', strokeWidth: 1 }}
+                      labelLine={{ stroke: 'var(--theme-bg-sidebar)', strokeWidth: 1 }}
                     >
                       {achievementDistribution.map((entry, index) => (
                         <Cell key={index} fill={entry.fill} />
                       ))}
                     </Pie>
                     <Tooltip
-                      contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
+                      contentStyle={{ borderRadius: 12, border: "1px solid var(--theme-bg-sidebar)", background: "#ffffff" }}
                       formatter={(value, name) => [`${value || 0} records`, name]}
                     />
                     <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
@@ -652,8 +654,8 @@ export function ExecutiveSection({
 
             <ChartCard title="Target Overview" subtitle="Quick summary" className="lg:col-span-2">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-gradient-to-br from-[#C6693C]/10 to-[#C6693C]/5 rounded-xl p-3 text-center border border-[#C6693C]/20">
-                  <p className="text-2xl font-bold text-[#C6693C]">{targetStats.totalRecords || 0}</p>
+                <div className="bg-gradient-to-br from-[var(--theme-primary)]/10 to-[var(--theme-primary)]/5 rounded-xl p-3 text-center border border-[var(--theme-primary)]/20">
+                  <p className="text-2xl font-bold text-[var(--theme-primary)]">{targetStats.totalRecords || 0}</p>
                   <p className="text-xs text-gray-500 truncate">Records</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-3 text-center border border-blue-200">
@@ -680,7 +682,7 @@ export function ExecutiveSection({
                 placeholder="Search by executive, doctor, organization..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 rounded-xl border-[#E8C9B8] focus:ring-[#C6693C]"
+                className="pl-9 rounded-xl border-[var(--theme-border)] focus:ring-[var(--theme-primary)]"
               />
             </div>
             <p className="text-sm text-gray-500">
@@ -694,11 +696,11 @@ export function ExecutiveSection({
               filteredTargets.map((target, index) => (
                 <div
                   key={index}
-                  className="bg-white rounded-2xl border border-[#E8C9B8] p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                  className="bg-white rounded-2xl border border-[var(--theme-border)] p-4 hover:shadow-lg transition-shadow cursor-pointer"
                   onClick={() => setSelectedTarget(selectedTarget === index ? null : index)}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-[#5A2D1A] truncate max-w-[60%]">
+                    <h4 className="font-semibold text-[var(--theme-text-primary)] truncate max-w-[60%]">
                       {target?.salesPersonName || 'N/A'}
                     </h4>
                     <Badge className={`rounded-full whitespace-nowrap ${
@@ -710,19 +712,19 @@ export function ExecutiveSection({
                     </Badge>
                   </div>
 
-                  <p className="text-sm text-[#C6693C] truncate">{target?.doctorName || 'N/A'}</p>
+                  <p className="text-sm text-[var(--theme-primary)] truncate">{target?.doctorName || 'N/A'}</p>
                   <p className="text-xs text-gray-500 truncate">{target?.organization || 'N/A'}</p>
 
                   <div className="grid grid-cols-3 gap-2 text-center text-sm mt-3">
-                    <div className="bg-[#FFF8F5] rounded-lg p-2">
+                    <div className="bg-[var(--theme-card-bg)] rounded-lg p-2">
                       <p className="text-[10px] text-gray-500 uppercase tracking-wide">Product</p>
-                      <p className="font-semibold text-[#5A2D1A] text-xs truncate">{target?.productName || 'N/A'}</p>
+                      <p className="font-semibold text-[var(--theme-text-primary)] text-xs truncate">{target?.productName || 'N/A'}</p>
                     </div>
-                    <div className="bg-[#FFF8F5] rounded-lg p-2">
+                    <div className="bg-[var(--theme-card-bg)] rounded-lg p-2">
                       <p className="text-[10px] text-gray-500 uppercase tracking-wide">Target</p>
-                      <p className="font-semibold text-[#5A2D1A]">{target?.monthlyTarget || 0}</p>
+                      <p className="font-semibold text-[var(--theme-text-primary)]">{target?.monthlyTarget || 0}</p>
                     </div>
-                    <div className="bg-[#FFF8F5] rounded-lg p-2">
+                    <div className="bg-[var(--theme-card-bg)] rounded-lg p-2">
                       <p className="text-[10px] text-gray-500 uppercase tracking-wide">Achieved</p>
                       <p className="font-semibold text-green-600">{target?.monthlyAchievement || 0}</p>
                     </div>
@@ -758,7 +760,7 @@ export function ExecutiveSection({
             <div className="overflow-x-auto -mx-2">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-[#FFF5F0]">
+                  <TableRow className="bg-[var(--theme-bg-light)]">
                     <TableHead className="text-base font-semibold">#</TableHead>
                     <TableHead className="text-base font-semibold">Executive</TableHead>
                     <TableHead className="text-base font-semibold">Doctor</TableHead>
@@ -779,7 +781,7 @@ export function ExecutiveSection({
                           <td className="p-4 text-[17px] font-normal text-[#252C58]">
                             {(targetPagination.currentPage - 1) * targetPagination.pageSize + index + 1}
                           </td>
-                          <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[#C6693C] max-w-[120px] truncate">
+                          <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[var(--theme-primary)] max-w-[120px] truncate">
                             {target?.salesPersonName || 'N/A'}
                           </td>
                           <td className="px-4 py-3 text-[15px] whitespace-nowrap max-w-[120px] truncate">
@@ -818,7 +820,7 @@ export function ExecutiveSection({
             </div>
 
             {/* Target Pagination */}
-            <div className="px-4 py-3 border-t border-[#E8C9B8] bg-gray-50 rounded-b-2xl">
+            <div className="px-4 py-3 border-t border-[var(--theme-border)] bg-gray-50 rounded-b-2xl">
               {(targetPagination?.totalRecords || 0) > 0 && (
                 <Pagination
                   currentPage={targetPagination.currentPage || 1}

@@ -88,13 +88,13 @@ export function SelectTrigger({ className = "", children, isOpen, setIsOpen, sel
 
   return (
     <div 
-      className={`flex h-11 w-full items-center justify-between rounded-lg bg-white px-3.5 py-2.5 text-sm ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C6693C] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer hover:border-[#C6693C] transition-all duration-200 ${className}`}
+      className={`flex h-11 w-full items-center justify-between rounded-lg bg-white px-3.5 py-2.5 text-sm ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer hover:border-[var(--theme-primary)] transition-all duration-200 ${className}`}
       onClick={handleClick}
     >
-      <span className="truncate flex-1 font-medium text-[#3D2314]">{children}</span>
+      <span className="truncate flex-1 font-medium text-[var(--theme-text-primary)]">{children}</span>
       <LucideIcons.ChevronDown 
         size={18} 
-        className={`transition-transform duration-200 flex-shrink-0 ml-2 text-[#8B5A3C] ${isOpen ? "rotate-180" : ""}`} 
+        className={`transition-transform duration-200 flex-shrink-0 ml-2 text-[var(--theme-text-secondary)] ${isOpen ? "rotate-180" : ""}`} 
       />
     </div>
   );
@@ -102,14 +102,14 @@ export function SelectTrigger({ className = "", children, isOpen, setIsOpen, sel
 
 export function SelectValue({ placeholder, children }) {
   const displayText = children || placeholder || "Select...";
-  return <span className="text-sm text-[#3D2314]">{displayText}</span>;
+  return <span className="text-sm text-[var(--theme-text-primary)]">{displayText}</span>;
 }
 
 export function SelectContent({ children, isOpen }) {
   if (!isOpen) return null;
   
   return (
-    <div className="absolute z-[9999] w-full mt-1.5 rounded-xl border border-[#E8C9B8] bg-white shadow-xl max-h-60 overflow-auto py-1.5">
+    <div className="absolute z-[9999] w-full mt-1.5 rounded-xl border border-[var(--theme-border)] bg-white shadow-xl max-h-60 overflow-auto py-1.5">
       {children}
     </div>
   );
@@ -130,8 +130,8 @@ export function SelectItem({ value, children, handleSelect, selected }) {
     <div 
       className={`flex cursor-pointer select-none items-center py-2.5 px-4 text-sm outline-none transition-all duration-150 ${
         isSelected 
-          ? 'bg-[#C6693C] text-white' 
-          : 'text-[#3D2314] hover:bg-[#F5E0D6]'
+          ? 'bg-[var(--theme-primary)] text-white' 
+          : 'text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-hover)]'
       }`}
       onClick={handleClick}
     >

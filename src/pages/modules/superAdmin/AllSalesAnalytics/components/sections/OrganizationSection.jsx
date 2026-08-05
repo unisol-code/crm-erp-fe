@@ -40,14 +40,14 @@ import Pagination from "../../../../../../components/uiComponents/pagination/Pag
 
 function MiniStat({ label, value, icon, tone, subtitle }) {
   return (
-    <div className="rounded-xl border border-[#E8C9B8] p-4 bg-[#FFF8F5]">
+    <div className="rounded-xl border border-[var(--theme-border)] p-4 bg-[var(--theme-card-bg)]">
       <div className="flex items-center gap-2">
-        {icon && <span className="text-[#C6693C]">{icon}</span>}
-        <p className="text-[10px] font-semibold text-[#8B5A3C] uppercase tracking-wider">
+        {icon && <span className="text-[var(--theme-primary)]">{icon}</span>}
+        <p className="text-[10px] font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
           {label}
         </p>
       </div>
-      <p className={`text-2xl font-bold mt-1 ${tone === "success" ? "text-green-600" : tone === "info" ? "text-blue-600" : "text-[#5A2D1A]"}`}>
+      <p className={`text-2xl font-bold mt-1 ${tone === "success" ? "text-green-600" : tone === "info" ? "text-blue-600" : "text-[var(--theme-text-primary)]"}`}>
         {value}
       </p>
       {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
@@ -61,9 +61,9 @@ function ProductCard({ product, organizationName }) {
                           "text-red-600";
 
   return (
-    <div className="bg-white rounded-lg border border-[#E8C9B8] p-3 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg border border-[var(--theme-border)] p-3 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-medium text-[#5A2D1A] truncate flex-1 mr-2">{product.productName}</p>
+        <p className="text-sm font-medium text-[var(--theme-text-primary)] truncate flex-1 mr-2">{product.productName}</p>
         <Badge className={`rounded-full ${achievementColor} bg-opacity-10 whitespace-nowrap`}>
           {product.achievementPercentage}%
         </Badge>
@@ -90,7 +90,7 @@ function ProductCard({ product, organizationName }) {
 function Sel({ label, value, onChange, options }) {
   return (
     <div className="min-w-0">
-      <label className="text-[11px] font-medium text-[#A54A29] uppercase tracking-wide">{label}</label>
+      <label className="text-[11px] font-medium text-[var(--theme-accent)] uppercase tracking-wide">{label}</label>
       <Select value={value || undefined} onValueChange={onChange}>
         <SelectTrigger className="mt-1 rounded-xl bg-white"><SelectValue placeholder="All" /></SelectTrigger>
         <SelectContent>
@@ -105,25 +105,25 @@ function Gauge({ label, target, pct }) {
   const achieved = Math.round((target * pct) / 100);
   const remaining = Math.max(0, target - achieved);
   return (
-    <div className="rounded-2xl border border-[#E8B59F] p-4 bg-[#FBE9E7]">
+    <div className="rounded-2xl border border-[var(--theme-bg-sidebar)] p-4 bg-[var(--theme-primary-bg)]">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-semibold text-[#A54A29]">{label}</p>
+        <p className="text-sm font-semibold text-[var(--theme-accent)]">{label}</p>
         <span className="text-xs text-gray-500">{pct}%</span>
       </div>
       <div className="relative h-28">
         <ResponsiveContainer width="100%" height="100%">
-          <RadialBarChart innerRadius="70%" outerRadius="100%" data={[{ v: pct, fill: "#C6693C" }]} startAngle={225} endAngle={-45}>
-            <RadialBar background={{ fill: "#E8B59F" }} dataKey="v" cornerRadius={20} />
+          <RadialBarChart innerRadius="70%" outerRadius="100%" data={[{ v: pct, fill: "var(--theme-primary)" }]} startAngle={225} endAngle={-45}>
+            <RadialBar background={{ fill: "var(--theme-bg-sidebar)" }} dataKey="v" cornerRadius={20} />
           </RadialBarChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 grid place-items-center pointer-events-none">
-          <p className="text-2xl font-bold text-[#C6693C]">{pct}%</p>
+          <p className="text-2xl font-bold text-[var(--theme-primary)]">{pct}%</p>
         </div>
       </div>
       <div className="grid grid-cols-3 gap-1 mt-2 text-center text-[11px]">
-        <div><p className="text-gray-500">Target</p><p className="font-semibold text-[#A54A29]">{target.toLocaleString()}</p></div>
+        <div><p className="text-gray-500">Target</p><p className="font-semibold text-[var(--theme-accent)]">{target.toLocaleString()}</p></div>
         <div><p className="text-gray-500">Achieved</p><p className="font-semibold text-green-500">{achieved.toLocaleString()}</p></div>
-        <div><p className="text-gray-500">Remaining</p><p className="font-semibold text-[#A54A29]">{remaining.toLocaleString()}</p></div>
+        <div><p className="text-gray-500">Remaining</p><p className="font-semibold text-[var(--theme-accent)]">{remaining.toLocaleString()}</p></div>
       </div>
     </div>
   );
@@ -131,8 +131,8 @@ function Gauge({ label, target, pct }) {
 
 function M({ label, value }) {
   return (
-    <div className="rounded-xl border border-[#E8B59F] p-3 bg-[#FBE9E7]">
-      <p className="text-[11px] text-[#A54A29] uppercase tracking-wide">{label}</p>
+    <div className="rounded-xl border border-[var(--theme-bg-sidebar)] p-3 bg-[var(--theme-primary-bg)]">
+      <p className="text-[11px] text-[var(--theme-accent)] uppercase tracking-wide">{label}</p>
       <p className="text-lg font-semibold mt-0.5">{value}</p>
     </div>
   );
@@ -144,6 +144,7 @@ export function OrganizationSection({
   organizationDashboardData,
   organizationProductData,
   loading = false,
+  tableLoading = false,
   onProductPageChange,
   onProductItemsPerPageChange,
   // ✅ New props for organization list
@@ -447,7 +448,7 @@ export function OrganizationSection({
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <LoaderSpinner />
-          <p className="mt-4 text-[#8B5A3C] font-medium">Loading organization data...</p>
+          <p className="mt-4 text-[var(--theme-text-secondary)] font-medium">Loading organization data...</p>
         </div>
       </div>
     );
@@ -457,7 +458,7 @@ export function OrganizationSection({
   if (!organizationDashboardData && filtered.length === 0 && orgProductList.length === 0 && organizationList.length === 0) {
     return (
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-[#A54A29] mb-2">
+        <h2 className="text-2xl font-semibold tracking-tight text-[var(--theme-accent)] mb-2">
           Organization Analytics
         </h2>
         <div className="flex items-center justify-center h-64 text-gray-400">
@@ -469,26 +470,26 @@ export function OrganizationSection({
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold tracking-tight text-[#A54A29] mb-2">
+      <h2 className="text-2xl font-semibold tracking-tight text-[var(--theme-accent)] mb-2">
         Organization Analytics
       </h2>
       <p className="text-sm text-gray-600 mb-6">
         Hospital infrastructure, capacity, surgery analytics & product performance
-        {filters.state && <span className="ml-2 font-medium text-[#C6693C]">Filtered by: {filters.state}</span>}
-        {filters.district && <span className="ml-2 font-medium text-[#C6693C]">| {filters.district}</span>}
-        {filters.city && <span className="ml-2 font-medium text-[#C6693C]">| {filters.city}</span>}
+        {filters.state && <span className="ml-2 font-medium text-[var(--theme-primary)]">Filtered by: {filters.state}</span>}
+        {filters.district && <span className="ml-2 font-medium text-[var(--theme-primary)]">| {filters.district}</span>}
+        {filters.city && <span className="ml-2 font-medium text-[var(--theme-primary)]">| {filters.city}</span>}
       </p>
 
       {/* Custom Tabs */}
-      <div className="flex flex-wrap gap-1 border-b border-[#E8C9B8] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">
+      <div className="flex flex-wrap gap-1 border-b border-[var(--theme-border)] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">
         <button
           onClick={() => setActiveTab("overview")}
           className={`
             flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap
             rounded-lg
             ${activeTab === "overview"
-              ? 'bg-[#C6693C] text-white shadow-md shadow-[#C6693C]/20'
-              : 'text-[#6B4226] hover:bg-[#F5E0D6] hover:text-[#C6693C]'
+              ? 'bg-[var(--theme-primary)] text-white shadow-md shadow-[var(--theme-primary)]/20'
+              : 'text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-hover)] hover:text-[var(--theme-primary)]'
             }
           `}
         >
@@ -506,8 +507,8 @@ export function OrganizationSection({
             flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap
             rounded-lg
             ${activeTab === "hospitals"
-              ? 'bg-[#C6693C] text-white shadow-md shadow-[#C6693C]/20'
-              : 'text-[#6B4226] hover:bg-[#F5E0D6] hover:text-[#C6693C]'
+              ? 'bg-[var(--theme-primary)] text-white shadow-md shadow-[var(--theme-primary)]/20'
+              : 'text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-hover)] hover:text-[var(--theme-primary)]'
             }
           `}
         >
@@ -525,8 +526,8 @@ export function OrganizationSection({
             flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap
             rounded-lg
             ${activeTab === "products"
-              ? 'bg-[#C6693C] text-white shadow-md shadow-[#C6693C]/20'
-              : 'text-[#6B4226] hover:bg-[#F5E0D6] hover:text-[#C6693C]'
+              ? 'bg-[var(--theme-primary)] text-white shadow-md shadow-[var(--theme-primary)]/20'
+              : 'text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-hover)] hover:text-[var(--theme-primary)]'
             }
           `}
         >
@@ -595,14 +596,14 @@ export function OrganizationSection({
                       outerRadius={95} 
                       paddingAngle={3}
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      labelLine={{ stroke: '#E8B59F', strokeWidth: 1 }}
+                      labelLine={{ stroke: 'var(--theme-bg-sidebar)', strokeWidth: 1 }}
                     >
                       {hospitalTypeData.map((item, i) => (
                         <Cell key={i} fill={item.fill} />
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
+                      contentStyle={{ borderRadius: 12, border: "1px solid var(--theme-bg-sidebar)", background: "#ffffff" }}
                       formatter={(value, name) => [`${value} hospitals`, name]}
                     />
                     <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
@@ -646,9 +647,9 @@ export function OrganizationSection({
 
           {/* Additional Statistics */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
-            <div className="bg-gradient-to-r from-[#C6693C]/10 to-[#C6693C]/5 rounded-xl p-4 border border-[#C6693C]/20 text-center">
-              <p className="text-xs text-[#8B5A3C] font-medium">🏥 Avg Beds/Hospital</p>
-              <p className="text-2xl font-bold text-[#5A2D1A]">{derivedMetrics.avgBedsPerHospital}</p>
+            <div className="bg-gradient-to-r from-[var(--theme-primary)]/10 to-[var(--theme-primary)]/5 rounded-xl p-4 border border-[var(--theme-primary)]/20 text-center">
+              <p className="text-xs text-[var(--theme-text-secondary)] font-medium">🏥 Avg Beds/Hospital</p>
+              <p className="text-2xl font-bold text-[var(--theme-text-primary)]">{derivedMetrics.avgBedsPerHospital}</p>
             </div>
             <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-xl p-4 border border-blue-200 text-center">
               <p className="text-xs text-blue-600 font-medium">🛏️ Avg ICU/Hospital</p>
@@ -708,7 +709,7 @@ export function OrganizationSection({
             <div className="overflow-x-auto -mx-2">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-[#FFF5F0]">
+                  <TableRow className="bg-[var(--theme-bg-light)]">
                     <TableHead className="text-base font-semibold">#</TableHead>
                     <TableHead className="text-base font-semibold">Hospital</TableHead>
                     <TableHead className="text-base font-semibold">Type</TableHead>
@@ -721,13 +722,21 @@ export function OrganizationSection({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {organizationList.length > 0 ? (
+                  {tableLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="p-8 text-center">
+                        <div className="flex justify-center items-center w-full">
+                          <LoaderSpinner />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : organizationList.length > 0 ? (
                     organizationList.map((hospital, index) => (
                       <TableRow key={index} className="hover:bg-gray-50 transition-all">
                         <td className="p-4 text-[17px] font-normal text-[#252C58]">
                           {(listPagination.currentPage - 1) * listPagination.pageSize + index + 1}
                         </td>
-                        <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[#C6693C]">
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[var(--theme-primary)]">
                           {hospital.hospitalName || 'N/A'}
                         </td>
                         <td className="px-4 py-3 text-[15px] whitespace-nowrap">
@@ -736,7 +745,7 @@ export function OrganizationSection({
                           </Badge>
                         </td>
                         <td className="px-4 py-3 text-[15px] whitespace-nowrap">
-                          <Badge variant="secondary" className="rounded-full bg-[#FFF5F0] border-[#E8C9B8]">
+                          <Badge variant="secondary" className="rounded-full bg-[var(--theme-bg-light)] border-[var(--theme-border)]">
                             {hospital.typeOfHospital || 'N/A'}
                           </Badge>
                         </td>
@@ -744,7 +753,7 @@ export function OrganizationSection({
                           <div className="flex flex-wrap gap-1">
                             {hospital.specialities && hospital.specialities.length > 0 ? (
                               hospital.specialities.filter(s => s && s.trim() !== '').slice(0, 2).map((s, idx) => (
-                                <span key={idx} className="px-2 py-0.5 bg-[#FFF5F0] text-[#8B5A3C] text-xs rounded-full border border-[#E8C9B8]">
+                                <span key={idx} className="px-2 py-0.5 bg-[var(--theme-bg-light)] text-[var(--theme-text-secondary)] text-xs rounded-full border border-[var(--theme-border)]">
                                   {s}
                                 </span>
                               ))
@@ -769,7 +778,7 @@ export function OrganizationSection({
                           {hospital.surgeries && hospital.surgeries.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {hospital.surgeries.filter(s => s.surgeryType && s.surgeryType.trim() !== '' && s.count > 0).slice(0, 1).map((s, idx) => (
-                                <span key={idx} className="px-2 py-0.5 bg-[#FFF5F0] text-[#C6693C] text-xs rounded-full border border-[#E8C9B8]">
+                                <span key={idx} className="px-2 py-0.5 bg-[var(--theme-bg-light)] text-[var(--theme-primary)] text-xs rounded-full border border-[var(--theme-border)]">
                                   {s.surgeryType}: {s.count}
                                 </span>
                               ))}
@@ -795,7 +804,7 @@ export function OrganizationSection({
             </div>
 
             {/* Hospital List Pagination */}
-            <div className="px-4 py-3 border-t border-[#E8C9B8] bg-gray-50 rounded-b-2xl">
+            <div className="px-4 py-3 border-t border-[var(--theme-border)] bg-gray-50 rounded-b-2xl">
               {listPagination.totalRecords > 0 && (
                 <Pagination
                   currentPage={listPagination.currentPage}
@@ -869,14 +878,14 @@ export function OrganizationSection({
                       outerRadius={90}
                       paddingAngle={2}
                       label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
-                      labelLine={{ stroke: '#E8B59F', strokeWidth: 1 }}
+                      labelLine={{ stroke: 'var(--theme-bg-sidebar)', strokeWidth: 1 }}
                     >
                       {achievementDistribution.map((entry, index) => (
                         <Cell key={index} fill={entry.fill} />
                       ))}
                     </Pie>
                     <Tooltip
-                      contentStyle={{ borderRadius: 12, border: "1px solid #E8B59F", background: "#ffffff" }}
+                      contentStyle={{ borderRadius: 12, border: "1px solid var(--theme-bg-sidebar)", background: "#ffffff" }}
                       formatter={(value, name) => [`${value} organizations`, name]}
                     />
                     <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
@@ -887,8 +896,8 @@ export function OrganizationSection({
 
             <ChartCard title="Product Performance" subtitle="Quick overview" className="lg:col-span-2">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-gradient-to-br from-[#C6693C]/10 to-[#C6693C]/5 rounded-xl p-3 text-center border border-[#C6693C]/20">
-                  <p className="text-2xl font-bold text-[#C6693C]">{productStats.totalOrgs}</p>
+                <div className="bg-gradient-to-br from-[var(--theme-primary)]/10 to-[var(--theme-primary)]/5 rounded-xl p-3 text-center border border-[var(--theme-primary)]/20">
+                  <p className="text-2xl font-bold text-[var(--theme-primary)]">{productStats.totalOrgs}</p>
                   <p className="text-xs text-gray-500 truncate">Organizations</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-3 text-center border border-blue-200">
@@ -915,7 +924,7 @@ export function OrganizationSection({
                 placeholder="Search organization or product..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 rounded-xl border-[#E8C9B8] focus:ring-[#C6693C]"
+                className="pl-9 rounded-xl border-[var(--theme-border)] focus:ring-[var(--theme-primary)]"
               />
             </div>
             <p className="text-sm text-gray-500">
@@ -928,12 +937,12 @@ export function OrganizationSection({
             {filteredProductData.map((org, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl border border-[#E8C9B8] p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                className="bg-white rounded-2xl border border-[var(--theme-border)] p-4 hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => setSelectedOrg(selectedOrg === index ? null : index)}
               >
                 {/* Organization Header */}
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-[#5A2D1A] truncate max-w-[60%]">
+                  <h4 className="font-semibold text-[var(--theme-text-primary)] truncate max-w-[60%]">
                     {org.organizationName}
                   </h4>
                   <Badge className={`rounded-full whitespace-nowrap ${
@@ -947,17 +956,17 @@ export function OrganizationSection({
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-3 gap-2 text-center text-sm mb-3">
-                  <div className="bg-[#FFF8F5] rounded-lg p-2">
+                  <div className="bg-[var(--theme-card-bg)] rounded-lg p-2">
                     <p className="text-[10px] text-gray-500 uppercase tracking-wide">Target</p>
-                    <p className="font-semibold text-[#5A2D1A]">{org.totalMonthlyTarget}</p>
+                    <p className="font-semibold text-[var(--theme-text-primary)]">{org.totalMonthlyTarget}</p>
                   </div>
-                  <div className="bg-[#FFF8F5] rounded-lg p-2">
+                  <div className="bg-[var(--theme-card-bg)] rounded-lg p-2">
                     <p className="text-[10px] text-gray-500 uppercase tracking-wide">Achieved</p>
                     <p className="font-semibold text-green-600">{org.totalMonthlyAchievement}</p>
                   </div>
-                  <div className="bg-[#FFF8F5] rounded-lg p-2">
+                  <div className="bg-[var(--theme-card-bg)] rounded-lg p-2">
                     <p className="text-[10px] text-gray-500 uppercase tracking-wide">Products</p>
-                    <p className="font-semibold text-[#C6693C]">{org.products?.length || 0}</p>
+                    <p className="font-semibold text-[var(--theme-primary)]">{org.products?.length || 0}</p>
                   </div>
                 </div>
 
@@ -983,8 +992,8 @@ export function OrganizationSection({
 
                 {/* Expanded Products */}
                 {selectedOrg === index && org.products && org.products.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-[#E8C9B8] space-y-2 max-h-60 overflow-y-auto">
-                    <p className="text-xs font-semibold text-[#8B5A3C] uppercase tracking-wider sticky top-0 bg-white py-1">
+                  <div className="mt-3 pt-3 border-t border-[var(--theme-border)] space-y-2 max-h-60 overflow-y-auto">
+                    <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider sticky top-0 bg-white py-1">
                       Products ({org.products.length})
                     </p>
                     {org.products.map((product, pIdx) => (
@@ -1006,7 +1015,7 @@ export function OrganizationSection({
             <div className="overflow-x-auto -mx-2">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-[#FFF5F0]">
+                  <TableRow className="bg-[var(--theme-bg-light)]">
                     <TableHead className="text-base font-semibold">#</TableHead>
                     <TableHead className="text-base font-semibold">Organization</TableHead>
                     <TableHead className="text-base font-semibold text-center">Products</TableHead>
@@ -1032,7 +1041,7 @@ export function OrganizationSection({
                         <td className="p-4 text-[17px] font-normal text-[#252C58]">
                           {(productPagination.currentPage - 1) * productPagination.pageSize + index + 1}
                         </td>
-                        <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[#C6693C] max-w-[150px] truncate">
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[var(--theme-primary)] max-w-[150px] truncate">
                           {org.organizationName}
                         </td>
                         <td className="px-4 py-3 text-[15px] whitespace-nowrap text-center">
@@ -1067,7 +1076,7 @@ export function OrganizationSection({
             </div>
 
             {/* Product Pagination */}
-            <div className="px-4 py-3 border-t border-[#E8C9B8] bg-gray-50 rounded-b-2xl">
+            <div className="px-4 py-3 border-t border-[var(--theme-border)] bg-gray-50 rounded-b-2xl">
               {productPagination.totalRecords > 0 && (
                 <Pagination
                   currentPage={productPagination.currentPage}
@@ -1101,18 +1110,18 @@ export function OrganizationSection({
                   <M label="CY Surgeries" value={arr.reduce((s, o) => s + (o.totalSurgeriesCalendarYear || 0), 0).toLocaleString()} />
                   <M label="Avg Achievement" value={`${Math.round(arr.reduce((s, o) => s + (o.productAchievement || 0), 0) / (arr.length || 1))}%`} />
                 </div>
-                <div className="rounded-2xl border border-[#E8B59F] p-4 bg-white">
-                  <p className="text-sm font-medium mb-2 text-[#A54A29]">Cities</p>
+                <div className="rounded-2xl border border-[var(--theme-bg-sidebar)] p-4 bg-white">
+                  <p className="text-sm font-medium mb-2 text-[var(--theme-accent)]">Cities</p>
                   <div className="flex flex-wrap gap-1">
                     {cities.map(c => <Badge key={c} variant="secondary" className="rounded-full">{c} · {arr.filter(o => o.city === c).length}</Badge>)}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-[#E8B59F] p-4 bg-white">
-                  <p className="text-sm font-medium mb-2 text-[#A54A29]">Top organizations</p>
+                <div className="rounded-2xl border border-[var(--theme-bg-sidebar)] p-4 bg-white">
+                  <p className="text-sm font-medium mb-2 text-[var(--theme-accent)]">Top organizations</p>
                   <ul className="space-y-2 text-sm">
                     {arr.slice(0, 5).map(o => (
                       <li key={o.id} className="flex items-center justify-between">
-                        <span className="truncate text-[#A54A29]">{o.organizationName}</span>
+                        <span className="truncate text-[var(--theme-accent)]">{o.organizationName}</span>
                         <span className="text-xs text-gray-500">{(o.beds || 0)} beds · {(o.productAchievement || 0)}%</span>
                       </li>
                     ))}

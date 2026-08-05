@@ -42,41 +42,41 @@ const customSelectStyles = {
   control: (provided, state) => ({
     ...provided,
     borderRadius: '0.75rem',
-    borderColor: state.isFocused ? '#C6693C' : (state.hasValue ? '#C6693C' : '#E8C9B8'),
+    borderColor: state.isFocused ? 'var(--theme-primary)' : (state.hasValue ? 'var(--theme-primary)' : 'var(--theme-border)'),
     borderWidth: '2px',
-    backgroundColor: state.hasValue ? '#FFF5F0' : 'white',
+    backgroundColor: state.hasValue ? 'var(--theme-bg-light)' : 'white',
     boxShadow: state.isFocused ? '0 0 0 3px rgba(198, 105, 60, 0.2)' : 'none',
     '&:hover': {
-      borderColor: '#C6693C'
+      borderColor: 'var(--theme-primary)'
     },
     minHeight: '44px',
     cursor: 'pointer'
   }),
   placeholder: (provided) => ({
     ...provided,
-    color: '#8B5A3C',
+    color: 'var(--theme-text-secondary)',
     fontSize: '13px'
   }),
   singleValue: (provided) => ({
     ...provided,
-    color: '#2D1A0E',
+    color: 'var(--theme-text-primary)',
     fontWeight: '500'
   }),
   menu: (provided) => ({
     ...provided,
     borderRadius: '0.75rem',
-    borderColor: '#E8C9B8',
+    borderColor: 'var(--theme-border)',
     borderWidth: '1px',
     boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
     zIndex: 9999
   }),
   option: (provided, state) => ({
     ...provided,
-    backgroundColor: state.isSelected ? '#C6693C' : (state.isFocused ? '#F5E0D6' : 'white'),
-    color: state.isSelected ? 'white' : '#2D1A0E',
+    backgroundColor: state.isSelected ? 'var(--theme-primary)' : (state.isFocused ? 'var(--theme-bg-hover)' : 'white'),
+    color: state.isSelected ? 'white' : 'var(--theme-text-primary)',
     cursor: 'pointer',
     '&:hover': {
-      backgroundColor: state.isSelected ? '#A54A29' : '#F5E0D6'
+      backgroundColor: state.isSelected ? 'var(--theme-primary-dark)' : 'var(--theme-bg-hover)'
     },
     padding: '10px 16px'
   }),
@@ -85,16 +85,16 @@ const customSelectStyles = {
   }),
   dropdownIndicator: (provided, state) => ({
     ...provided,
-    color: '#8B5A3C',
+    color: 'var(--theme-text-secondary)',
     transform: state.selectProps.menuIsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
     transition: 'transform 0.2s ease'
   }),
   clearIndicator: (provided) => ({
     ...provided,
-    color: '#8B5A3C',
+    color: 'var(--theme-text-secondary)',
     cursor: 'pointer',
     '&:hover': {
-      color: '#C6693C'
+      color: 'var(--theme-primary)'
     }
   }),
   menuList: (provided) => ({
@@ -104,9 +104,9 @@ const customSelectStyles = {
   })
 };
 
-const NoOptionsMessage = () => (
-  <div className="px-4 py-3 text-sm text-[#8B5A3C]">
-    No options available
+const NoOptionsMessage = ({ message = "No options available" }) => (
+  <div className="px-4 py-3 text-sm text-[var(--theme-text-secondary)]">
+    {message}
   </div>
 );
 
@@ -168,36 +168,40 @@ export function FilterBar({ selectedTab = 'overview' }) {
     profileState, profile,
     fetchTypeOfProfile, typeOfProfile,
     fetchAllEmployees, employees,
-    fetchSpecialityIndividual, getspeciality
+    fetchSpecialityIndividual, getspeciality,
+    fetchAllRegion, region,
   } = useDropdown();
 
   const [selectedStateCode, setSelectedStateCode] = useState(null);
 
   // All useMemo remain the same
   const stateSelectOptions = useMemo(() => {
+    if (!filters.region) return [];
     if (!Array.isArray(allStateName) || allStateName.length === 0) return [];
     return allStateName.map(state => ({
-      value: state.stateName || state,
-      label: state.stateName || state,
-      stateCode: state.stateCode,
+      value: state.name || state,
+      label: state.name || state,
+      stateCode: state.code,
     }));
-  }, [allStateName]);
+  }, [allStateName, filters.region]);
 
   const districtSelectOptions = useMemo(() => {
+    if (!filters.state) return [];
     if (!Array.isArray(districtList) || districtList.length === 0) return [];
     return districtList.map(district => ({
       value: district,
       label: district,
     }));
-  }, [districtList]);
+  }, [districtList, filters.state]);
 
   const citySelectOptions = useMemo(() => {
+    if (!filters.district) return [];
     if (!Array.isArray(cities) || cities.length === 0) return [];
     return cities.map(city => ({
       value: city,
       label: city,
     }));
-  }, [cities]);
+  }, [cities, filters.district]);
 
   const segmentSelectOptions = useMemo(() => {
     if (!Array.isArray(segment) || segment.length === 0) return [];
@@ -239,13 +243,21 @@ export function FilterBar({ selectedTab = 'overview' }) {
     }));
   }, [employees]);
 
+  const regionSelectOptions = useMemo(() => {
+    if (!Array.isArray(region) || region.length === 0) return [];
+    return region.map(item => ({
+      value: item,
+      label: item,
+    }));
+  }, [region]);
+
   // All useEffect remain the same
   useEffect(() => {
-    fetchAllStateName();
     fetchSegment();
     fetchTypeOfProfile();
     fetchAllEmployees();
     fetchSpecialityIndividual();
+    fetchAllRegion();
   }, []);
 
   useEffect(() => {
@@ -285,7 +297,7 @@ export function FilterBar({ selectedTab = 'overview' }) {
         break;
       case 'executives':
         fetchSalesPerformanceRef.current();
-        // fetchSalesPersonAnalyticsRef.current();
+        fetchSalesPersonAnalyticsRef.current();
         fetchSalesPersonTargetAnalyticsRef.current();
         break;
       case 'hospitals':
@@ -322,6 +334,13 @@ case 'organizations':
     const value = selectedOption ? selectedOption.value : "";
     updateFilterRef.current(key, value);
 
+    if (key === "region") {
+      setSelectedStateCode("");
+      updateFilterRef.current("state", "");
+      updateFilterRef.current("district", "");
+      updateFilterRef.current("city", "");
+      fetchAllStateName(value || "");
+    }
     if (key === "state") {
       const selectedState = stateSelectOptions.find(opt => opt.value === value);
       setSelectedStateCode(selectedState ? (selectedState.stateCode || selectedState.value) : value);
@@ -369,6 +388,7 @@ case 'organizations':
   };
 
   const filterItems = [
+ 
     { 
       key: "month", 
       label: "Month",
@@ -384,6 +404,15 @@ case 'organizations':
       options: getYearOptions(),
       placeholder: "Select year",
       value: filters.year,
+      isMulti: false,
+      isSearchable: true
+    },
+       { 
+      key: "region", 
+      label: "Region",
+      options: regionSelectOptions,
+      placeholder: "All regions",
+      value: filters.region,
       isMulti: false,
       isSearchable: true
     },
@@ -453,23 +482,23 @@ case 'organizations':
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E8C9B8] shadow-md">
+    <div className="bg-white rounded-2xl border border-[var(--theme-border)] shadow-md">
       <div className="px-5 py-4">
         <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center gap-2 bg-[#C6693C]/10 px-3 py-1.5 rounded-lg">
-            <LucideIcons.Filter size={18} className="text-[#C6693C]" />
-            <h2 className="text-sm font-semibold text-[#5A2D1A]">Filters</h2>
+          <div className="flex items-center gap-2 bg-[var(--theme-primary)]/10 px-3 py-1.5 rounded-lg">
+            <LucideIcons.Filter size={18} className="text-[var(--theme-primary)]" />
+            <h2 className="text-sm font-semibold text-[var(--theme-text-primary)]">Filters</h2>
           </div>
           <span className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={handleResetFilters} className="rounded-lg text-[#6B4226] hover:bg-[#F5E0D6]">
+            <Button variant="ghost" size="sm" onClick={handleResetFilters} className="rounded-lg text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-hover)]">
               <LucideIcons.RotateCcw size={14} /> Reset
             </Button>
-            <Button size="sm" onClick={handleApplyFilters} disabled={loading} className="rounded-lg bg-[#C6693C] hover:bg-[#A54A29] text-white shadow-sm shadow-[#C6693C]/20">
+            <Button size="sm" onClick={handleApplyFilters} disabled={loading} className="rounded-lg bg-[var(--theme-primary)] hover:bg-[var(--theme-primary-dark)] text-white shadow-sm shadow-[var(--theme-primary)]/20">
               Apply Filters
             </Button>
-            <DropdownMenu>
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="rounded-lg border-[#E8C9B8] hover:bg-[#F5E0D6]">
+                <Button variant="outline" size="sm" className="rounded-lg border-[var(--theme-border)] hover:bg-[var(--theme-bg-hover)]">
                   <LucideIcons.Download size={14} /> Export
                 </Button>
               </DropdownMenuTrigger>
@@ -478,7 +507,7 @@ case 'organizations':
                 <DropdownMenuItem>Excel</DropdownMenuItem>
                 <DropdownMenuItem>CSV</DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </span>
         </div>
         
@@ -489,7 +518,7 @@ case 'organizations':
             
             return (
               <div key={item.key} className="min-w-0">
-                <label className="text-[10px] font-semibold text-[#6B4226] uppercase tracking-wider block mb-1.5">
+                <label className="text-[10px] font-semibold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">
                   {item.label}
                 </label>
                 <Select
@@ -502,7 +531,12 @@ case 'organizations':
                   placeholder={item.placeholder}
                   isClearable={true}
                   isSearchable={item.isSearchable}
-                  noOptionsMessage={() => <NoOptionsMessage />}
+                    noOptionsMessage={() => {
+                      if (item.key === 'state') return <NoOptionsMessage message="Select region first" />;
+                      if (item.key === 'district') return <NoOptionsMessage message="Select state first" />;
+                      if (item.key === 'city') return <NoOptionsMessage message="Select district first" />;
+                      return <NoOptionsMessage />;
+                    }}
                   components={{ NoOptionsMessage }}
                   formatOptionLabel={({ label, value }) => {
                     if (item.key === 'month') {
@@ -521,7 +555,7 @@ case 'organizations':
                 />
                 {hasValue && (
                   <div className="mt-1">
-                    <span className="text-[10px] font-medium text-[#C6693C] bg-[#FFF5F0] px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-medium text-[var(--theme-primary)] bg-[var(--theme-bg-light)] px-2 py-0.5 rounded-full">
                       Selected
                     </span>
                   </div>

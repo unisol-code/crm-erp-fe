@@ -24,19 +24,19 @@
 // data/theme.js
 
 export const THEME = {
-  primaryColor: "#C6693C",
-  secondaryColor: "#FFE0B2",
-  bgSidebar: "#E8B59F",
-  backgroundColor: "#FBE9E7",
-  highlightColor: "#FFC4A2",
-  accentColor: "#A54A29",
+  primaryColor: "var(--theme-primary)",
+  secondaryColor: "var(--theme-secondary)",
+  bgSidebar: "var(--theme-bg-sidebar)",
+  backgroundColor: "var(--theme-background)",
+  highlightColor: "var(--theme-highlight)",
+  accentColor: "var(--theme-accent)",
 };
 
 export const themeColors = {
-  primary: "#C6693C",
-  primaryLight: "#FFE0B2",
-  primaryDark: "#A54A29",
-  primaryBg: "#FBE9E7",
-  primaryHover: "#FFC4A2",
-  sidebarBg: "#E8B59F",
+  primary: "var(--theme-primary)",
+  primaryLight: "var(--theme-secondary)",
+  primaryDark: "var(--theme-accent)",
+  primaryBg: "var(--theme-background)",
+  primaryHover: "var(--theme-highlight)",
+  sidebarBg: "var(--theme-bg-sidebar)",
 };
