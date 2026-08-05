@@ -408,7 +408,7 @@ const ViewMonthlyPlanning = () => {
           {!loading && oneMonthPlanningList?.data?.length > 0 && (
             <Pagination
               currentPage={oneMonthPlanningList?.currentPage}
-              totalItems={oneMonthPlanningList?.totalItems}
+              totalItems={oneMonthPlanningList?.totalPlans}
               itemsPerPage={limit}
               totalPages={oneMonthPlanningList?.totalPages}
               onPageChange={onPageChange}

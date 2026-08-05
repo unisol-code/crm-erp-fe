@@ -395,7 +395,7 @@ const handleTargetPageSizeChange = (pageSize) => {
           <FilterBar selectedTab={selectedTab} />
         </div>
 
-        <div className="flex flex-wrap gap-1 border-b border-[#E8C9B8] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">
+        <div className="flex flex-wrap  justify-between gap-1 border-b border-[#E8C9B8] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">
           {tabs.map((tab) => {
             const isActive = selectedTab === tab.id;
             const Icon = tab.icon;
