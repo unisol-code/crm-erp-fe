@@ -130,6 +130,7 @@ export const analyticsLoadingStateAtom = atom(createPersistedAtom("analyticsLoad
 
 // Filter State - To store current applied filters
 export const analyticsFiltersStateAtom = atom(createPersistedAtom("analyticsFiltersState", {
+  region: "",
   state: "",
   district: "",
   city: "",

@@ -105,7 +105,7 @@ export function DropdownMenuItem({ children, onSelect, onClose }) {
   
   return (
     <div
-      className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none transition-colors hover:bg-[#FFC4A2] hover:text-[#A54A29]"
+      className="flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none transition-colors hover:bg-[var(--theme-highlight)] hover:text-[var(--theme-accent)]"
       onClick={handleClick}
     >
       {children}

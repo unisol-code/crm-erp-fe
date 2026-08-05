@@ -4,11 +4,11 @@ export function Button({ children, variant = "default", size = "default", classN
   const baseStyles = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
   
   const variants = {
-    default: "bg-[#C6693C] text-white hover:bg-[#A54A29] focus-visible:ring-[#C6693C]",
-    outline: "border border-[#C6693C] bg-white hover:bg-[#FFC4A2] focus-visible:ring-[#C6693C] text-[#C6693C]",
-    ghost: "hover:bg-[#FFC4A2] focus-visible:ring-[#C6693C] text-[#C6693C]",
-    secondary: "bg-[#FFE0B2] text-[#A54A29] hover:bg-[#FFC4A2] focus-visible:ring-[#C6693C]",
-    destructive: "bg-[#A54A29] text-white hover:bg-[#8B3A1E] focus-visible:ring-[#A54A29]"
+    default: "bg-[var(--theme-primary)] text-white hover:bg-[var(--theme-accent)] focus-visible:ring-[var(--theme-primary)]",
+    outline: "border border-[var(--theme-primary)] bg-white hover:bg-[var(--theme-highlight)] focus-visible:ring-[var(--theme-primary)] text-[var(--theme-primary)]",
+    ghost: "hover:bg-[var(--theme-highlight)] focus-visible:ring-[var(--theme-primary)] text-[var(--theme-primary)]",
+    secondary: "bg-[var(--theme-highlight)] text-[var(--theme-accent)] hover:bg-[var(--theme-highlight)] focus-visible:ring-[var(--theme-primary)]",
+    destructive: "bg-[var(--theme-accent)] text-white hover:bg-[var(--theme-accent)] focus-visible:ring-[var(--theme-accent)]"
   };
   
   const sizes = {

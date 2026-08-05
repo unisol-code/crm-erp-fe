@@ -499,10 +499,10 @@ const AddNewIndividual = () => {
     getIndividualDataByID,
     getindividualByID,
     updateIndividual,
-    loading: submitLoading,
+    createNewIndiviual,
+    loading,
   } = useIndividuals();
   const [editData, setEditData] = useState(null);
-  const { loading, createNewIndiviual } = useIndividuals();
   const navigate = useNavigate();
   useEffect(() => {
     fetchSegment();
@@ -817,7 +817,8 @@ const AddNewIndividual = () => {
                           text={isEdit ? "Save Changes" : "Submit"}
                           type="submit"
                           isFormikButton={true}
-                          disabled={loading}
+                          disabled={loading || formik.isSubmitting}
+                          loading={loading || formik.isSubmitting}
                         />
                       )}
                     </div>

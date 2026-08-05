@@ -4,7 +4,7 @@ export function Sheet({ open, onOpenChange, children }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 bg-black/50" onClick={() => onOpenChange(false)}>
-      <div className="fixed inset-y-0 right-0 z-50 flex w-full sm:max-w-lg flex-col border-l border-[#E8B59F] bg-[#FBE9E7] shadow-lg" onClick={e => e.stopPropagation()}>
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full sm:max-w-lg flex-col border-l border-[var(--theme-bg-sidebar)] bg-[var(--theme-primary-bg)] shadow-lg" onClick={e => e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -20,7 +20,7 @@ export function SheetHeader({ children }) {
 }
 
 export function SheetTitle({ children }) {
-  return <h2 className="text-lg font-semibold leading-none tracking-tight text-[#A54A29]">{children}</h2>;
+  return <h2 className="text-lg font-semibold leading-none tracking-tight text-[var(--theme-accent)]">{children}</h2>;
 }
 
 export function SheetDescription({ children }) {

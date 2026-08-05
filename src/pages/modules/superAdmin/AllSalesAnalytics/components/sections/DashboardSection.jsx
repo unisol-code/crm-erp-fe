@@ -49,26 +49,26 @@ import LoaderSpinner from "../../../../../../components/uiComponents/loader/Load
 
 function SummaryStat({ label, value, hint, tone }) {
   return (
-    <div className="rounded-xl border border-[#E8C9B8] p-4 bg-[#FFF8F5]">
-      <p className="text-xs font-medium text-[#8B5A3C]">{label}</p>
+    <div className="rounded-xl border border-[var(--theme-border)] p-4 bg-[var(--theme-card-bg)]">
+      <p className="text-xs font-medium text-[var(--theme-text-secondary)]">{label}</p>
       <p
-        className={`text-xl font-bold mt-1 ${tone === "success" ? "text-green-600" : "text-[#5A2D1A]"}`}
+        className={`text-xl font-bold mt-1 ${tone === "success" ? "text-green-600" : "text-[var(--theme-text-primary)]"}`}
       >
         {value}
       </p>
-      {hint && <p className="text-xs text-[#8B5A3C] mt-0.5">{hint}</p>}
+      {hint && <p className="text-xs text-[var(--theme-text-secondary)] mt-0.5">{hint}</p>}
     </div>
   );
 }
 
 function MiniStat({ label, value, tone }) {
   return (
-    <div className="rounded-xl border border-[#E8C9B8] p-3 bg-[#FFF8F5]">
-      <p className="text-[10px] font-semibold text-[#8B5A3C] uppercase tracking-wider">
+    <div className="rounded-xl border border-[var(--theme-border)] p-3 bg-[var(--theme-card-bg)]">
+      <p className="text-[10px] font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
         {label}
       </p>
       <p
-        className={`text-lg font-bold mt-0.5 ${tone === "success" ? "text-green-600" : "text-[#5A2D1A]"}`}
+        className={`text-lg font-bold mt-0.5 ${tone === "success" ? "text-green-600" : "text-[var(--theme-text-primary)]"}`}
       >
         {value}
       </p>
@@ -77,19 +77,20 @@ function MiniStat({ label, value, tone }) {
 }
 
 export function DashboardSection({
-  hospitals,
-  filters,
-  kpis,
-  executives = [],
-  loading = false,
-  paginationData = {},
-  onPageChange,
-  onItemsPerPageChange,
-  organizationData,
-  onSearch,
-  specialityData,
-  targetData,
-}) {
+   hospitals,
+   filters,
+   kpis,
+   executives = [],
+   loading = false,
+   tableLoading = false,
+   paginationData = {},
+   onPageChange,
+   onItemsPerPageChange,
+   organizationData,
+   onSearch,
+   specialityData,
+   targetData,
+ }) {
   const [drillDistrict, setDrillDistrict] = useState(null);
   const [productCat, setProductCat] = useState("All");
   const [hospitalSearch, setHospitalSearch] = useState("");
@@ -106,7 +107,7 @@ export function DashboardSection({
   const targetPct = Math.round(
     (TARGETS.monthlyAchieved / TARGETS.monthlyTarget) * 100,
   );
-  const gaugeData = [{ name: "Achieved", value: targetPct, fill: "#C6693C" }];
+  const gaugeData = [{ name: "Achieved", value: targetPct, fill: "var(--theme-primary)" }];
 
   const filteredProducts = useMemo(
     () =>
@@ -315,30 +316,30 @@ export function DashboardSection({
       {/* Header Section */}
       <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#5A2D1A]">
+          <h1 className="text-2xl md:text-3xl font-bold text-[var(--theme-text-primary)]">
             Territory Analytics
           </h1>
-          <p className="text-sm text-[#8B5A3C] mt-1 font-medium">
+          <p className="text-sm text-[var(--theme-text-secondary)] mt-1 font-medium">
             Live view of hospitals, doctors, visits and product performance
             across Maharashtra.
             {filters.state && (
-              <span className="ml-2 text-[#C6693C] font-semibold">
+              <span className="ml-2 text-[var(--theme-primary)] font-semibold">
                 Filtered by: {filters.state}
               </span>
             )}
             {filters.district && (
-              <span className="ml-2 text-[#C6693C] font-semibold">
+              <span className="ml-2 text-[var(--theme-primary)] font-semibold">
                 | {filters.district}
               </span>
             )}
             {filters.city && (
-              <span className="ml-2 text-[#C6693C] font-semibold">
+              <span className="ml-2 text-[var(--theme-primary)] font-semibold">
                 | {filters.city}
               </span>
             )}
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-medium text-[#8B5A3C] bg-[#FFF5F0] px-3 py-1.5 rounded-lg border border-[#E8C9B8]">
+        <div className="flex items-center gap-2 text-xs font-medium text-[var(--theme-text-secondary)] bg-[var(--theme-bg-light)] px-3 py-1.5 rounded-lg border border-[var(--theme-border)]">
           <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
           Data synced 2 min ago
         </div>
@@ -368,23 +369,23 @@ export function DashboardSection({
           action={
             <Badge
               variant="secondary"
-              className="rounded-full bg-[#C6693C]/10 text-[#C6693C] border-[#C6693C]/20"
+              className="rounded-full bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] border-[var(--theme-primary)]/20"
             >
               Live
             </Badge>
           }
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative rounded-2xl overflow-hidden border border-[#E8C9B8] bg-gradient-to-br from-[#C6693C]/5 via-white to-[#FFC4A2]/5 min-h-[280px] grid place-items-center">
+            <div className="relative rounded-2xl overflow-hidden border border-[var(--theme-border)] bg-gradient-to-br from-[var(--theme-primary)]/5 via-white to-[var(--theme-highlight)]/5 min-h-[280px] grid place-items-center">
               <div className="text-center px-6">
                 <LucideIcons.MapPin
-                  className="mx-auto text-[#C6693C]"
+                  className="mx-auto text-[var(--theme-primary)]"
                   size={40}
                 />
-                <p className="mt-2 text-sm font-medium text-[#5A2D1A]">
+                <p className="mt-2 text-sm font-medium text-[var(--theme-text-primary)]">
                   Maharashtra heatmap
                 </p>
-                <p className="text-xs text-[#8B5A3C]">
+                <p className="text-xs text-[var(--theme-text-secondary)]">
                   Interactive map placeholder
                 </p>
                 <div className="mt-4 flex items-center gap-1 justify-center flex-wrap">
@@ -403,7 +404,7 @@ export function DashboardSection({
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold text-[#5A2D1A] uppercase tracking-wider mb-2">
+              <p className="text-xs font-semibold text-[var(--theme-text-primary)] uppercase tracking-wider mb-2">
                 District Ranking
               </p>
               <ResponsiveContainer width="100%" height={260}>
@@ -412,19 +413,19 @@ export function DashboardSection({
                   layout="vertical"
                   margin={{ left: 8, right: 16 }}
                 >
-                  <CartesianGrid horizontal={false} stroke="#E8C9B8" />
-                  <XAxis type="number" stroke="#8B5A3C" fontSize={11} />
+                  <CartesianGrid horizontal={false} stroke="var(--theme-border)" />
+                  <XAxis type="number" stroke="var(--theme-text-secondary)" fontSize={11} />
                   <YAxis
                     dataKey="district"
                     type="category"
-                    stroke="#8B5A3C"
+                    stroke="var(--theme-text-secondary)"
                     fontSize={12}
                     width={70}
                   />
                   <Tooltip
                     contentStyle={{
                       borderRadius: 12,
-                      border: "1px solid #E8C9B8",
+                      border: "1px solid var(--theme-border)",
                       background: "#ffffff",
                     }}
                   />
@@ -486,13 +487,13 @@ export function DashboardSection({
             ].map((s) => (
               <div
                 key={s.label}
-                className="flex items-center justify-between p-3 rounded-xl bg-[#FFF8F5] border border-[#E8C9B8]"
+                className="flex items-center justify-between p-3 rounded-xl bg-[var(--theme-card-bg)] border border-[var(--theme-border)]"
               >
                 <div>
-                  <p className="text-xs font-medium text-[#8B5A3C]">
+                  <p className="text-xs font-medium text-[var(--theme-text-secondary)]">
                     {s.label}
                   </p>
-                  <p className="text-base font-bold text-[#5A2D1A] mt-0.5">
+                  <p className="text-base font-bold text-[var(--theme-text-primary)] mt-0.5">
                     {s.value}
                   </p>
                 </div>
@@ -528,7 +529,7 @@ export function DashboardSection({
                       label={({ name, percent }) =>
                         `${formatSpecialityName(name)} ${(percent * 100).toFixed(0)}%`
                       }
-                      labelLine={{ stroke: "#E8B59F", strokeWidth: 1 }}
+                      labelLine={{ stroke: "var(--theme-bg-sidebar)", strokeWidth: 1 }}
                     >
                       {specialityChartData.map((_, i) => (
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -537,7 +538,7 @@ export function DashboardSection({
                     <Tooltip
                       contentStyle={{
                         borderRadius: 12,
-                        border: "1px solid #E8B59F",
+                        border: "1px solid var(--theme-bg-sidebar)",
                         background: "#ffffff",
                         padding: "12px",
                       }}
@@ -567,14 +568,14 @@ export function DashboardSection({
             {/* Right: Stats Cards */}
             <div className="space-y-2">
               {/* Top Speciality Card */}
-              <div className="bg-gradient-to-r from-[#C6693C]/10 to-[#C6693C]/5 rounded-xl p-3 border border-[#C6693C]/20">
-                <p className="text-xs text-[#8B5A3C] font-medium">
+              <div className="bg-gradient-to-r from-[var(--theme-primary)]/10 to-[var(--theme-primary)]/5 rounded-xl p-3 border border-[var(--theme-primary)]/20">
+                <p className="text-xs text-[var(--theme-text-secondary)] font-medium">
                   🏆 Top Speciality
                 </p>
-                <p className="text-lg font-bold text-[#5A2D1A]">
+                <p className="text-lg font-bold text-[var(--theme-text-primary)]">
                   {formatSpecialityName(topSpeciality?.name) || "N/A"}
                 </p>
-                <p className="text-sm text-[#C6693C]">
+                <p className="text-sm text-[var(--theme-primary)]">
                   {topSpeciality?.value || 0} doctors
                 </p>
               </div>
@@ -624,21 +625,21 @@ export function DashboardSection({
           </div>
 
           {/* Bottom: Speciality List */}
-          <div className="mt-4 pt-4 border-t border-[#E8C9B8]">
+          <div className="mt-4 pt-4 border-t border-[var(--theme-border)]">
             <div className="flex flex-wrap gap-2">
               {specialityChartData.map((item, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-[#FFF8F5] rounded-full border border-[#E8C9B8] hover:bg-[#C6693C]/10 transition-colors cursor-default"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-[var(--theme-card-bg)] rounded-full border border-[var(--theme-border)] hover:bg-[var(--theme-primary)]/10 transition-colors cursor-default"
                 >
                   <span
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: COLORS[index % COLORS.length] }}
                   />
-                  <span className="text-sm text-[#5A2D1A]">
+                  <span className="text-sm text-[var(--theme-text-primary)]">
                     {formatSpecialityName(item.name)}
                   </span>
-                  <span className="text-xs text-[#C6693C] font-medium">
+                  <span className="text-xs text-[var(--theme-primary)] font-medium">
                     ({item.value})
                   </span>
                 </div>
@@ -667,24 +668,24 @@ export function DashboardSection({
                   {
                     name: "Monthly",
                     value: targetStats.monthlyPercentage || 0,
-                    fill: "#C6693C",
+                    fill: "var(--theme-primary)",
                   },
                   {
                     name: "Quarterly",
                     value: targetStats.quarterlyPercentage || 0,
-                    fill: "#E8A87C",
+                    fill: "var(--theme-highlight)",
                   },
                   {
                     name: "Yearly",
                     value: targetStats.yearlyPercentage || 0,
-                    fill: "#F5CBA7",
+                    fill: "var(--theme-secondary)",
                   },
                 ]}
                 startAngle={225}
                 endAngle={-45}
               >
                 <RadialBar
-                  background={{ fill: "#E8B59F" }}
+                  background={{ fill: "var(--theme-bg-sidebar)" }}
                   dataKey="value"
                   cornerRadius={20}
                   barSize={15}
@@ -700,7 +701,7 @@ export function DashboardSection({
                 <Tooltip
                   contentStyle={{
                     borderRadius: 12,
-                    border: "1px solid #E8B59F",
+                    border: "1px solid var(--theme-bg-sidebar)",
                     background: "#ffffff",
                     padding: "10px 14px",
                   }}
@@ -710,7 +711,7 @@ export function DashboardSection({
             </ResponsiveContainer>
             <div className="absolute inset-0 grid place-items-center pointer-events-none">
               <div className="text-center">
-                <p className="text-2xl font-bold text-[#C6693C]">
+                <p className="text-2xl font-bold text-[var(--theme-primary)]">
                   {(
                     (targetStats.monthlyPercentage +
                       targetStats.quarterlyPercentage +
@@ -729,61 +730,61 @@ export function DashboardSection({
           {/* Target Stats Grid - Monthly, Quarterly, Yearly */}
           <div className="grid grid-cols-3 gap-2 mt-2">
             {/* Monthly */}
-            <div className="bg-[#FFF8F5] rounded-xl p-2.5 border border-[#E8C9B8] text-center">
+            <div className="bg-[var(--theme-card-bg)] rounded-xl p-2.5 border border-[var(--theme-border)] text-center">
               <div className="flex items-center justify-center gap-1.5 mb-0.5">
                 <span
                   className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: "#C6693C" }}
+                  style={{ backgroundColor: "var(--theme-primary)" }}
                 />
-                <p className="text-[10px] text-[#8B5A3C] font-medium">
+                <p className="text-[10px] text-[var(--theme-text-secondary)] font-medium">
                   Monthly
                 </p>
               </div>
-              <p className="text-sm font-bold text-[#5A2D1A]">
+              <p className="text-sm font-bold text-[var(--theme-text-primary)]">
                 {targetStats.monthlyAchieved}/{targetStats.monthlyTarget}
               </p>
               <p
-                className={`text-xs font-semibold ${targetStats.monthlyPercentage >= 100 ? "text-green-600" : targetStats.monthlyPercentage >= 80 ? "text-[#C6693C]" : "text-red-500"}`}
+                className={`text-xs font-semibold ${targetStats.monthlyPercentage >= 100 ? "text-green-600" : targetStats.monthlyPercentage >= 80 ? "text-[var(--theme-primary)]" : "text-red-500"}`}
               >
                 {targetStats.monthlyPercentage}%
               </p>
             </div>
 
             {/* Quarterly */}
-            <div className="bg-[#FFF8F5] rounded-xl p-2.5 border border-[#E8C9B8] text-center">
+            <div className="bg-[var(--theme-card-bg)] rounded-xl p-2.5 border border-[var(--theme-border)] text-center">
               <div className="flex items-center justify-center gap-1.5 mb-0.5">
                 <span
                   className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: "#E8A87C" }}
+                  style={{ backgroundColor: "var(--theme-highlight)" }}
                 />
-                <p className="text-[10px] text-[#8B5A3C] font-medium">
+                <p className="text-[10px] text-[var(--theme-text-secondary)] font-medium">
                   Quarterly
                 </p>
               </div>
-              <p className="text-sm font-bold text-[#5A2D1A]">
+              <p className="text-sm font-bold text-[var(--theme-text-primary)]">
                 {targetStats.quarterlyAchieved}/{targetStats.quarterlyTarget}
               </p>
               <p
-                className={`text-xs font-semibold ${targetStats.quarterlyPercentage >= 100 ? "text-green-600" : targetStats.quarterlyPercentage >= 80 ? "text-[#C6693C]" : "text-red-500"}`}
+                className={`text-xs font-semibold ${targetStats.quarterlyPercentage >= 100 ? "text-green-600" : targetStats.quarterlyPercentage >= 80 ? "text-[var(--theme-primary)]" : "text-red-500"}`}
               >
                 {targetStats.quarterlyPercentage}%
               </p>
             </div>
 
             {/* Yearly */}
-            <div className="bg-[#FFF8F5] rounded-xl p-2.5 border border-[#E8C9B8] text-center">
+            <div className="bg-[var(--theme-card-bg)] rounded-xl p-2.5 border border-[var(--theme-border)] text-center">
               <div className="flex items-center justify-center gap-1.5 mb-0.5">
                 <span
                   className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: "#F5CBA7" }}
+                  style={{ backgroundColor: "var(--theme-secondary)" }}
                 />
-                <p className="text-[10px] text-[#8B5A3C] font-medium">Yearly</p>
+                <p className="text-[10px] text-[var(--theme-text-secondary)] font-medium">Yearly</p>
               </div>
-              <p className="text-sm font-bold text-[#5A2D1A]">
+              <p className="text-sm font-bold text-[var(--theme-text-primary)]">
                 {targetStats.yearlyAchieved}/{targetStats.yearlyTarget}
               </p>
               <p
-                className={`text-xs font-semibold ${targetStats.yearlyPercentage >= 100 ? "text-green-600" : targetStats.yearlyPercentage >= 80 ? "text-[#C6693C]" : "text-red-500"}`}
+                className={`text-xs font-semibold ${targetStats.yearlyPercentage >= 100 ? "text-green-600" : targetStats.yearlyPercentage >= 80 ? "text-[var(--theme-primary)]" : "text-red-500"}`}
               >
                 {targetStats.yearlyPercentage}%
               </p>
@@ -800,7 +801,7 @@ export function DashboardSection({
               </div>
               <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#C6693C] rounded-full transition-all duration-500"
+                  className="h-full bg-[var(--theme-primary)] rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(targetStats.monthlyPercentage || 0, 100)}%`,
                   }}
@@ -816,7 +817,7 @@ export function DashboardSection({
               </div>
               <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#E8A87C] rounded-full transition-all duration-500"
+                  className="h-full bg-[var(--theme-highlight)] rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(targetStats.quarterlyPercentage || 0, 100)}%`,
                   }}
@@ -832,7 +833,7 @@ export function DashboardSection({
               </div>
               <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#F5CBA7] rounded-full transition-all duration-500"
+                  className="h-full bg-[var(--theme-secondary)] rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(targetStats.yearlyPercentage || 0, 100)}%`,
                   }}
@@ -854,7 +855,7 @@ export function DashboardSection({
             layout="vertical"
             margin={{ left: 8, right: 16 }}
           >
-            <CartesianGrid horizontal={false} stroke="#E8B59F" />
+            <CartesianGrid horizontal={false} stroke="var(--theme-bg-sidebar)" />
             <XAxis type="number" stroke="#6b7280" fontSize={11} />
             <YAxis
               dataKey="name"
@@ -866,7 +867,7 @@ export function DashboardSection({
             <Tooltip
               contentStyle={{
                 borderRadius: 12,
-                border: "1px solid #E8B59F",
+                border: "1px solid var(--theme-bg-sidebar)",
                 background: "#ffffff",
               }}
               formatter={(value, name) => {
@@ -881,7 +882,7 @@ export function DashboardSection({
             <Bar
               dataKey="planned"
               name="Total Visits"
-              fill="#C6693C"
+              fill="var(--theme-primary)"
               radius={[0, 4, 4, 0]}
             />
             <Bar
@@ -943,8 +944,8 @@ export function DashboardSection({
                   onClick={() => setProductCat(c)}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     productCat === c
-                      ? "bg-[#C6693C] text-white border-[#C6693C]"
-                      : "border-[#E8B59F] text-gray-500 hover:bg-[#FFC4A2]"
+                      ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)]"
+                      : "border-[var(--theme-bg-sidebar)] text-gray-500 hover:bg-[var(--theme-highlight)]"
                   }`}
                 >
                   {c}
@@ -955,13 +956,13 @@ export function DashboardSection({
         >
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={filteredProducts} margin={{ left: 0, right: 8 }}>
-              <CartesianGrid vertical={false} stroke="#E8B59F" />
+              <CartesianGrid vertical={false} stroke="var(--theme-bg-sidebar)" />
               <XAxis dataKey="name" stroke="#6b7280" fontSize={11} />
               <YAxis stroke="#6b7280" fontSize={11} />
               <Tooltip
                 contentStyle={{
                   borderRadius: 12,
-                  border: "1px solid #E8B59F",
+                  border: "1px solid var(--theme-bg-sidebar)",
                   background: "#ffffff",
                 }}
               />
@@ -994,17 +995,17 @@ export function DashboardSection({
               return (
                 <div key={f.stage}>
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-medium text-[#A54A29]">
+                    <span className="font-medium text-[var(--theme-accent)]">
                       {f.stage}
                     </span>
                     <span className="text-gray-500">
                       {f.value}{" "}
                       {conv !== null && (
-                        <span className="ml-2 text-[#C6693C]">{conv}%</span>
+                        <span className="ml-2 text-[var(--theme-primary)]">{conv}%</span>
                       )}
                     </span>
                   </div>
-                  <div className="h-7 rounded-lg bg-[#FBE9E7] overflow-hidden">
+                  <div className="h-7 rounded-lg bg-[var(--theme-primary-bg)] overflow-hidden">
                     <div
                       className="h-full rounded-lg transition-all"
                       style={{
@@ -1025,17 +1026,17 @@ export function DashboardSection({
       <div className="shadow overflow-x-auto">
         {/* Hospital Table - Using the new component */}
         <div className="mt-4">
-          <HospitalTable
-            data={organizationData}
-            loading={loading}
-            pagination={{
-              currentPage: organizationData?.currentPage || 1,
-              pageSize: organizationData?.pageSize || 10,
-            }}
-            onPageChange={onPageChange}
-            onItemsPerPageChange={onItemsPerPageChange}
-            onSearch={onSearch}
-          />
+        <HospitalTable
+             data={organizationData}
+             loading={tableLoading}
+             pagination={{
+               currentPage: organizationData?.currentPage || 1,
+               pageSize: organizationData?.pageSize || 10,
+             }}
+             onPageChange={onPageChange}
+             onItemsPerPageChange={onItemsPerPageChange}
+             onSearch={onSearch}
+           />
         </div>
       </div>
 
@@ -1082,9 +1083,9 @@ export function DashboardSection({
                 value={`${filteredHospitals.filter((h) => h.district === drillDistrict).length > 0 ? Math.round(filteredHospitals.filter((h) => h.district === drillDistrict).reduce((sum, h) => sum + h.achievement, 0) / filteredHospitals.filter((h) => h.district === drillDistrict).length) : 0}%`}
               />
             </div>
-            <div className="rounded-2xl border border-[#E8B59F] p-4 bg-white">
-              <p className="text-sm font-medium mb-2 flex items-center gap-2 text-[#A54A29]">
-                <LucideIcons.TrendingUp size={16} className="text-[#C6693C]" />
+            <div className="rounded-2xl border border-[var(--theme-bg-sidebar)] p-4 bg-white">
+              <p className="text-sm font-medium mb-2 flex items-center gap-2 text-[var(--theme-accent)]">
+                <LucideIcons.TrendingUp size={16} className="text-[var(--theme-primary)]" />
                 Top hospitals in {drillDistrict}
               </p>
               <ul className="space-y-2 text-sm">
@@ -1102,7 +1103,7 @@ export function DashboardSection({
                   ))}
               </ul>
             </div>
-            <Button className="w-full rounded-xl bg-[#C6693C] hover:bg-[#A54A29]">
+            <Button className="w-full rounded-xl bg-[var(--theme-primary)] hover:bg-[var(--theme-accent)]">
               Open full report
             </Button>
           </div>

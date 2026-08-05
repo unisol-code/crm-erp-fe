@@ -10,6 +10,8 @@ import { HospitalSection } from './components/sections/HospitalSection';
 import { OrganizationSection } from './components/sections/OrganizationSection';
 // import { OrganizationProductSection } from './components/sections/OrganizationProductSection';
 import useAllSalesAnalytics from "../../../../hooks/superAdminHook/allSalesAnalytics/useAllSalesAnalytics";
+import { useTheme } from "../../../../hooks/theme/useTheme";
+import LoaderSpinner from "../../../../components/uiComponents/loader/LoaderSpinner.jsx";
 import { 
   HOSPITALS, 
   DOCTORS, 
@@ -17,7 +19,8 @@ import {
   EXECUTIVES,
 } from './data/analyticsData';
 
-function AllSalesAnalytics() {
+const AllSalesAnalytics = () => {
+  const { theme } = useTheme();
   const {
     selectedTab,
     changeTab,
@@ -51,6 +54,9 @@ function AllSalesAnalytics() {
   const [hospitalPage, setHospitalPage] = useState(1);
   const [hospitalLimit, setHospitalLimit] = useState(10);
   const [hospitalSearch, setHospitalSearch] = useState("");
+  const [tableLoading, setTableLoading] = useState(false);
+  const [doctorTableLoading, setDoctorTableLoading] = useState(false);
+  const [orgListTableLoading, setOrgListTableLoading] = useState(false);
 
   // ✅ Doctor pagination state
   const [doctorPage, setDoctorPage] = useState(1);
@@ -66,23 +72,39 @@ const [targetPage, setTargetPage] = useState(1);
 const [targetPageSize, setTargetPageSize] = useState(10);
 
   // ✅ Function to fetch doctor data with current pagination
-  const loadDoctorData = useCallback(async () => {
+  const loadDoctorData = useCallback(async (silent = false) => {
     try {
-      await fetchDoctorAnalytics();
+      await fetchDoctorAnalytics({}, silent);
       await fetchDoctorList({
         page: doctorPage,
         limit: doctorLimit,
-      });
+      }, silent);
     } catch (error) {
       console.error('Error loading doctor data:', error);
     }
   }, [fetchDoctorAnalytics, fetchDoctorList, doctorPage, doctorLimit]);
 
-  // ✅ Fetch data based on active tab only
-  useEffect(() => {
-    const fetchTabData = async () => {
-      try {
-        switch (selectedTab) {
+   // ✅ Reset filters and pagination when tab changes
+   useEffect(() => {
+     resetFilters();
+     setHospitalPage(1);
+     setHospitalLimit(10);
+     setHospitalSearch("");
+     setDoctorPage(1);
+     setDoctorLimit(10);
+     setProductPage(1);
+     setProductPageSize(10);
+     setOrgListPage(1);
+     setOrgListPageSize(10);
+     setTargetPage(1);
+     setTargetPageSize(10);
+   }, [selectedTab, resetFilters]);
+
+   // ✅ Fetch data based on active tab only
+   useEffect(() => {
+     const fetchTabData = async () => {
+       try {
+         switch (selectedTab) {
           case 'overview':
             await fetchOverviewData();
             await fetchSalesPerformance();
@@ -94,15 +116,15 @@ const [targetPageSize, setTargetPageSize] = useState(10);
             await fetchTargetAnalytics();
             break;
           case 'doctors':
-            await loadDoctorData();
+            await loadDoctorData(false);
             break;
           case 'executives':
             await fetchSalesPerformance();
-            //  await fetchSalesPersonAnalytics();
-              await fetchSalesPersonTargetAnalytics({
-    page: targetPage,
-    limit: targetPageSize,
-  });
+            await fetchSalesPersonAnalytics();
+            await fetchSalesPersonTargetAnalytics({
+              page: targetPage,
+              limit: targetPageSize,
+            });
             break;
           case 'hospitals':
             await fetchOrganizationAnalytics({
@@ -135,49 +157,75 @@ const [targetPageSize, setTargetPageSize] = useState(10);
     fetchTabData();
   }, [selectedTab]); // ✅ Only trigger on tab change
 
-  // ✅ Separate useEffect for doctor pagination changes
-  useEffect(() => {
-    if (selectedTab === 'doctors') {
-      loadDoctorData();
-    }
-  }, [doctorPage, doctorLimit, selectedTab, loadDoctorData]);
-
   // ✅ Doctor pagination handlers
-  const handleDoctorPageChange = (page) => {
+  const handleDoctorPageChange = async (page) => {
     setDoctorPage(page);
+    setDoctorTableLoading(true);
+    try {
+      await fetchDoctorList({
+        page: page,
+        limit: doctorLimit,
+      }, true);
+    } finally {
+      setDoctorTableLoading(false);
+    }
   };
 
-  const handleDoctorLimitChange = (limit) => {
+  const handleDoctorLimitChange = async (limit) => {
     setDoctorLimit(limit);
     setDoctorPage(1);
+    setDoctorTableLoading(true);
+    try {
+      await fetchDoctorList({
+        page: 1,
+        limit: limit,
+      }, true);
+    } finally {
+      setDoctorTableLoading(false);
+    }
   };
 
   // ✅ Handle hospital pagination changes
-  const handleHospitalPageChange = (page) => {
+  const handleHospitalPageChange = async (page) => {
     setHospitalPage(page);
-    fetchOrganizationAnalytics({
-      page: page,
-      limit: hospitalLimit,
-    });
+    setTableLoading(true);
+    try {
+      await fetchOrganizationAnalytics({
+        page: page,
+        limit: hospitalLimit,
+      }, true);
+    } finally {
+      setTableLoading(false);
+    }
   };
 
-  const handleHospitalLimitChange = (limit) => {
+  const handleHospitalLimitChange = async (limit) => {
     setHospitalLimit(limit);
     setHospitalPage(1);
-    fetchOrganizationAnalytics({
-      page: 1,
-      limit: limit,
-    });
+    setTableLoading(true);
+    try {
+      await fetchOrganizationAnalytics({
+        page: 1,
+        limit: limit,
+      }, true);
+    } finally {
+      setTableLoading(false);
+    }
   };
 
-  const handleHospitalSearch = (searchTerm) => {
+  const handleHospitalSearch = async (searchTerm) => {
     setHospitalSearch(searchTerm);
     setHospitalPage(1);
-    fetchOrganizationAnalytics({
-      page: 1,
-      limit: hospitalLimit,
-      search: searchTerm,
-    });
+    setTableLoading(true);
+    try {
+      await fetchOrganizationAnalytics({
+        page: 1,
+        limit: hospitalLimit,
+        search: searchTerm,
+      }, true);
+    } finally {
+      setTableLoading(false);
+    }
   };
 
 const handleProductPageChange = (page) => {
@@ -197,21 +245,31 @@ const handleProductPageSizeChange = (pageSize) => {
   });
 };
 
-const handleOrgListPageChange = (page) => {
+const handleOrgListPageChange = async (page) => {
   setOrgListPage(page);
-  fetchOrganizationListAnalytics({
-    page: page,
-    pageSize: orgListPageSize,
-  });
+  setOrgListTableLoading(true);
+  try {
+    await fetchOrganizationListAnalytics({
+      page: page,
+      pageSize: orgListPageSize,
+    }, true);
+  } finally {
+    setOrgListTableLoading(false);
+  }
 };
 
-const handleOrgListPageSizeChange = (pageSize) => {
+const handleOrgListPageSizeChange = async (pageSize) => {
   setOrgListPageSize(pageSize);
   setOrgListPage(1);
-  fetchOrganizationListAnalytics({
-    page: 1,
-    pageSize: pageSize,
-  });
+  setOrgListTableLoading(true);
+  try {
+    await fetchOrganizationListAnalytics({
+      page: 1,
+      pageSize: pageSize,
+    }, true);
+  } finally {
+    setOrgListTableLoading(false);
+  }
 };
 
 
@@ -292,6 +350,7 @@ const handleTargetPageSizeChange = (pageSize) => {
         specialityData={specialityData} 
         targetData={targetData} 
         loading={loading}
+        tableLoading={tableLoading}
         onPageChange={handleHospitalPageChange}
         onItemsPerPageChange={handleHospitalLimitChange}
         onSearch={handleHospitalSearch}
@@ -307,6 +366,7 @@ const handleTargetPageSizeChange = (pageSize) => {
         doctorData={doctorData}
         doctorListData={doctorListData}
         loading={loading}
+        tableLoading={doctorTableLoading}
         onPageChange={handleDoctorPageChange}
         onItemsPerPageChange={handleDoctorLimitChange}
       />
@@ -342,6 +402,7 @@ const handleTargetPageSizeChange = (pageSize) => {
   organizationListData={organizationListData}
   filters={filters}
   loading={loading}
+  tableLoading={orgListTableLoading}
   onProductPageChange={handleProductPageChange}
   onProductItemsPerPageChange={handleProductPageSizeChange}
   onOrganizationListPageChange={handleOrgListPageChange}
@@ -352,10 +413,10 @@ const handleTargetPageSizeChange = (pageSize) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FFF5F0] via-[#FDF0EA] to-[#FBE9E7] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.backgroundColor }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C6693C] mx-auto"></div>
-          <p className="mt-4 text-[#8B5A3C] font-medium">Loading dashboard...</p>
+          <LoaderSpinner />
+          <p className="mt-4 text-[var(--theme-text-secondary)] font-medium">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -363,14 +424,17 @@ const handleTargetPageSizeChange = (pageSize) => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FFF5F0] via-[#FDF0EA] to-[#FBE9E7] flex items-center justify-center">
-        <div className="text-center bg-white p-8 rounded-2xl shadow-lg border border-[#E8C9B8] max-w-md">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.backgroundColor }}>
+        <div className="text-center bg-white p-8 rounded-2xl shadow-lg border border-[var(--theme-border)] max-w-md">
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
-          <h3 className="text-xl font-bold text-[#5A2D1A] mb-2">Error Loading Data</h3>
-          <p className="text-[#8B5A3C] mb-4">{error}</p>
+          <h3 className="text-xl font-bold text-[var(--theme-text-primary)] mb-2">Error Loading Data</h3>
+          <p className="text-[var(--theme-text-secondary)] mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-[#C6693C] text-white rounded-lg hover:bg-[#A54A29] transition-colors"
+            className="px-6 py-2 rounded-lg text-white transition-colors"
+            style={{ backgroundColor: theme.primaryColor }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = theme.accentColor}
+            onMouseLeave={(e) => e.target.style.backgroundColor = theme.primaryColor}
           >
             Retry
           </button>
@@ -380,13 +444,36 @@ const handleTargetPageSizeChange = (pageSize) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFF5F0] via-[#FDF0EA] to-[#FBE9E7]">
+    <div
+      style={{
+        '--theme-primary': theme.primaryColor,
+        '--theme-secondary': theme.secondaryColor,
+        '--theme-bg-sidebar': theme.bgSidebar,
+        '--theme-background': theme.backgroundColor,
+        '--theme-highlight': theme.highlightColor,
+        '--theme-accent': theme.accentColor,
+        '--theme-primary-light': theme.secondaryColor,
+        '--theme-primary-dark': theme.accentColor,
+        '--theme-primary-bg': theme.backgroundColor,
+        '--theme-primary-hover': theme.highlightColor,
+        '--theme-sidebar-bg': theme.bgSidebar,
+        '--theme-text-primary': theme.accentColor,
+        '--theme-text-secondary': theme.accentColor,
+        '--theme-text-muted': theme.accentColor,
+        '--theme-border': theme.highlightColor,
+        '--theme-bg-light': theme.backgroundColor,
+        '--theme-bg-lighter': theme.backgroundColor,
+        '--theme-bg-hover': theme.secondaryColor,
+        '--theme-card-bg': '#FFFFFF',
+      }}
+      className="min-h-screen bg-[var(--theme-bg-lighter)]"
+    >
       <div className="px-4 md:px-6 lg:px-8 pt-6 pb-10">
         <div className="mb-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-[#5A2D1A] tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold text-[var(--theme-text-primary)] tracking-tight">
             Employee Analytics
           </h1>
-          <p className="text-sm text-[#8B5A3C] mt-1 font-medium">
+          <p className="text-sm text-[var(--theme-text-secondary)] mt-1 font-medium">
             Comprehensive workforce insights & drill-down reports
           </p>
         </div>
@@ -395,7 +482,7 @@ const handleTargetPageSizeChange = (pageSize) => {
           <FilterBar selectedTab={selectedTab} />
         </div>
 
-        <div className="flex flex-wrap gap-1 border-b border-[#E8C9B8] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">
+        <div className="flex flex-wrap  justify-between gap-1 border-b border-[var(--theme-border)] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">
           {tabs.map((tab) => {
             const isActive = selectedTab === tab.id;
             const Icon = tab.icon;
@@ -407,8 +494,8 @@ const handleTargetPageSizeChange = (pageSize) => {
                   flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap
                   rounded-lg
                   ${isActive 
-                    ? 'bg-[#C6693C] text-white shadow-md shadow-[#C6693C]/20' 
-                    : 'text-[#6B4226] hover:bg-[#F5E0D6] hover:text-[#C6693C]'
+                    ? 'bg-[var(--theme-primary)] text-white shadow-md shadow-[var(--theme-primary)]/20' 
+                    : 'text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-hover)] hover:text-[var(--theme-primary)]'
                   }
                 `}
               >
@@ -424,7 +511,7 @@ const handleTargetPageSizeChange = (pageSize) => {
           })}
         </div>
 
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-[#E8C9B8] shadow-xl shadow-[#C6693C]/5 p-6 min-h-[500px]">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-[var(--theme-border)] shadow-xl shadow-[var(--theme-primary)]/5 p-6 min-h-[500px]">
           {tabs.find(tab => tab.id === selectedTab)?.component}
         </div>
       </div>
