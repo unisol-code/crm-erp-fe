@@ -257,9 +257,9 @@ export function DashboardSection({
     return [];
   }, [targetData]);
 
-  // ✅ Process target data from API - FIXED for object response
+  // ✅ Process target data from API - FIXED for array response
   const targetStats = useMemo(() => {
-    if (!targetData?.data) {
+    if (!targetData?.data || !Array.isArray(targetData.data) || targetData.data.length === 0) {
       console.log("ℹ️ No target data available");
       return {
         totalTarget: 0,
@@ -274,7 +274,7 @@ export function DashboardSection({
       };
     }
 
-    const data = targetData.data;
+    const data = targetData.data[0];
     console.log("📊 Target Data:", data);
 
     return {
