@@ -272,7 +272,7 @@ export function DoctorSection({
       </div>
 
       {/* Leaderboard + Speciality Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <ChartCard title="Doctor Performance Leaderboard" subtitle="Top 10 doctors by achievement %" className="lg:col-span-2">
           {leaderboard.length === 0 ? <EmptyState /> : (
             <ResponsiveContainer width="100%" height={360}>
@@ -318,7 +318,7 @@ export function DoctorSection({
             </>
           )}
         </ChartCard>
-      </div>
+      </div> */}
 
       {/* Matrix + Product Completion */}
       {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">

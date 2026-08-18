@@ -25,6 +25,7 @@ const AllSalesAnalytics = () => {
     selectedTab,
     changeTab,
     filters,
+    updateFilter,
     fetchOverviewData,
     fetchSalesPerformance,
     fetchOrganizationAnalytics,
@@ -57,6 +58,8 @@ const AllSalesAnalytics = () => {
   const [tableLoading, setTableLoading] = useState(false);
   const [doctorTableLoading, setDoctorTableLoading] = useState(false);
   const [orgListTableLoading, setOrgListTableLoading] = useState(false);
+  const [productTableLoading, setProductTableLoading] = useState(false);
+  const [targetTableLoading, setTargetTableLoading] = useState(false);
 
   // ✅ Doctor pagination state
   const [doctorPage, setDoctorPage] = useState(1);
@@ -228,21 +231,31 @@ const [targetPageSize, setTargetPageSize] = useState(10);
     }
   };
 
-const handleProductPageChange = (page) => {
+const handleProductPageChange = async (page) => {
   setProductPage(page);
-  fetchOrganizationProductAnalytics({
-    page: page,
-    pageSize: productPageSize,
-  });
+  setProductTableLoading(true);
+  try {
+    await fetchOrganizationProductAnalytics({
+      page: page,
+      pageSize: productPageSize,
+    });
+  } finally {
+    setProductTableLoading(false);
+  }
 };
 
-const handleProductPageSizeChange = (pageSize) => {
+const handleProductPageSizeChange = async (pageSize) => {
   setProductPageSize(pageSize);
   setProductPage(1);
-  fetchOrganizationProductAnalytics({
-    page: 1,
-    pageSize: pageSize,
-  });
+  setProductTableLoading(true);
+  try {
+    await fetchOrganizationProductAnalytics({
+      page: 1,
+      pageSize: pageSize,
+    });
+  } finally {
+    setProductTableLoading(false);
+  }
 };
 
 const handleOrgListPageChange = async (page) => {
@@ -273,21 +286,31 @@ const handleOrgListPageSizeChange = async (pageSize) => {
 };
 
 
-const handleTargetPageChange = (page) => {
+const handleTargetPageChange = async (page) => {
   setTargetPage(page);
-  fetchSalesPersonTargetAnalytics({
-    page: page,
-    limit: targetPageSize,
-  });
+  setTargetTableLoading(true);
+  try {
+    await fetchSalesPersonTargetAnalytics({
+      page: page,
+      limit: targetPageSize,
+    });
+  } finally {
+    setTargetTableLoading(false);
+  }
 };
 
-const handleTargetPageSizeChange = (pageSize) => {
+const handleTargetPageSizeChange = async (pageSize) => {
   setTargetPageSize(pageSize);
   setTargetPage(1);
-  fetchSalesPersonTargetAnalytics({
-    page: 1,
-    limit: pageSize,
-  });
+  setTargetTableLoading(true);
+  try {
+    await fetchSalesPersonTargetAnalytics({
+      page: 1,
+      limit: pageSize,
+    });
+  } finally {
+    setTargetTableLoading(false);
+  }
 };
 
   const safeFilters = filters || {
@@ -300,6 +323,59 @@ const handleTargetPageSizeChange = (pageSize) => {
     speciality: "",
     typeOfDoctorProfile: "",
     salesPerson: "",
+  };
+
+  const handleFiltersChange = async (tab) => {
+    try {
+      switch (tab) {
+        case 'overview':
+          await fetchOverviewData();
+          await fetchSalesPerformance();
+          await fetchOrganizationAnalytics({
+            page: hospitalPage,
+            limit: hospitalLimit,
+          });
+          await fetchSpecialityAnalytics();
+          await fetchTargetAnalytics();
+          break;
+        case 'doctors':
+          await loadDoctorData(false);
+          break;
+        case 'executives':
+          await fetchSalesPerformance();
+          await fetchSalesPersonAnalytics();
+          await fetchSalesPersonTargetAnalytics({
+            page: targetPage,
+            limit: targetPageSize,
+          });
+          break;
+        case 'hospitals':
+          await fetchOrganizationAnalytics({
+            page: hospitalPage,
+            limit: hospitalLimit,
+          });
+          break;
+        case 'organizations':
+          await fetchOrganizationAnalytics({
+            page: hospitalPage,
+            limit: hospitalLimit,
+          });
+          await fetchOrganizationDashboardAnalytics();
+          await fetchOrganizationProductAnalytics({
+            page: productPage,
+            pageSize: productPageSize,
+          });
+          await fetchOrganizationListAnalytics({
+            page: orgListPage,
+            pageSize: orgListPageSize,
+          });
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
   };
 
   const filteredData = useMemo(() => {
@@ -381,6 +457,7 @@ const handleTargetPageSizeChange = (pageSize) => {
   salesPersonTargetData={salesPersonTargetData}
   filters={filters}
   loading={loading}
+  tableLoading={targetTableLoading}
   onTargetPageChange={handleTargetPageChange}
   onTargetItemsPerPageChange={handleTargetPageSizeChange}
 />
@@ -403,6 +480,7 @@ const handleTargetPageSizeChange = (pageSize) => {
   filters={filters}
   loading={loading}
   tableLoading={orgListTableLoading}
+  productTableLoading={productTableLoading}
   onProductPageChange={handleProductPageChange}
   onProductItemsPerPageChange={handleProductPageSizeChange}
   onOrganizationListPageChange={handleOrgListPageChange}
@@ -410,17 +488,6 @@ const handleTargetPageSizeChange = (pageSize) => {
 />
     },
   ];
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.backgroundColor }}>
-        <div className="text-center">
-          <LoaderSpinner />
-          <p className="mt-4 text-[var(--theme-text-secondary)] font-medium">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -479,7 +546,14 @@ const handleTargetPageSizeChange = (pageSize) => {
         </div>
 
         <div className="mb-4">
-          <FilterBar selectedTab={selectedTab} />
+          <FilterBar 
+            selectedTab={selectedTab}
+            loading={loading}
+            filters={filters}
+            updateFilter={updateFilter}
+            resetFilters={resetFilters}
+            onFiltersChange={handleFiltersChange}
+          />
         </div>
 
         <div className="flex flex-wrap  justify-between gap-1 border-b border-[var(--theme-border)] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">

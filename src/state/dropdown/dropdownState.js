@@ -19,7 +19,7 @@ export const productDetailsStateAtom = atom(createPersistedAtom("productDetailsS
 
 export const cityNamesAtom = atom(createPersistedAtom("cityNames", []))
 
-export const doctorListAtom = atom(createPersistedAtom("doctorListState", []))
+export const doctorListAtom = atom(createPersistedAtom("doctorListDropdownState", []))
 
 export const productTypesAtom = atom(createPersistedAtom("productTypesState", []))
 

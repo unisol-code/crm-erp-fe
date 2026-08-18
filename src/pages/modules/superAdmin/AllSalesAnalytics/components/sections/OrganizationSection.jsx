@@ -145,6 +145,7 @@ export function OrganizationSection({
   organizationProductData,
   loading = false,
   tableLoading = false,
+  productTableLoading = false,
   onProductPageChange,
   onProductItemsPerPageChange,
   // ✅ New props for organization list
@@ -740,7 +741,7 @@ export function OrganizationSection({
                           {hospital.hospitalName || 'N/A'}
                         </td>
                         <td className="px-4 py-3 text-[15px] whitespace-nowrap">
-                          <Badge className={`rounded-full ${hospital.typeOfOrgOrHospital === 'Govt' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                          <Badge className={`rounded-full ${hospital.typeOfOrgOrHospital === 'Govt' ? 'bg-blue-400 text-blue-700' : 'bg-green-400 text-green-700'}`}>
                             {hospital.typeOfOrgOrHospital || 'N/A'}
                           </Badge>
                         </td>
@@ -1026,7 +1027,15 @@ export function OrganizationSection({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProductData.map((org, index) => {
+                  {productTableLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="p-8 text-center">
+                        <div className="flex justify-center items-center w-full">
+                          <LoaderSpinner />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredProductData.map((org, index) => {
                     const pct = org.achievementPercentage || 0;
                     const status = pct >= 100 ? "Excellent" :
                                   pct >= 75 ? "Good" :

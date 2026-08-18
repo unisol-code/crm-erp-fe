@@ -320,22 +320,31 @@ export function DashboardSection({
             Territory Analytics
           </h1>
           <p className="text-sm text-[var(--theme-text-secondary)] mt-1 font-medium">
-            Live view of hospitals, doctors, visits and product performance
-            across Maharashtra.
-            {filters.state && (
-              <span className="ml-2 text-[var(--theme-primary)] font-semibold">
-                Filtered by: {filters.state}
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[var(--theme-primary)] animate-pulse" />
+                Loading analytics...
               </span>
-            )}
-            {filters.district && (
-              <span className="ml-2 text-[var(--theme-primary)] font-semibold">
-                | {filters.district}
-              </span>
-            )}
-            {filters.city && (
-              <span className="ml-2 text-[var(--theme-primary)] font-semibold">
-                | {filters.city}
-              </span>
+            ) : (
+              <>
+                Live view of hospitals, doctors, visits and product performance
+                across Maharashtra.
+                {filters.state && (
+                  <span className="ml-2 text-[var(--theme-primary)] font-semibold">
+                    Filtered by: {filters.state}
+                  </span>
+                )}
+                {filters.district && (
+                  <span className="ml-2 text-[var(--theme-primary)] font-semibold">
+                    | {filters.district}
+                  </span>
+                )}
+                {filters.city && (
+                  <span className="ml-2 text-[var(--theme-primary)] font-semibold">
+                    | {filters.city}
+                  </span>
+                )}
+              </>
             )}
           </p>
         </div>
@@ -345,21 +354,32 @@ export function DashboardSection({
         </div>
       </div>
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        {displayKpis.map((k) => {
-          const Icon = LucideIcons[k.icon] || LucideIcons.Activity;
-          return (
-            <KpiCard
-              key={k.key}
-              title={k.title}
-              value={k.value}
-              trend={k.trend}
-              accent={k.accent}
-              icon={Icon}
-            />
-          );
-        })}
-      </div>
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="rounded-xl border border-[var(--theme-border)] p-4 bg-[var(--theme-card-bg)] animate-pulse">
+              <div className="h-3 w-24 bg-gray-200 rounded mb-3" />
+              <div className="h-8 w-16 bg-gray-200 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+          {displayKpis.map((k) => {
+            const Icon = LucideIcons[k.icon] || LucideIcons.Activity;
+            return (
+              <KpiCard
+                key={k.key}
+                title={k.title}
+                value={k.value}
+                trend={k.trend}
+                accent={k.accent}
+                icon={Icon}
+              />
+            );
+          })}
+        </div>
+      )}
       {/* Row 1: Territory Heatmap + Summary */}
       {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <ChartCard
@@ -516,7 +536,11 @@ export function DashboardSection({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Left: Pie Chart */}
             <div className="lg:col-span-2">
-              {specialityChartData.length > 0 ? (
+              {loading ? (
+                <div className="flex items-center justify-center h-[260px]">
+                  <LoaderSpinner />
+                </div>
+              ) : specialityChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
                     <Pie
@@ -560,97 +584,136 @@ export function DashboardSection({
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-[260px] text-gray-400">
-                  {loading ? <LoaderSpinner /> : "No speciality data available"}
+                  No speciality data available
                 </div>
               )}
             </div>
 
             {/* Right: Stats Cards */}
-            <div className="space-y-2">
-              {/* Top Speciality Card */}
-              <div className="bg-gradient-to-r from-[var(--theme-primary)]/10 to-[var(--theme-primary)]/5 rounded-xl p-3 border border-[var(--theme-primary)]/20">
-                <p className="text-xs text-[var(--theme-text-secondary)] font-medium">
-                  🏆 Top Speciality
-                </p>
-                <p className="text-lg font-bold text-[var(--theme-text-primary)]">
-                  {formatSpecialityName(topSpeciality?.name) || "N/A"}
-                </p>
-                <p className="text-sm text-[var(--theme-primary)]">
-                  {topSpeciality?.value || 0} doctors
-                </p>
+            {loading ? (
+              <div className="space-y-2">
+                <div className="bg-[var(--theme-card-bg)] rounded-xl p-3 border border-[var(--theme-border)] animate-pulse">
+                  <div className="h-3 w-24 bg-gray-200 rounded mb-2" />
+                  <div className="h-5 w-32 bg-gray-200 rounded" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 animate-pulse">
+                    <div className="h-3 w-16 bg-gray-200 rounded mb-2" />
+                    <div className="h-6 w-10 bg-gray-200 rounded" />
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-3 border border-green-100 animate-pulse">
+                    <div className="h-3 w-16 bg-gray-200 rounded mb-2" />
+                    <div className="h-6 w-10 bg-gray-200 rounded" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 animate-pulse">
+                    <div className="h-3 w-20 bg-gray-200 rounded mb-2" />
+                    <div className="h-6 w-8 bg-gray-200 rounded" />
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 animate-pulse">
+                    <div className="h-3 w-20 bg-gray-200 rounded mb-2" />
+                    <div className="h-6 w-8 bg-gray-200 rounded" />
+                  </div>
+                </div>
               </div>
+            ) : (
+              <div className="space-y-2">
+                {/* Top Speciality Card */}
+                <div className="bg-gradient-to-r from-[var(--theme-primary)]/10 to-[var(--theme-primary)]/5 rounded-xl p-3 border border-[var(--theme-primary)]/20">
+                  <p className="text-xs text-[var(--theme-text-secondary)] font-medium">
+                    🏆 Top Speciality
+                  </p>
+                  <p className="text-lg font-bold text-[var(--theme-text-primary)]">
+                    {formatSpecialityName(topSpeciality?.name) || "N/A"}
+                  </p>
+                  <p className="text-sm text-[var(--theme-primary)]">
+                    {topSpeciality?.value || 0} doctors
+                  </p>
+                </div>
 
-              {/* Doctor Distribution */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
-                  <p className="text-xs text-blue-600 font-medium">
-                    👨‍⚕️ Physicians
-                  </p>
-                  <p className="text-xl font-bold text-blue-700">
-                    {profileDistribution.Physician}
-                  </p>
-                  <p className="text-xs text-blue-500">General medicine</p>
+                {/* Doctor Distribution */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                    <p className="text-xs text-blue-600 font-medium">
+                      👨‍⚕️ Physicians
+                    </p>
+                    <p className="text-xl font-bold text-blue-700">
+                      {profileDistribution.Physician}
+                    </p>
+                    <p className="text-xs text-blue-500">General medicine</p>
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-3 border border-green-100">
+                    <p className="text-xs text-green-600 font-medium">
+                      🔬 Surgeons
+                    </p>
+                    <p className="text-xl font-bold text-green-700">
+                      {profileDistribution.Surgeon}
+                    </p>
+                    <p className="text-xs text-green-500">Surgical specialists</p>
+                  </div>
                 </div>
-                <div className="bg-green-50 rounded-xl p-3 border border-green-100">
-                  <p className="text-xs text-green-600 font-medium">
-                    🔬 Surgeons
-                  </p>
-                  <p className="text-xl font-bold text-green-700">
-                    {profileDistribution.Surgeon}
-                  </p>
-                  <p className="text-xs text-green-500">Surgical specialists</p>
-                </div>
-              </div>
 
-              {/* Total Stats */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                  <p className="text-xs text-gray-500 font-medium">
-                    📊 Total Specialities
-                  </p>
-                  <p className="text-xl font-bold text-gray-700">
-                    {specialityChartData.length}
-                  </p>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                  <p className="text-xs text-gray-500 font-medium">
-                    👤 Total Doctors
-                  </p>
-                  <p className="text-xl font-bold text-gray-700">
-                    {totalDoctors}
-                  </p>
+                {/* Total Stats */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                    <p className="text-xs text-gray-500 font-medium">
+                      📊 Total Specialities
+                    </p>
+                    <p className="text-xl font-bold text-gray-700">
+                      {specialityChartData.length}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                    <p className="text-xs text-gray-500 font-medium">
+                      👤 Total Doctors
+                    </p>
+                    <p className="text-xl font-bold text-gray-700">
+                      {totalDoctors}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Bottom: Speciality List */}
-          <div className="mt-4 pt-4 border-t border-[var(--theme-border)]">
-            <div className="flex flex-wrap gap-2">
-              {specialityChartData.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-[var(--theme-card-bg)] rounded-full border border-[var(--theme-border)] hover:bg-[var(--theme-primary)]/10 transition-colors cursor-default"
-                >
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  />
-                  <span className="text-sm text-[var(--theme-text-primary)]">
-                    {formatSpecialityName(item.name)}
-                  </span>
-                  <span className="text-xs text-[var(--theme-primary)] font-medium">
-                    ({item.value})
-                  </span>
-                </div>
-              ))}
-              {specialityChartData.length === 0 && (
-                <div className="text-sm text-gray-400">
-                  No specialities available
-                </div>
-              )}
+          {loading ? (
+            <div className="mt-4 pt-4 border-t border-[var(--theme-border)]">
+              <div className="flex flex-wrap gap-2">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="h-8 w-24 bg-gray-200 rounded-full animate-pulse" />
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mt-4 pt-4 border-t border-[var(--theme-border)]">
+              <div className="flex flex-wrap gap-2">
+                {specialityChartData.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-[var(--theme-card-bg)] rounded-full border border-[var(--theme-border)] hover:bg-[var(--theme-primary)]/10 transition-colors cursor-default"
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    />
+                    <span className="text-sm text-[var(--theme-text-primary)]">
+                      {formatSpecialityName(item.name)}
+                    </span>
+                    <span className="text-xs text-[var(--theme-primary)] font-medium">
+                      ({item.value})
+                    </span>
+                  </div>
+                ))}
+                {specialityChartData.length === 0 && (
+                  <div className="text-sm text-gray-400">
+                    No specialities available
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </ChartCard>
 
         {/* ✅ Target vs Achievement - Multiple Radial Bars */}
@@ -658,8 +721,14 @@ export function DashboardSection({
           title="Target vs Achievement"
           subtitle="Monthly, Quarterly & Yearly performance"
         >
-          {/* Multiple Radial Bars */}
-          <div className="relative h-52">
+          {loading ? (
+            <div className="flex items-center justify-center h-52">
+              <LoaderSpinner />
+            </div>
+          ) : (
+            <>
+              {/* Multiple Radial Bars */}
+              <div className="relative h-52">
             <ResponsiveContainer width="100%" height="100%">
               <RadialBarChart
                 innerRadius="60%"
@@ -841,6 +910,8 @@ export function DashboardSection({
               </div>
             </div>
           </div>
+            </>
+          )}
         </ChartCard>
       </div>
       {/* Sales Executive Performance - Grouped Bar Chart */}
@@ -849,50 +920,56 @@ export function DashboardSection({
         subtitle="Total Visits vs Success Visits"
         className="mt-4"
       >
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart
-            data={executives}
-            layout="vertical"
-            margin={{ left: 8, right: 16 }}
-          >
-            <CartesianGrid horizontal={false} stroke="var(--theme-bg-sidebar)" />
-            <XAxis type="number" stroke="#6b7280" fontSize={11} />
-            <YAxis
-              dataKey="name"
-              type="category"
-              stroke="#6b7280"
-              fontSize={12}
-              width={70}
-            />
-            <Tooltip
-              contentStyle={{
-                borderRadius: 12,
-                border: "1px solid var(--theme-bg-sidebar)",
-                background: "#ffffff",
-              }}
-              formatter={(value, name) => {
-                if (name === "planned")
-                  return [`${value} visits`, "Total Visits"];
-                if (name === "completed")
-                  return [`${value} visits`, "Success Visits"];
-                return [value, name];
-              }}
-            />
-            <Legend />
-            <Bar
-              dataKey="planned"
-              name="Total Visits"
-              fill="var(--theme-primary)"
-              radius={[0, 4, 4, 0]}
-            />
-            <Bar
-              dataKey="completed"
-              name="Success Visits"
-              fill="#22c55e"
-              radius={[0, 4, 4, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
+        {loading ? (
+          <div className="flex items-center justify-center h-[220px]">
+            <LoaderSpinner />
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart
+              data={executives}
+              layout="vertical"
+              margin={{ left: 8, right: 16 }}
+            >
+              <CartesianGrid horizontal={false} stroke="var(--theme-bg-sidebar)" />
+              <XAxis type="number" stroke="#6b7280" fontSize={11} />
+              <YAxis
+                dataKey="name"
+                type="category"
+                stroke="#6b7280"
+                fontSize={12}
+                width={70}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 12,
+                  border: "1px solid var(--theme-bg-sidebar)",
+                  background: "#ffffff",
+                }}
+                formatter={(value, name) => {
+                  if (name === "planned")
+                    return [`${value} visits`, "Total Visits"];
+                  if (name === "completed")
+                    return [`${value} visits`, "Success Visits"];
+                  return [value, name];
+                }}
+              />
+              <Legend />
+              <Bar
+                dataKey="planned"
+                name="Total Visits"
+                fill="var(--theme-primary)"
+                radius={[0, 4, 4, 0]}
+              />
+              <Bar
+                dataKey="completed"
+                name="Success Visits"
+                fill="#22c55e"
+                radius={[0, 4, 4, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
 
         <div className="mt-4 overflow-x-auto -mx-2">
           <Table>
@@ -906,25 +983,34 @@ export function DashboardSection({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {executives.map((e) => (
-                <TableRow key={e.id}>
-                  <TableCell className="font-medium">{e.name}</TableCell>
-                  <TableCell className="text-right">{e.planned}</TableCell>
-                  <TableCell className="text-right">{e.completed}</TableCell>
-                  <TableCell className="text-right">
-                    <AchievementBadge value={e.achievement} />
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="p-8 text-center">
+                    <div className="flex justify-center items-center w-full">
+                      <LoaderSpinner />
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))}
-              {executives.length === 0 && (
+              ) : executives.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="text-center py-8 text-sm text-gray-500"
                   >
                     No executive data available
                   </TableCell>
                 </TableRow>
+              ) : (
+                executives.map((e) => (
+                  <TableRow key={e.id}>
+                    <TableCell className="font-medium">{e.name}</TableCell>
+                    <TableCell className="text-right">{e.planned}</TableCell>
+                    <TableCell className="text-right">{e.completed}</TableCell>
+                    <TableCell className="text-right">
+                      <AchievementBadge value={e.achievement} />
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
@@ -1027,16 +1113,17 @@ export function DashboardSection({
         {/* Hospital Table - Using the new component */}
         <div className="mt-4">
         <HospitalTable
-             data={organizationData}
-             loading={tableLoading}
-             pagination={{
-               currentPage: organizationData?.currentPage || 1,
-               pageSize: organizationData?.pageSize || 10,
-             }}
-             onPageChange={onPageChange}
-             onItemsPerPageChange={onItemsPerPageChange}
-             onSearch={onSearch}
-           />
+              data={organizationData}
+              loading={loading}
+              tableLoading={tableLoading}
+              pagination={{
+                currentPage: organizationData?.currentPage || 1,
+                pageSize: organizationData?.pageSize || 10,
+              }}
+              onPageChange={onPageChange}
+              onItemsPerPageChange={onItemsPerPageChange}
+              onSearch={onSearch}
+            />
         </div>
       </div>
 

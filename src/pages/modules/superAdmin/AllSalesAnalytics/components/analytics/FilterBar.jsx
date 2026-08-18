@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import * as LucideIcons from "lucide-react";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import Select from "react-select";
-import useAllSalesAnalytics from "../../../../../../hooks/superAdminHook/allSalesAnalytics/useAllSalesAnalytics";
+import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
 import { 
   Button, 
   DropdownMenu,
@@ -17,7 +17,6 @@ const MONTHS = [
   { value: "January", label: "January" },
   { value: "February", label: "February" },
   { value: "March", label: "March" },
-  { value: "April", label: "April" },
   { value: "May", label: "May" },
   { value: "June", label: "June" },
   { value: "July", label: "July" },
@@ -110,55 +109,16 @@ const NoOptionsMessage = ({ message = "No options available" }) => (
   </div>
 );
 
-export function FilterBar({ selectedTab = 'overview' }) {
-  const {
-    filters,
-    updateFilter,
-    resetFilters,
-    fetchOverviewData,
-    fetchSalesPerformance,
-    fetchOrganizationAnalytics,
-    fetchSpecialityAnalytics,
-    fetchTargetAnalytics,
-    fetchDoctorAnalytics,
-    fetchDoctorList, // ✅ Add this
-     fetchSalesPersonAnalytics,fetchOrganizationDashboardAnalytics,
-     fetchOrganizationProductAnalytics, fetchOrganizationListAnalytics,  fetchSalesPersonTargetAnalytics,
-    loading
-  } = useAllSalesAnalytics();
-
-  // ✅ Use refs to prevent unnecessary re-renders
-  const fetchOverviewDataRef = useRef(fetchOverviewData);
-  const fetchSalesPerformanceRef = useRef(fetchSalesPerformance);
-  const fetchOrganizationAnalyticsRef = useRef(fetchOrganizationAnalytics);
-  const fetchSpecialityAnalyticsRef = useRef(fetchSpecialityAnalytics);
-  const fetchTargetAnalyticsRef = useRef(fetchTargetAnalytics);
-  const fetchDoctorAnalyticsRef = useRef(fetchDoctorAnalytics);
-  const fetchDoctorListRef = useRef(fetchDoctorList); // ✅ Add this
-  const fetchSalesPersonAnalyticsRef = useRef(fetchSalesPersonAnalytics);
-  const fetchOrganizationDashboardAnalyticsRef = useRef(fetchOrganizationDashboardAnalytics);
-  const fetchOrganizationProductAnalyticsRef = useRef(fetchOrganizationProductAnalytics);
-  const fetchOrganizationListAnalyticsRef = useRef(fetchOrganizationListAnalytics);
-  const fetchSalesPersonTargetAnalyticsRef = useRef(fetchSalesPersonTargetAnalytics);
-  const updateFilterRef = useRef(updateFilter);
-  const resetFiltersRef = useRef(resetFilters);
-
-  // ✅ Add a flag to prevent multiple rapid calls
+export function FilterBar({ 
+  selectedTab = 'overview',
+  loading = false,
+  filters = {},
+  updateFilter,
+  resetFilters,
+  onFiltersChange,
+}) {
   const isFetchingRef = useRef(false);
   const debounceTimerRef = useRef(null);
-
-  useEffect(() => {
-    fetchOverviewDataRef.current = fetchOverviewData;
-    fetchSalesPerformanceRef.current = fetchSalesPerformance;
-    fetchOrganizationAnalyticsRef.current = fetchOrganizationAnalytics;
-    fetchSpecialityAnalyticsRef.current = fetchSpecialityAnalytics;
-    fetchTargetAnalyticsRef.current = fetchTargetAnalytics;
-    fetchDoctorAnalyticsRef.current = fetchDoctorAnalytics;
-    fetchDoctorListRef.current = fetchDoctorList; // ✅ Add this
-     fetchOrganizationProductAnalyticsRef.current = fetchOrganizationProductAnalytics;
-    updateFilterRef.current = updateFilter;
-    resetFiltersRef.current = resetFilters;
-  }, [fetchOverviewData, fetchSalesPerformance, fetchOrganizationAnalytics,fetchOrganizationProductAnalytics, fetchSpecialityAnalytics, fetchTargetAnalytics, fetchDoctorAnalytics, fetchDoctorList, updateFilter, resetFilters]);
 
   const { 
     fetchAllStateName, allStateName,
@@ -174,7 +134,6 @@ export function FilterBar({ selectedTab = 'overview' }) {
 
   const [selectedStateCode, setSelectedStateCode] = useState(null);
 
-  // All useMemo remain the same
   const stateSelectOptions = useMemo(() => {
     if (!filters.region) return [];
     if (!Array.isArray(allStateName) || allStateName.length === 0) return [];
@@ -251,7 +210,6 @@ export function FilterBar({ selectedTab = 'overview' }) {
     }));
   }, [region]);
 
-  // All useEffect remain the same
   useEffect(() => {
     fetchSegment();
     fetchTypeOfProfile();
@@ -278,107 +236,76 @@ export function FilterBar({ selectedTab = 'overview' }) {
     }
   }, [filters.segment]);
 
-  // ✅ Updated fetchActiveTabData to include doctor list
-  const fetchActiveTabData = () => {
-    switch (selectedTab) {
-      case 'overview':
-        fetchOverviewDataRef.current();
-        fetchSalesPerformanceRef.current();
-        fetchOrganizationAnalyticsRef.current();
-        fetchSpecialityAnalyticsRef.current();
-        fetchTargetAnalyticsRef.current();
-        break;
-      case 'doctors':
-        fetchDoctorAnalyticsRef.current();
-        fetchDoctorListRef.current({
-          page: 1,
-          limit: 10,
-        }); // ✅ Fetch doctor list with filters
-        break;
-      case 'executives':
-        fetchSalesPerformanceRef.current();
-        fetchSalesPersonAnalyticsRef.current();
-        fetchSalesPersonTargetAnalyticsRef.current();
-        break;
-      case 'hospitals':
-case 'organizations':
-  fetchOrganizationAnalyticsRef.current();
-  fetchOrganizationDashboardAnalyticsRef.current();
-  fetchOrganizationProductAnalyticsRef.current();
-    fetchOrganizationListAnalyticsRef.current();
-  break;
-      default:
-        break;
-    }
-  };
-
-  // ✅ Debounced fetch function
-  const fetchAllData = () => {
+  const triggerFetch = () => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     
-    // Clear any pending timeout
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
     
     debounceTimerRef.current = setTimeout(() => {
-      fetchActiveTabData();
+      if (onFiltersChange) {
+        onFiltersChange(selectedTab);
+      }
       isFetchingRef.current = false;
       debounceTimerRef.current = null;
-    }, 300); // ✅ 300ms debounce
+    }, 300);
   };
 
-  // ✅ Use refs in handlers
   const handleSelectChange = (key, selectedOption) => {
     const value = selectedOption ? selectedOption.value : "";
-    updateFilterRef.current(key, value);
+    if (updateFilter) updateFilter(key, value);
 
     if (key === "region") {
       setSelectedStateCode("");
-      updateFilterRef.current("state", "");
-      updateFilterRef.current("district", "");
-      updateFilterRef.current("city", "");
+      if (updateFilter) {
+        updateFilter("state", "");
+        updateFilter("district", "");
+        updateFilter("city", "");
+      }
       fetchAllStateName(value || "");
     }
     if (key === "state") {
       const selectedState = stateSelectOptions.find(opt => opt.value === value);
       setSelectedStateCode(selectedState ? (selectedState.stateCode || selectedState.value) : value);
-      updateFilterRef.current("district", "");
-      updateFilterRef.current("city", "");
+      if (updateFilter) {
+        updateFilter("district", "");
+        updateFilter("city", "");
+      }
     }
     if (key === "district") {
-      updateFilterRef.current("city", "");
+      if (updateFilter) updateFilter("city", "");
     }
     
-    // ✅ Use debounced fetch
-    fetchAllData();
+    triggerFetch();
   };
 
   const handleApplyFilters = () => {
-    // ✅ Clear any pending debounce and fetch immediately
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = null;
     }
     isFetchingRef.current = false;
     
-    fetchActiveTabData();
+    if (onFiltersChange) {
+      onFiltersChange(selectedTab);
+    }
   };
 
   const handleResetFilters = () => {
-    resetFiltersRef.current();
+    if (resetFilters) resetFilters();
     
-    // ✅ Clear any pending debounce
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = null;
     }
     isFetchingRef.current = false;
     
-    // After reset, fetch data for the active tab with empty filters
     setTimeout(() => {
-      fetchActiveTabData();
+      if (onFiltersChange) {
+        onFiltersChange(selectedTab);
+      }
     }, 100);
   };
 
@@ -387,26 +314,26 @@ case 'organizations':
     return item.options.find(opt => opt.value === item.value) || null;
   };
 
-  const filterItems = [
+ const filterItems = [
  
-    { 
-      key: "month", 
-      label: "Month",
-      options: MONTHS,
-      placeholder: "Select month",
-      value: filters.month,
-      isMulti: false,
-      isSearchable: true
-    },
-    { 
-      key: "year", 
-      label: "Year",
-      options: getYearOptions(),
-      placeholder: "Select year",
-      value: filters.year,
-      isMulti: false,
-      isSearchable: true
-    },
+    // { 
+    //   key: "month", 
+    //   label: "Month",
+    //   options: MONTHS,
+    //   placeholder: "Select month",
+    //   value: filters.month,
+    //   isMulti: false,
+    //   isSearchable: true
+    // },
+    // { 
+    //   key: "year", 
+    //   label: "Year",
+    //   options: getYearOptions(),
+    //   placeholder: "Select year",
+    //   value: filters.year,
+    //   isMulti: false,
+    //   isSearchable: true
+    // },
        { 
       key: "region", 
       label: "Region",
@@ -461,26 +388,25 @@ case 'organizations':
       isMulti: false,
       isSearchable: true
     },
-    { 
-      key: "typeOfDoctorProfile", 
-      label: "Doctor Profile",
-      options: profileSelectOptions,
-      placeholder: "All profiles",
-      value: filters.typeOfDoctorProfile,
-      isMulti: false,
-      isSearchable: true
-    },
-    { 
-      key: "salesPerson", 
-      label: "Sales Executive",
-      options: salesPersonSelectOptions,
-      placeholder: "All executives",
-      value: filters.salesPerson,
-      isMulti: false,
-      isSearchable: true
-    },
+    // { 
+    //   key: "typeOfDoctorProfile", 
+    //   label: "Doctor Profile",
+    //   options: profileSelectOptions,
+    //   placeholder: "All profiles",
+    //   value: filters.typeOfDoctorProfile,
+    //   isMulti: false,
+    //   isSearchable: true
+    // },
+    // { 
+    //   key: "salesPerson", 
+    //   label: "Sales Executive",
+    //   options: salesPersonSelectOptions,
+    //   placeholder: "All executives",
+    //   value: filters.salesPerson,
+    //   isMulti: false,
+    //   isSearchable: true
+    // },
   ];
-
   return (
     <div className="bg-white rounded-2xl border border-[var(--theme-border)] shadow-md">
       <div className="px-5 py-4">
@@ -490,24 +416,17 @@ case 'organizations':
             <h2 className="text-sm font-semibold text-[var(--theme-text-primary)]">Filters</h2>
           </div>
           <span className="ml-auto flex items-center gap-2">
+            {/* {loading && (
+              <div className="flex items-center gap-2">
+                <LoaderSpinner />
+              </div>
+            )} */}
             <Button variant="ghost" size="sm" onClick={handleResetFilters} className="rounded-lg text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-hover)]">
               <LucideIcons.RotateCcw size={14} /> Reset
             </Button>
             <Button size="sm" onClick={handleApplyFilters} disabled={loading} className="rounded-lg bg-[var(--theme-primary)] hover:bg-[var(--theme-primary-dark)] text-white shadow-sm shadow-[var(--theme-primary)]/20">
               Apply Filters
             </Button>
-            {/* <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="rounded-lg border-[var(--theme-border)] hover:bg-[var(--theme-bg-hover)]">
-                  <LucideIcons.Download size={14} /> Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>PDF</DropdownMenuItem>
-                <DropdownMenuItem>Excel</DropdownMenuItem>
-                <DropdownMenuItem>CSV</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu> */}
           </span>
         </div>
         
@@ -531,6 +450,7 @@ case 'organizations':
                   placeholder={item.placeholder}
                   isClearable={true}
                   isSearchable={item.isSearchable}
+                  isLoading={loading}
                     noOptionsMessage={() => {
                       if (item.key === 'state') return <NoOptionsMessage message="Select region first" />;
                       if (item.key === 'district') return <NoOptionsMessage message="Select state first" />;

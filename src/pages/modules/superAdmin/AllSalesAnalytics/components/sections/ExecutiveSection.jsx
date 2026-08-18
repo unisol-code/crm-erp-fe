@@ -84,6 +84,7 @@ export function ExecutiveSection({
   salesPersonData, 
   salesPersonTargetData,
   loading = false,
+  tableLoading = false,
   onTargetPageChange,
   onTargetItemsPerPageChange,
 }) {
@@ -773,7 +774,15 @@ export function ExecutiveSection({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTargets && filteredTargets.length > 0 ? (
+                  {tableLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="p-8 text-center">
+                        <div className="flex justify-center items-center w-full">
+                          <LoaderSpinner />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredTargets && filteredTargets.length > 0 ? (
                     filteredTargets.map((target, index) => {
                       const pct = target?.achievementPercentage || 0;
                       return (
