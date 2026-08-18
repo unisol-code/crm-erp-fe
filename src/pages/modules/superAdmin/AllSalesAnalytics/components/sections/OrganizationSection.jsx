@@ -740,7 +740,7 @@ export function OrganizationSection({
                           {hospital.hospitalName || 'N/A'}
                         </td>
                         <td className="px-4 py-3 text-[15px] whitespace-nowrap">
-                          <Badge className={`rounded-full ${hospital.typeOfOrgOrHospital === 'Govt' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                          <Badge className={`rounded-full ${hospital.typeOfOrgOrHospital === 'Govt' ? 'bg-blue-400 text-blue-700' : 'bg-green-400 text-green-700'}`}>
                             {hospital.typeOfOrgOrHospital || 'N/A'}
                           </Badge>
                         </td>

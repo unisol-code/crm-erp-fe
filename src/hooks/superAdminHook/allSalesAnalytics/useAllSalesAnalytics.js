@@ -524,6 +524,7 @@ const fetchOrganizationListAnalytics = useCallback(async (filterParams = {}, sil
       if (allFilters.district) params.append("district", allFilters.district);
       if (allFilters.city) params.append("city", allFilters.city);
       if (allFilters.segment) params.append("segment", allFilters.segment);
+      if (allFilters.speciality) params.append("speciality", allFilters.speciality);
       if (allFilters.typeOfHospital) params.append("typeOfHospital", allFilters.typeOfHospital);
       if (allFilters.typeOfOrgOrHospital) params.append("typeOfOrgOrHospital", allFilters.typeOfOrgOrHospital);
       if (allFilters.salesPerson) params.append("salesPerson", allFilters.salesPerson);

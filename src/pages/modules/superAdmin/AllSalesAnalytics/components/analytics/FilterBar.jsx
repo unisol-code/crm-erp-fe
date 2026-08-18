@@ -389,24 +389,24 @@ case 'organizations':
 
   const filterItems = [
  
-    { 
-      key: "month", 
-      label: "Month",
-      options: MONTHS,
-      placeholder: "Select month",
-      value: filters.month,
-      isMulti: false,
-      isSearchable: true
-    },
-    { 
-      key: "year", 
-      label: "Year",
-      options: getYearOptions(),
-      placeholder: "Select year",
-      value: filters.year,
-      isMulti: false,
-      isSearchable: true
-    },
+    // { 
+    //   key: "month", 
+    //   label: "Month",
+    //   options: MONTHS,
+    //   placeholder: "Select month",
+    //   value: filters.month,
+    //   isMulti: false,
+    //   isSearchable: true
+    // },
+    // { 
+    //   key: "year", 
+    //   label: "Year",
+    //   options: getYearOptions(),
+    //   placeholder: "Select year",
+    //   value: filters.year,
+    //   isMulti: false,
+    //   isSearchable: true
+    // },
        { 
       key: "region", 
       label: "Region",
@@ -461,24 +461,24 @@ case 'organizations':
       isMulti: false,
       isSearchable: true
     },
-    { 
-      key: "typeOfDoctorProfile", 
-      label: "Doctor Profile",
-      options: profileSelectOptions,
-      placeholder: "All profiles",
-      value: filters.typeOfDoctorProfile,
-      isMulti: false,
-      isSearchable: true
-    },
-    { 
-      key: "salesPerson", 
-      label: "Sales Executive",
-      options: salesPersonSelectOptions,
-      placeholder: "All executives",
-      value: filters.salesPerson,
-      isMulti: false,
-      isSearchable: true
-    },
+    // { 
+    //   key: "typeOfDoctorProfile", 
+    //   label: "Doctor Profile",
+    //   options: profileSelectOptions,
+    //   placeholder: "All profiles",
+    //   value: filters.typeOfDoctorProfile,
+    //   isMulti: false,
+    //   isSearchable: true
+    // },
+    // { 
+    //   key: "salesPerson", 
+    //   label: "Sales Executive",
+    //   options: salesPersonSelectOptions,
+    //   placeholder: "All executives",
+    //   value: filters.salesPerson,
+    //   isMulti: false,
+    //   isSearchable: true
+    // },
   ];
 
   return (
