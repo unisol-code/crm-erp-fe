@@ -145,6 +145,7 @@ export function OrganizationSection({
   organizationProductData,
   loading = false,
   tableLoading = false,
+  productTableLoading = false,
   onProductPageChange,
   onProductItemsPerPageChange,
   // ✅ New props for organization list
@@ -1026,7 +1027,15 @@ export function OrganizationSection({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProductData.map((org, index) => {
+                  {productTableLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="p-8 text-center">
+                        <div className="flex justify-center items-center w-full">
+                          <LoaderSpinner />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredProductData.map((org, index) => {
                     const pct = org.achievementPercentage || 0;
                     const status = pct >= 100 ? "Excellent" :
                                   pct >= 75 ? "Good" :

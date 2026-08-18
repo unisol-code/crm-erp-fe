@@ -10,6 +10,7 @@ import { Input } from "../common";
 export function HospitalTable({ 
   data, 
   loading = false, 
+  tableLoading = false,
   pagination = {},
   onPageChange,
   onItemsPerPageChange,
@@ -157,7 +158,7 @@ export function HospitalTable({
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-gray-200">
-            {loading ? (
+            {loading || tableLoading ? (
               <TableRow>
                 <TableCell colSpan={11} className="p-8 text-center">
                   <div className="flex justify-center items-center w-full">
@@ -255,7 +256,7 @@ export function HospitalTable({
 
       {/* Pagination */}
       <div className="px-4 py-3 border-t border-[var(--theme-border)] bg-gray-50">
-        {!loading && hospitals.length > 0 && (
+        {!loading && !tableLoading && hospitals.length > 0 && (
           <Pagination
             currentPage={currentPage}
             totalItems={totalRecords}

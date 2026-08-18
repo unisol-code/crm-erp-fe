@@ -466,9 +466,9 @@ const fetchOrganizationDashboardAnalytics = useCallback(async (filterParams = {}
 }, [fetchData, setOrganizationDashboardData, setError]);
 
 // ============== API 10: FETCH ORGANIZATION PRODUCT ANALYTICS ==============
-const fetchOrganizationProductAnalytics = useCallback(async (filterParams = {}) => {
-  setLoading(true);
-  setError(null);
+const fetchOrganizationProductAnalytics = useCallback(async (filterParams = {}, silent = false) => {
+    if (!silent) setLoading(true);
+    setError(null);
 
   try {
     const allFilters = { ...filtersRef.current, ...filterParams };
@@ -505,10 +505,10 @@ const fetchOrganizationProductAnalytics = useCallback(async (filterParams = {}) 
     setError(err.message || "Failed to fetch organization product analytics");
     toast.error(err.response?.data?.message || "Failed to fetch organization product analytics");
     return null;
-  } finally {
-    setLoading(false);
-  }
-}, [fetchData, setOrganizationProductData, setError]);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [fetchData, setOrganizationProductData, setError]);
 
 // ============== API 11: FETCH ORGANIZATION LIST ANALYTICS ==============
 const fetchOrganizationListAnalytics = useCallback(async (filterParams = {}, silent = false) => {
@@ -558,9 +558,9 @@ const fetchOrganizationListAnalytics = useCallback(async (filterParams = {}, sil
 
 
 // ============== API 12: FETCH SALES PERSON TARGET ANALYTICS ==============
-const fetchSalesPersonTargetAnalytics = useCallback(async (filterParams = {}) => {
-  setLoading(true);
-  setError(null);
+const fetchSalesPersonTargetAnalytics = useCallback(async (filterParams = {}, silent = false) => {
+    if (!silent) setLoading(true);
+    setError(null);
 
   try {
     const allFilters = { ...filtersRef.current, ...filterParams };
@@ -596,10 +596,10 @@ const fetchSalesPersonTargetAnalytics = useCallback(async (filterParams = {}) =>
     setError(err.message || "Failed to fetch sales person target analytics");
     toast.error(err.response?.data?.message || "Failed to fetch sales person target analytics");
     return null;
-  } finally {
-    setLoading(false);
-  }
-}, [fetchData, setSalesPersonTargetData, setError]);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [fetchData, setSalesPersonTargetData, setError]);
 
 
   // ============== FILTER MANAGEMENT ==============
