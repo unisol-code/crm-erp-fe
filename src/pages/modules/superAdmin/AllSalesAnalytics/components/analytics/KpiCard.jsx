@@ -17,9 +17,9 @@ export function KpiCard({ title, value, trend, accent, icon: Icon, onClick }) {
         <div className={`h-12 w-12 rounded-xl grid place-items-center ${a.iconBg} ring-1 ${a.ring}`}>
           <Icon size={20} className={a.fg} />
         </div>
-        <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-2.5 py-1 rounded-full ${a.bg} ${a.fg}`}>
+        {/* <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-2.5 py-1 rounded-full ${a.bg} ${a.fg}`}>
           <LucideIcons.ArrowUpRight size={12} />+{trend}%
-        </span>
+        </span> */}
       </div>
       <div className="mt-4">
         <p className="text-sm font-medium text-[var(--theme-text-secondary)]">{title}</p>

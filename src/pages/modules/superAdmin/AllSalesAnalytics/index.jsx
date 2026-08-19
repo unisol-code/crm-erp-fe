@@ -535,9 +535,9 @@ const handleTargetPageSizeChange = async (pageSize) => {
       }}
       className="min-h-screen bg-[var(--theme-bg-lighter)]"
     >
-      <div className="px-4 md:px-6 lg:px-8 pt-6 pb-10">
+      
         <div className="mb-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--theme-text-primary)] tracking-tight">
+          <h1 className="text-xl md:text-2xl font-bold text-[var(--theme-text-primary)] tracking-tight">
             Employee Analytics
           </h1>
           <p className="text-sm text-[var(--theme-text-secondary)] mt-1 font-medium">
@@ -556,7 +556,7 @@ const handleTargetPageSizeChange = async (pageSize) => {
           />
         </div>
 
-        <div className="flex flex-wrap  justify-between gap-1 border-b border-[var(--theme-border)] mb-6 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-t-xl px-2 py-1">
+        <div className="flex flex-wrap  justify-between gap-1 border-b border-[var(--theme-border)] mb-3 overflow-x-auto bg-white/60 backdrop-blur-sm rounded-xl px-2 py-1">
           {tabs.map((tab) => {
             const isActive = selectedTab === tab.id;
             const Icon = tab.icon;
@@ -589,7 +589,7 @@ const handleTargetPageSizeChange = async (pageSize) => {
           {tabs.find(tab => tab.id === selectedTab)?.component}
         </div>
       </div>
-    </div>
+   
   );
 }
 
