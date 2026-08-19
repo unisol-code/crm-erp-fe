@@ -140,7 +140,7 @@ export function HospitalTable({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="shadow overflow-x-auto rounded-t-2xl border border-gray-200">
         <Table>
           <TableHeader>
             <TableRow className="bg-[var(--theme-bg-light)]">
@@ -255,7 +255,7 @@ export function HospitalTable({
       </div>
 
       {/* Pagination */}
-      <div className="px-4 py-3 border-t border-[var(--theme-border)] bg-gray-50">
+           <div className="rounded-b-2xl bg-white shadow-lg border border-gray-200 overflow-hidden">
         {!loading && !tableLoading && hospitals.length > 0 && (
           <Pagination
             currentPage={currentPage}

@@ -316,7 +316,7 @@ export function DashboardSection({
       {/* Header Section */}
       <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--theme-text-primary)]">
+          <h1 className="text-xl md:text-2xl font-bold text-[var(--theme-text-primary)]">
             Territory Analytics
           </h1>
           <p className="text-sm text-[var(--theme-text-secondary)] mt-1 font-medium">
@@ -327,8 +327,7 @@ export function DashboardSection({
               </span>
             ) : (
               <>
-                Live view of hospitals, doctors, visits and product performance
-                across Maharashtra.
+                Live view of hospitals, doctors, visits and product performance.
                 {filters.state && (
                   <span className="ml-2 text-[var(--theme-primary)] font-semibold">
                     Filtered by: {filters.state}

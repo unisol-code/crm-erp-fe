@@ -275,7 +275,7 @@ export function ExecutiveSection({
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-[var(--theme-accent)]">
+          <h2 className="text-xl md:text-2xl font-bold text-[var(--theme-accent)]">
             Sales Executive Performance
           </h2>
           <p className="text-sm text-gray-600 mt-1">
@@ -758,7 +758,7 @@ export function ExecutiveSection({
 
           {/* Target Table */}
           <ChartCard title="Target Directory" subtitle="Detailed target view">
-            <div className="overflow-x-auto -mx-2">
+            <div className="shadow overflow-x-auto rounded-t-2xl border border-gray-200">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-[var(--theme-bg-light)]">
@@ -829,7 +829,7 @@ export function ExecutiveSection({
             </div>
 
             {/* Target Pagination */}
-            <div className="px-4 py-3 border-t border-[var(--theme-border)] bg-gray-50 rounded-b-2xl">
+                <div className="rounded-b-2xl bg-white shadow-lg border border-gray-200 overflow-hidden">
               {(targetPagination?.totalRecords || 0) > 0 && (
                 <Pagination
                   currentPage={targetPagination.currentPage || 1}

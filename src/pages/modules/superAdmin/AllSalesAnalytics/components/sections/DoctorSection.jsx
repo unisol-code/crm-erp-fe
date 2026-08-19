@@ -111,10 +111,10 @@ export function DoctorSection({
   const paginationInfo = useMemo(() => {
     if (doctorListData) {
       return {
-        currentPage: doctorListData.currentPage || 1,
-        pageSize: doctorListData.pageSize || 10,
-        totalPages: doctorListData.totalPages || 1,
-        totalRecords: doctorListData.totalRecords || 0,
+        currentPage: doctorListData?.pagination.currentPage || 1,
+        pageSize: doctorListData?.pagination.limit || 10,
+        totalPages: doctorListData?.pagination.totalPages ,
+        totalRecords: doctorListData?.pagination.totalRecords || 0,
       };
     }
     return {
@@ -217,7 +217,7 @@ export function DoctorSection({
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold tracking-tight text-[var(--theme-accent)] mb-2">Doctor Analytics</h2>
+      <h2 className="text-xl md:text-2xl font-bold text-[var(--theme-accent)] mb-2">Doctor Analytics</h2>
       <p className="text-sm text-gray-600 mb-6">
         Doctor-wise performance and product engagement intelligence
         {filters.speciality && <span className="ml-2 font-medium text-[var(--theme-primary)]">Filtered by: {filters.speciality}</span>}
@@ -411,7 +411,7 @@ export function DoctorSection({
 
       {/* ✅ Doctor Directory Table */}
       <ChartCard title="Doctor Directory" subtitle="Click a row for full drill-down" className="mt-4">
-        <div className="overflow-x-auto -mx-2 max-h-[520px]">
+        <div className="shadow overflow-x-auto rounded-t-2xl border border-gray-200">
           <Table>
             <TableHeader className="sticky top-0 bg-white z-10">
               <TableRow className="bg-[var(--theme-bg-light)]">
@@ -496,7 +496,7 @@ export function DoctorSection({
         </div>
         
         {/* ✅ Pagination - Using the same Pagination component as Dashboard */}
-        <div className="px-4 py-3 border-t border-[var(--theme-border)] bg-gray-50 rounded-b-2xl">
+            <div className="rounded-b-2xl bg-white shadow-lg border border-gray-200 overflow-hidden">
           {!loading && totalRecords > 0 && (
             <Pagination
               currentPage={currentPage}
