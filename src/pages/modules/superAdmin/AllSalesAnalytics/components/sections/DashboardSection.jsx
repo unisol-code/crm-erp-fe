@@ -29,11 +29,10 @@ import {
   TableRow,
   TableHead,
   TableCell,
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "../common";
 import {
   COLORS,
@@ -90,12 +89,15 @@ export function DashboardSection({
    onSearch,
    specialityData,
    targetData,
- }) {
-  const [drillDistrict, setDrillDistrict] = useState(null);
-  const [productCat, setProductCat] = useState("All");
-  const [hospitalSearch, setHospitalSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+   overviewData,
+  }) {
+   const [drillDistrict, setDrillDistrict] = useState(null);
+   const [productCat, setProductCat] = useState("All");
+   const [hospitalSearch, setHospitalSearch] = useState("");
+   const [page, setPage] = useState(1);
+   const [limit, setLimit] = useState(10);
+   const [kpiDetailOpen, setKpiDetailOpen] = useState(false);
+   const [selectedProfileType, setSelectedProfileType] = useState(null);
 
   // Use props pagination or local state
   const currentPage = paginationData.currentPage || page;
@@ -311,6 +313,13 @@ export function DashboardSection({
     }
   };
 
+  const handleKpiClick = (kpi) => {
+    if (kpi.key === "individualCount") {
+      setKpiDetailOpen((prev) => !prev);
+      setSelectedProfileType(null);
+    }
+  };
+
   return (
     <div>
       {/* Header Section */}
@@ -374,157 +383,144 @@ export function DashboardSection({
                 trend={k.trend}
                 accent={k.accent}
                 icon={Icon}
+                onClick={() => handleKpiClick(k)}
               />
             );
           })}
         </div>
       )}
-      {/* Row 1: Territory Heatmap + Summary */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <ChartCard
-          title="Maharashtra Territory Heatmap"
-          subtitle="Visit density by district"
-          className="lg:col-span-2"
-          action={
-            <Badge
-              variant="secondary"
-              className="rounded-full bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] border-[var(--theme-primary)]/20"
+      {/* Doctor Profile Breakdown - Inline Below KPI Cards */}
+      {kpiDetailOpen && overviewData?.data?.typeOfDoctorProfileWiseCount && Object.keys(overviewData.data.typeOfDoctorProfileWiseCount).length > 0 && (
+        <div className="mt-4 p-4 rounded-xl border border-[var(--theme-border)] bg-white">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
+              Doctor Profile Breakdown
+            </p>
+            <button
+              onClick={() => { setKpiDetailOpen(false); setSelectedProfileType(null); }}
+              className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
             >
-              Live
-            </Badge>
-          }
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative rounded-2xl overflow-hidden border border-[var(--theme-border)] bg-gradient-to-br from-[var(--theme-primary)]/5 via-white to-[var(--theme-highlight)]/5 min-h-[280px] grid place-items-center">
-              <div className="text-center px-6">
-                <LucideIcons.MapPin
-                  className="mx-auto text-[var(--theme-primary)]"
-                  size={40}
-                />
-                <p className="mt-2 text-sm font-medium text-[var(--theme-text-primary)]">
-                  Maharashtra heatmap
-                </p>
-                <p className="text-xs text-[var(--theme-text-secondary)]">
-                  Interactive map placeholder
-                </p>
-                <div className="mt-4 flex items-center gap-1 justify-center flex-wrap">
-                  {filteredDistricts.map((d, i) => (
-                    <div
-                      key={d.district}
-                      className="h-8 rounded-md"
-                      style={{
-                        width: 24 + d.value / 4,
-                        backgroundColor: `rgba(198, 105, 60, ${0.3 + i * 0.12})`,
-                      }}
-                      title={`${d.district}: ${d.value}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[var(--theme-text-primary)] uppercase tracking-wider mb-2">
-                District Ranking
-              </p>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart
-                  data={filteredDistricts}
-                  layout="vertical"
-                  margin={{ left: 8, right: 16 }}
-                >
-                  <CartesianGrid horizontal={false} stroke="var(--theme-border)" />
-                  <XAxis type="number" stroke="var(--theme-text-secondary)" fontSize={11} />
-                  <YAxis
-                    dataKey="district"
-                    type="category"
-                    stroke="var(--theme-text-secondary)"
-                    fontSize={12}
-                    width={70}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: "1px solid var(--theme-border)",
-                      background: "#ffffff",
-                    }}
-                  />
-                  <Bar
-                    dataKey="value"
-                    radius={[0, 8, 8, 0]}
-                    onClick={(d) => setDrillDistrict(d.district)}
+              <LucideIcons.X size={14} />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Object.entries(overviewData.data.typeOfDoctorProfileWiseCount)
+              .sort(([, a], [, b]) => b - a)
+              .map(([type, count]) => {
+                const colorMap = {
+                  Surgeon: "bg-red-50 text-red-600 border-red-100",
+                  Physician: "bg-blue-50 text-blue-600 border-blue-100",
+                  Nursing: "bg-pink-50 text-pink-600 border-pink-100",
+                  Pharmacist: "bg-purple-50 text-purple-600 border-purple-100",
+                  "Bio-Medical": "bg-teal-50 text-teal-600 border-teal-100",
+                  Financial: "bg-emerald-50 text-emerald-600 border-emerald-100",
+                  "Non Clinical": "bg-gray-50 text-gray-600 border-gray-100",
+                };
+                const iconMap = {
+                  Surgeon: LucideIcons.Scissors,
+                  Physician: LucideIcons.Stethoscope,
+                  Nursing: LucideIcons.Heart,
+                  Pharmacist: LucideIcons.Pill,
+                  "Bio-Medical": LucideIcons.Microscope,
+                  Financial: LucideIcons.DollarSign,
+                  "Non Clinical": LucideIcons.UserCheck,
+                };
+                const ProfileIcon = iconMap[type] || LucideIcons.User;
+                const colors = colorMap[type] || "bg-gray-50 text-gray-600 border-gray-100";
+                const isSelected = selectedProfileType === type;
+
+                return (
+                  <div
+                    key={type}
+                    onClick={() => setSelectedProfileType(isSelected ? null : type)}
+                    className={`group rounded-xl border p-4 transition-all cursor-pointer ${
+                      isSelected
+                        ? "border-[var(--theme-primary)] bg-[var(--theme-primary)]/5 shadow-md"
+                        : "border-[var(--theme-border)] bg-white hover:shadow-md hover:border-[var(--theme-primary)]/30"
+                    }`}
                   >
-                    {filteredDistricts.map((_, i) => (
-                      <Cell
-                        key={i}
-                        fill={COLORS[i % COLORS.length]}
-                        cursor="pointer"
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+                    <div className={`h-10 w-10 rounded-lg border ${colors} grid place-items-center mb-3`}>
+                      <ProfileIcon size={18} />
+                    </div>
+                    <p className="text-sm font-semibold text-[var(--theme-text-primary)] leading-tight">
+                      {type}
+                    </p>
+                    <p className="text-2xl font-bold text-[var(--theme-text-primary)] mt-1">
+                      {count}
+                    </p>
+                    <p className="text-[10px] text-[var(--theme-text-secondary)] font-medium mt-0.5">
+                      doctors
+                    </p>
+                  </div>
+                );
+              })}
           </div>
-        </ChartCard>
 
-        <ChartCard title="Territory Summary" subtitle="Key metrics">
-          <div className="space-y-3">
-            {[
-              {
-                label: "Active districts",
-                value: filteredDistricts
-                  .filter((d) => d.value > 0)
-                  .length.toString(),
-                trend: "+2",
-              },
-              {
-                label: "Hospitals covered",
-                value: filteredHospitals.length.toString(),
-                trend: "+14",
-              },
-              {
-                label: "Avg. visits / district",
-                value:
-                  filteredDistricts.length > 0
-                    ? Math.round(
-                        filteredDistricts.reduce((s, d) => s + d.value, 0) /
-                          filteredDistricts.filter((d) => d.value > 0).length,
-                      ).toString()
-                    : "0",
-                trend: "+9",
-              },
-              {
-                label: "Best performing",
-                value:
-                  filteredHospitals.length > 0
-                    ? filteredHospitals.reduce((a, b) =>
-                        a.achievement > b.achievement ? a : b,
-                      ).name
-                    : "N/A",
-                trend: "Top performer",
-              },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="flex items-center justify-between p-3 rounded-xl bg-[var(--theme-card-bg)] border border-[var(--theme-border)]"
-              >
-                <div>
-                  <p className="text-xs font-medium text-[var(--theme-text-secondary)]">
-                    {s.label}
+          {/* Nested breakdown for selected profile type */}
+          {selectedProfileType && (() => {
+            const profileSpecialities = specialityChartData.filter((item) =>
+              item.profiles?.some((p) => p.typeOfDoctorProfile === selectedProfileType),
+            );
+            const profileCount = overviewData.data.typeOfDoctorProfileWiseCount[selectedProfileType] || 0;
+
+            return (
+              <div className="mt-4 pt-4 border-t border-[var(--theme-border)]">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
+                    {selectedProfileType} - Speciality Breakdown
                   </p>
-                  <p className="text-base font-bold text-[var(--theme-text-primary)] mt-0.5">
-                    {s.value}
-                  </p>
+                  <button
+                    onClick={() => setSelectedProfileType(null)}
+                    className="text-[10px] text-[var(--theme-primary)] font-medium hover:underline"
+                  >
+                    Close
+                  </button>
                 </div>
-                <span className="text-xs font-semibold text-green-600">
-                  {s.trend}
-                </span>
-              </div>
-            ))}
-          </div>
-        </ChartCard>
-      </div> */}
+                {profileSpecialities.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {profileSpecialities.map((item, index) => {
+                      const profileCountForSpeciality = item.profiles?.find(
+                        (p) => p.typeOfDoctorProfile === selectedProfileType,
+                      )?.count || 0;
+                      const colorMap = {
+                        Surgeon: "bg-red-50 text-red-600 border-red-100",
+                        Physician: "bg-blue-50 text-blue-600 border-blue-100",
+                        Nursing: "bg-pink-50 text-pink-600 border-pink-100",
+                        Pharmacist: "bg-purple-50 text-purple-600 border-purple-100",
+                        "Bio-Medical": "bg-teal-50 text-teal-600 border-teal-100",
+                        Financial: "bg-emerald-50 text-emerald-600 border-emerald-100",
+                        "Non Clinical": "bg-gray-50 text-gray-600 border-gray-100",
+                      };
+                      const colors = colorMap[selectedProfileType] || "bg-gray-50 text-gray-600 border-gray-100";
 
+                      return (
+                        <div
+                          key={index}
+                          className="rounded-xl border border-[var(--theme-border)] bg-white p-3 transition-all hover:shadow-md"
+                        >
+                          <p className="text-xs font-semibold text-[var(--theme-text-secondary)] mb-1">
+                            {formatSpecialityName(item.name)}
+                          </p>
+                          <p className="text-xl font-bold text-[var(--theme-text-primary)]">
+                            {profileCountForSpeciality}
+                          </p>
+                          <p className="text-[10px] text-[var(--theme-text-secondary)] font-medium">
+                            {selectedProfileType}s
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 text-center py-4">
+                    No speciality breakdown available for {selectedProfileType}
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      )}
       {/* Row 2: Speciality Intelligence + Target vs Achievement */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <ChartCard
@@ -1015,97 +1011,6 @@ export function DashboardSection({
           </Table>
         </div>
       </ChartCard>
-      {/* Row 4: Product Intelligence + Lead Conversion Funnel */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <ChartCard
-          title="Product Intelligence"
-          subtitle="Achieved quantity by product"
-          className="lg:col-span-2"
-          action={
-            <div className="flex gap-1 flex-wrap">
-              {PRODUCT_CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setProductCat(c)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    productCat === c
-                      ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)]"
-                      : "border-[var(--theme-bg-sidebar)] text-gray-500 hover:bg-[var(--theme-highlight)]"
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          }
-        >
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={filteredProducts} margin={{ left: 0, right: 8 }}>
-              <CartesianGrid vertical={false} stroke="var(--theme-bg-sidebar)" />
-              <XAxis dataKey="name" stroke="#6b7280" fontSize={11} />
-              <YAxis stroke="#6b7280" fontSize={11} />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: 12,
-                  border: "1px solid var(--theme-bg-sidebar)",
-                  background: "#ffffff",
-                }}
-              />
-              <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                {filteredProducts.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-10 text-sm text-gray-500">
-              No products in this category.
-            </div>
-          )}
-        </ChartCard>
-
-        <ChartCard
-          title="Lead Conversion Funnel"
-          subtitle="Stage-wise conversion"
-        >
-          <div className="space-y-2">
-            {FUNNEL.map((f, i) => {
-              const max = FUNNEL[0].value;
-              const width = (f.value / max) * 100;
-              const conv =
-                i === 0
-                  ? null
-                  : Math.round((f.value / FUNNEL[i - 1].value) * 100);
-              return (
-                <div key={f.stage}>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-medium text-[var(--theme-accent)]">
-                      {f.stage}
-                    </span>
-                    <span className="text-gray-500">
-                      {f.value}{" "}
-                      {conv !== null && (
-                        <span className="ml-2 text-[var(--theme-primary)]">{conv}%</span>
-                      )}
-                    </span>
-                  </div>
-                  <div className="h-7 rounded-lg bg-[var(--theme-primary-bg)] overflow-hidden">
-                    <div
-                      className="h-full rounded-lg transition-all"
-                      style={{
-                        width: `${width}%`,
-                        background: `linear-gradient(90deg, ${COLORS[i % COLORS.length]}, color-mix(in oklch, ${COLORS[i % COLORS.length]} 60%, white))`,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </ChartCard>
-      </div> */}
-
       {/* Row 5: Hospitals Table - Employee List Style */}
       {/* Table */}
       <div className="shadow overflow-x-auto">
@@ -1126,19 +1031,16 @@ export function DashboardSection({
         </div>
       </div>
 
-      {/* District Drill-down Sheet */}
-      <Sheet
-        open={!!drillDistrict}
-        onOpenChange={(o) => !o && setDrillDistrict(null)}
-      >
-        <SheetContent className="w-full sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>{drillDistrict} district</SheetTitle>
-            <SheetDescription>
+      {/* District Drill-down Dialog */}
+      <Dialog open={!!drillDistrict} onOpenChange={(o) => !o && setDrillDistrict(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="pb-4">
+            <DialogTitle>{drillDistrict} district</DialogTitle>
+            <p className="text-xs text-[var(--theme-text-secondary)] font-medium mt-1">
               Field-force performance in {drillDistrict}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-6 space-y-4">
+            </p>
+          </DialogHeader>
+          <div className="mt-2 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <MiniStat
                 label="Visits"
@@ -1193,8 +1095,8 @@ export function DashboardSection({
               Open full report
             </Button>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

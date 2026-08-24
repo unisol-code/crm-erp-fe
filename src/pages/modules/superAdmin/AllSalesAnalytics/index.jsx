@@ -48,8 +48,9 @@ const AllSalesAnalytics = () => {
     kpis,
     executiveData,
     loading,
-    error,
+    error,allIndividualData,fetchAllIndividualData
   } = useAllSalesAnalytics();
+  
 
   // State for hospital pagination
   const [hospitalPage, setHospitalPage] = useState(1);
@@ -430,6 +431,7 @@ const handleTargetPageSizeChange = async (pageSize) => {
         onPageChange={handleHospitalPageChange}
         onItemsPerPageChange={handleHospitalLimitChange}
         onSearch={handleHospitalSearch}
+        overviewData={overviewData}
       />
     },
     { 

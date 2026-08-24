@@ -16,9 +16,14 @@ import {
   organizationDataStateAtom,
   specialityDataStateAtom,
   targetDataStateAtom,
-  doctorDataStateAtom, // ✅ Add this
-   doctorListStateAtom,  salesPersonDataStateAtom,  organizationDashboardDataStateAtom,   organizationProductDataStateAtom,
-   organizationListDataStateAtom,salesPersonTargetDataStateAtom
+  doctorDataStateAtom,
+  doctorListStateAtom,
+  salesPersonDataStateAtom,
+  organizationDashboardDataStateAtom,
+  organizationProductDataStateAtom,
+  organizationListDataStateAtom,
+  salesPersonTargetDataStateAtom,
+  allIndividualDataStateAtom,
 } from "../../../state/allSalesAnalyticState/allSalesAnalyticsState";
 
 const useAllSalesAnalytics = () => {
@@ -39,7 +44,8 @@ const useAllSalesAnalytics = () => {
   const [organizationDashboardData, setOrganizationDashboardData] = useRecoilState(organizationDashboardDataStateAtom);
 const [organizationProductData, setOrganizationProductData] = useRecoilState(organizationProductDataStateAtom);
 const [organizationListData, setOrganizationListData] = useRecoilState(organizationListDataStateAtom);
-const [salesPersonTargetData, setSalesPersonTargetData] = useRecoilState(salesPersonTargetDataStateAtom);
+  const [salesPersonTargetData, setSalesPersonTargetData] = useRecoilState(salesPersonTargetDataStateAtom);
+  const [allIndividualData, setAllIndividualData] = useRecoilState(allIndividualDataStateAtom);
   const filtersRef = useRef(filters);
 
   // Update ref when filters change
@@ -50,15 +56,29 @@ const [salesPersonTargetData, setSalesPersonTargetData] = useRecoilState(salesPe
   // ============== HELPER FUNCTIONS ==============
   const buildKPIs = (data) => {
     if (!data) return [];
-    return [
-      { key: "individualCount", title: "Total Doctor", value: String(data.individualCount ?? 0), trend: 0, accent: "info", icon: "Users" },
-      { key: "organizationCount", title: "Total Hospital ", value: String(data.organizationCount ?? 0), trend: 0, accent: "product", icon: "Building" },
-      { key: "associatedHospitalCount", title: "Associated Hospitals", value: String(data.associatedHospitalCount ?? 0), trend: 0, accent: "success", icon: "Hospital" },
-      { key: "totalVisit", title: "Total Visits", value: String(data.totalVisit ?? 0), trend: 0, accent: "target", icon: "Activity" },
-      { key: "totalTarget", title: "Total Target", value: String(data.totalTarget ?? 0), trend: 0, accent: "info", icon: "Target" },
-      { key: "totalAchievement", title: "Total Achievement", value: String(data.totalAchievement ?? 0), trend: 0, accent: "success", icon: "Award" },
-      { key: "achievementPercentage", title: "Achievement %", value: `${Math.round(data.achievementPercentage || 0)}%`, trend: 0, accent: "target", icon: "Percent" },
-    ];
+    const kpis = [];
+    if (data.individualCount !== undefined) {
+      kpis.push({ key: "individualCount", title: "Total Doctor", value: String(data.individualCount ?? 0), trend: 0, accent: "info", icon: "Users" });
+    }
+    if (data.organizationCount !== undefined) {
+      kpis.push({ key: "organizationCount", title: "Total Hospital", value: String(data.organizationCount ?? 0), trend: 0, accent: "product", icon: "Building" });
+    }
+    if (data.associatedHospitalCount !== undefined) {
+      kpis.push({ key: "associatedHospitalCount", title: "Associated Hospitals", value: String(data.associatedHospitalCount ?? 0), trend: 0, accent: "success", icon: "Hospital" });
+    }
+    if (data.totalVisit !== undefined) {
+      kpis.push({ key: "totalVisit", title: "Total Visits", value: String(data.totalVisit ?? 0), trend: 0, accent: "target", icon: "Activity" });
+    }
+    if (data.totalTarget !== undefined) {
+      kpis.push({ key: "totalTarget", title: "Total Target", value: String(data.totalTarget ?? 0), trend: 0, accent: "info", icon: "Target" });
+    }
+    if (data.totalAchievement !== undefined) {
+      kpis.push({ key: "totalAchievement", title: "Total Achievement", value: String(data.totalAchievement ?? 0), trend: 0, accent: "success", icon: "Award" });
+    }
+    if (data.achievementPercentage !== undefined) {
+      kpis.push({ key: "achievementPercentage", title: "Achievement %", value: `${Math.round(data.achievementPercentage || 0)}%`, trend: 0, accent: "target", icon: "Percent" });
+    }
+    return kpis;
   };
 
   const buildExecutiveData = (data) => {
@@ -601,6 +621,48 @@ const fetchSalesPersonTargetAnalytics = useCallback(async (filterParams = {}, si
     }
   }, [fetchData, setSalesPersonTargetData, setError]);
 
+  // ============== API 13: FETCH ALL INDIVIDUAL DATA ==============
+  const fetchAllIndividualData = useCallback(async (filterParams = {}, silent = false) => {
+    if (!silent) setLoading(true);
+    setError(null);
+
+    try {
+      const allFilters = { ...filtersRef.current, ...filterParams };
+
+      const params = new URLSearchParams();
+      if (allFilters.typeOfDoctorProfile) params.append("typeOfDoctorProfile", allFilters.typeOfDoctorProfile);
+      if (allFilters.speciality) params.append("speciality", allFilters.speciality);
+      if (allFilters.city) params.append("city", allFilters.city);
+      if (allFilters.district) params.append("district", allFilters.district);
+      if (allFilters.state) params.append("state", allFilters.state);
+      if (allFilters.page) params.append("page", String(allFilters.page || 1));
+      if (allFilters.limit) params.append("limit", String(allFilters.limit || 10));
+
+      const url = `${conf.apiBaseUrl}dashboard/getAllIndiviual${
+        params.toString() ? `?${params.toString()}` : ""
+      }`;
+
+      const res = await fetchData({
+        method: "GET",
+        url: url,
+      });
+
+      if (res && res.success) {
+        setAllIndividualData(res);
+        return res;
+      } else {
+        throw new Error(res?.message || "Failed to fetch all individual data");
+      }
+    } catch (err) {
+      console.error("Error while fetching all individual data:", err);
+      setError(err.message || "Failed to fetch all individual data");
+      toast.error(err.response?.data?.message || "Failed to fetch all individual data");
+      return null;
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [fetchData, setAllIndividualData, setError]);
+
 
   // ============== FILTER MANAGEMENT ==============
    const resetFilters = useCallback(() => {
@@ -727,6 +789,10 @@ const fetchSalesPersonTargetAnalytics = useCallback(async (filterParams = {}, si
   salesPersonTargetData,
   fetchSalesPersonTargetAnalytics,
   resetSalesPersonTargetData: () => setSalesPersonTargetData(null),
+
+  allIndividualData,
+  fetchAllIndividualData,
+  resetAllIndividualData: () => setAllIndividualData(null),
   };
 };
 
