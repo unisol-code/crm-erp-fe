@@ -70,3 +70,9 @@ export const organizationListDataStateAtom = atom(createPersistedAtom("organizat
 export const salesPersonTargetDataStateAtom = atom(createPersistedAtom("salesPersonTargetDataState", null));
 
 export const allIndividualDataStateAtom = atom(createPersistedAtom("allIndividualDataState", null));
+
+export const specificIndividualDataStateAtom = atom(createPersistedAtom("specificIndividualDataState", null));
+
+export const allOrganizationsDataStateAtom = atom(createPersistedAtom("allOrganizationsDataState", null));
+
+export const specificOrganizationDataStateAtom = atom(createPersistedAtom("specificOrganizationDataState", null));

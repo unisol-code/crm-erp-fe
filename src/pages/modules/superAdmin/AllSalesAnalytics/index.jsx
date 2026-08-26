@@ -48,7 +48,10 @@ const AllSalesAnalytics = () => {
     kpis,
     executiveData,
     loading,
-    error,allIndividualData,fetchAllIndividualData
+    error,allIndividualData,fetchAllIndividualData,  specificIndividualData,
+  fetchSpecificIndividualData, allOrganizationsData,
+  fetchAllOrganizationsData, specificOrganizationData,
+  fetchSpecificOrganizationData,
   } = useAllSalesAnalytics();
   
 
@@ -432,6 +435,14 @@ const handleTargetPageSizeChange = async (pageSize) => {
         onItemsPerPageChange={handleHospitalLimitChange}
         onSearch={handleHospitalSearch}
         overviewData={overviewData}
+        allIndividualData={allIndividualData}
+        fetchAllIndividualData={fetchAllIndividualData}
+        specificIndividualData={specificIndividualData}
+        fetchSpecificIndividualData={fetchSpecificIndividualData}
+        allOrganizationsData={allOrganizationsData}
+        fetchAllOrganizationsData={fetchAllOrganizationsData}
+        specificOrganizationData={specificOrganizationData}
+        fetchSpecificOrganizationData={fetchSpecificOrganizationData}
       />
     },
     { 

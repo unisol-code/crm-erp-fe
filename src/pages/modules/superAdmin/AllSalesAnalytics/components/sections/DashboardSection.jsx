@@ -45,7 +45,7 @@ import {
 } from "../../data/analyticsData";
 import Pagination from "../../../../../../components/uiComponents/pagination/Pagination.jsx";
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
-
+import { TiEye} from "react-icons/ti";
 function SummaryStat({ label, value, hint, tone }) {
   return (
     <div className="rounded-xl border border-[var(--theme-border)] p-4 bg-[var(--theme-card-bg)]">
@@ -90,6 +90,14 @@ export function DashboardSection({
    specialityData,
    targetData,
    overviewData,
+   allIndividualData,
+   fetchAllIndividualData,
+   specificIndividualData,
+   fetchSpecificIndividualData,
+    allOrganizationsData,
+    fetchAllOrganizationsData,
+    specificOrganizationData,
+    fetchSpecificOrganizationData,
   }) {
    const [drillDistrict, setDrillDistrict] = useState(null);
    const [productCat, setProductCat] = useState("All");
@@ -98,6 +106,16 @@ export function DashboardSection({
    const [limit, setLimit] = useState(10);
    const [kpiDetailOpen, setKpiDetailOpen] = useState(false);
    const [selectedProfileType, setSelectedProfileType] = useState(null);
+   const [selectedHospitalType, setSelectedHospitalType] = useState(null);
+   const [individualLoading, setIndividualLoading] = useState(false);
+   const [individualPage, setIndividualPage] = useState(1);
+   const [individualLimit, setIndividualLimit] = useState(10);
+   const [selectedDoctor, setSelectedDoctor] = useState(null);
+   const [selectedOrganization, setSelectedOrganization] = useState(null);
+   const [selectedOrgType, setSelectedOrgType] = useState(null);
+   const [orgLoading, setOrgLoading] = useState(false);
+   const [orgPage, setOrgPage] = useState(1);
+  const [orgLimit, setOrgLimit] = useState(10);
 
   // Use props pagination or local state
   const currentPage = paginationData.currentPage || page;
@@ -317,7 +335,82 @@ export function DashboardSection({
     if (kpi.key === "individualCount") {
       setKpiDetailOpen((prev) => !prev);
       setSelectedProfileType(null);
+      setSelectedDoctor(null);
+      setSelectedHospitalType(null);
+      setSelectedOrganization(null);
+      setIndividualPage(1);
+      setIndividualLimit(10);
     }
+    if (kpi.key === "organizationCount") {
+      setKpiDetailOpen(false);
+      setSelectedProfileType(null);
+      setSelectedDoctor(null);
+      setSelectedHospitalType((prev) => (prev === "hospital" ? null : "hospital"));
+      setSelectedOrganization(null);
+      setIndividualPage(1);
+      setIndividualLimit(10);
+    }
+  };
+
+  const handleIndividualPageChange = (newPage) => {
+    setIndividualPage(newPage);
+  };
+
+  const handleIndividualLimitChange = (newLimit) => {
+    setIndividualLimit(newLimit);
+    setIndividualPage(1);
+  };
+
+  useEffect(() => {
+    if (selectedProfileType && fetchAllIndividualData) {
+      setIndividualLoading(true);
+      fetchAllIndividualData({
+        typeOfDoctorProfile: selectedProfileType,
+        page: individualPage,
+        limit: individualLimit,
+      })
+        .finally(() => setIndividualLoading(false));
+    }
+  }, [selectedProfileType, fetchAllIndividualData, individualPage, individualLimit]);
+
+  useEffect(() => {
+    if (selectedDoctor && fetchSpecificIndividualData) {
+      fetchSpecificIndividualData(selectedDoctor);
+    }
+  }, [selectedDoctor, fetchSpecificIndividualData]);
+
+  useEffect(() => {
+    if (selectedOrgType && fetchAllOrganizationsData) {
+      setOrgLoading(true);
+      fetchAllOrganizationsData({
+        typeOfOrgOrHospital: selectedOrgType,
+        page: orgPage,
+        limit: orgLimit,
+      }).finally(() => setOrgLoading(false));
+    }
+  }, [selectedOrgType, fetchAllOrganizationsData, orgPage, orgLimit]);
+
+  useEffect(() => {
+    if (selectedOrganization && fetchSpecificOrganizationData) {
+      fetchSpecificOrganizationData(selectedOrganization);
+    }
+  }, [selectedOrganization, fetchSpecificOrganizationData]);
+
+  const handleViewDoctor = (id) => {
+    setSelectedDoctor(id);
+  };
+
+  const handleViewOrganization = (id) => {
+    setSelectedOrganization(id);
+  };
+
+  const handleOrgPageChange = (newPage) => {
+    setOrgPage(newPage);
+  };
+
+  const handleOrgLimitChange = (newLimit) => {
+    setOrgLimit(newLimit);
+    setOrgPage(1);
   };
 
   return (
@@ -396,10 +489,10 @@ export function DashboardSection({
             <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
               Doctor Profile Breakdown
             </p>
-            <button
-              onClick={() => { setKpiDetailOpen(false); setSelectedProfileType(null); }}
-              className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-            >
+             <button
+               onClick={() => { setKpiDetailOpen(false); setSelectedProfileType(null); setSelectedHospitalType(null); setSelectedOrganization(null); }}
+               className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+             >
               <LucideIcons.X size={14} />
             </button>
           </div>
@@ -432,7 +525,12 @@ export function DashboardSection({
                 return (
                   <div
                     key={type}
-                    onClick={() => setSelectedProfileType(isSelected ? null : type)}
+                    onClick={() => {
+                      setSelectedProfileType(isSelected ? null : type);
+                      setSelectedDoctor(null);
+                      setSelectedHospitalType(null);
+                      setSelectedOrganization(null);
+                    }}
                     className={`group rounded-xl border p-4 transition-all cursor-pointer ${
                       isSelected
                         ? "border-[var(--theme-primary)] bg-[var(--theme-primary)]/5 shadow-md"
@@ -476,49 +574,529 @@ export function DashboardSection({
                     Close
                   </button>
                 </div>
-                {profileSpecialities.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {profileSpecialities.map((item, index) => {
-                      const profileCountForSpeciality = item.profiles?.find(
-                        (p) => p.typeOfDoctorProfile === selectedProfileType,
-                      )?.count || 0;
-                      const colorMap = {
-                        Surgeon: "bg-red-50 text-red-600 border-red-100",
-                        Physician: "bg-blue-50 text-blue-600 border-blue-100",
-                        Nursing: "bg-pink-50 text-pink-600 border-pink-100",
-                        Pharmacist: "bg-purple-50 text-purple-600 border-purple-100",
-                        "Bio-Medical": "bg-teal-50 text-teal-600 border-teal-100",
-                        Financial: "bg-emerald-50 text-emerald-600 border-emerald-100",
-                        "Non Clinical": "bg-gray-50 text-gray-600 border-gray-100",
-                      };
-                      const colors = colorMap[selectedProfileType] || "bg-gray-50 text-gray-600 border-gray-100";
+        
+                  {/* Individual Doctor Table */}
+                  {allIndividualData?.data && allIndividualData.data.length > 0 && (
+                    <div className="mt-4 rounded-xl border border-[var(--theme-border)] overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Doctor</TableHead>
+                              <TableHead>Hospital</TableHead>
+                              <TableHead>City</TableHead>
+                              <TableHead>District</TableHead>
+                               <TableHead>Profile</TableHead>
+                              <TableHead>Department</TableHead>
+                              <TableHead>Designation</TableHead>
+                              <TableHead>Sales Person</TableHead>
+                              <TableHead>View</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {individualLoading ? (
+                              <TableRow>
+                                 <TableCell colSpan={9} className="p-8 text-center">
+                                  <div className="flex justify-center items-center w-full">
+                                    <LoaderSpinner />
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              allIndividualData.data.map((item, idx) => (
+                                <TableRow key={item._id || idx}>
+                                  <TableCell className="font-medium">{item.Doctor}</TableCell>
+                                  <TableCell>{item.Hospital || "-"}</TableCell>
+                                  <TableCell>{item.City}</TableCell>
+                                  <TableCell>{item.District}</TableCell>
+                                  <TableCell>{item.typeOfDoctorProfile || "-"}</TableCell>
+                                  <TableCell>{item.department || item.Speciality || "-"}</TableCell>
+                                  <TableCell>{item.designation || "-"}</TableCell>
+                                  <TableCell>{item.salesPersonName}</TableCell>
+                                   <TableCell>  <button
+                                      onClick={() => handleViewDoctor(item._id)}
+                                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600 hover:text-[var(--theme-primary)] transition-colors"
+                                    >
+                                      <TiEye size={18} />
+                                    </button>
+                                   </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      {!individualLoading && allIndividualData.data.length === 0 && (
+                        <p className="text-xs text-gray-500 text-center py-4">
+                          No individual data available for {selectedProfileType}
+                        </p>
+                      )}
 
-                      return (
-                        <div
-                          key={index}
-                          className="rounded-xl border border-[var(--theme-border)] bg-white p-3 transition-all hover:shadow-md"
-                        >
-                          <p className="text-xs font-semibold text-[var(--theme-text-secondary)] mb-1">
-                            {formatSpecialityName(item.name)}
-                          </p>
-                          <p className="text-xl font-bold text-[var(--theme-text-primary)]">
-                            {profileCountForSpeciality}
-                          </p>
-                          <p className="text-[10px] text-[var(--theme-text-secondary)] font-medium">
-                            {selectedProfileType}s
-                          </p>
+                      {/* Pagination for Individual Data */}
+                      {selectedProfileType && (() => {
+                        const totalRecords = allIndividualData?.totalRecords || allIndividualData?.data?.length || 0;
+                        const totalPages = allIndividualData?.totalPages || Math.ceil(totalRecords / individualLimit);
+                        const currentPage = allIndividualData?.currentPage || individualPage;
+
+                        return (
+                          <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={totalRecords}
+                            itemsPerPage={individualLimit}
+                            onPageChange={handleIndividualPageChange}
+                            onItemsPerPageChange={handleIndividualLimitChange}
+                            showRowPerPage
+                          />
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+        </div>
+      )}
+
+      {/* Hospital Type Breakdown - Inline Below KPI Cards */}
+      {selectedHospitalType && overviewData?.data?.typeOfHospitalWiseCount && Object.keys(overviewData.data.typeOfHospitalWiseCount).length > 0 && (
+        <div className="mt-4 p-4 rounded-xl border border-[var(--theme-border)] bg-white">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
+              Hospital Type Breakdown
+            </p>
+             <button
+               onClick={() => { setSelectedHospitalType(null); setSelectedOrganization(null); }}
+               className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+             >
+              <LucideIcons.X size={14} />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+             {Object.entries(overviewData.data.typeOfHospitalWiseCount).map(([type, count]) => {
+               const iconMap = {
+                 govtHospitalCount: LucideIcons.Hospital,
+                 pvtHospitalCount: LucideIcons.Building2,
+               };
+               const colorMap = {
+                 govtHospitalCount: "bg-blue-50 text-blue-600 border-blue-100",
+                 pvtHospitalCount: "bg-purple-50 text-purple-600 border-purple-100",
+               };
+               const labelMap = {
+                 govtHospitalCount: "Govt Hospital",
+                 pvtHospitalCount: "Private Hospital",
+               };
+               const orgTypeValueMap = {
+                 govtHospitalCount: "Govt",
+                 pvtHospitalCount: "Private",
+               };
+               const HospitalIcon = iconMap[type] || LucideIcons.Hospital;
+               const colors = colorMap[type] || "bg-gray-50 text-gray-600 border-gray-100";
+               const orgTypeValue = orgTypeValueMap[type] || type;
+               const isOrgTypeSelected = selectedOrgType === orgTypeValue;
+
+               return (
+                 <div
+                   key={type}
+                    onClick={() => {
+                      setSelectedOrgType(isOrgTypeSelected ? null : orgTypeValue);
+                      setSelectedOrganization(null);
+                    }}
+                   className={`group rounded-xl border p-4 transition-all cursor-pointer ${
+                     isOrgTypeSelected
+                       ? "border-[var(--theme-primary)] bg-[var(--theme-primary)]/5 shadow-md"
+                       : "border-[var(--theme-border)] bg-white hover:shadow-md hover:border-[var(--theme-primary)]/30"
+                   }`}
+                 >
+                   <div className={`h-10 w-10 rounded-lg border ${colors} grid place-items-center mb-3`}>
+                     <HospitalIcon size={18} />
+                   </div>
+                   <p className="text-sm font-semibold text-[var(--theme-text-primary)] leading-tight">
+                     {labelMap[type] || type}
+                   </p>
+                   <p className="text-2xl font-bold text-[var(--theme-text-primary)] mt-1">
+                     {count}
+                   </p>
+                   <p className="text-[10px] text-[var(--theme-text-secondary)] font-medium mt-0.5">
+                     hospitals
+                   </p>
+                 </div>
+               );
+             })}
+           </div>
+
+           {/* Organization Data Table for Selected Hospital Type */}
+           {selectedOrgType && (() => {
+             const orgDataList = allOrganizationsData?.data || [];
+             const totalRecords = allOrganizationsData?.totalRecords || orgDataList.length || 0;
+             const totalPages = allOrganizationsData?.totalPages || Math.ceil(totalRecords / orgLimit);
+             const currentPage = allOrganizationsData?.currentPage || orgPage;
+
+             return (
+               <div className="mt-4 pt-4 border-t border-[var(--theme-border)]">
+                 <div className="flex items-center justify-between mb-3">
+                   <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
+                     {selectedOrgType} - Organizations List
+                   </p>
+                    <button
+                      onClick={() => { setSelectedOrgType(null); setOrgPage(1); setSelectedOrganization(null); }}
+                      className="text-[10px] text-[var(--theme-primary)] font-medium hover:underline"
+                    >
+                     Close
+                   </button>
+                 </div>
+
+                 {orgLoading ? (
+                   <div className="rounded-xl border border-[var(--theme-border)] overflow-hidden">
+                     <div className="p-8 text-center">
+                       <LoaderSpinner />
+                     </div>
+                   </div>
+                 ) : orgDataList.length > 0 ? (
+                   <div className="mt-4 rounded-xl border border-[var(--theme-border)] overflow-hidden">
+                     <div className="overflow-x-auto">
+                       <Table>
+                         <TableHeader>
+                           <TableRow>
+                             <TableHead>#</TableHead>
+                             <TableHead>Organization</TableHead>
+                             <TableHead>Type</TableHead>
+                             <TableHead>City</TableHead>
+                             <TableHead>District</TableHead>
+                             <TableHead>State</TableHead>
+                             <TableHead>Speciality</TableHead>
+                             <TableHead>View</TableHead>
+                           </TableRow>
+                         </TableHeader>
+                         <TableBody>
+                           {orgDataList.map((item, idx) => (
+                             <TableRow key={item._id || idx}>
+                               <TableCell>{(currentPage - 1) * orgLimit + idx + 1}</TableCell>
+                               <TableCell className="font-medium">{item.organizationName || item.hospitalName || "-"}</TableCell>
+                               <TableCell>
+                               
+                                   {item.typeOfOrgOrHospital || "N/A"}
+   
+                               </TableCell>
+                               <TableCell>{item.city || "-"}</TableCell>
+                               <TableCell>{item.district || "-"}</TableCell>
+                               <TableCell>{item.state || "-"}</TableCell>
+                               <TableCell>{item.speciality || "-"}</TableCell>
+                                <TableCell>
+                                  <button
+                                    onClick={() => handleViewOrganization(item._id)}
+                                    className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600 hover:text-[var(--theme-primary)] transition-colors"
+                                  >
+                                    <TiEye size={18} />
+                                  </button>
+                                </TableCell>
+                             </TableRow>
+                           ))}
+                         </TableBody>
+                       </Table>
+                     </div>
+
+                     <Pagination
+                       currentPage={currentPage}
+                       totalPages={totalPages}
+                       totalItems={totalRecords}
+                       itemsPerPage={orgLimit}
+                       onPageChange={handleOrgPageChange}
+                       onItemsPerPageChange={handleOrgLimitChange}
+                       showRowPerPage
+                     />
+                   </div>
+                 ) : (
+                   <p className="text-xs text-gray-500 text-center py-4">
+                     No organizations found for {selectedOrgType}
+                   </p>
+                 )}
+               </div>
+             );
+            })()}
+          </div>
+        )}
+
+        {/* Organization Detail Inline Section */}
+        {selectedOrganization && specificOrganizationData?.data && (
+          <div className="mt-4 p-4 rounded-xl border border-[var(--theme-border)] bg-white">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
+                Organization Details
+              </p>
+              <button
+                onClick={() => setSelectedOrganization(null)}
+                className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <LucideIcons.X size={14} />
+              </button>
+            </div>
+
+            {specificOrganizationData.data && (() => {
+              const org = specificOrganizationData.data.organization || {};
+              const monthlyPlanning = specificOrganizationData.data.monthlyPlanning || {};
+
+              return (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-[var(--theme-border)] bg-white p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider mb-1">
+                          Basic Information
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-[10px] text-gray-500 font-medium">Organization Name</p>
+                            <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                              {org.hospitalName || org.organizationName || "-"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-500 font-medium">Type</p>
+                            <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                              {org.typeOfOrgOrHospital || "-"}
+                            </p>
+                          </div>
+                          {org.ifGovt && (
+                            <div>
+                              <p className="text-[10px] text-gray-500 font-medium">Govt Category</p>
+                              <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                                {org.ifGovt}
+                              </p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-[10px] text-gray-500 font-medium">Category</p>
+                            <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                              {org.typeOfHospital || "-"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-500 font-medium">Speciality</p>
+                            <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                              {org.specialities && org.specialities.length > 0
+                                ? org.specialities.map(s => s.name).filter(Boolean).join(", ") || "-"
+                                : "-"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-500 font-medium">Total Beds</p>
+                            <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                              {org.totalBeds ?? 0}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-500 font-medium">ICU Beds</p>
+                            <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                              {org.totalICUBeds ?? 0}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-500 font-medium">Operation Theatres</p>
+                            <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                              {org.totalOT ?? 0}
+                            </p>
+                          </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-xs text-gray-500 text-center py-4">
-                    No speciality breakdown available for {selectedProfileType}
-                  </p>
-                )}
+
+                  {/* Monthly Planning */}
+                  {Object.keys(monthlyPlanning).length > 0 ? (
+                    <div className="rounded-xl border border-[var(--theme-border)] bg-white p-4">
+                      <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider mb-3">
+                        Monthly Planning
+                      </p>
+                      <div className="space-y-3">
+                        {Object.entries(monthlyPlanning).map(([month, plans]) => (
+                          <div key={month} className="border border-[var(--theme-border)] rounded-lg overflow-hidden">
+                            <div className="bg-gray-50 px-3 py-2 border-b border-[var(--theme-border)]">
+                              <p className="text-xs font-semibold text-[var(--theme-text-primary)]">{month}</p>
+                            </div>
+                            <div className="p-3">
+                              {Array.isArray(plans) && plans.length > 0 ? (
+                                <div className="space-y-2">
+                                  {plans.map((plan, idx) => (
+                                    <div key={idx} className="flex flex-wrap items-center gap-2 text-xs">
+                                      <span className="font-medium text-[var(--theme-text-primary)]">
+                                        {plan.nameOfDoctor}
+                                      </span>
+                                      <span className="text-gray-400">|</span>
+                                      <span className="text-gray-600">{plan.selectOrganization}</span>
+                                      <span className="text-gray-400">|</span>
+                                      <span className="text-gray-500">
+                                        {plan.createPlanningForDate ? new Date(plan.createPlanningForDate).toLocaleDateString() : "-"}
+                                      </span>
+                                      {plan.productToBePromoted && Array.isArray(plan.productToBePromoted) && plan.productToBePromoted.length > 0 ? (
+                                        <>
+                                          <span className="text-gray-400">|</span>
+                                          <div className="flex flex-wrap gap-1">
+                                            {plan.productToBePromoted.map((product, pIdx) => (
+                                              <span
+                                                key={pIdx}
+                                                className="px-2 py-0.5 rounded-full bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] text-[10px] font-medium"
+                                              >
+                                                {product}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        </>
+                                      ) : plan.productToBePromoted && typeof plan.productToBePromoted === 'string' ? (
+                                        <>
+                                          <span className="text-gray-400">|</span>
+                                          <span className="px-2 py-0.5 rounded-full bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] text-[10px] font-medium">
+                                            {plan.productToBePromoted}
+                                          </span>
+                                        </>
+                                      ) : null}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-gray-500">No plans for this month</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-[var(--theme-border)] bg-white p-4 text-center">
+                      <p className="text-xs text-gray-500">No monthly planning data available</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {!specificOrganizationData?.data && selectedOrganization && (
+              <div className="flex justify-center items-center py-10">
+                <LoaderSpinner />
               </div>
-            );
-          })()}
+            )}
+          </div>
+        )}
+
+        {/* Doctor Detail Inline Section */}
+      {selectedDoctor && specificIndividualData?.data && (
+        <div className="mt-4 p-4 rounded-xl border border-[var(--theme-border)] bg-white">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
+              Doctor Details
+            </p>
+            <button
+              onClick={() => setSelectedDoctor(null)}
+              className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <LucideIcons.X size={14} />
+            </button>
+          </div>
+
+          {specificIndividualData.data && (
+            <div className="space-y-4">
+              {/* Basic Info Card */}
+              <div className="rounded-xl border border-[var(--theme-border)] bg-white p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider mb-1">
+                      Basic Information
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[10px] text-gray-500 font-medium">Full Name</p>
+                        <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                          {specificIndividualData.data.individual?.fullName || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 font-medium">Profile Type</p>
+                        <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                          {specificIndividualData.data.individual?.typeOfDoctorProfile || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 font-medium">Designation</p>
+                        <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                          {specificIndividualData.data.individual?.designation || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 font-medium">Hospital</p>
+                        <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                          {specificIndividualData.data.individual?.hospitalName || "-"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Monthly Planning */}
+              {specificIndividualData.data.monthlyPlanning && Object.keys(specificIndividualData.data.monthlyPlanning).length > 0 ? (
+                <div className="rounded-xl border border-[var(--theme-border)] bg-white p-4">
+                  <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider mb-3">
+                    Monthly Planning
+                  </p>
+                  <div className="space-y-3">
+                    {Object.entries(specificIndividualData.data.monthlyPlanning).map(([month, plans]) => (
+                      <div key={month} className="border border-[var(--theme-border)] rounded-lg overflow-hidden">
+                        <div className="bg-gray-50 px-3 py-2 border-b border-[var(--theme-border)]">
+                          <p className="text-xs font-semibold text-[var(--theme-text-primary)]">{month}</p>
+                        </div>
+                        <div className="p-3">
+                          {Array.isArray(plans) && plans.length > 0 ? (
+                            <div className="space-y-2">
+                              {plans.map((plan, idx) => (
+                                <div key={idx} className="flex flex-wrap items-center gap-2 text-xs">
+                                  <span className="font-medium text-[var(--theme-text-primary)]">
+                                    {plan.nameOfDoctor}
+                                  </span>
+                                  <span className="text-gray-400">|</span>
+                                  <span className="text-gray-600">{plan.selectOrganization}</span>
+                                  <span className="text-gray-400">|</span>
+                                  <span className="text-gray-500">
+                                    {plan.createPlanningForDate ? new Date(plan.createPlanningForDate).toLocaleDateString() : "-"}
+                                  </span>
+                                  {plan.productToBePromoted && Array.isArray(plan.productToBePromoted) && plan.productToBePromoted.length > 0 && (
+                                    <>
+                                      <span className="text-gray-400">|</span>
+                                      <div className="flex flex-wrap gap-1">
+                                        {plan.productToBePromoted.map((product, pIdx) => (
+                                          <span
+                                            key={pIdx}
+                                            className="px-2 py-0.5 rounded-full bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] text-[10px] font-medium"
+                                          >
+                                            {product}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-gray-500">No plans for this month</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-[var(--theme-border)] bg-white p-4 text-center">
+                  <p className="text-xs text-gray-500">No monthly planning data available</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!specificIndividualData?.data && selectedDoctor && (
+            <div className="flex justify-center items-center py-10">
+              <LoaderSpinner />
+            </div>
+          )}
         </div>
       )}
       {/* Row 2: Speciality Intelligence + Target vs Achievement */}
@@ -1097,6 +1675,8 @@ export function DashboardSection({
           </div>
         </DialogContent>
       </Dialog>
+
+
     </div>
   );
 }

@@ -24,6 +24,9 @@ import {
   organizationListDataStateAtom,
   salesPersonTargetDataStateAtom,
   allIndividualDataStateAtom,
+  specificIndividualDataStateAtom,
+  allOrganizationsDataStateAtom,
+  specificOrganizationDataStateAtom,
 } from "../../../state/allSalesAnalyticState/allSalesAnalyticsState";
 
 const useAllSalesAnalytics = () => {
@@ -46,6 +49,9 @@ const [organizationProductData, setOrganizationProductData] = useRecoilState(org
 const [organizationListData, setOrganizationListData] = useRecoilState(organizationListDataStateAtom);
   const [salesPersonTargetData, setSalesPersonTargetData] = useRecoilState(salesPersonTargetDataStateAtom);
   const [allIndividualData, setAllIndividualData] = useRecoilState(allIndividualDataStateAtom);
+  const [specificIndividualData, setSpecificIndividualData] = useRecoilState(specificIndividualDataStateAtom);
+  const [allOrganizationsData, setAllOrganizationsData] = useRecoilState(allOrganizationsDataStateAtom);
+  const [specificOrganizationData, setSpecificOrganizationData] = useRecoilState(specificOrganizationDataStateAtom);
   const filtersRef = useRef(filters);
 
   // Update ref when filters change
@@ -663,6 +669,106 @@ const fetchSalesPersonTargetAnalytics = useCallback(async (filterParams = {}, si
     }
   }, [fetchData, setAllIndividualData, setError]);
 
+  // ============== API 14: FETCH SPECIFIC INDIVIDUAL DATA BY ID ==============
+  const fetchSpecificIndividualData = useCallback(async (id, silent = false) => {
+    if (!silent) setLoading(true);
+    setError(null);
+
+    try {
+      const url = `${conf.apiBaseUrl}dashboard/InformationOfSpecficIndiviual/${id}`;
+
+      const res = await fetchData({
+        method: "GET",
+        url: url,
+      });
+
+      if (res && res.success) {
+        setSpecificIndividualData(res);
+        return res;
+      } else {
+        throw new Error(res?.message || "Failed to fetch specific individual data");
+      }
+    } catch (err) {
+      console.error("Error while fetching specific individual data:", err);
+      setError(err.message || "Failed to fetch specific individual data");
+      toast.error(err.response?.data?.message || "Failed to fetch specific individual data");
+      return null;
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [fetchData, setSpecificIndividualData, setError]);
+
+  // ============== API 15: FETCH ALL ORGANIZATIONS DATA ==============
+  const fetchAllOrganizationsData = useCallback(async (filterParams = {}, silent = false) => {
+    if (!silent) setLoading(true);
+    setError(null);
+
+    try {
+      const allFilters = { ...filtersRef.current, ...filterParams };
+
+      const params = new URLSearchParams();
+      if (allFilters.typeOfOrgOrHospital) params.append("typeOfOrgOrHospital", allFilters.typeOfOrgOrHospital);
+      if (allFilters.speciality) params.append("speciality", allFilters.speciality);
+      if (allFilters.city) params.append("city", allFilters.city);
+      if (allFilters.district) params.append("district", allFilters.district);
+      if (allFilters.state) params.append("state", allFilters.state);
+      if (allFilters.page) params.append("page", String(allFilters.page || 1));
+      if (allFilters.limit) params.append("limit", String(allFilters.limit || 10));
+
+      const url = `${conf.apiBaseUrl}dashboard/getAllOrganizations${
+        params.toString() ? `?${params.toString()}` : ""
+      }`;
+
+      const res = await fetchData({
+        method: "GET",
+        url: url,
+      });
+
+      if (res && res.success) {
+        setAllOrganizationsData(res);
+        return res;
+      } else {
+        throw new Error(res?.message || "Failed to fetch all organizations data");
+      }
+    } catch (err) {
+      console.error("Error while fetching all organizations data:", err);
+      setError(err.message || "Failed to fetch all organizations data");
+      toast.error(err.response?.data?.message || "Failed to fetch all organizations data");
+      return null;
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [fetchData, setAllOrganizationsData, setError]);
+
+  // ============== API 16: FETCH SPECIFIC ORGANIZATION DATA BY ID ==============
+  const fetchSpecificOrganizationData = useCallback(async (id, silent = false) => {
+    if (!silent) setLoading(true);
+    setError(null);
+
+    try {
+      const url = `${conf.apiBaseUrl}dashboard/specificOrganizationData/${id}`;
+
+      const res = await fetchData({
+        method: "GET",
+        url: url,
+      });
+
+      if (res && res.success) {
+        setSpecificOrganizationData(res);
+        return res;
+      } else {
+        throw new Error(res?.message || "Failed to fetch specific organization data");
+      }
+    } catch (err) {
+      console.error("Error while fetching specific organization data:", err);
+      setError(err.message || "Failed to fetch specific organization data");
+      toast.error(err.response?.data?.message || "Failed to fetch specific organization data");
+      return null;
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [fetchData, setSpecificOrganizationData, setError]);
+
 
   // ============== FILTER MANAGEMENT ==============
    const resetFilters = useCallback(() => {
@@ -793,6 +899,18 @@ const fetchSalesPersonTargetAnalytics = useCallback(async (filterParams = {}, si
   allIndividualData,
   fetchAllIndividualData,
   resetAllIndividualData: () => setAllIndividualData(null),
+
+  specificIndividualData,
+  fetchSpecificIndividualData,
+  resetSpecificIndividualData: () => setSpecificIndividualData(null),
+
+  allOrganizationsData,
+  fetchAllOrganizationsData,
+  resetAllOrganizationsData: () => setAllOrganizationsData(null),
+
+  specificOrganizationData,
+  fetchSpecificOrganizationData,
+  resetSpecificOrganizationData: () => setSpecificOrganizationData(null),
   };
 };
 
