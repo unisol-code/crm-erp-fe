@@ -208,6 +208,7 @@ const DoctorProfileBreakdown = () => {
                     <TableHeader className="sticky top-0 bg-white z-10">
                       <TableRow className="bg-[var(--theme-bg-light)]">
                         <TableHead className="text-base font-semibold">Sr. No.</TableHead>
+                        <TableHead className="text-base font-semibold">Sales Person</TableHead>
                         <TableHead className="text-base font-semibold">Doctor</TableHead>
                         <TableHead className="text-base font-semibold">Hospital</TableHead>
                         <TableHead className="text-base font-semibold">Profile</TableHead>
@@ -216,7 +217,6 @@ const DoctorProfileBreakdown = () => {
                         <TableHead className="text-base font-semibold">District</TableHead>
                         <TableHead className="text-base font-semibold">State</TableHead>
                         <TableHead className="text-base font-semibold">Designation</TableHead>
-                        <TableHead className="text-base font-semibold">Sales Person</TableHead>
                         <TableHead className="text-base font-semibold text-center">View</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -234,6 +234,9 @@ const DoctorProfileBreakdown = () => {
                           <TableRow key={item._id || idx} className="cursor-pointer hover:bg-gray-50 transition-all">
                             <td className="p-4 text-[17px] font-normal text-[#252C58]">
                               {(currentPage - 1) * individualLimit + idx + 1}
+                            </td>
+                            <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                              {item.salesPersonName || "-"}
                             </td>
                             <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[var(--theme-primary)] hover:underline">
                               {item.Doctor || "-"}
@@ -261,9 +264,7 @@ const DoctorProfileBreakdown = () => {
                             <td className="px-4 py-3 text-[15px] whitespace-nowrap">
                               {item.designation || "-"}
                             </td>
-                            <td className="px-4 py-3 text-[15px] whitespace-nowrap">
-                              {item.salesPersonName || "-"}
-                            </td>
+
                             <td className="p-4 text-center align-middle">
                               <button
                                 onClick={() => handleViewDoctor(item._id)}
@@ -285,7 +286,7 @@ const DoctorProfileBreakdown = () => {
                     </TableBody>
                   </Table>
                 </div>
-                
+
                 {!individualLoading && dataList.length > 0 && (
                   <div className="rounded-b-2xl bg-white shadow-lg border border-gray-200 overflow-hidden">
                     <Pagination

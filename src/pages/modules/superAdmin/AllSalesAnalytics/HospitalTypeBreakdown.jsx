@@ -213,6 +213,7 @@ const HospitalTypeBreakdown = () => {
                     <TableHeader className="sticky top-0 bg-white z-10">
                       <TableRow className="bg-[var(--theme-bg-light)]">
                         <TableHead className="text-base font-semibold">Sr. No.</TableHead>
+                         <TableHead className="text-base font-semibold">Sales Person </TableHead>
                         <TableHead className="text-base font-semibold">Organization</TableHead>
                         <TableHead className="text-base font-semibold">Type</TableHead>
                         <TableHead className="text-base font-semibold">Category</TableHead>
@@ -236,6 +237,13 @@ const HospitalTypeBreakdown = () => {
                           <TableRow key={item._id || idx} className="cursor-pointer hover:bg-gray-50 transition-all">
                             <td className="p-4 text-[17px] font-normal text-[#252C58]">
                               {(currentPage - 1) * orgLimit + idx + 1}
+                            </td>
+                                <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                              <div className="flex items-center gap-3">
+                                <span className="font-medium text-[var(--theme-primary)]">
+                                  {item.salesPersonName || "-"}
+                                </span>
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-[15px] whitespace-nowrap">
                               <div className="flex items-center gap-3">
