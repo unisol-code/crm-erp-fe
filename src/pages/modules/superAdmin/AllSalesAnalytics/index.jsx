@@ -1,6 +1,5 @@
-// index.jsx
-
 import React, { useMemo, useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import * as LucideIcons from "lucide-react";
 import { FilterBar } from './components/analytics/FilterBar';
 import { DashboardSection } from './components/sections/DashboardSection';
@@ -20,6 +19,7 @@ import {
 } from './data/analyticsData';
 
 const AllSalesAnalytics = () => {
+  const navigate = useNavigate();
   const { theme } = useTheme();
   const {
     selectedTab,
@@ -48,8 +48,12 @@ const AllSalesAnalytics = () => {
     kpis,
     executiveData,
     loading,
-    error,
+    error,allIndividualData,fetchAllIndividualData,  specificIndividualData,
+  fetchSpecificIndividualData, allOrganizationsData,
+  fetchAllOrganizationsData, specificOrganizationData,
+  fetchSpecificOrganizationData,
   } = useAllSalesAnalytics();
+  
 
   // State for hospital pagination
   const [hospitalPage, setHospitalPage] = useState(1);
@@ -64,6 +68,8 @@ const AllSalesAnalytics = () => {
   // ✅ Doctor pagination state
   const [doctorPage, setDoctorPage] = useState(1);
   const [doctorLimit, setDoctorLimit] = useState(10);
+  const [doctorSearch, setDoctorSearch] = useState("");
+  const [doctorSalesPerson, setDoctorSalesPerson] = useState("");
 
   const [productPage, setProductPage] = useState(1);
 const [productPageSize, setProductPageSize] = useState(10);
@@ -81,27 +87,31 @@ const [targetPageSize, setTargetPageSize] = useState(10);
       await fetchDoctorList({
         page: doctorPage,
         limit: doctorLimit,
+        doctorName: doctorSearch,
+        salesPersonName: doctorSalesPerson,
       }, silent);
     } catch (error) {
       console.error('Error loading doctor data:', error);
     }
-  }, [fetchDoctorAnalytics, fetchDoctorList, doctorPage, doctorLimit]);
+  }, [fetchDoctorAnalytics, fetchDoctorList, doctorPage, doctorLimit, doctorSearch, doctorSalesPerson]);
 
    // ✅ Reset filters and pagination when tab changes
    useEffect(() => {
-     resetFilters();
-     setHospitalPage(1);
-     setHospitalLimit(10);
-     setHospitalSearch("");
-     setDoctorPage(1);
-     setDoctorLimit(10);
-     setProductPage(1);
-     setProductPageSize(10);
-     setOrgListPage(1);
-     setOrgListPageSize(10);
-     setTargetPage(1);
-     setTargetPageSize(10);
-   }, [selectedTab, resetFilters]);
+      resetFilters();
+      setHospitalPage(1);
+      setHospitalLimit(10);
+      setHospitalSearch("");
+      setDoctorPage(1);
+      setDoctorLimit(10);
+      setDoctorSearch("");
+      setDoctorSalesPerson("");
+      setProductPage(1);
+      setProductPageSize(10);
+      setOrgListPage(1);
+      setOrgListPageSize(10);
+      setTargetPage(1);
+      setTargetPageSize(10);
+    }, [selectedTab, resetFilters]);
 
    // ✅ Fetch data based on active tab only
    useEffect(() => {
@@ -168,6 +178,8 @@ const [targetPageSize, setTargetPageSize] = useState(10);
       await fetchDoctorList({
         page: page,
         limit: doctorLimit,
+        doctorName: doctorSearch,
+        salesPersonName: doctorSalesPerson,
       }, true);
     } finally {
       setDoctorTableLoading(false);
@@ -182,6 +194,42 @@ const [targetPageSize, setTargetPageSize] = useState(10);
       await fetchDoctorList({
         page: 1,
         limit: limit,
+        doctorName: doctorSearch,
+        salesPersonName: doctorSalesPerson,
+      }, true);
+    } finally {
+      setDoctorTableLoading(false);
+    }
+  };
+
+  // ✅ Doctor search handler
+  const handleDoctorSearch = async (searchTerm) => {
+    setDoctorSearch(searchTerm);
+    setDoctorPage(1);
+    setDoctorTableLoading(true);
+    try {
+      await fetchDoctorList({
+        page: 1,
+        limit: doctorLimit,
+        doctorName: searchTerm,
+        salesPersonName: doctorSalesPerson,
+      }, true);
+    } finally {
+      setDoctorTableLoading(false);
+    }
+  };
+
+  // ✅ Doctor sales person filter handler
+  const handleDoctorSalesPersonFilter = async (salesPersonName) => {
+    setDoctorSalesPerson(salesPersonName);
+    setDoctorPage(1);
+    setDoctorTableLoading(true);
+    try {
+      await fetchDoctorList({
+        page: 1,
+        limit: doctorLimit,
+        doctorName: doctorSearch,
+        salesPersonName: salesPersonName,
       }, true);
     } finally {
       setDoctorTableLoading(false);
@@ -283,6 +331,12 @@ const handleOrgListPageSizeChange = async (pageSize) => {
   } finally {
     setOrgListTableLoading(false);
   }
+};
+
+// ✅ Navigate to organization details in HospitalTypeBreakdown
+const handleViewOrganizationDetails = (orgId, type) => {
+  const hospitalType = type === "Govt" ? "Govt" : "Pvt";
+  navigate(`/sales-analyticsAll/hospital-type-breakdown/${hospitalType}/${orgId}`);
 };
 
 
@@ -430,6 +484,15 @@ const handleTargetPageSizeChange = async (pageSize) => {
         onPageChange={handleHospitalPageChange}
         onItemsPerPageChange={handleHospitalLimitChange}
         onSearch={handleHospitalSearch}
+        overviewData={overviewData}
+        allIndividualData={allIndividualData}
+        fetchAllIndividualData={fetchAllIndividualData}
+        specificIndividualData={specificIndividualData}
+        fetchSpecificIndividualData={fetchSpecificIndividualData}
+        allOrganizationsData={allOrganizationsData}
+        fetchAllOrganizationsData={fetchAllOrganizationsData}
+        specificOrganizationData={specificOrganizationData}
+        fetchSpecificOrganizationData={fetchSpecificOrganizationData}
       />
     },
     { 
@@ -445,6 +508,8 @@ const handleTargetPageSizeChange = async (pageSize) => {
         tableLoading={doctorTableLoading}
         onPageChange={handleDoctorPageChange}
         onItemsPerPageChange={handleDoctorLimitChange}
+        onSearch={handleDoctorSearch}
+        onSalesPersonFilter={handleDoctorSalesPersonFilter}
       />
     },
     { 
@@ -485,6 +550,7 @@ const handleTargetPageSizeChange = async (pageSize) => {
   onProductItemsPerPageChange={handleProductPageSizeChange}
   onOrganizationListPageChange={handleOrgListPageChange}
   onOrganizationListItemsPerPageChange={handleOrgListPageSizeChange}
+  onViewOrganization={handleViewOrganizationDetails}
 />
     },
   ];

@@ -1,6 +1,7 @@
 // components/sections/DashboardSection.jsx
 
 import React, { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { HospitalTable } from "./HospitalTable";
 import * as LucideIcons from "lucide-react";
 import {
@@ -29,11 +30,10 @@ import {
   TableRow,
   TableHead,
   TableCell,
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "../common";
 import {
   COLORS,
@@ -46,7 +46,7 @@ import {
 } from "../../data/analyticsData";
 import Pagination from "../../../../../../components/uiComponents/pagination/Pagination.jsx";
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
-
+import { TiEye} from "react-icons/ti";
 function SummaryStat({ label, value, hint, tone }) {
   return (
     <div className="rounded-xl border border-[var(--theme-border)] p-4 bg-[var(--theme-card-bg)]">
@@ -90,12 +90,33 @@ export function DashboardSection({
    onSearch,
    specialityData,
    targetData,
- }) {
-  const [drillDistrict, setDrillDistrict] = useState(null);
-  const [productCat, setProductCat] = useState("All");
-  const [hospitalSearch, setHospitalSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+   overviewData,
+   allIndividualData,
+   fetchAllIndividualData,
+   specificIndividualData,
+   fetchSpecificIndividualData,
+    allOrganizationsData,
+    fetchAllOrganizationsData,
+    specificOrganizationData,
+    fetchSpecificOrganizationData,
+  }) {
+   const [drillDistrict, setDrillDistrict] = useState(null);
+   const [productCat, setProductCat] = useState("All");
+   const [hospitalSearch, setHospitalSearch] = useState("");
+   const [page, setPage] = useState(1);
+   const [limit, setLimit] = useState(10);
+   const [kpiDetailOpen, setKpiDetailOpen] = useState(false);
+   const [selectedProfileType, setSelectedProfileType] = useState(null);
+   const [selectedHospitalType, setSelectedHospitalType] = useState(null);
+   const [individualLoading, setIndividualLoading] = useState(false);
+   const [individualPage, setIndividualPage] = useState(1);
+   const [individualLimit, setIndividualLimit] = useState(10);
+   const [selectedDoctor, setSelectedDoctor] = useState(null);
+   const [selectedOrganization, setSelectedOrganization] = useState(null);
+   const [selectedOrgType, setSelectedOrgType] = useState(null);
+   const [orgLoading, setOrgLoading] = useState(false);
+   const [orgPage, setOrgPage] = useState(1);
+  const [orgLimit, setOrgLimit] = useState(10);
 
   // Use props pagination or local state
   const currentPage = paginationData.currentPage || page;
@@ -311,6 +332,78 @@ export function DashboardSection({
     }
   };
 
+  const navigate = useNavigate();
+
+  const handleKpiClick = (kpi) => {
+    if (kpi.key === "individualCount") {
+      navigate("/sales-analyticsAll/doctor-profile-breakdown");
+    }
+    if (kpi.key === "organizationCount") {
+      navigate("/sales-analyticsAll/hospital-type-breakdown");
+    }
+  };
+
+  const handleIndividualPageChange = (newPage) => {
+    setIndividualPage(newPage);
+  };
+
+  const handleIndividualLimitChange = (newLimit) => {
+    setIndividualLimit(newLimit);
+    setIndividualPage(1);
+  };
+
+  useEffect(() => {
+    if (selectedProfileType && fetchAllIndividualData) {
+      setIndividualLoading(true);
+      fetchAllIndividualData({
+        typeOfDoctorProfile: selectedProfileType,
+        page: individualPage,
+        limit: individualLimit,
+      })
+        .finally(() => setIndividualLoading(false));
+    }
+  }, [selectedProfileType, fetchAllIndividualData, individualPage, individualLimit]);
+
+  useEffect(() => {
+    if (selectedDoctor && fetchSpecificIndividualData) {
+      fetchSpecificIndividualData(selectedDoctor);
+    }
+  }, [selectedDoctor, fetchSpecificIndividualData]);
+
+  useEffect(() => {
+    if (selectedOrgType && fetchAllOrganizationsData) {
+      setOrgLoading(true);
+      fetchAllOrganizationsData({
+        typeOfOrgOrHospital: selectedOrgType,
+        page: orgPage,
+        limit: orgLimit,
+      }).finally(() => setOrgLoading(false));
+    }
+  }, [selectedOrgType, fetchAllOrganizationsData, orgPage, orgLimit]);
+
+  useEffect(() => {
+    if (selectedOrganization && fetchSpecificOrganizationData) {
+      fetchSpecificOrganizationData(selectedOrganization);
+    }
+  }, [selectedOrganization, fetchSpecificOrganizationData]);
+
+  const handleViewDoctor = (id) => {
+    setSelectedDoctor(id);
+  };
+
+  const handleViewOrganization = (id) => {
+    setSelectedOrganization(id);
+  };
+
+  const handleOrgPageChange = (newPage) => {
+    setOrgPage(newPage);
+  };
+
+  const handleOrgLimitChange = (newLimit) => {
+    setOrgLimit(newLimit);
+    setOrgPage(1);
+  };
+
   return (
     <div>
       {/* Header Section */}
@@ -374,158 +467,14 @@ export function DashboardSection({
                 trend={k.trend}
                 accent={k.accent}
                 icon={Icon}
+                onClick={() => handleKpiClick(k)}
               />
             );
           })}
         </div>
       )}
-      {/* Row 1: Territory Heatmap + Summary */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <ChartCard
-          title="Maharashtra Territory Heatmap"
-          subtitle="Visit density by district"
-          className="lg:col-span-2"
-          action={
-            <Badge
-              variant="secondary"
-              className="rounded-full bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] border-[var(--theme-primary)]/20"
-            >
-              Live
-            </Badge>
-          }
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative rounded-2xl overflow-hidden border border-[var(--theme-border)] bg-gradient-to-br from-[var(--theme-primary)]/5 via-white to-[var(--theme-highlight)]/5 min-h-[280px] grid place-items-center">
-              <div className="text-center px-6">
-                <LucideIcons.MapPin
-                  className="mx-auto text-[var(--theme-primary)]"
-                  size={40}
-                />
-                <p className="mt-2 text-sm font-medium text-[var(--theme-text-primary)]">
-                  Maharashtra heatmap
-                </p>
-                <p className="text-xs text-[var(--theme-text-secondary)]">
-                  Interactive map placeholder
-                </p>
-                <div className="mt-4 flex items-center gap-1 justify-center flex-wrap">
-                  {filteredDistricts.map((d, i) => (
-                    <div
-                      key={d.district}
-                      className="h-8 rounded-md"
-                      style={{
-                        width: 24 + d.value / 4,
-                        backgroundColor: `rgba(198, 105, 60, ${0.3 + i * 0.12})`,
-                      }}
-                      title={`${d.district}: ${d.value}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[var(--theme-text-primary)] uppercase tracking-wider mb-2">
-                District Ranking
-              </p>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart
-                  data={filteredDistricts}
-                  layout="vertical"
-                  margin={{ left: 8, right: 16 }}
-                >
-                  <CartesianGrid horizontal={false} stroke="var(--theme-border)" />
-                  <XAxis type="number" stroke="var(--theme-text-secondary)" fontSize={11} />
-                  <YAxis
-                    dataKey="district"
-                    type="category"
-                    stroke="var(--theme-text-secondary)"
-                    fontSize={12}
-                    width={70}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: "1px solid var(--theme-border)",
-                      background: "#ffffff",
-                    }}
-                  />
-                  <Bar
-                    dataKey="value"
-                    radius={[0, 8, 8, 0]}
-                    onClick={(d) => setDrillDistrict(d.district)}
-                  >
-                    {filteredDistricts.map((_, i) => (
-                      <Cell
-                        key={i}
-                        fill={COLORS[i % COLORS.length]}
-                        cursor="pointer"
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </ChartCard>
 
-        <ChartCard title="Territory Summary" subtitle="Key metrics">
-          <div className="space-y-3">
-            {[
-              {
-                label: "Active districts",
-                value: filteredDistricts
-                  .filter((d) => d.value > 0)
-                  .length.toString(),
-                trend: "+2",
-              },
-              {
-                label: "Hospitals covered",
-                value: filteredHospitals.length.toString(),
-                trend: "+14",
-              },
-              {
-                label: "Avg. visits / district",
-                value:
-                  filteredDistricts.length > 0
-                    ? Math.round(
-                        filteredDistricts.reduce((s, d) => s + d.value, 0) /
-                          filteredDistricts.filter((d) => d.value > 0).length,
-                      ).toString()
-                    : "0",
-                trend: "+9",
-              },
-              {
-                label: "Best performing",
-                value:
-                  filteredHospitals.length > 0
-                    ? filteredHospitals.reduce((a, b) =>
-                        a.achievement > b.achievement ? a : b,
-                      ).name
-                    : "N/A",
-                trend: "Top performer",
-              },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="flex items-center justify-between p-3 rounded-xl bg-[var(--theme-card-bg)] border border-[var(--theme-border)]"
-              >
-                <div>
-                  <p className="text-xs font-medium text-[var(--theme-text-secondary)]">
-                    {s.label}
-                  </p>
-                  <p className="text-base font-bold text-[var(--theme-text-primary)] mt-0.5">
-                    {s.value}
-                  </p>
-                </div>
-                <span className="text-xs font-semibold text-green-600">
-                  {s.trend}
-                </span>
-              </div>
-            ))}
-          </div>
-        </ChartCard>
-      </div> */}
-
-      {/* Row 2: Speciality Intelligence + Target vs Achievement */}
+        {/* Row 2: Speciality Intelligence + Target vs Achievement */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <ChartCard
           title="Speciality Intelligence"
@@ -1015,97 +964,6 @@ export function DashboardSection({
           </Table>
         </div>
       </ChartCard>
-      {/* Row 4: Product Intelligence + Lead Conversion Funnel */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <ChartCard
-          title="Product Intelligence"
-          subtitle="Achieved quantity by product"
-          className="lg:col-span-2"
-          action={
-            <div className="flex gap-1 flex-wrap">
-              {PRODUCT_CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setProductCat(c)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    productCat === c
-                      ? "bg-[var(--theme-primary)] text-white border-[var(--theme-primary)]"
-                      : "border-[var(--theme-bg-sidebar)] text-gray-500 hover:bg-[var(--theme-highlight)]"
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          }
-        >
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={filteredProducts} margin={{ left: 0, right: 8 }}>
-              <CartesianGrid vertical={false} stroke="var(--theme-bg-sidebar)" />
-              <XAxis dataKey="name" stroke="#6b7280" fontSize={11} />
-              <YAxis stroke="#6b7280" fontSize={11} />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: 12,
-                  border: "1px solid var(--theme-bg-sidebar)",
-                  background: "#ffffff",
-                }}
-              />
-              <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                {filteredProducts.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-10 text-sm text-gray-500">
-              No products in this category.
-            </div>
-          )}
-        </ChartCard>
-
-        <ChartCard
-          title="Lead Conversion Funnel"
-          subtitle="Stage-wise conversion"
-        >
-          <div className="space-y-2">
-            {FUNNEL.map((f, i) => {
-              const max = FUNNEL[0].value;
-              const width = (f.value / max) * 100;
-              const conv =
-                i === 0
-                  ? null
-                  : Math.round((f.value / FUNNEL[i - 1].value) * 100);
-              return (
-                <div key={f.stage}>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-medium text-[var(--theme-accent)]">
-                      {f.stage}
-                    </span>
-                    <span className="text-gray-500">
-                      {f.value}{" "}
-                      {conv !== null && (
-                        <span className="ml-2 text-[var(--theme-primary)]">{conv}%</span>
-                      )}
-                    </span>
-                  </div>
-                  <div className="h-7 rounded-lg bg-[var(--theme-primary-bg)] overflow-hidden">
-                    <div
-                      className="h-full rounded-lg transition-all"
-                      style={{
-                        width: `${width}%`,
-                        background: `linear-gradient(90deg, ${COLORS[i % COLORS.length]}, color-mix(in oklch, ${COLORS[i % COLORS.length]} 60%, white))`,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </ChartCard>
-      </div> */}
-
       {/* Row 5: Hospitals Table - Employee List Style */}
       {/* Table */}
       <div className="shadow overflow-x-auto">
@@ -1126,19 +984,16 @@ export function DashboardSection({
         </div>
       </div>
 
-      {/* District Drill-down Sheet */}
-      <Sheet
-        open={!!drillDistrict}
-        onOpenChange={(o) => !o && setDrillDistrict(null)}
-      >
-        <SheetContent className="w-full sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>{drillDistrict} district</SheetTitle>
-            <SheetDescription>
+      {/* District Drill-down Dialog */}
+      <Dialog open={!!drillDistrict} onOpenChange={(o) => !o && setDrillDistrict(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="pb-4">
+            <DialogTitle>{drillDistrict} district</DialogTitle>
+            <p className="text-xs text-[var(--theme-text-secondary)] font-medium mt-1">
               Field-force performance in {drillDistrict}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-6 space-y-4">
+            </p>
+          </DialogHeader>
+          <div className="mt-2 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <MiniStat
                 label="Visits"
@@ -1193,8 +1048,10 @@ export function DashboardSection({
               Open full report
             </Button>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
+
+
     </div>
   );
 }

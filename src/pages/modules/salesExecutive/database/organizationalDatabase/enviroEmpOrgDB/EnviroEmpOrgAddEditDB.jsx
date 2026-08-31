@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import { useParams, useNavigate } from "react-router-dom";
@@ -7,6 +7,8 @@ import Button from "../../../../../../components/uiComponents/button/Button";
 import BreadCrumb from "../../../../../../components/uiComponents/breadcrumb/BreadCrumb";
 import useEnviroAdminOrgDB from "../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminOrgDB";
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner";
+import ReactSelect from "react-select";
+import EnviroEmpAddDBfpo from "./EnviroEmpAddDBfpo";
 
 const checkboxOptions = {
   services: [
@@ -37,7 +39,26 @@ const checkboxOptions = {
   ],
 };
 
+const sectorOptions = [
+  { label: "Agriculture", value: "Agriculture" },
+  { label: "Waste Management", value: "Waste Management" },
+];
+
+const orgTypeOptions = {
+  Agriculture: [
+    { label: "FPO", value: "FPO" },
+    { label: "FPC", value: "FPC" },
+    { label: "CMRC", value: "CMRC" },
+    { label: "BACHAT GAT", value: "BACHAT GAT" },
+    { label: "SELF HELP GROUP", value: "SELF HELP GROUP" },
+    { label: "GOVERNMENT", value: "GOVERNMENT" },
+  ],
+  "Waste Management": [],
+};
+
 const validationSchema = yup.object({
+  sectionName: yup.string().required("Section Name is required"),
+  OrganizationType: yup.string().required("Organization Type is required"),
   departmentName: yup.string().trim().required("Department Name is required"),
   jurisdictionLevel: yup.string().required("Jurisdiction Level is required"),
   stateName: yup.string().trim().required("State / UT Name is required"),
@@ -48,31 +69,31 @@ const validationSchema = yup.object({
     .trim()
     .required("Official Contact Number is required")
     .matches(/^[0-9+()\- ]+$/, "Enter a valid phone number"),
-  officialEmail: yup.string().email("Invalid email").required("Official Email is required"),
-  departmentWebsite: yup
-    .string()
-    .trim()
-    .nullable()
-    .notRequired()
-    .url("Enter a valid website URL"),
-  totalOfficers: yup
-    .number()
-    .typeError("Enter a number")
-    .integer("Enter a whole number")
-    .positive("Must be greater than zero")
-    .required("Total Number of Officers is required"),
-  activeSchemes: yup.string().trim().required("Active schemes are required"),
-  farmersRegistered: yup
-    .number()
-    .typeError("Enter a number")
-    .integer("Enter a whole number")
-    .positive("Must be greater than zero")
-    .required("Estimated number of farmers is required"),
-  servicesOthersText: yup.string().when("servicesOffered", {
-    is: (servicesOffered) => servicesOffered?.Others === true,
-    then: (schema) => schema.trim().required("Please specify other service"),
-    otherwise: (schema) => schema.nullable(),
-  }),
+  // officialEmail: yup.string().email("Invalid email").required("Official Email is required"),
+  // departmentWebsite: yup
+  //   .string()
+  //   .trim()
+  //   .nullable()
+  //   .notRequired()
+  //   .url("Enter a valid website URL"),
+  // totalOfficers: yup
+  //   .number()
+  //   .typeError("Enter a number")
+  //   .integer("Enter a whole number")
+  //   .positive("Must be greater than zero")
+  //   .required("Total Number of Officers is required"),
+  // activeSchemes: yup.string().trim().required("Active schemes are required"),
+  // farmersRegistered: yup
+  //   .number()
+  //   .typeError("Enter a number")
+  //   .integer("Enter a whole number")
+  //   .positive("Must be greater than zero")
+  //   .required("Estimated number of farmers is required"),
+  // servicesOthersText: yup.string().when("servicesOffered", {
+  //   is: (servicesOffered) => servicesOffered?.Others === true,
+  //   then: (schema) => schema.trim().required("Please specify other service"),
+  //   otherwise: (schema) => schema.nullable(),
+  // }),
 });
 
 const InputField = ({ label, name, formik, placeholder, type = "text" }) => {
@@ -154,6 +175,8 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
   const isEdit = mode === "edit";
   const isView = mode === "view";
   const isEditMode = Boolean(id);
+  const [selectedSector, setSelectedSector] = useState(null);
+  const [selectedOrgType, setSelectedOrgType] = useState(null);
 
   useEffect(() => {
     if (id) {
@@ -164,6 +187,8 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
 
   const formik = useFormik({
     initialValues: {
+      sectionName: "",
+      OrganizationType: "",
       departmentName: "",
       jurisdictionLevel: "",
       stateName: "",
@@ -229,9 +254,26 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
   };
 
   useEffect(() => {
+    if (selectedSector) {
+      formik.setFieldValue("sectionName", selectedSector.value);
+    }
+    if (selectedOrgType) {
+      formik.setFieldValue("OrganizationType", selectedOrgType.value);
+    }
+  }, [selectedSector, selectedOrgType]);
+
+  useEffect(() => {
+    if (selectedSector) {
+      setSelectedOrgType(null);
+    }
+  }, [selectedSector]);
+
+  useEffect(() => {
     if (enviroAdminOrgDetails) {
       const d = enviroAdminOrgDetails;
       formik.setValues({
+        sectionName: d.sectionName || "",
+        OrganizationType: d.OrganizationType || "",
         departmentName: d.departmentName || "",
         jurisdictionLevel: d.jurisdictionLevel || "",
         stateName: d.state || "",
@@ -300,8 +342,94 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
         >Enviro Department Profile</h2>
       </div>
 
-      <form onSubmit={formik.handleSubmit} className="space-y-4 bg-white rounded-b-xl p-2 shadow-lg shadow-slate-900/10 sm:p-6">
-        <fieldset disabled={isView} className="space-y-4">
+      <div className="space-y-4 bg-white rounded-b-xl p-2 shadow-lg shadow-slate-900/10 sm:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label className="block mb-2 text-sm font-medium text-slate-700">Sector</label>
+            <ReactSelect
+              options={sectorOptions}
+              value={selectedSector}
+              onChange={(selected) => {
+                setSelectedSector(selected);
+                setSelectedOrgType(null);
+                formik.setFieldValue("sectionName", selected?.value || "");
+                formik.setFieldValue("OrganizationType", "");
+              }}
+              placeholder="Select Sector"
+              isClearable
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  minHeight: "50px",
+                  borderRadius: "0.5rem",
+                  borderColor: state.isFocused ? "#60A5FA" : "#556581",
+                  boxShadow: state.isFocused ? "0 0 0 2px #60A5FA" : "none",
+                }),
+                valueContainer: (base) => ({
+                  ...base,
+                  padding: "0 6px",
+                  fontSize: "1rem",
+                }),
+                input: (base) => ({
+                  ...base,
+                  margin: 0,
+                  padding: 0,
+                }),
+                placeholder: (base) => ({
+                  ...base,
+                  color: "#9CA3AF",
+                }),
+              }}
+            />
+            {formik.touched.sectionName && formik.errors.sectionName ? (
+              <span className="text-xs text-red-500">{formik.errors.sectionName}</span>
+            ) : null}
+          </div>
+          <div>
+            <label className="block mb-2 text-sm font-medium text-slate-700">Organization Type</label>
+            <ReactSelect
+              options={selectedSector ? orgTypeOptions[selectedSector.value] || [] : []}
+              value={selectedOrgType}
+              onChange={(selected) => {
+                setSelectedOrgType(selected);
+                formik.setFieldValue("OrganizationType", selected?.value || "");
+              }}
+              placeholder="Select Organization Type"
+              isClearable
+              isDisabled={!selectedSector}
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  minHeight: "50px",
+                  borderRadius: "0.5rem",
+                  borderColor: state.isFocused ? "#60A5FA" : "#556581",
+                  boxShadow: state.isFocused ? "0 0 0 2px #60A5FA" : "none",
+                }),
+                valueContainer: (base) => ({
+                  ...base,
+                  padding: "0 6px",
+                  fontSize: "1rem",
+                }),
+                input: (base) => ({
+                  ...base,
+                  margin: 0,
+                  padding: 0,
+                }),
+                placeholder: (base) => ({
+                  ...base,
+                  color: "#9CA3AF",
+                }),
+              }}
+            />
+            {formik.touched.OrganizationType && formik.errors.OrganizationType ? (
+              <span className="text-xs text-red-500">{formik.errors.OrganizationType}</span>
+            ) : null}
+          </div>
+        </div>
+
+        {selectedOrgType?.value === "GOVERNMENT" ? (
+          <form onSubmit={formik.handleSubmit} className="space-y-4">
+            <fieldset disabled={isView} className="space-y-4">
           <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
@@ -464,23 +592,26 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
             </div>
           </section>
 
-        </fieldset>
-        <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="button" text={isView ? "Back" : "Cancel"} variant={3} onClick={() => navigate(-1)} />
-            {!isView && (
-              <Button
-                type="submit"
-                text={isEdit ? "Update" : "Save"}
-                variant={1}
-                loading={loading}
-              />
-            )}
-          </div>
-        </div>
-      </form>
+         </fieldset>
+         <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+           <div className="flex flex-wrap items-center gap-3">
+             <Button type="button" text={isView ? "Back" : "Cancel"} variant={3} onClick={() => navigate(-1)} />
+             {!isView && (
+               <Button
+                 type="submit"
+                 text={isEdit ? "Update" : "Save"}
+                 variant={1}
+                 loading={loading}
+               />
+             )}
+           </div>
+         </div>
+       </form>
+         ) : selectedOrgType?.value === "FPO" || selectedOrgType?.value === "FPC" || selectedOrgType?.value === "CMRC" || selectedOrgType?.value === "BACHAT GAT" || selectedOrgType?.value === "SELF HELP GROUP" ? (
+           <EnviroEmpAddDBfpo OrganizationType={selectedOrgType?.value} mode={isEdit ? "edit" : isView ? "view" : "add"} />
+         ) : null}
+      </div>
     </div>
-    // </div>
   );
 }
 

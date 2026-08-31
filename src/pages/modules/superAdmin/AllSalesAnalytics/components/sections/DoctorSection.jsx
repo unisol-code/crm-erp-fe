@@ -1,7 +1,9 @@
 // components/sections/DoctorSection.jsx
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import * as LucideIcons from "lucide-react";
+import { TiEye } from "react-icons/ti"
 import { 
   Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, 
   RadialBar, RadialBarChart, ResponsiveContainer, Tooltip, 
@@ -11,6 +13,7 @@ import { ChartCard, KpiCard, AchBadge, EmptyState } from '../analytics';
 import { 
   Button, 
   Badge, 
+  Input,
   Table, 
   TableHeader, 
   TableBody, 
@@ -35,6 +38,8 @@ import {
 } from '../../data/analyticsData';
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
 import Pagination from "../../../../../../components/uiComponents/pagination/Pagination.jsx";
+import Select from "react-select";
+import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 
 function Mini({ label, value }) {
   return (
@@ -54,8 +59,58 @@ export function DoctorSection({
   tableLoading = false,
   onPageChange,
   onItemsPerPageChange,
+  onSearch,
+  onSalesPersonFilter,
 }) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSalesPerson, setSelectedSalesPerson] = useState(null);
+  const searchTimeoutRef = useRef(null);
+  const onSearchRef = useRef(onSearch);
+  const onSalesPersonFilterRef = useRef(onSalesPersonFilter);
+
+  // ✅ Fetch sales executive dropdown from API
+  const { salesExecutive, fetchSalesExecutive } = useDropdown();
+
+  useEffect(() => {
+    fetchSalesExecutive();
+  }, [fetchSalesExecutive]);
+
+  // ✅ Keep refs updated with latest callbacks
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+
+  useEffect(() => {
+    onSalesPersonFilterRef.current = onSalesPersonFilter;
+  }, [onSalesPersonFilter]);
+
+  // ✅ Debounced search - call API when search term changes
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      if (onSearchRef.current) {
+        onSearchRef.current(searchTerm);
+      }
+    }, 500);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm]);
+
+  // ✅ Sales person filter - call API when selection changes
+  useEffect(() => {
+    if (onSalesPersonFilterRef.current) {
+      onSalesPersonFilterRef.current(selectedSalesPerson?.value || "");
+    }
+  }, [selectedSalesPerson]);
 
   // ✅ Process doctor summary data from API
   const doctorSummary = useMemo(() => {
@@ -91,6 +146,7 @@ export function DoctorSection({
         totalVisit: item.totalVisit || 0,
         totalTarget: item.totalTarget || 0,
         totalAchievement: item.totalAchievement || 0,
+        salesPersonName: item.salesPersonName || 'N/A',
         achievement: item.totalTarget > 0 
           ? Math.round((item.totalAchievement / item.totalTarget) * 100) 
           : 0,
@@ -106,6 +162,14 @@ export function DoctorSection({
     }
     return [];
   }, [doctorListData, doctors]);
+
+  // ✅ Get sales persons from API dropdown
+  const salesPersonOptions = useMemo(() => {
+    if (salesExecutive && Array.isArray(salesExecutive)) {
+      return salesExecutive.map(sp => ({ label: sp, value: sp }));
+    }
+    return [];
+  }, [salesExecutive]);
 
   // ✅ Pagination info from API
   const paginationInfo = useMemo(() => {
@@ -271,146 +335,45 @@ export function DoctorSection({
         />
       </div>
 
-      {/* Leaderboard + Speciality Distribution */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <ChartCard title="Doctor Performance Leaderboard" subtitle="Top 10 doctors by achievement %" className="lg:col-span-2">
-          {leaderboard.length === 0 ? <EmptyState /> : (
-            <ResponsiveContainer width="100%" height={360}>
-              <BarChart data={leaderboard} layout="vertical" margin={{ left: 8, right: 24 }}>
-                <CartesianGrid horizontal={false} stroke="var(--theme-bg-sidebar)" />
-                <XAxis type="number" domain={[0, 100]} stroke="#6b7280" fontSize={11} unit="%" />
-                <YAxis dataKey="doctorName" type="category" stroke="#6b7280" fontSize={11} width={140} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: 12, border: "1px solid var(--theme-bg-sidebar)", background: "#ffffff" }}
-                  formatter={(value, name, props) => {
-                    const item = props.payload;
-                    return [`${value}%`, item.doctorName];
-                  }}
-                />
-                <Bar dataKey="achievement" radius={[0, 8, 8, 0]} label={{ position: "right", fontSize: 11, fill: "#6b7280", formatter: (v) => `${v}%` }}>
-                  {leaderboard.map((d, i) => <Cell key={i} fill={(d.achievement || 0) > 85 ? "#22c55e" : (d.achievement || 0) >= 70 ? "#eab308" : "#ef4444"} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </ChartCard>
-        <ChartCard title="Speciality Contribution" subtitle="Share of total achievement">
-          {specContrib.length === 0 ? <EmptyState /> : (
-            <>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie data={specContrib} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={3}>
-                    {specContrib.map((s, i) => <Cell key={i} fill={s.fill} />)}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ borderRadius: 12, border: "1px solid var(--theme-bg-sidebar)", background: "#ffffff" }}
-                    formatter={(value, name) => [`${value}% achievement`, name]}
-                  />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="grid grid-cols-2 gap-2 mt-3">
-                <Mini label="Top speciality" value={topSpec} />
-                <Mini label="Total doctors" value={String(total)} />
-                <Mini label="Avg target" value={String(Math.round(doctorList.reduce((s, d) => s + (d.totalTarget || 0), 0) / (total || 1)))} />
-                <Mini label="Avg achievement" value={`${displayAvgAch.toFixed(2)}%`} />
-              </div>
-            </>
-          )}
-        </ChartCard>
-      </div> */}
-
-      {/* Matrix + Product Completion */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-        <ChartCard title="Sales Person × Speciality" subtitle="Active doctors matrix">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs border-separate border-spacing-1">
-              <thead>
-                <tr>
-                  <th className="text-left text-gray-500 font-medium p-2">Sales</th>
-                  {D_SPECIALITIES.map(s => <th key={s} className="text-gray-500 font-medium p-2 text-center">{s.slice(0, 6)}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {matrix.map(row => (
-                  <tr key={row.sales}>
-                    <td className="font-medium p-2">{row.sales}</td>
-                    {row.cells.map((v, i) => (
-                      <td key={i} className="p-2 text-center rounded-md font-semibold" style={{ background: `color-mix(in oklch, var(--theme-primary) ${(v / matrixMax) * 70}%, transparent)` }}>
-                        {v}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </ChartCard>
-        <ChartCard title="Product Completion Intelligence" subtitle="Complete vs Incomplete adoption">
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={prodStack} margin={{ left: 0, right: 8 }}>
-              <CartesianGrid vertical={false} stroke="var(--theme-bg-sidebar)" />
-              <XAxis dataKey="name" stroke="#6b7280" fontSize={10} angle={-25} textAnchor="end" height={60} />
-              <YAxis stroke="#6b7280" fontSize={11} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--theme-bg-sidebar)", background: "#ffffff" }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="Complete" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="Incomplete" stackId="a" fill="#ef4444" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div> */}
-
-      {/* Price vs Achievement + Quality Analytics */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <ChartCard title="Price vs Achievement" subtitle="Bubble = # doctors" className="lg:col-span-2">
-          <ResponsiveContainer width="100%" height={320}>
-            <ScatterChart margin={{ left: 8, right: 16, top: 8, bottom: 8 }}>
-              <CartesianGrid stroke="var(--theme-bg-sidebar)" />
-              <XAxis type="number" dataKey="price" name="Price" stroke="#6b7280" fontSize={11} unit="₹" />
-              <YAxis type="number" dataKey="achievement" name="Achievement" stroke="#6b7280" fontSize={11} unit="%" domain={[0, 100]} />
-              <ZAxis type="number" dataKey="doctors" range={[80, 600]} />
-              <Tooltip 
-                cursor={{ strokeDasharray: "3 3" }} 
-                contentStyle={{ borderRadius: 12, border: "1px solid var(--theme-bg-sidebar)", background: "#ffffff" }}
-                formatter={(value, name, props) => {
-                  if (name === 'Price') return [`₹${value}`, name];
-                  if (name === 'Achievement') return [`${value}%`, name];
-                  if (name === 'doctors') return [`${value} doctors`, name];
-                  return [value, name];
-                }}
-              />
-              <Scatter data={scatter} fill="var(--theme-primary)" fillOpacity={0.7} />
-            </ScatterChart>
-          </ResponsiveContainer>
-        </ChartCard>
-        <ChartCard title="Quality Analytics" subtitle="Average doctor quality">
-          <div className="relative h-40">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart innerRadius="70%" outerRadius="100%" data={[{ name: "q", value: displayAvgQuality, fill: "var(--theme-primary)" }]} startAngle={225} endAngle={-45}>
-                <RadialBar background={{ fill: "var(--theme-bg-sidebar)" }} dataKey="value" cornerRadius={20} />
-              </RadialBarChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 grid place-items-center pointer-events-none">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-[var(--theme-primary)]">{displayAvgQuality}</p>
-                <p className="text-[11px] text-gray-500">/ 100</p>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-2 mt-3">
-            {qBuckets.map(b => (
-              <div key={b.label} className="flex items-center justify-between text-sm px-3 py-2 rounded-xl bg-[var(--theme-primary-bg)] border border-[var(--theme-bg-sidebar)]">
-                <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: b.tone }} />{b.label}</span>
-                <span className="font-semibold">{b.count}</span>
-              </div>
-            ))}
-          </div>
-        </ChartCard>
-      </div> */}
-
       {/* ✅ Doctor Directory Table */}
       <ChartCard title="Doctor Directory" subtitle="Click a row for full drill-down" className="mt-4">
+        {/* Search and Filter Controls */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
+            <LucideIcons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <Input
+              type="text"
+              placeholder="Search by doctor"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <div className="w-full sm:w-64">
+            <Select
+              isClearable
+              placeholder="Filter by Sales Person"
+              value={selectedSalesPerson}
+              onChange={setSelectedSalesPerson}
+              options={salesPersonOptions}
+              classNamePrefix="react-select"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  borderRadius: '0.5rem',
+                  borderColor: '#d1d5db',
+                  minHeight: '40px',
+                  boxShadow: 'none',
+                  '&:hover': { borderColor: 'var(--theme-primary)' },
+                }),
+                placeholder: (base) => ({
+                  ...base,
+                  color: '#9ca3af',
+                }),
+              }}
+            />
+          </div>
+        </div>
         <div className="shadow overflow-x-auto rounded-t-2xl border border-gray-200">
           <Table>
             <TableHeader className="sticky top-0 bg-white z-10">
@@ -419,12 +382,14 @@ export function DoctorSection({
                 <TableHead className="text-base font-semibold">Doctor</TableHead>
                 <TableHead className="text-base font-semibold">Hospital</TableHead>
                 <TableHead className="text-base font-semibold">Speciality</TableHead>
+                 <TableHead className="text-base font-semibold">State</TableHead>
+               <TableHead className="text-base font-semibold">District</TableHead>
                 <TableHead className="text-base font-semibold">City</TableHead>
-                <TableHead className="text-base font-semibold">District</TableHead>
                 <TableHead className="text-base font-semibold text-right">Visits</TableHead>
                 <TableHead className="text-base font-semibold text-right">Target</TableHead>
                 <TableHead className="text-base font-semibold text-right">Achievement</TableHead>
-                <TableHead className="text-base font-semibold">Status</TableHead>
+                 <TableHead className="text-base font-semibold text-right">Sales Person</TableHead>
+                <TableHead className="text-base font-semibold">View</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-200">
@@ -461,11 +426,14 @@ export function DoctorSection({
                           {d.speciality || 'N/A'}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-[15px] whitespace-nowrap">
-                        {d.city || 'N/A'}
+                           <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                        {d.state || 'N/A'}
+                      </td>
+                        <td className="px-4 py-3 text-[15px] whitespace-nowrap">
+                        {d.district || 'N/A'}
                       </td>
                       <td className="px-4 py-3 text-[15px] whitespace-nowrap">
-                        {d.district || 'N/A'}
+                        {d.city || 'N/A'}
                       </td>
                       <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right">
                         {d.totalVisit || 0}
@@ -476,18 +444,25 @@ export function DoctorSection({
                       <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right">
                         <AchBadge v={achievement} />
                       </td>
-                      <td className="px-4 py-3 text-[15px] whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isActive ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"}`}>
-                          {isActive ? "Active" : "Inactive"}
-                        </span>
+                         <td className="px-4 py-3 text-[15px] whitespace-nowrap text-right">
+                        {d.salesPersonName || "N/A"}
                       </td>
+                              <td className="p-4 text-center align-middle">
+                                                  <button
+                                                    onClick={() => { navigate(`/sales-analyticsAll/doctor-profile-breakdown/${d.typeOfDoctorProfile}/${d.id}`) }}
+                                                    className="text-[var(--theme-primary)] hover:bg-[var(--theme-primary)]/10 rounded-full w-9 h-9 flex items-center justify-center transition-colors"
+                                                    aria-label="View details"
+                                                  >
+                                                    <TiEye size={18} />
+                                                  </button>
+                                </td>
                     </TableRow>
                   );
                 })
               ) : (
                 <TableRow>
                   <TableCell colSpan={10} className="text-center py-8 text-sm text-gray-500">
-                    No doctors match your filters.
+                    No doctors match your search or filters.
                   </TableCell>
                 </TableRow>
               )}

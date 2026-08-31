@@ -103,12 +103,12 @@ const FarmerForm = ({ formik }) => {
         formik={formik}
         placeholder="Enter last name"
       />
-      <FormField
+      {/* <FormField
         name="leadOwner"
         label="Lead Owner"
         formik={formik}
         placeholder="Enter lead owner"
-      />
+      /> */}
       <FormField
         name="email"
         type="email"
@@ -122,12 +122,7 @@ const FarmerForm = ({ formik }) => {
         formik={formik}
         placeholder="Enter phone number"
       />
-      <FormField
-        name="productName"
-        label="Product Name"
-        formik={formik}
-        placeholder="Enter product name"
-      />
+
       <FormField
         name="totalLandOwned"
         label="Total Land Owned"
@@ -187,7 +182,7 @@ const FarmerForm = ({ formik }) => {
         ]}
         formik={formik}
       />
-      <FormField
+      {/* <FormField
         name="lastMeeting"
         label="Last Meeting"
         formik={formik}
@@ -200,14 +195,14 @@ const FarmerForm = ({ formik }) => {
         formik={formik}
         type="date"
         min={new Date().toISOString().split("T")[0]}
-      />
-      <FormField
+      /> */}
+      {/* <FormField
         name="nextfollowup"
         label="Next Follow Up"
         formik={formik}
         type="date"
       />
-      <FormField name="status" label="Status" formik={formik} />
+      <FormField name="status" label="Status" formik={formik} /> */}
 
       {/* Financial Information */}
       <SectionHeading title="Financial Information" />
@@ -238,6 +233,12 @@ const FarmerForm = ({ formik }) => {
 
       {/* Agricultural Details */}
       <SectionHeading title="Agricultural Details" />
+            <FormField
+        name="productName"
+        label="Product Name"
+        formik={formik}
+        placeholder="Enter product name"
+      />
       <FormField
         name="sprayingType"
         label="Spraying Type"
@@ -264,7 +265,7 @@ const FarmerForm = ({ formik }) => {
       />
       <FormField
         name="sprayingDuration"
-        label="Spraying Duration"
+        label="Crop Duration"
         formik={formik}
         placeholder="Enter duration"
       />
@@ -273,6 +274,12 @@ const FarmerForm = ({ formik }) => {
         label="Purpose for Buying"
         formik={formik}
         placeholder="Enter purpose"
+      />
+            <FormField
+        name="Comments"
+        label="Comment Box"
+        formik={formik}
+        placeholder="Enter any comments"
       />
     </div>
   );

@@ -2,6 +2,8 @@
 
 import React, { useMemo, useState } from "react";
 import * as LucideIcons from "lucide-react";
+import { TiEye, TiTrash } from "react-icons/ti";
+import { useTheme } from "../../../../../../hooks/theme/useTheme.js";
 import {
   Bar,
   BarChart,
@@ -51,6 +53,7 @@ import {
 } from "../../data/analyticsData";
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
 import Pagination from "../../../../../../components/uiComponents/pagination/Pagination.jsx";
+import { themes } from "../../../../../../components/theme/Themes.js";
 
 function MiniStat({ label, value, icon, tone, subtitle }) {
   return (
@@ -217,6 +220,7 @@ export function OrganizationSection({
   organizationListData,
   onOrganizationListPageChange,
   onOrganizationListItemsPerPageChange,
+  onViewOrganization,
 }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [state, setState] = useState("");
@@ -546,6 +550,13 @@ export function OrganizationSection({
   const handleListItemsPerPageChange = (pageSize) => {
     if (onOrganizationListItemsPerPageChange) {
       onOrganizationListItemsPerPageChange(pageSize);
+    }
+  };
+
+  // ✅ Handler for viewing organization details
+  const handleViewOrganization = (orgId, type) => {
+    if (onViewOrganization) {
+      onViewOrganization(orgId, type);
     }
   };
 
@@ -930,6 +941,9 @@ export function OrganizationSection({
                     <TableHead className="text-base font-semibold">
                       Surgeries
                     </TableHead>
+                     <TableHead className="text-base font-semibold">
+                      View
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1035,6 +1049,15 @@ export function OrganizationSection({
                             <span className="text-gray-400 text-sm">N/A</span>
                           )}
                         </td>
+                                        <td className="p-4 text-center text-[19px] align-middle">
+                                           <button
+                                             onClick={() => handleViewOrganization(hospital._id, hospital.typeOfOrgOrHospital)}
+                                             className="text-black hover:bg-blue-200 rounded-full w-8 h-8 flex items-center justify-center"
+                                             aria-label="View details"
+                                           >
+                                             <TiEye size={18} color={themes.primaryColor} />
+                                           </button>
+                                         </td>
                       </TableRow>
                     ))
                   ) : (
