@@ -100,3 +100,5 @@ export const IQ2Atom = atom(createPersistedAtom("IQ2", []));
 export const IQ4Atom = atom(createPersistedAtom("IQ4", []));
 
 export const BMW4Atom = atom(createPersistedAtom("BMW4", []));
+
+export const salesExecutiveAtom = atom(createPersistedAtom("salesExecutive", []));

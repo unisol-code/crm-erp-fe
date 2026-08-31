@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import * as LucideIcons from "lucide-react";
+import { TiEye } from "react-icons/ti";
 import { 
   Bar, BarChart, CartesianGrid, Cell, Line, LineChart, 
   ResponsiveContainer, Tooltip, XAxis, YAxis, Pie, PieChart, Legend
@@ -21,6 +22,7 @@ import {
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
 import { COLORS } from '../../data/analyticsData';
 import Pagination from "../../../../../../components/uiComponents/pagination/Pagination.jsx";
+import { useNavigate } from "react-router-dom";
 
 function MiniStat({ label, value, icon, tone }) {
   return (
@@ -93,12 +95,14 @@ export function ExecutiveSection({
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTarget, setSelectedTarget] = useState(null);
+  const Navigate = useNavigate();
 
   // ✅ Process sales person data from API
   const salesPersons = useMemo(() => {
     if (salesPersonData?.data && Array.isArray(salesPersonData.data)) {
       return salesPersonData.data.map((item) => ({
         name: item.salesPersonName || 'N/A',
+        id: item._id || 'N/A',
         company: item.companyName || 'N/A',
         totalVisits: item.totalVisits || 0,
         successVisits: item.successVisits || 0,
@@ -522,6 +526,7 @@ export function ExecutiveSection({
                       <TableHead className="text-base font-semibold text-right">Individuals</TableHead>
                       <TableHead className="text-base font-semibold text-right">Success Rate</TableHead>
                       <TableHead className="text-base font-semibold">Status</TableHead>
+                       <TableHead className="text-base font-semibold">View</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -565,6 +570,15 @@ export function ExecutiveSection({
                                 {isActive ? "Active" : "Inactive"}
                               </span>
                             </td>
+                             <td className="p-4 text-center align-middle">
+                                                  <button
+                                                    onClick={() => { Navigate(`/sales-analyticsAll/Executive-type-breakdown/${person?.id}`) }}
+                                                    className="text-[var(--theme-primary)] hover:bg-[var(--theme-primary)]/10 rounded-full w-9 h-9 flex items-center justify-center transition-colors"
+                                                    aria-label="View details"
+                                                  >
+                                                    <TiEye size={18} />
+                                                  </button>
+                                </td>
                           </TableRow>
                         );
                       })

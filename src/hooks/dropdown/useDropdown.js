@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   kitchenTypeAtom,
   laundryTypeAtom,
@@ -50,6 +50,7 @@ import {
   IQ4Atom,
   BMW4Atom,
   districtListAtom,
+  salesExecutiveAtom,
 } from "../../state/dropdown/dropdownState";
 import useFetch from "../useFetch";
 import { useRecoilState } from "recoil";
@@ -139,6 +140,7 @@ const useDropdown = () => {
   const [districtList, setDistrictList] = useRecoilState(districtListAtom);
 
   const [cities, setCities] = useRecoilState(allCitiesAtom);
+  const [salesExecutive, setSalesExecutive] = useRecoilState(salesExecutiveAtom);
 
   const fetchLegalEntity = async () => {
     setLoading(true);
@@ -1114,6 +1116,23 @@ const useDropdown = () => {
     }
   };
 
+  const fetchSalesExecutive = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}dashboard/getSalesExecutiveDropdown`,
+      });
+      if (res) {
+        setSalesExecutive(res?.data || res);
+      }
+    } catch (error) {
+      console.error("Error while fetching sales executive dropdown:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchData, setSalesExecutive]);
+
   return {
     fetchLegalEntity,
     legalEntity,
@@ -1220,7 +1239,8 @@ const useDropdown = () => {
     IQ4,
     fetchbiomedicalfour,
     BMW4,
-
+    salesExecutive,
+    fetchSalesExecutive,
   };
 };
 

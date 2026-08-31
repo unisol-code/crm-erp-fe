@@ -76,3 +76,6 @@ export const specificIndividualDataStateAtom = atom(createPersistedAtom("specifi
 export const allOrganizationsDataStateAtom = atom(createPersistedAtom("allOrganizationsDataState", null));
 
 export const specificOrganizationDataStateAtom = atom(createPersistedAtom("specificOrganizationDataState", null));
+
+// ✅ Sales Person Specific Data State
+export const specificSalesPersonDataStateAtom = atom(createPersistedAtom("specificSalesPersonDataState", null));

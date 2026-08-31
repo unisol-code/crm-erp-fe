@@ -103,6 +103,9 @@ import EnviroAdminOrgAddEditDB from "./pages/modules/superAdmin/database/superAd
 import EnviroEmpOrgAddEditDB from "./pages/modules/salesExecutive/database/organizationalDatabase/enviroEmpOrgDB/EnviroEmpOrgAddEditDB";
 import EnviroOrgRequestActions from "./pages/modules/superAdmin/database/superAdminOrganizationDB/enviroAdminOrgDB/EnviroOrgRequestActions";
 import AllSalesAnalytics from "./pages/modules/superAdmin/AllSalesAnalytics/index"
+import DoctorProfileBreakdown from "./pages/modules/superAdmin/AllSalesAnalytics/DoctorProfileBreakdown";
+import HospitalTypeBreakdown from "./pages/modules/superAdmin/AllSalesAnalytics/HospitalTypeBreakdown";
+import ExecutiveProfileBreakdown from "./pages/modules/superAdmin/AllSalesAnalytics/ExecutiveProfileBreakdown";
 
 function App() {
   const [activeTab, setActiveTab] = useState("/crm-dashboard");
@@ -487,6 +490,83 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <AllSalesAnalytics/>
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/doctor-profile-breakdown"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <DoctorProfileBreakdown />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/doctor-profile-breakdown/:profileType"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <DoctorProfileBreakdown />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/doctor-profile-breakdown/:profileType/:doctorId"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <DoctorProfileBreakdown />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/hospital-type-breakdown"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <HospitalTypeBreakdown />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/hospital-type-breakdown/:hospitalType"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <HospitalTypeBreakdown />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/hospital-type-breakdown/:hospitalType/:orgId"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <HospitalTypeBreakdown />
+              </SuperAdminLayout>
+            }
+          />
+                    <Route
+            path="/sales-analyticsAll/Executive-type-breakdown/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <ExecutiveProfileBreakdown />
               </SuperAdminLayout>
             }
           />

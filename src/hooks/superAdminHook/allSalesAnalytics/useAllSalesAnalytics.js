@@ -27,6 +27,7 @@ import {
   specificIndividualDataStateAtom,
   allOrganizationsDataStateAtom,
   specificOrganizationDataStateAtom,
+  specificSalesPersonDataStateAtom,
 } from "../../../state/allSalesAnalyticState/allSalesAnalyticsState";
 
 const useAllSalesAnalytics = () => {
@@ -52,6 +53,7 @@ const [organizationListData, setOrganizationListData] = useRecoilState(organizat
   const [specificIndividualData, setSpecificIndividualData] = useRecoilState(specificIndividualDataStateAtom);
   const [allOrganizationsData, setAllOrganizationsData] = useRecoilState(allOrganizationsDataStateAtom);
   const [specificOrganizationData, setSpecificOrganizationData] = useRecoilState(specificOrganizationDataStateAtom);
+  const [specificSalesPersonData, setSpecificSalesPersonData] = useRecoilState(specificSalesPersonDataStateAtom);
   const filtersRef = useRef(filters);
 
   // Update ref when filters change
@@ -381,6 +383,22 @@ const fetchDoctorList = useCallback(async (filterParams = {}, silent = false) =>
       if (allFilters.segment) params.append("segment", allFilters.segment);
       if (allFilters.speciality) params.append("speciality", allFilters.speciality);
       if (allFilters.typeOfDoctorProfile) params.append("typeOfDoctorProfile", allFilters.typeOfDoctorProfile);
+            // ✅ Sales Person Name
+      if (allFilters.salesPersonName) {
+        params.append(
+          "salesPersonName",
+          allFilters.salesPersonName
+        );
+      }
+
+      // ✅ Doctor Name
+      if (allFilters.doctorName) {
+        params.append(
+          "doctorName",
+          allFilters.doctorName
+        );
+      }
+
       if (allFilters.page) params.append("page", String(allFilters.page || 1));
       if (allFilters.limit) params.append("limit", String(allFilters.limit || 10));
 
@@ -770,6 +788,35 @@ const fetchSalesPersonTargetAnalytics = useCallback(async (filterParams = {}, si
   }, [fetchData, setSpecificOrganizationData, setError]);
 
 
+  // ============== API 17: FETCH SPECIFIC SALES PERSON DATA BY ID ==============
+  const fetchSpecificSalesPersonData = useCallback(async (id, silent = false) => {
+    if (!silent) setLoading(true);
+    setError(null);
+
+    try {
+      const url = `${conf.apiBaseUrl}dashboard/showSalesPersonSpecificData/${id}`;
+
+      const res = await fetchData({
+        method: "GET",
+        url: url,
+      });
+
+      if (res && res.success) {
+        setSpecificSalesPersonData(res);
+        return res;
+      } else {
+        throw new Error(res?.message || "Failed to fetch specific sales person data");
+      }
+    } catch (err) {
+      console.error("Error while fetching specific sales person data:", err);
+      setError(err.message || "Failed to fetch specific sales person data");
+      toast.error(err.response?.data?.message || "Failed to fetch specific sales person data");
+      return null;
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [fetchData, setSpecificSalesPersonData, setError]);
+
   // ============== FILTER MANAGEMENT ==============
    const resetFilters = useCallback(() => {
      const clearedFilters = {
@@ -911,6 +958,10 @@ const fetchSalesPersonTargetAnalytics = useCallback(async (filterParams = {}, si
   specificOrganizationData,
   fetchSpecificOrganizationData,
   resetSpecificOrganizationData: () => setSpecificOrganizationData(null),
+
+  specificSalesPersonData,
+  fetchSpecificSalesPersonData,
+  resetSpecificSalesPersonData: () => setSpecificSalesPersonData(null),
   };
 };
 
