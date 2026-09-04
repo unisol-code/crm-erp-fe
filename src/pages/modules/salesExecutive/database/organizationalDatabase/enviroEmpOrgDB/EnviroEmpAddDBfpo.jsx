@@ -156,68 +156,68 @@ const selectStyles = {
 
 const validationSchema = yup.object({
   fpoName: yup.string().trim().required("FPO Name is required"),
-  registrationNumber: yup.string().trim().required("Registration Number is required"),
-  registrationAct: yup.string().trim().required("Registration Act is required"),
-  yearOfEstablishment: yup
-    .string()
-    .trim()
-    .required("Year of Establishment is required")
-    .matches(/^\d{4}$/, "Enter a valid 4-digit year"),
-  operationalArea: yup.string().trim().required("Operational Area is required"),
+  // registrationNumber: yup.string().trim().required("Registration Number is required"),
+  // registrationAct: yup.string().trim().required("Registration Act is required"),
+  // yearOfEstablishment: yup
+  //   .string()
+  //   .trim()
+  //   .required("Year of Establishment is required")
+  //   .matches(/^\d{4}$/, "Enter a valid 4-digit year"),
+  // operationalArea: yup.string().trim().required("Operational Area is required"),
   officeAddress: yup.string().trim().required("Office Address is required"),
   officialContactNumber: yup
     .string()
     .trim()
     .required("Official Contact Number is required")
     .matches(/^[0-9+()\- ]+$/, "Enter a valid phone number"),
-  officialEmailId: yup.string().email("Invalid email").required("Official Email ID is required"),
-  websiteAppUrl: yup.string().trim().nullable().notRequired().url("Enter a valid URL"),
+  // officialEmailId: yup.string().email("Invalid email").required("Official Email ID is required"),
+  // websiteAppUrl: yup.string().trim().nullable().notRequired().url("Enter a valid URL"),
   region: yup.string().trim().required("Region is required"),
   cityTownVillage: yup.string().trim().required("City/Town/Village is required"),
   district: yup.string().trim().required("District is required"),
   state: yup.string().trim().required("State is required"),
-  pincode: yup.string().trim().required("Pincode is required").matches(/^(?!0{6})[0-9]{6}$/, "Must be a valid 6-digit pincode"),
-  landmark: yup.string().trim().required("Landmark is required"),
-  numberOfBoardMembers: yup
-    .number()
-    .typeError("Enter a number")
-    .integer("Enter a whole number")
-    .min(0, "Cannot be negative")
-    .required("Number of Board Members is required"),
-  numberOfStaffMembers: yup
-    .number()
-    .typeError("Enter a number")
-    .integer("Enter a whole number")
-    .min(0, "Cannot be negative")
-    .required("Number of Staff Members is required"),
-  totalActiveMembers: yup
-    .number()
-    .typeError("Enter a number")
-    .integer("Enter a whole number")
-    .positive("Must be greater than zero")
-    .required("Total Active Members is required"),
-  memberCategories: yup.array().min(1, "Select at least one member category").required("Member Categories are required"),
-  memberCategoriesOthers: yup.string().when("memberCategories", {
-    is: (memberCategories) => memberCategories?.includes("Others"),
-    then: (schema) => schema.trim().required("Please specify other category"),
-    otherwise: (schema) => schema.nullable(),
-  }),
-  primaryCommunicationChannels: yup.array().min(1, "Select at least one communication channel").required("Communication Channels are required"),
-  majorCropsHandled: yup.string().trim().required("Major Crops/Commodities are required"),
-  annualTurnover: yup
-    .number()
-    .typeError("Enter a number")
-    .min(0, "Cannot be negative")
-    .required("Annual Turnover is required"),
-  majorRevenueSources: yup.array().min(1, "Select at least one revenue source").required("Revenue Sources are required"),
-  majorRevenueSourcesOthers: yup.string().when("majorRevenueSources", {
-    is: (majorRevenueSources) => majorRevenueSources?.includes("Others"),
-    then: (schema) => schema.trim().required("Please specify other source"),
-    otherwise: (schema) => schema.nullable(),
-  }),
-  keyBuyerTypes: yup.array().min(1, "Select at least one buyer type").required("Buyer Types are required"),
-  topChallenges: yup.string().trim().required("Top Challenges are required"),
-  topPriorities: yup.string().trim().required("Top Priorities are required"),
+  // pincode: yup.string().trim().required("Pincode is required").matches(/^(?!0{6})[0-9]{6}$/, "Must be a valid 6-digit pincode"),
+  // landmark: yup.string().trim().required("Landmark is required"),
+  // numberOfBoardMembers: yup
+  //   .number()
+  //   .typeError("Enter a number")
+  //   .integer("Enter a whole number")
+  //   .min(0, "Cannot be negative")
+  //   .required("Number of Board Members is required"),
+  // numberOfStaffMembers: yup
+  //   .number()
+  //   .typeError("Enter a number")
+  //   .integer("Enter a whole number")
+  //   .min(0, "Cannot be negative")
+  //   .required("Number of Staff Members is required"),
+  // totalActiveMembers: yup
+  //   .number()
+  //   .typeError("Enter a number")
+  //   .integer("Enter a whole number")
+  //   .positive("Must be greater than zero")
+  //   .required("Total Active Members is required"),
+  // memberCategories: yup.array().min(1, "Select at least one member category").required("Member Categories are required"),
+  // memberCategoriesOthers: yup.string().when("memberCategories", {
+  //   is: (memberCategories) => memberCategories?.includes("Others"),
+  //   then: (schema) => schema.trim().required("Please specify other category"),
+  //   otherwise: (schema) => schema.nullable(),
+  // }),
+  // primaryCommunicationChannels: yup.array().min(1, "Select at least one communication channel").required("Communication Channels are required"),
+  // majorCropsHandled: yup.string().trim().required("Major Crops/Commodities are required"),
+  // annualTurnover: yup
+  //   .number()
+  //   .typeError("Enter a number")
+  //   .min(0, "Cannot be negative")
+  //   .required("Annual Turnover is required"),
+  // majorRevenueSources: yup.array().min(1, "Select at least one revenue source").required("Revenue Sources are required"),
+  // majorRevenueSourcesOthers: yup.string().when("majorRevenueSources", {
+  //   is: (majorRevenueSources) => majorRevenueSources?.includes("Others"),
+  //   then: (schema) => schema.trim().required("Please specify other source"),
+  //   otherwise: (schema) => schema.nullable(),
+  // }),
+  // keyBuyerTypes: yup.array().min(1, "Select at least one buyer type").required("Buyer Types are required"),
+  // topChallenges: yup.string().trim().required("Top Challenges are required"),
+  // topPriorities: yup.string().trim().required("Top Priorities are required"),
 });
 
 const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO" }) => {
@@ -269,7 +269,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO" }) => {
     fetchMemberCategories();
     fetchMajorRevenueSources();
     fetchAllRegion();
-    fetchAllStateName();
+    // fetchAllStateName();
   }, []);
 
   useEffect(() => {

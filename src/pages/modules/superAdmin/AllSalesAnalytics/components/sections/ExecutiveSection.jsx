@@ -20,7 +20,6 @@ import {
   Input,
 } from '../common';
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
-import { COLORS } from '../../data/analyticsData';
 import Pagination from "../../../../../../components/uiComponents/pagination/Pagination.jsx";
 import { useNavigate } from "react-router-dom";
 
