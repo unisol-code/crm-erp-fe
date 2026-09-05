@@ -6,6 +6,7 @@ import { useTheme } from "../../../../../../hooks/theme/useTheme";
 import Button from "../../../../../../components/uiComponents/button/Button";
 import BreadCrumb from "../../../../../../components/uiComponents/breadcrumb/BreadCrumb";
 import useEnviroAdminOrgDB from "../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminOrgDB";
+import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner";
 import ReactSelect from "react-select";
 import EnviroEmpAddDBfpo from "./EnviroEmpAddDBfpo";
@@ -61,9 +62,13 @@ const validationSchema = yup.object({
   OrganizationType: yup.string().required("Organization Type is required"),
   departmentName: yup.string().trim().required("Department Name is required"),
   jurisdictionLevel: yup.string().required("Jurisdiction Level is required"),
+  region: yup.string().trim().required("Region is required"),
   stateName: yup.string().trim().required("State / UT Name is required"),
-  districtName: yup.string().trim().required("District Name is required"),
-  officeAddress: yup.string().trim().required("Office Address is required"),
+  // districtName: yup.string().trim().required("District Name is required"),
+  // cityTownVillage: yup.string().trim().required("City/Town/Village is required"),
+  // pincode: yup.string().trim().required("Pincode is required").matches(/^(?!0{6})[0-9]{6}$/, "Must be a valid 6-digit pincode"),
+  // landmark: yup.string().trim().required("Landmark is required"),
+  // officeAddress: yup.string().trim().required("Office Address is required"),
   officialContactNumber: yup
     .string()
     .trim()
@@ -118,6 +123,34 @@ const InputField = ({ label, name, formik, placeholder, type = "text" }) => {
       {error ? <span className="text-xs text-red-500">{error}</span> : null}
     </div>
   );
+};
+
+const selectStyles = {
+  control: (base, state) => ({
+    ...base,
+    minHeight: "50px",
+    borderRadius: "0.5rem",
+    borderColor: state.isFocused ? "#60A5FA" : "#556581",
+    boxShadow: state.isFocused ? "0 0 0 2px #60A5FA" : "none",
+  }),
+  valueContainer: (base) => ({
+    ...base,
+    padding: "0 6px",
+    fontSize: "1rem",
+  }),
+  input: (base) => ({
+    ...base,
+    margin: 0,
+    padding: 0,
+  }),
+  placeholder: (base) => ({
+    ...base,
+    color: "#9CA3AF",
+  }),
+  menu: (base) => ({
+    ...base,
+    zIndex: 50,
+  }),
 };
 
 const CheckboxGroup = ({ title, groupName, options, formik, showOtherField, otherName }) => (
@@ -177,6 +210,24 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
   const isEditMode = Boolean(id);
   const [selectedSector, setSelectedSector] = useState(null);
   const [selectedOrgType, setSelectedOrgType] = useState(null);
+  const [selectedStateCode, setSelectedStateCode] = useState("");
+
+  const {
+    fetchAllRegion,
+    region,
+    allStateName,
+    fetchAllCities,
+    cities,
+    loading: locationLoading,
+    fetchAllStateName,
+    fetchDistrictList,
+    districtList,
+  } = useDropdown();
+
+  useEffect(() => {
+    fetchAllRegion();
+    // fetchAllStateName();
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -191,8 +242,12 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
       OrganizationType: "",
       departmentName: "",
       jurisdictionLevel: "",
+      region: "",
       stateName: "",
       districtName: "",
+      cityTownVillage: "",
+      pincode: "",
+      landmark: "",
       officeAddress: "",
       officialContactNumber: "",
       officialEmail: "",
@@ -276,8 +331,12 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
         OrganizationType: d.OrganizationType || "",
         departmentName: d.departmentName || "",
         jurisdictionLevel: d.jurisdictionLevel || "",
+        region: d.region || "",
         stateName: d.state || "",
         districtName: d.district || "",
+        cityTownVillage: d.cityTownVillage || "",
+        pincode: d.pincode || "",
+        landmark: d.landmark || "",
         officeAddress: d.officeAddress || "",
         officialContactNumber: d.officialContactNumber || "",
         officialEmail: d.officialEmailId || "",
@@ -467,17 +526,166 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
                   <span className="text-xs text-red-500">{formik.errors.jurisdictionLevel}</span>
                 ) : null}
               </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-slate-700">Region</label>
+                <ReactSelect
+                  className="w-full"
+                  isLoading={locationLoading}
+                  styles={selectStyles}
+                  options={
+                    Array.isArray(region)
+                      ? region.map((item) => ({
+                          label: item.name || item,
+                          value: item.name || item,
+                        }))
+                      : []
+                  }
+                  value={
+                    Array.isArray(region)
+                      ? region
+                          .map((item) => ({
+                            label: item.name || item,
+                            value: item.name || item,
+                          }))
+                          .find((option) => option.value === formik.values.region) || null
+                      : null
+                  }
+                  onChange={(selected) => {
+                    formik.setFieldValue("region", selected?.value || "");
+                    formik.setFieldValue("stateName", "");
+                    formik.setFieldValue("districtName", "");
+                    formik.setFieldValue("cityTownVillage", "");
+                    fetchAllStateName(selected?.value || "");
+                  }}
+                  onBlur={() => formik.setFieldTouched("region", true)}
+                  placeholder="Select Region"
+                  isClearable
+                />
+                {formik.touched.region && formik.errors.region && (
+                  <div className="text-red-500 text-xs mt-1">{formik.errors.region}</div>
+                )}
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-slate-700">State / UT</label>
+                <ReactSelect
+                  className="w-full"
+                  isLoading={locationLoading}
+                  styles={selectStyles}
+                  isDisabled={!formik.values.region}
+                  options={
+                    Array.isArray(allStateName)
+                      ? allStateName.map((state) => ({
+                          label: state.name || state.stateName,
+                          value: state.name || state.stateName,
+                          stateCode: state.code || state.stateCode,
+                        }))
+                      : []
+                  }
+                  value={
+                    allStateName
+                      ?.map((state) => ({
+                        label: state.name || state.stateName,
+                        value: state.name || state.stateName,
+                        stateCode: state.code || state.stateCode,
+                      }))
+                      .find((option) => option.value === formik.values.stateName) || null
+                  }
+                  onChange={(selected) => {
+                    formik.setFieldValue("stateName", selected?.value || "");
+                    setSelectedStateCode(selected?.stateCode || "");
+                    formik.setFieldValue("districtName", "");
+                    formik.setFieldValue("cityTownVillage", "");
+                    fetchDistrictList(selected?.value);
+                  }}
+                  onBlur={() => formik.setFieldTouched("stateName", true)}
+                  placeholder="Select State / UT"
+                  isClearable
+                />
+                {formik.touched.stateName && formik.errors.stateName && (
+                  <div className="text-red-500 text-xs mt-1">{formik.errors.stateName}</div>
+                )}
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-slate-700">District</label>
+                <ReactSelect
+                  className="w-full"
+                  isLoading={locationLoading}
+                  styles={selectStyles}
+                  isDisabled={!formik.values.stateName}
+                  options={
+                    Array.isArray(districtList)
+                      ? districtList.map((district) => ({
+                          label: district,
+                          value: district,
+                        }))
+                      : []
+                  }
+                  value={
+                    districtList
+                      ?.map((district) => ({
+                        label: district,
+                        value: district,
+                      }))
+                      .find((option) => option.value === formik.values.districtName) || null
+                  }
+                  onChange={(selected) => {
+                    formik.setFieldValue("districtName", selected?.value || "");
+                    formik.setFieldValue("cityTownVillage", "");
+                    fetchAllCities(selectedStateCode, selected?.value);
+                  }}
+                  onBlur={() => formik.setFieldTouched("districtName", true)}
+                  placeholder="Select District"
+                  isClearable
+                />
+                {formik.touched.districtName && formik.errors.districtName && (
+                  <div className="text-red-500 text-xs mt-1">{formik.errors.districtName}</div>
+                )}
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-slate-700">City/Town/Village</label>
+                <ReactSelect
+                  className="w-full"
+                  isLoading={locationLoading}
+                  styles={selectStyles}
+                  isDisabled={!formik.values.districtName}
+                  options={
+                    Array.isArray(cities)
+                      ? cities.map((city) => ({
+                          label: city,
+                          value: city,
+                        }))
+                      : []
+                  }
+                  value={
+                    cities
+                      ?.map((city) => ({
+                        label: city,
+                        value: city,
+                      }))
+                      .find((option) => option.value === formik.values.cityTownVillage) || null
+                  }
+                  onChange={(selected) => {
+                    formik.setFieldValue("cityTownVillage", selected?.value || "");
+                  }}
+                  onBlur={() => formik.setFieldTouched("cityTownVillage", true)}
+                  placeholder="Select City/Town/Village"
+                  isClearable
+                />
+                {formik.touched.cityTownVillage && formik.errors.cityTownVillage && (
+                  <div className="text-red-500 text-xs mt-1">{formik.errors.cityTownVillage}</div>
+                )}
+              </div>
               <InputField
-                label="State / UT Name"
-                name="stateName"
+                label="Pincode"
+                name="pincode"
                 formik={formik}
-                placeholder="Enter state or union territory"
+                placeholder="Enter Pincode"
               />
               <InputField
-                label="District Name"
-                name="districtName"
+                label="Landmark"
+                name="landmark"
                 formik={formik}
-                placeholder="Enter district name"
+                placeholder="Enter Landmark"
               />
               <InputField
                 label="Office Address"

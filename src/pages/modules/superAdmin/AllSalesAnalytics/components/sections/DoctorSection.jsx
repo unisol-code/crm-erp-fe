@@ -4,11 +4,6 @@ import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import * as LucideIcons from "lucide-react";
 import { TiEye } from "react-icons/ti"
-import { 
-  Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, 
-  RadialBar, RadialBarChart, ResponsiveContainer, Tooltip, 
-  XAxis, YAxis, Scatter, ScatterChart, ZAxis, Line, LineChart
-} from "recharts";
 import { ChartCard, KpiCard, AchBadge, EmptyState } from '../analytics';
 import { 
   Button, 

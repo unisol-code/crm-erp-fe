@@ -87,7 +87,7 @@ function SalesExecutiveHeader() {
             {employeeLoginData?.name || "Sales Executive"}
           </Typography>
           <Typography fontSize="12px" color="black">
-            Sales Executive
+             {employeeLoginData?.designation || "Sales Executive"}
           </Typography>
         </Box>
       </IconButton>
