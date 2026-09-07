@@ -10,6 +10,10 @@ import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner";
 import ReactSelect from "react-select";
 import EnviroEmpAddDBfpo from "./EnviroEmpAddDBfpo";
+import BiomedicalAndSolidWaste from "../../../../salesExecutive/database/organizationalDatabase/organizationTabs/BiomedicalAndSolidWaste";
+import Kitchen from "../organizationTabs/Kitchen";
+import Laundry from "../organizationTabs/Laundry";
+import BasicInfo from "../organizationTabs/BasicInfo";
 
 const checkboxOptions = {
   services: [
@@ -54,8 +58,60 @@ const orgTypeOptions = {
     { label: "SELF HELP GROUP", value: "SELF HELP GROUP" },
     { label: "GOVERNMENT", value: "GOVERNMENT" },
   ],
-  "Waste Management": [],
+  "Waste Management": [
+        { label: "PRIVATE", value: "PRIVATE" },
+    { label: "GOVERNMENT", value: "GOVERNMENT" },
+  ],
 };
+
+const wasteManagementTypeOptions = [
+  { label: "Solid Waste Management", value: "solid" },
+  { label: "Waste Water Management", value: "water" },
+  { label: "Biomedical Waste Management", value: "biomedical" },
+  { label: "Kitchen", value: "kitchen" },
+  { label: "Laundry", value: "laundry" },
+];
+
+const wasteTypeLabel = {
+  biomedical: "Biomedical Waste",
+  solid: "Solid Waste",
+  water: "Waste Water",
+  kitchen: "Kitchen",
+  laundry: "Laundry",
+};
+
+const tabComponentMap = {
+  biomedical: (formik, isView) => (
+    <BiomedicalAndSolidWaste formik={formik} type="biomedical" isReadOnly={isView} />
+  ),
+  solid: (formik, isView) => (
+    <BiomedicalAndSolidWaste formik={formik} type="solid" isReadOnly={isView} />
+  ),
+  water: (formik, isView) => (
+    <BiomedicalAndSolidWaste formik={formik} type="water" isReadOnly={isView} />
+  ),
+  kitchen: (formik, isView) => <Kitchen formik={formik} isReadOnly={isView} />,
+  laundry: (formik, isView) => <Laundry formik={formik} isReadOnly={isView} />,
+};
+
+const Tabs = ({ tabs, active, onChange }) => (
+  <div className="flex w-full gap-2 border-b border-slate-200 mb-6">
+    {tabs.map((t) => (
+      <button
+        key={t.id}
+        type="button"
+        onClick={() => onChange(t.id)}
+        className={`flex-1 px-4 py-2 text-sm font-medium rounded-t-lg transition text-center whitespace-nowrap ${
+          active === t.id
+            ? "bg-blue-600 text-white"
+            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+        }`}
+      >
+        {t.label}
+      </button>
+    ))}
+  </div>
+);
 
 const validationSchema = yup.object({
   sectionName: yup.string().required("Section Name is required"),
@@ -211,6 +267,8 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
   const [selectedSector, setSelectedSector] = useState(null);
   const [selectedOrgType, setSelectedOrgType] = useState(null);
   const [selectedStateCode, setSelectedStateCode] = useState("");
+  const [selectedWasteTypes, setSelectedWasteTypes] = useState([]);
+  const [activeTab, setActiveTab] = useState("basic");
 
   const {
     fetchAllRegion,
@@ -282,6 +340,25 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
         "Mobile App": false,
         "Written Application": false,
       },
+      wasteManagementType: [],
+      bioMedicalWaste: {},
+      solidWaste: {},
+      wasteWaterManagement: {},
+      kitchenWasteManagement: {},
+      laundry: {},
+      Basic: {
+        segment: "",
+        hospitalName: "",
+        typeOfHospital: "",
+        typeOfOrgOrHospital: "",
+        ifGovt: "",
+        region: "",
+        state: "",
+        district: "",
+        city: "",
+        emailAddress: "",
+        address: "",
+      },
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -320,12 +397,19 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
   useEffect(() => {
     if (selectedSector) {
       setSelectedOrgType(null);
+      setSelectedWasteTypes([]);
+      setActiveTab("basic");
+      formik.setFieldValue("wasteManagementType", []);
     }
   }, [selectedSector]);
 
   useEffect(() => {
     if (enviroAdminOrgDetails) {
       const d = enviroAdminOrgDetails;
+      const matchedSector = sectorOptions.find((s) => s.value === d.sectionName) || null;
+      const matchedOrgType = matchedSector
+        ? (orgTypeOptions[matchedSector.value] || []).find((o) => o.value === d.OrganizationType) || null
+        : null;
       formik.setValues({
         sectionName: d.sectionName || "",
         OrganizationType: d.OrganizationType || "",
@@ -358,7 +442,31 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
           Portal: false, Helpline: false, "Office Visit": false,
           "Mobile App": false, "Written Application": false,
         }),
+        wasteManagementType: Array.isArray(d.wasteManagementType) ? d.wasteManagementType : [],
+        bioMedicalWaste: d.bioMedicalWaste || {},
+        solidWaste: d.solidWaste || {},
+        wasteWaterManagement: d.wasteWaterManagement || {},
+        kitchenWasteManagement: d.kitchenWasteManagement || {},
+        laundry: d.laundry || {},
+        Basic: d.Basic || {
+          segment: "",
+          hospitalName: "",
+          typeOfHospital: "",
+          typeOfOrgOrHospital: "",
+          ifGovt: "",
+          region: "",
+          state: "",
+          district: "",
+          city: "",
+          emailAddress: "",
+          address: "",
+        },
       });
+      if (Array.isArray(d.wasteManagementType)) {
+        setSelectedWasteTypes(d.wasteManagementType);
+      }
+      if (matchedSector) setSelectedSector(matchedSector);
+      if (matchedOrgType) setSelectedOrgType(matchedOrgType);
     }
   }, [enviroAdminOrgDetails]);
 
@@ -411,8 +519,10 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
               onChange={(selected) => {
                 setSelectedSector(selected);
                 setSelectedOrgType(null);
+                setSelectedWasteTypes([]);
                 formik.setFieldValue("sectionName", selected?.value || "");
                 formik.setFieldValue("OrganizationType", "");
+                formik.setFieldValue("wasteManagementType", []);
               }}
               placeholder="Select Sector"
               isClearable
@@ -451,7 +561,10 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
               value={selectedOrgType}
               onChange={(selected) => {
                 setSelectedOrgType(selected);
+                setSelectedWasteTypes([]);
+                setActiveTab("basic");
                 formik.setFieldValue("OrganizationType", selected?.value || "");
+                formik.setFieldValue("wasteManagementType", []);
               }}
               placeholder="Select Organization Type"
               isClearable
@@ -486,7 +599,52 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
           </div>
         </div>
 
-        {selectedOrgType?.value === "GOVERNMENT" ? (
+        {selectedSector?.value === "Waste Management" && selectedOrgType ? (
+          <div className="mb-6">
+            <label className="block mb-2 text-sm font-medium text-slate-700">
+              Select Waste Management Type(s)
+            </label>
+            <ReactSelect
+              isMulti
+              options={wasteManagementTypeOptions}
+              value={wasteManagementTypeOptions.filter((opt) =>
+                selectedWasteTypes.includes(opt.value)
+              )}
+              onChange={(selected) => {
+                const values = selected ? selected.map((s) => s.value) : [];
+                setSelectedWasteTypes(values);
+                formik.setFieldValue("wasteManagementType", values);
+              }}
+              placeholder="Select waste management type(s)"
+              isClearable
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  minHeight: "50px",
+                  borderRadius: "0.5rem",
+                  borderColor: state.isFocused ? "#60A5FA" : "#556581",
+                  boxShadow: state.isFocused ? "0 0 0 2px #60A5FA" : "none",
+                }),
+                valueContainer: (base) => ({
+                  ...base,
+                  padding: "0 6px",
+                  fontSize: "1rem",
+                }),
+                input: (base) => ({
+                  ...base,
+                  margin: 0,
+                  padding: 0,
+                }),
+                placeholder: (base) => ({
+                  ...base,
+                  color: "#9CA3AF",
+                }),
+              }}
+            />
+          </div>
+        ) : null}
+
+        {selectedOrgType?.value === "GOVERNMENT" && selectedSector?.value === "Agriculture" ? (
           <form onSubmit={formik.handleSubmit} className="space-y-4">
             <fieldset disabled={isView} className="space-y-4">
           <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
@@ -815,9 +973,65 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
            </div>
          </div>
        </form>
-         ) : selectedOrgType?.value === "FPO" || selectedOrgType?.value === "FPC" || selectedOrgType?.value === "CMRC" || selectedOrgType?.value === "BACHAT GAT" || selectedOrgType?.value === "SELF HELP GROUP" ? (
+          ) : selectedOrgType?.value === "FPO" || selectedOrgType?.value === "FPC" || selectedOrgType?.value === "CMRC" || selectedOrgType?.value === "BACHAT GAT" || selectedOrgType?.value === "SELF HELP GROUP" ? (
            <EnviroEmpAddDBfpo OrganizationType={selectedOrgType?.value} mode={isEdit ? "edit" : isView ? "view" : "add"} />
-         ) : null}
+          ) : selectedSector?.value === "Waste Management" && selectedOrgType && selectedWasteTypes.length > 0 ? (
+            (() => {
+              const dynamicTabs = selectedWasteTypes.map((t) => ({
+                id: t,
+                label: wasteTypeLabel[t] || t,
+              }));
+              const tabIds = ["basic", ...dynamicTabs.map((t) => t.id)];
+              const safeActive = tabIds.includes(activeTab) ? activeTab : "basic";
+              const currentIndex = tabIds.indexOf(safeActive);
+              const isLastTab = currentIndex === tabIds.length - 1;
+              return (
+                <form onSubmit={formik.handleSubmit} className="space-y-4">
+                  <fieldset disabled={isView} className="space-y-4">
+                    <Tabs
+                      active={safeActive}
+                      onChange={setActiveTab}
+                      tabs={[{ id: "basic", label: "Basic Info" }, ...dynamicTabs]}
+                    />
+                    {safeActive === "basic" && (
+                      <BasicInfo formik={formik} isReadOnly={isView} />
+                    )}
+                    {dynamicTabs.map((t) =>
+                      safeActive === t.id ? (
+                        <div key={t.id}>{tabComponentMap[t.id]?.(formik, isView)}</div>
+                      ) : null
+                    )}
+                  </fieldset>
+                  <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button type="button" text={isView ? "Back" : "Cancel"} variant={3} onClick={() => navigate(-1)} />
+                      {!isView && !isLastTab && (
+                        <Button
+                          type="button"
+                          text="Save and Proceed"
+                          variant={1}
+                          loading={loading}
+                          onClick={() => {
+                            if (currentIndex >= 0 && currentIndex < tabIds.length - 1) {
+                              setActiveTab(tabIds[currentIndex + 1]);
+                            }
+                          }}
+                        />
+                      )}
+                      {!isView && isLastTab && (
+                        <Button
+                          type="submit"
+                          text={isEdit ? "Update" : "Save"}
+                          variant={1}
+                          loading={loading}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </form>
+              );
+            })()
+          ) : null}
       </div>
     </div>
   );
