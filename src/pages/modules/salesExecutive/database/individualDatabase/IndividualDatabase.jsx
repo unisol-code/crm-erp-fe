@@ -41,7 +41,7 @@ function IndividualDatabase() {
   const [limit, setLimit] = useState(10);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
    const [selectedSegment, setSelectedSegment] = useState(null);
-  const [typeOfProfile, setTypeOfProfile] = useState("Farmer");
+  const [typeOfProfile, setTypeOfProfile] = useState(null);
   const [openRequestModal, setOpenRequestModal] = useState(false);
   const [requestId, setRequestId] = useState(null);
   const { isEnviroSolution } = useCompany();
@@ -95,36 +95,14 @@ function IndividualDatabase() {
     // }
       if (isEnviroSolution) {
     enviroindiviualdropdown();
-    setTypeOfProfile("Farmer");
     setSelectedDoctor(null);
   } else {
-    // Segment list lao
     fetchSegment();
-
-    // Default segment
-    setSelectedSegment("Clinical");
-
-    // Clinical ke profiles lao
-    profileState("Clinical");
-
-    // Default doctor
-    setSelectedDoctor("Surgeon");
-
+    setSelectedSegment(null);
+    setSelectedDoctor(null);
     setTypeOfProfile(null);
   }
   }, [isEnviroSolution]);
-
-  /* ===================== DEFAULT DROPDOWN ===================== */
-  useEffect(() => {
-    if (
-      Array.isArray(dropdownOptions) &&
-      dropdownOptions.length > 0 &&
-      !selectedDoctor &&
-      !isEnviroSolution
-    ) {
-      setSelectedDoctor(dropdownOptions[0]);
-    }
-  }, [dropdownOptions, isEnviroSolution]);
 
   /* ===================== FETCH DATA ===================== */
   useEffect(() => {
@@ -136,7 +114,7 @@ function IndividualDatabase() {
       } else if (typeOfProfile === "FPO") {
         fetchEnviroFPOList(page, limit, typeOfProfile);
       }
-    } else if (selectedDoctor) {
+    } else if (!isEnviroSolution) {
       getAllindividual(page, limit, selectedDoctor);
     }
   }, [page, limit, selectedDoctor, isEnviroSolution, typeOfProfile]);
@@ -350,6 +328,7 @@ function IndividualDatabase() {
                     onChange={handleSegmentChange}
                     placeholder="Select Segment"
                     isLoading={dropLoading}
+                    isClearable
                   />
                 </div>
               )}
@@ -376,6 +355,7 @@ function IndividualDatabase() {
                       : "Select Doctor Type"
                   }
                   isLoading={dropLoading}
+                  isClearable
                 />
               </div>
             </div>

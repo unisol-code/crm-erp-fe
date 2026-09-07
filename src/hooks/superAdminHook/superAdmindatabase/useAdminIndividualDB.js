@@ -34,8 +34,10 @@ const useAdminIndividualDB = () => {
       const params = new URLSearchParams({
         page: page,
         limit: limit,
-        typeOfDoctorProfile: typeOfDoctorProfile,
       });
+      if (typeOfDoctorProfile) {
+        params.set("typeOfDoctorProfile", typeOfDoctorProfile);
+      }
       const res = await fetchData({
         method: "GET",
         url: `${conf.apiBaseUrl}doctor/get-allindividual?${params}`,
