@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { getIn } from "formik";
+import useDropdown from "../../../../../../../hooks/dropdown/useDropdown";
+import ReactSelect from "react-select";
+import _ from "lodash";
 
 // Reusable Section Heading
 const SectionHeading = ({ title }) => (
@@ -36,6 +39,72 @@ const FormField = ({ label, name, formik, type = "text", ...props }) => {
           }`}
       />
       {error && touched && (
+        <div className="text-red-500 text-xs mt-1">{error}</div>
+      )}
+    </div>
+  );
+};
+
+// Select Component for Dropdown
+const Select = ({
+  label,
+  name,
+  formik,
+  options,
+  loading,
+  placeholder,
+  onChange,
+}) => {
+  const value = getIn(formik.values, name, "");
+  const touched = getIn(formik.touched, name, false);
+  const error = getIn(formik.errors, name, "");
+
+  const selectOptions = options.map((opt) =>
+    typeof opt === "string" ? { label: opt, value: opt } : opt
+  );
+  const selectedOption =
+    selectOptions.find((opt) => opt.value === value) || null;
+
+  return (
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <ReactSelect
+        options={selectOptions}
+        isLoading={loading}
+        name={name}
+        value={selectedOption}
+        onChange={(selected) => {
+          formik.setFieldValue(name, selected?.value || "");
+          if (onChange) onChange(selected?.value || "");
+        }}
+        onBlur={() => formik.setFieldTouched(name, true)}
+        placeholder={`Select ${label}`}
+        classNamePrefix="react-select"
+        styles={{
+          control: (base, state) => ({
+            ...base,
+            minHeight: "50px",
+            borderRadius: "0.5rem",
+            borderColor: state.isFocused ? "#60A5FA" : "#556581",
+            boxShadow: state.isFocused ? "0 0 0 2px #60A5FA" : "none",
+          }),
+          valueContainer: (base) => ({
+            ...base,
+            padding: "0 6px",
+            fontSize: "1rem",
+          }),
+          input: (base) => ({
+            ...base,
+            margin: 0,
+            padding: 0,
+          }),
+          placeholder: (base) => ({
+            ...base,
+            color: "#9CA3AF",
+          }),
+        }}
+      />
+      {touched && error && (
         <div className="text-red-500 text-xs mt-1">{error}</div>
       )}
     </div>
@@ -87,6 +156,36 @@ const CheckboxGroup = ({ name, label, options, formik }) => {
 };
 
 const FarmerForm = ({ formik }) => {
+  const [selectedStateCode, setSelectedStateCode] = useState("");
+  const {
+    fetchAllRegion,
+    region,
+    allStateName,
+    fetchAllCities,
+    cities,
+    loading: locationLoading,
+    fetchAllStateName,
+    fetchDistrictList,
+    districtList,
+  } = useDropdown();
+
+  useEffect(() => {
+    fetchAllRegion();
+    fetchAllStateName();
+  }, []);
+
+  const handleSelectDistrict = (stateCode) => {
+    if (stateCode) {
+      fetchDistrictList(stateCode);
+    }
+  };
+
+  const handleSelectCity = (districtCode) => {
+    if (districtCode) {
+      fetchAllCities(selectedStateCode, districtCode);
+    }
+  };
+
   return (
     <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
       {/* General Details */}
@@ -132,29 +231,96 @@ const FarmerForm = ({ formik }) => {
 
       {/* Address Details */}
       <SectionHeading title="Address Details" />
-      <FormField
-        name="villageName"
-        label="Village Name"
+      <Select
+        label="Region"
+        name="region"
         formik={formik}
-        placeholder="Enter village name"
+        options={
+          Array.isArray(region)
+            ? region.map((reg) => ({
+                label: reg.name || reg,
+                value: reg.name || reg,
+              }))
+            : []
+        }
+        loading={locationLoading}
+        onChange={(val) => {
+          formik.setFieldValue("region", val || "");
+          formik.setFieldValue("state", "");
+          formik.setFieldValue("district", "");
+          formik.setFieldValue("taluka", "");
+          fetchAllStateName(val || "");
+        }}
       />
-      <FormField
-        name="state"
+      <Select
         label="State"
+        name="state"
         formik={formik}
-        placeholder="Enter state"
+        options={
+          Array.isArray(allStateName)
+            ? allStateName.map((state) => ({
+                label: state.name || state.stateName,
+                value: state.name || state.stateName,
+                stateCode: state.code || state.stateCode,
+              }))
+            : []
+        }
+        loading={locationLoading}
+        onChange={(val) => {
+          formik.setFieldValue("state", val || "");
+          const selectedState = allStateName?.find(
+            (s) => (s.name || s.stateName) === val
+          );
+          setSelectedStateCode(selectedState?.code || selectedState?.stateCode || "");
+          formik.setFieldValue("district", "");
+          formik.setFieldValue("taluka", "");
+          handleSelectDistrict(val || "");
+        }}
       />
-      <FormField
-        name="district"
+      <Select
         label="District"
+        name="district"
         formik={formik}
-        placeholder="Enter district"
+        options={
+          Array.isArray(districtList)
+            ? districtList.map((district) => ({
+                label: district,
+                value: district,
+              }))
+            : []
+        }
+        loading={locationLoading}
+        onChange={(val) => {
+          formik.setFieldValue("district", val || "");
+          formik.setFieldValue("taluka", "");
+          handleSelectCity(val || "");
+        }}
+      />
+      <Select
+        label="Village/City/Town"
+        name="villageName"
+        formik={formik}
+        options={
+          Array.isArray(cities)
+            ? cities.map((city) => ({
+                label: city,
+                value: city,
+              }))
+            : []
+        }
+        loading={locationLoading}
+      />
+            <FormField
+        name="taluka"
+        label="Taluka"
+        formik={formik}
+        placeholder="Enter taluka"
       />
       <FormField
         name="address"
-        label="Address"
+        label="Full Address"
         formik={formik}
-        placeholder="Enter address"
+        placeholder="Enter full address"
       />
       <FormField
         name="pinCode"
@@ -162,12 +328,6 @@ const FarmerForm = ({ formik }) => {
         formik={formik}
         type="text"
         placeholder="Enter 6-digit pincode"
-      />
-      <FormField
-        name="taluka"
-        label="Taluka"
-        formik={formik}
-        placeholder="Enter taluka"
       />
 
       {/* Lead Generation */}
@@ -276,7 +436,7 @@ const FarmerForm = ({ formik }) => {
         placeholder="Enter purpose"
       />
             <FormField
-        name="Comments"
+        name="commentBox"
         label="Comment Box"
         formik={formik}
         placeholder="Enter any comments"

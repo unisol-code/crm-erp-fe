@@ -155,7 +155,7 @@ const selectStyles = {
 };
 
 const validationSchema = yup.object({
-  fpoName: yup.string().trim().required("FPO Name is required"),
+  organizationName: yup.string().trim().required("Organization Name is required"),
   // registrationNumber: yup.string().trim().required("Registration Number is required"),
   // registrationAct: yup.string().trim().required("Registration Act is required"),
   // yearOfEstablishment: yup
@@ -220,7 +220,7 @@ const validationSchema = yup.object({
   // topPriorities: yup.string().trim().required("Top Priorities are required"),
 });
 
-const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO" }) => {
+const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const {
@@ -281,21 +281,56 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO" }) => {
 
   const formik = useFormik({
     initialValues: {
-      fpoName: "",
+      sectionName: "",
+      OrganizationType: orgType,
+      departmentName: "",
+      jurisdictionLevel: "",
+      region: "",
+      stateName: "",
+      districtName: "",
+      cityTownVillage: "",
+      pincode: "",
+      landmark: "",
+      officeAddress: "",
+      officialContactNumber: "",
+      officialEmailId: "",
+      departmentWebsite: "",
+      totalOfficers: "",
+      activeSchemes: "",
+      servicesOffered: {
+        Subsidy: false,
+        Insurance: false,
+        Training: false,
+        "Soil Testing": false,
+        "Seed Distribution": false,
+        Advisory: false,
+        "Credit Support": false,
+        Others: false,
+      },
+      servicesOthersText: "",
+      communicationChannels: {
+        Helpline: false,
+        WhatsApp: false,
+        SMS: false,
+        "Mobile App": false,
+        Email: false,
+        "In-person": false,
+        IVR: false,
+      },
+      farmersRegistered: "",
+      grievanceChannels: {
+        Portal: false,
+        Helpline: false,
+        "Office Visit": false,
+        "Mobile App": false,
+        "Written Application": false,
+      },
+      organizationName: "",
       registrationNumber: "",
       registrationAct: "",
       yearOfEstablishment: "",
       operationalArea: "",
-      officeAddress: "",
-      officialContactNumber: "",
-      officialEmailId: "",
       websiteAppUrl: "",
-      region: "",
-      cityTownVillage: "",
-      district: "",
-      state: "",
-      pincode: "",
-      landmark: "",
       numberOfBoardMembers: "",
       numberOfStaffMembers: "",
       totalActiveMembers: "",
@@ -314,12 +349,15 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO" }) => {
     onSubmit: async (values) => {
       try {
         console.log("FPO Form onSubmit called with values:", values);
+        let success = false;
         if (isEditMode) {
-          await updateEnviroFPO(id, values);
+          success = await updateEnviroFPO(id, values);
         } else {
-          await createEnviroFPO(values);
+          success = await createEnviroFPO(values);
         }
-        navigate(-1);
+        if (success) {
+          navigate(-1);
+        }
       } catch (err) {
         console.error("Submission failed:", err);
       }
@@ -327,24 +365,51 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO" }) => {
   });
 
   useEffect(() => {
+    formik.setFieldValue("sectionName", sectionName || "");
+    formik.setFieldValue("OrganizationType", orgType || "");
+  }, [sectionName, orgType]);
+
+  useEffect(() => {
     if (enviroFPODetails) {
       const d = enviroFPODetails;
       formik.setValues({
-        fpoName: d.fpoName || "",
+        sectionName: d.sectionName || formik.values.sectionName,
+        OrganizationType: d.OrganizationType || formik.values.OrganizationType,
+        departmentName: d.departmentName || "",
+        jurisdictionLevel: d.jurisdictionLevel || "",
+        region: d.region || "",
+        stateName: d.stateName || d.state || "",
+        districtName: d.districtName || d.district || "",
+        cityTownVillage: d.cityTownVillage || "",
+        pincode: d.pincode || "",
+        landmark: d.landmark || "",
+        officeAddress: d.officeAddress || "",
+        officialContactNumber: d.officialContactNumber || "",
+        officialEmailId: d.officialEmailId || "",
+        departmentWebsite: d.departmentWebsite || "",
+        totalOfficers: d.totalOfficers || "",
+        activeSchemes: d.activeSchemes || "",
+        servicesOffered: {
+          Subsidy: false, Insurance: false, Training: false,
+          "Soil Testing": false, "Seed Distribution": false,
+          Advisory: false, "Credit Support": false, Others: false,
+        },
+        servicesOthersText: "",
+        communicationChannels: {
+          Helpline: false, WhatsApp: false, SMS: false,
+          "Mobile App": false, Email: false, "In-person": false, IVR: false,
+        },
+        farmersRegistered: d.totalFarmersRegistered || "",
+        grievanceChannels: {
+          Portal: false, Helpline: false, "Office Visit": false,
+          "Mobile App": false, "Written Application": false,
+        },
+        organizationName: d.organizationName || "",
         registrationNumber: d.registrationNumber || "",
         registrationAct: d.registrationAct || "",
         yearOfEstablishment: d.yearOfEstablishment || "",
         operationalArea: d.operationalArea || "",
-        officeAddress: d.officeAddress || "",
-        officialContactNumber: d.officialContactNumber || "",
-        officialEmailId: d.officialEmailId || "",
         websiteAppUrl: d.websiteAppUrl || "",
-        region: d.region || "",
-        cityTownVillage: d.cityTownVillage || "",
-        district: d.district || "",
-        state: d.state || "",
-        pincode: d.pincode || "",
-        landmark: d.landmark || "",
         numberOfBoardMembers: d.numberOfBoardMembers || "",
         numberOfStaffMembers: d.numberOfStaffMembers || "",
         totalActiveMembers: d.totalActiveMembers || "",
@@ -414,14 +479,14 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO" }) => {
     <div className="">
 
 
-      <form onSubmit={formik.handleSubmit} className="space-y-4 bg-white ">
+      <form onSubmit={formik.handleSubmit} className="space-y-4 bg-white " onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); }}>
         <fieldset disabled={isView} className="space-y-4">
           <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
             <SectionHeading title={`SECTION 1: ${orgType} Profile`} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputField
-                label={`1. Orgnization Name`}
-                name="fpoName"
+                label={`1. Organization Name`}
+                name="organizationName"
                 formik={formik}
                 placeholder={`Enter Orgnization Name`}
               />

@@ -191,12 +191,17 @@ const SuperAdminOrganizationDatabase = () => {
                     <TableCell
                       sx={{ padding: 2, fontSize: "1rem", fontWeight: 600 }}
                     >
-                      Department Name
+                      Organization Name
                     </TableCell>
                     <TableCell
                       sx={{ padding: 2, fontSize: "1rem", fontWeight: 600 }}
                     >
-                      Jurisdiction Level
+                      Organization Type
+                    </TableCell>
+                      <TableCell
+                      sx={{ padding: 2, fontSize: "1rem", fontWeight: 600 }}
+                    >
+                      Section Name
                     </TableCell>
                     <TableCell
                       sx={{ padding: 2, fontSize: "1rem", fontWeight: 600 }}
@@ -211,7 +216,7 @@ const SuperAdminOrganizationDatabase = () => {
                     <TableCell
                       sx={{ padding: 2, fontSize: "1rem", fontWeight: 600 }}
                     >
-                      Email Address
+                      City/Town/Village
                     </TableCell>
                   </>
                 ) : (
@@ -260,10 +265,13 @@ const SuperAdminOrganizationDatabase = () => {
                           {data.addedBy || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.departmentName || "-"}
+                          {data.organizationName || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.jurisdictionLevel || "-"}
+                          {data.OrganizationType || "-"}
+                        </TableCell>
+                         <TableCell sx={{ padding: 2 }}>
+                          {data.sectionName || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
                           {data.district || "-"}
@@ -272,7 +280,7 @@ const SuperAdminOrganizationDatabase = () => {
                           {data.state || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.officialEmailId || "-"}
+                          {data.cityTownVillage || "-"}
                         </TableCell>
                       </>
                     ) : (

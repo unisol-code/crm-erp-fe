@@ -13,6 +13,7 @@ import useEnviroAdminIndDB from "../../../../../../hooks/superAdminHook/superAdm
 import FarmerForm from "./tabs/Farmers";
 import GovForm from "./tabs/Gov";
 import FPOForm from "./tabs/FPO";
+import { region } from "caniuse-lite";
 
 const validationSchema = Yup.object({
   firstName: Yup.string().when("typeOfProfile", {
@@ -23,31 +24,31 @@ const validationSchema = Yup.object({
     is: (val) => val === "Farmer" || val === "Government Officer",
     then: () => Yup.string().required("Required"),
   }),
-  email: Yup.string().when("typeOfProfile", {
-    is: (val) => val === "Farmer" || val === "Government Officer",
-    then: () => Yup.string().email("Invalid email format").required("Required"),
-  }),
-  contact: Yup.string().when("typeOfProfile", {
-    is: (val) => val === "Farmer" || val === "Government Officer",
-    then: () => Yup.string()
-      .matches(/^\d{10}$/, "Must be a valid 10-digit number")
-      .required("Required"),
-  }),
+  // email: Yup.string().when("typeOfProfile", {
+  //   is: (val) => val === "Farmer" || val === "Government Officer",
+  //   then: () => Yup.string().email("Invalid email format").required("Required"),
+  // }),
+  // contact: Yup.string().when("typeOfProfile", {
+  //   is: (val) => val === "Farmer" || val === "Government Officer",
+  //   then: () => Yup.string()
+  //     .matches(/^\d{10}$/, "Must be a valid 10-digit number")
+  //     .required("Required"),
+  // }),
   // FPO validations
-  fpoName: Yup.string().when("typeOfProfile", {
-    is: "FPO",
-    then: () => Yup.string().required("Required"),
-  }),
-  officialEmailId: Yup.string().when("typeOfProfile", {
-    is: "FPO",
-    then: () => Yup.string().email("Invalid email format").required("Required"),
-  }),
-  officialContactNumber: Yup.string().when("typeOfProfile", {
-    is: "FPO",
-    then: () => Yup.string()
-      .matches(/^\d{10}$/, "Must be a valid 10-digit number")
-      .required("Required"),
-  }),
+  // fpoName: Yup.string().when("typeOfProfile", {
+  //   is: "FPO",
+  //   then: () => Yup.string().required("Required"),
+  // }),
+  // officialEmailId: Yup.string().when("typeOfProfile", {
+  //   is: "FPO",
+  //   then: () => Yup.string().email("Invalid email format").required("Required"),
+  // }),
+  // officialContactNumber: Yup.string().when("typeOfProfile", {
+  //   is: "FPO",
+  //   then: () => Yup.string()
+  //     .matches(/^\d{10}$/, "Must be a valid 10-digit number")
+  //     .required("Required"),
+  // }),
 });
 
 const initialValues = {
@@ -60,9 +61,11 @@ const initialValues = {
   email: "",
   contact: "",
   villageName: "",
+  region: "",
   state: "",
   district: "",
   address: "",
+   officeAddress: "",
   pinCode: "",
   leadGeneratedThrough: [],
   lastMeeting: "",
@@ -82,7 +85,8 @@ const initialValues = {
   existingLoan: "",
   bankName: "",
   otherCustomerType: "",
-  nextfollowup: "",
+  nextfollowup: "", commentBox: "",
+  salesId: "",
 
   // Gov Officer fields
   birthday: "",
@@ -91,6 +95,11 @@ const initialValues = {
   goals: "",
   officeName: "",
   designation: "",
+    region: "",
+    state: "",
+    district: "",
+    pinCode: "",
+    officeAddress: "",
   districtBlockRegion: "",
   yearsOfExperience: "",
   frequentlyRequestedServices: [],
@@ -99,7 +108,8 @@ const initialValues = {
   effectiveLanguage: "",
   dataMaintainedDigitally: "",
   dataManagementTools: [],
-  dataManagementToolsOthers: "",
+  dataManagementToolsOthers: "",  
+  commentBox: "", salesId: "",
 
   // FPO fields
   fpoName: "",
@@ -123,7 +133,7 @@ const initialValues = {
   majorRevenueSourcesOthers: "",
   keyBuyerTypes: [],
   topChallenges: "",
-  topPriorities: "",
+  topPriorities: "", salesId: "",
 };
 
 // Section Heading
@@ -258,16 +268,16 @@ const EnviroIndivualform = () => {
       // Define schema fields for sanitization
       const farmerFields = [
         "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
-        "email", "contact", "villageName", "state", "district", "address",
+        "email", "contact", "villageName","region" ,"state", "district", "address",
         "pinCode", "leadGeneratedThrough", "lastMeeting", "nextMeeting",
         "status", "panNo", "sprayingType", "tentativeBuyingDate", "cropType",
-        "cropName", "sprayingDuration", "customerType", "department", "taluka",
-        "purposeForBuying", "paymentMode", "existingLoan", "bankName", "salesId", "edit"
+        "cropName", "sprayingDuration", "customerType", "department", "taluka", "commentBox",
+        "purposeForBuying", "paymentMode", "existingLoan", "bankName", "salesId", "edit" 
       ];
 
       const govOfficerFields = [
         "firstName", "lastName", "email", "contact", "birthday", "anniversary",
-        "hobbies", "goals", "officeName", "designation", "districtBlockRegion",
+        "hobbies", "goals", "officeName", "designation",  "region", "state", "district","city" ,"pinCode","districtBlockRegion", "commentBox",
         "yearsOfExperience", "frequentlyRequestedServices", "frequentlyRequestedServicesOthers",
         "schemeUnderstanding", "effectiveLanguage", "dataMaintainedDigitally",
         "dataManagementTools", "dataManagementToolsOthers",

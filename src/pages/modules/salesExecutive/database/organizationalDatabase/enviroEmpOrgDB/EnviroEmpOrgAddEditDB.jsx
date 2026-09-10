@@ -13,7 +13,7 @@ import EnviroEmpAddDBfpo from "./EnviroEmpAddDBfpo";
 import BiomedicalAndSolidWaste from "../../../../salesExecutive/database/organizationalDatabase/organizationTabs/BiomedicalAndSolidWaste";
 import Kitchen from "../organizationTabs/Kitchen";
 import Laundry from "../organizationTabs/Laundry";
-import BasicInfo from "../organizationTabs/BasicInfo";
+import WasteBasicInfo from "../organizationTabs/WasteBasicInfo";
 
 const checkboxOptions = {
   services: [
@@ -116,8 +116,8 @@ const Tabs = ({ tabs, active, onChange }) => (
 const validationSchema = yup.object({
   sectionName: yup.string().required("Section Name is required"),
   OrganizationType: yup.string().required("Organization Type is required"),
-  departmentName: yup.string().trim().required("Department Name is required"),
-  jurisdictionLevel: yup.string().required("Jurisdiction Level is required"),
+  // departmentName: yup.string().trim().required("Department Name is required"),
+  // jurisdictionLevel: yup.string().required("Jurisdiction Level is required"),
   region: yup.string().trim().required("Region is required"),
   stateName: yup.string().trim().required("State / UT Name is required"),
   // districtName: yup.string().trim().required("District Name is required"),
@@ -298,6 +298,7 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
     initialValues: {
       sectionName: "",
       OrganizationType: "",
+      organizationName: "",
       departmentName: "",
       jurisdictionLevel: "",
       region: "",
@@ -346,30 +347,33 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
       wasteWaterManagement: {},
       kitchenWasteManagement: {},
       laundry: {},
-      Basic: {
-        segment: "",
-        hospitalName: "",
-        typeOfHospital: "",
-        typeOfOrgOrHospital: "",
-        ifGovt: "",
-        region: "",
-        state: "",
-        district: "",
-        city: "",
-        emailAddress: "",
-        address: "",
-      },
+      // Basic: {
+      //   segment: "",
+      //   hospitalName: "",
+      //   typeOfHospital: "",
+      //   typeOfOrgOrHospital: "",
+      //   ifGovt: "",
+      //   region: "",
+      //   state: "",
+      //   district: "",
+      //   city: "",
+      //   emailAddress: "",
+      //   address: "",
+      // },
     },
     validationSchema,
     onSubmit: async (values) => {
       try {
         console.log("Enviro Org data submitting:", values);
+        let success = false;
         if (isEditMode) {
-          await updateEnviroAdminOrg(id, values);
+          success = await updateEnviroAdminOrg(id, values);
         } else {
-          await createEnviroAdminOrg(values);
+          success = await createEnviroAdminOrg(values);
         }
-        navigate(-1);
+        if (success) {
+          navigate(-1);
+        }
       } catch (err) {
         console.error("Submission failed:", err);
       }
@@ -644,8 +648,8 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
           </div>
         ) : null}
 
-        {selectedOrgType?.value === "GOVERNMENT" && selectedSector?.value === "Agriculture" ? (
-          <form onSubmit={formik.handleSubmit} className="space-y-4">
+          {selectedOrgType?.value === "GOVERNMENT" && selectedSector?.value === "Agriculture" ? (
+            <form onSubmit={formik.handleSubmit} className="space-y-4" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); }}>
             <fieldset disabled={isView} className="space-y-4">
           <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between gap-4">
@@ -973,8 +977,8 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
            </div>
          </div>
        </form>
-          ) : selectedOrgType?.value === "FPO" || selectedOrgType?.value === "FPC" || selectedOrgType?.value === "CMRC" || selectedOrgType?.value === "BACHAT GAT" || selectedOrgType?.value === "SELF HELP GROUP" ? (
-           <EnviroEmpAddDBfpo OrganizationType={selectedOrgType?.value} mode={isEdit ? "edit" : isView ? "view" : "add"} />
+           ) : selectedOrgType?.value === "FPO" || selectedOrgType?.value === "FPC" || selectedOrgType?.value === "CMRC" || selectedOrgType?.value === "BACHAT GAT" || selectedOrgType?.value === "SELF HELP GROUP" ? (
+            <EnviroEmpAddDBfpo orgType={selectedOrgType?.value} sectionName={selectedSector?.value} mode={isEdit ? "edit" : isView ? "view" : "add"} />
           ) : selectedSector?.value === "Waste Management" && selectedOrgType && selectedWasteTypes.length > 0 ? (
             (() => {
               const dynamicTabs = selectedWasteTypes.map((t) => ({
@@ -986,16 +990,16 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
               const currentIndex = tabIds.indexOf(safeActive);
               const isLastTab = currentIndex === tabIds.length - 1;
               return (
-                <form onSubmit={formik.handleSubmit} className="space-y-4">
+                <form onSubmit={formik.handleSubmit} className="space-y-4" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); }}>
                   <fieldset disabled={isView} className="space-y-4">
                     <Tabs
                       active={safeActive}
                       onChange={setActiveTab}
                       tabs={[{ id: "basic", label: "Basic Info" }, ...dynamicTabs]}
                     />
-                    {safeActive === "basic" && (
-                      <BasicInfo formik={formik} isReadOnly={isView} />
-                    )}
+                     {safeActive === "basic" && (
+                       <WasteBasicInfo formik={formik} isReadOnly={isView} />
+                     )}
                     {dynamicTabs.map((t) =>
                       safeActive === t.id ? (
                         <div key={t.id}>{tabComponentMap[t.id]?.(formik, isView)}</div>
