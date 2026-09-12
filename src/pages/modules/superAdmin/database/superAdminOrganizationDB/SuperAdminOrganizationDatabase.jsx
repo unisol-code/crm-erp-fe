@@ -30,6 +30,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import useCompany from "../../../../../hooks/common/useCompany";
 import useEnviroAdminOrgDB from "../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminOrgDB";
+import ReactSelect from "react-select";
 
 const SuperAdminOrganizationDatabase = () => {
   const {
@@ -39,9 +40,12 @@ const SuperAdminOrganizationDatabase = () => {
     deleteAdminOrganization
   } = useAdminOrganizationDB();
 
-  const { fetchEnviroAdminOrgList,
-    enviroAdminOrgList, deleteEnviroAdminOrg,
-    loading: enviroOrgListLoading, } = useEnviroAdminOrgDB();
+  const { 
+    fetchEnviroAdminOrgList,
+    enviroAdminOrgList, 
+    deleteEnviroAdminOrg,
+    loading: enviroOrgListLoading, 
+  } = useEnviroAdminOrgDB();
 
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -50,6 +54,11 @@ const SuperAdminOrganizationDatabase = () => {
   const [openRequestModal, setOpenRequestModal] = useState(false);
   const [requestId, setRequestId] = useState();
   const { isEnviroSolution } = useCompany();
+  
+  const [search, setSearch] = useState("");
+  const [sectionName, setSectionName] = useState("");
+  const [organizationType, setOrganizationType] = useState("");
+  
   const onPageChange = (data) => {
     setPage(data);
   };
@@ -60,13 +69,36 @@ const SuperAdminOrganizationDatabase = () => {
   };
   const currentTheme = themes.light;
 
+  const sectorOptions = [
+    { label: "Agriculture", value: "Agriculture" },
+    { label: "Waste Management", value: "Waste Management" },
+  ];
+
+  const orgTypeOptions = {
+    Agriculture: [
+      { label: "FPO", value: "FPO" },
+      { label: "FPC", value: "FPC" },
+      { label: "CMRC", value: "CMRC" },
+      { label: "BACHAT GAT", value: "BACHAT GAT" },
+      { label: "SELF HELP GROUP", value: "SELF HELP GROUP" },
+      { label: "GOVERNMENT", value: "GOVERNMENT" },
+    ],
+    "Waste Management": [
+      { label: "PRIVATE", value: "PRIVATE" },
+      { label: "GOVERNMENT", value: "GOVERNMENT" },
+    ],
+  };
+
+  const selectedSector = sectorOptions.find((s) => s.value === sectionName) || null;
+  const availableOrgTypes = selectedSector ? orgTypeOptions[selectedSector.value] || [] : [];
+
   useEffect(() => {
     if (isEnviroSolution) {
-      fetchEnviroAdminOrgList(page, limit);
+      fetchEnviroAdminOrgList(page, limit, search, sectionName, organizationType);
     } else {
       fetchAdminOrganizationalDB(page, limit);
     }
-  }, [page, limit, isEnviroSolution]);
+  }, [page, limit, isEnviroSolution, search, sectionName, organizationType]);
 
   console.log("Organizational DB:", adminOrganizationalDB);
   console.log("Enviro Org List:", enviroAdminOrgList);
@@ -102,46 +134,88 @@ const SuperAdminOrganizationDatabase = () => {
   };
 
   const handleExport = () => {
-    if (!adminOrganizationalDB?.data?.length) return;
+    if (isEnviroSolution) {
+      if (!enviroAdminOrgList?.data?.length) return;
+    } else {
+      if (!adminOrganizationalDB?.data?.length) return;
+    }
 
     const doc = new jsPDF();
 
     doc.setFontSize(18);
     doc.text("Super Admin - Organizational Database", 14, 20);
 
-    const columns = [
-      "Sales Person",
-      "Organization Name",
-      "Specialities",
-      // "District",
-      // "State",
-      // "Region",
-    ];
+    if (isEnviroSolution) {
+      const columns = [
+        "Added By",
+        "Organization Name",
+        "Organization Type",
+        "Section Name",
+        "District",
+        "State",
+        "City/Town/Village",
+      ];
 
-    const rows = adminOrganizationalDB.data.map((org) => [
-      org?.salesPersonName || "N/A",
-      org?.organizationName || "N/A",
-      org?.specialities?.map((s) => s.name).join(", ") || "-",
-      org?.district || "-",
-      org?.state || "-",
-      org?.region || "-",
-    ]);
+      const rows = enviroAdminOrgList.data.map((org) => [
+        org?.addedBy || "N/A",
+        org?.organizationName || "N/A",
+        org?.OrganizationType || "-",
+        org?.sectionName || "-",
+        org?.district || "-",
+        org?.state || "-",
+        org?.cityTownVillage || "-",
+      ]);
 
-    autoTable(doc, {
-      startY: 30,
-      head: [columns],
-      body: rows,
-      theme: "grid",
-      headStyles: {
-        fillColor: [
-          parseInt(theme.primaryColor.slice(1, 3), 16),
-          parseInt(theme.primaryColor.slice(3, 5), 16),
-          parseInt(theme.primaryColor.slice(5, 7), 16),
-        ],
-        textColor: [255, 255, 255],
-      },
-      styles: { fontSize: 9 },
-    });
+      autoTable(doc, {
+        startY: 30,
+        head: [columns],
+        body: rows,
+        theme: "grid",
+        headStyles: {
+          fillColor: [
+            parseInt(theme.primaryColor.slice(1, 3), 16),
+            parseInt(theme.primaryColor.slice(3, 5), 16),
+            parseInt(theme.primaryColor.slice(5, 7), 16),
+          ],
+          textColor: [255, 255, 255],
+        },
+        styles: { fontSize: 9 },
+      });
+    } else {
+      const columns = [
+        "Sales Person",
+        "Organization Name",
+        "Specialities",
+        "District",
+        "State",
+        "Region",
+      ];
+
+      const rows = adminOrganizationalDB.data.map((org) => [
+        org?.salesPersonName || "N/A",
+        org?.organizationName || "N/A",
+        org?.specialities?.map((s) => s.name).join(", ") || "-",
+        org?.district || "-",
+        org?.state || "-",
+        org?.region || "-",
+      ]);
+
+      autoTable(doc, {
+        startY: 30,
+        head: [columns],
+        body: rows,
+        theme: "grid",
+        headStyles: {
+          fillColor: [
+            parseInt(theme.primaryColor.slice(1, 3), 16),
+            parseInt(theme.primaryColor.slice(3, 5), 16),
+            parseInt(theme.primaryColor.slice(5, 7), 16),
+          ],
+          textColor: [255, 255, 255],
+        },
+        styles: { fontSize: 9 },
+      });
+    }
 
     doc.save("super-admin-organizational-database.pdf");
   };
@@ -171,6 +245,80 @@ const SuperAdminOrganizationDatabase = () => {
           addButtonText="Add New Organization"
           onExportClick={handleExport}
         />
+
+        {isEnviroSolution && (
+          <Box sx={{ display: "flex", gap: 2, mb: 2, flexWrap: "wrap" }}>
+            <Box sx={{ flex: "1 1 250px", minWidth: "200px" }}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <input
+                type="text"
+                placeholder="Search organizations..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </Box>
+            <Box sx={{ flex: "1 1 200px", minWidth: "180px" }}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Section Name</label>
+              <ReactSelect
+                options={sectorOptions}
+                value={sectorOptions.find((s) => s.value === sectionName) || null}
+                onChange={(selected) => {
+                  setSectionName(selected?.value || "");
+                  setOrganizationType("");
+                  setPage(1);
+                }}
+                placeholder="Select Section"
+                isClearable
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    minHeight: "42px",
+                    borderRadius: "0.375rem",
+                    borderColor: state.isFocused ? theme.primaryColor : "#D1D5DB",
+                  }),
+                  valueContainer: (base) => ({
+                    ...base,
+                    padding: "0 8px",
+                    fontSize: "0.95rem",
+                  }),
+                  placeholder: (base) => ({ ...base, color: "#9CA3AF" }),
+                }}
+              />
+            </Box>
+            <Box sx={{ flex: "1 1 200px", minWidth: "180px" }}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Organization Type</label>
+              <ReactSelect
+                options={availableOrgTypes}
+                value={availableOrgTypes.find((o) => o.value === organizationType) || null}
+                onChange={(selected) => {
+                  setOrganizationType(selected?.value || "");
+                  setPage(1);
+                }}
+                placeholder="Select Organization Type"
+                isClearable
+                isDisabled={!selectedSector}
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    minHeight: "42px",
+                    borderRadius: "0.375rem",
+                    borderColor: state.isFocused ? theme.primaryColor : "#D1D5DB",
+                  }),
+                  valueContainer: (base) => ({
+                    ...base,
+                    padding: "0 8px",
+                    fontSize: "0.95rem",
+                  }),
+                  placeholder: (base) => ({ ...base, color: "#9CA3AF" }),
+                }}
+              />
+            </Box>
+          </Box>
+        )}
 
         <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
           <Table>

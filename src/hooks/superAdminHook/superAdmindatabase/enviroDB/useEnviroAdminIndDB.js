@@ -21,18 +21,23 @@ const useEnviroAdminIndDB = () => {
     const [enviroFPODetails, setEnviroFPODetails] = useRecoilState(enviroFPODetailsAtom);
     const [salesPersonList, setSalesPersonList] = useRecoilState(salesPersonListAtom);
 
-    const fetchEnviroAdminIndividualList = async (page, limit, typeOfProfile) => {
+    const fetchEnviroAdminIndividualList = async (page, limit, typeOfProfile, sectionName) => {
         setLoading(true);
         setError("");
         try {
             const params = new URLSearchParams({
                 page: page,
                 limit: limit,
-                typeOfProfile: typeOfProfile
             });
+            if (typeOfProfile) {
+                params.append("typeOfProfile", typeOfProfile);
+            }
+            if (sectionName) {
+                params.append("sectionName", sectionName);
+            }
             const res = await fetchData({
                 method: "GET",
-                url: `${conf.apiBaseUrl}doctor/Envro-get-all-doctors?${params}`,
+                url: `${conf.apiBaseUrl}enviro-individual/getEnviroIndiviual?${params}`,
             });
             if (res) {
                 setEnviroAdminIndividualList(res);

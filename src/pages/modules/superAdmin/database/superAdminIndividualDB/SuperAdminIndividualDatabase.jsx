@@ -36,8 +36,9 @@ const SuperAdminIndividualDatabase = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [selectedDoctor, setSelectedDoctor] = useState("Surgeon");
- const [selectedSegment, setSelectedSegment] = useState(null);
-  const [typeOfProfile, setTypeOfProfile] = useState("Farmer");
+  const [selectedSegment, setSelectedSegment] = useState(null);
+  const [typeOfProfile, setTypeOfProfile] = useState(null);
+  const [selectedSection, setSelectedSection] = useState("");
   const { isEnviroSolution } = useCompany();
 
   /* ================= DROPDOWN ================= */
@@ -66,12 +67,6 @@ const SuperAdminIndividualDatabase = () => {
     enviroAdminIndividualList,
     fetchEnviroAdminIndividualList,
     loading: enviroIndividualLoading,
-    fetchEnviroGovtOfficerList,
-    fetchEnviroFPOList,
-    loading: enviroGovtOfficerLoading,
-    loading: enviroFPOLoading,
-    enviroGovtOfficerList,
-    enviroFPOList,
     deleteEnviroAdminIndividual,
     deleteEnviroGovtOfficer,
     deleteEnviroFPO,
@@ -79,20 +74,14 @@ const SuperAdminIndividualDatabase = () => {
 
   /* ================= FETCH DATA ================= */
   useEffect(() => {
-    if (isEnviroSolution && typeOfProfile) {
-      if (typeOfProfile == "Farmer") {
-        fetchEnviroAdminIndividualList(page, limit, typeOfProfile);
-      } else if (typeOfProfile == "Government Officer") {
-        fetchEnviroGovtOfficerList(page, limit, typeOfProfile);
-      } else if (typeOfProfile == "FPO") {
-        fetchEnviroFPOList(page, limit, typeOfProfile);
-      }
+    if (isEnviroSolution) {
+      fetchEnviroAdminIndividualList(page, limit, typeOfProfile, selectedSection);
     }
 
     if (!isEnviroSolution && selectedDoctor) {
       fetchAdminAllIndividual(page, limit, selectedDoctor);
     }
-  }, [page, limit, selectedDoctor, typeOfProfile, isEnviroSolution]);
+  }, [page, limit, selectedDoctor, typeOfProfile, isEnviroSolution, selectedSection]);
 
   console.log("enviroAdminIndividualList", enviroAdminIndividualList)
   /* ================= DROPDOWN INIT ================= */
@@ -109,26 +98,20 @@ const SuperAdminIndividualDatabase = () => {
   // }, [isEnviroSolution]);
 
   useEffect(() => {
-  if (isEnviroSolution) {
-    enviroindiviualdropdown();
-    setTypeOfProfile("Farmer");
-    setSelectedDoctor(null);
-  } else {
-    // Segment list lao
-    fetchSegment();
-
-    // Default segment
-    setSelectedSegment("Clinical");
-
-    // Clinical ke profiles lao
-    profileState("Clinical");
-
-    // Default doctor
-    setSelectedDoctor("Surgeon");
-
-    setTypeOfProfile(null);
-  }
-}, [isEnviroSolution]);
+    if (isEnviroSolution) {
+      fetchSegment();
+      enviroindiviualdropdown();
+      setTypeOfProfile(null);
+      setSelectedSection("");
+      setSelectedDoctor(null);
+    } else {
+      fetchSegment();
+      setSelectedSegment("Clinical");
+      profileState("Clinical");
+      setSelectedDoctor("Surgeon");
+      setTypeOfProfile(null);
+    }
+  }, [isEnviroSolution]);
 
   /* ================= PAGINATION ================= */
   const onPageChange = (data) => {
@@ -151,20 +134,26 @@ const SuperAdminIndividualDatabase = () => {
 
   const handleDelete = async (data) => {
     if (isEnviroSolution) {
-      if (typeOfProfile == "Farmer") {
-        await deleteEnviroAdminIndividual(data?._id);
-        fetchEnviroAdminIndividualList(page, limit, typeOfProfile);
-      } else if (typeOfProfile == "Government Officer") {
-        await deleteEnviroGovtOfficer(data?._id);
-        fetchEnviroGovtOfficerList(page, limit, typeOfProfile);
-      } else if (typeOfProfile == "FPO") {
-        await deleteEnviroFPO(data?._id);
-        fetchEnviroFPOList(page, limit, typeOfProfile);
+      if (data.typeOfProfile === "Farmer") {
+        await deleteEnviroAdminIndividual(data._id);
+      } else if (data.typeOfProfile === "Government Officer") {
+        await deleteEnviroGovtOfficer(data._id);
+      } else if (data.typeOfProfile === "FPO") {
+        await deleteEnviroFPO(data._id);
       }
+      fetchEnviroAdminIndividualList(page, limit, typeOfProfile, selectedSection);
     } else {
       await deleteAdminIndividual(data?._id);
       setPage(1);
     }
+  };
+
+  const handleSectionChange = (option) => {
+    const val = option?.value || "";
+    setSelectedSection(val);
+    setTypeOfProfile(null);
+    enviroindiviualdropdown(val);
+    setPage(1);
   };
 
   const handleChange = (option) => {
@@ -193,8 +182,6 @@ const SuperAdminIndividualDatabase = () => {
 };
 
   console.log("enviroAdminIndividualList", enviroAdminIndividualList)
-  console.log("enviroGovtOfficerList", enviroGovtOfficerList)
-  console.log("enviroFPOList", enviroFPOList)
 
   const segmentOptions = Array.isArray(segment)
   ? segment.map((item) => ({
@@ -210,17 +197,14 @@ const SuperAdminIndividualDatabase = () => {
     : [];
 
   /* ================= DATA SWITCH ================= */
-  const tableLoading = isEnviroSolution
-    ? typeOfProfile == "Farmer" ? enviroIndividualLoading : typeOfProfile == "Government Officer" ? enviroGovtOfficerLoading : enviroFPOLoading
-    : loading;
+  const tableLoading = isEnviroSolution ? enviroIndividualLoading : loading;
 
   const tableData = isEnviroSolution
-    ? typeOfProfile == "Farmer" ? enviroAdminIndividualList?.data || [] : typeOfProfile == "Government Officer" ? enviroGovtOfficerList?.data || [] : enviroFPOList?.data || []
+    ? enviroAdminIndividualList?.data || []
     : getAdminAllIndividualList?.data || [];
 
-
   const paginationData = isEnviroSolution
-    ? typeOfProfile == "Farmer" ? enviroAdminIndividualList : typeOfProfile == "Government Officer" ? enviroGovtOfficerList : enviroFPOList
+    ? enviroAdminIndividualList
     : getAdminAllIndividualList;
 
   const handleExport = () => {
@@ -236,40 +220,16 @@ const SuperAdminIndividualDatabase = () => {
     let rows = [];
 
     if (isEnviroSolution) {
-      // 🟢 ENVIRO EXPORT
-      if (typeOfProfile === "Farmer") {
-        columns = ["Added By", "Person Name", "Segment", "Profile Type", "Lead Owner", "Product Name", "City"];
-        rows = tableData.map((item) => [
-          item?.addedBy || "-",
-          `${item?.firstName || ""} ${item?.lastName || ""}`,
-          item?.segment || "-",
-          item?.typeOfProfile || "-",
-          item?.leadOwner || "-",
-          item?.productName || "-",
-          item?.villageName || "-",
-        ]);
-      } else if (typeOfProfile === "Government Officer") {
-        columns = ["Added By", "Person Name", "Office Name", "Designation", "Coverage Area", "Segment", "Profile Type"];
-        rows = tableData.map((item) => [
-          item?.addedBy || "-",
-          `${item?.firstName || ""} ${item?.lastName || ""}`,
-          item?.officeName || "-",
-          item?.designation || "-",
-          item?.districtBlockRegion || "-",
-          item?.segment || "-",
-          item?.typeOfProfile || "-",
-        ]);
-      } else if (typeOfProfile === "FPO") {
-        columns = ["Added By", "FPO Name", "Registration No", "Operational Area", "Segment", "Profile Type"];
-        rows = tableData.map((item) => [
-          item?.addedBy || "-",
-          item?.fpoName || "-",
-          item?.registrationNumber || "-",
-          item?.operationalArea || "-",
-          item?.segment || "-",
-          item?.typeOfProfile || "-",
-        ]);
-      }
+      columns = ["Added By", "Person Name", "Segment", "Profile Type", "State", "City", "Sales Person"];
+      rows = tableData.map((item) => [
+        item?.addedBy || "-",
+        item?.name || "-",
+        item?.segment || "-",
+        item?.typeOfProfile || "-",
+        item?.state || "-",
+        item?.city || "-",
+        item?.salesPersonName || "-",
+      ]);
     } else {
       // 🟦 NORMAL EXPORT
       columns = [
@@ -378,7 +338,29 @@ const SuperAdminIndividualDatabase = () => {
       {/* LEFT: Dropdowns */}
       <div className="flex flex-col sm:flex-row gap-3">
 
-        {/* Segment Dropdown */}
+        {/* Section Dropdown (Enviro only) */}
+        {isEnviroSolution && (
+          <div className="w-full sm:w-56">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Section
+            </label>
+
+            <ReactSelect
+              options={segmentOptions}
+              value={
+                segmentOptions.find(
+                  (opt) => opt.value === selectedSection
+                ) || null
+              }
+              onChange={handleSectionChange}
+              placeholder="Select Section"
+              isLoading={dropLoading}
+              isClearable
+            />
+          </div>
+        )}
+
+        {/* Segment Dropdown (non-Enviro only) */}
         {!isEnviroSolution && (
           <div className="w-full sm:w-56">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -456,52 +438,30 @@ const SuperAdminIndividualDatabase = () => {
           <TableHead>
             <TableRow sx={{ backgroundColor: theme.secondaryColor }}>
               {(isEnviroSolution
-                ? typeOfProfile === "Farmer"
-                  ? [
+                ? [
                     "Sr. No",
-                    "Added By",
+                    // "Added By",
                     "Person Name",
                     "Segment",
-                    "Profile type",
-                    "Lead Owner",
-                    "Product Name",
+                    "Profile Type",
+                    "State",
+                    "City",
+                    "Sales Person",
+                    "Action",
+                  ]
+                : [
+                    "Sr. No",
+                    "Sales Person Name",
+                    selectedDoctor === "Non Clinical"
+                      ? "Department"
+                      : "Hospital Name",
+                    "Designation",
+                    "Person Name",
+                    selectedDoctor !== "Non Clinical" && "Speciality",
+                    "Profile of Customer",
                     "City",
                     "Action",
                   ]
-                  : typeOfProfile === "Government Officer"
-                    ? [
-                      "Sr. No",
-                      "Added By",
-                      "Person Name",
-                      "Office Name",
-                      "Designation",
-                      "Segment",
-                      "Profile type",
-                      "Action",
-                    ]
-                    : [
-                      "Sr. No",
-                      "Added By",
-                      "FPO Name",
-                      "Registration No",
-                      "Operational Area",
-                      "Segment",
-                      "Profile type",
-                      "Action",
-                    ]
-                : [
-                  "Sr. No",
-                  "Sales Person Name",
-                  selectedDoctor === "Non Clinical"
-                    ? "Department"
-                    : "Hospital Name",
-                  "Designation",
-                  "Person Name",
-                  selectedDoctor !== "Non Clinical" && "Speciality",
-                  "Profile of Customer",
-                  "City",
-                  "Action",
-                ]
               )
                 .filter(Boolean)
                 .map((head, i) => (
@@ -534,37 +494,13 @@ const SuperAdminIndividualDatabase = () => {
 
                   {isEnviroSolution ? (
                     <>
-                      {typeOfProfile === "Farmer" && (
-                        <>
-                          <TableCell>{data?.addedBy || "-"}</TableCell>
-                          <TableCell>{`${data?.firstName || ""} ${data?.lastName || ""}`}</TableCell>
-                          <TableCell>{data?.segment || "-"}</TableCell>
-                          <TableCell>{data?.typeOfProfile || "-"}</TableCell>
-                          <TableCell>{data?.leadOwner || "-"}</TableCell>
-                          <TableCell>{data?.productName || "-"}</TableCell>
-                          <TableCell>{data?.villageName || "-"}</TableCell>
-                        </>
-                      )}
-                      {typeOfProfile === "Government Officer" && (
-                        <>
-                          <TableCell>{data?.addedBy || "-"}</TableCell>
-                          <TableCell>{`${data?.firstName || ""} ${data?.lastName || ""}`}</TableCell>
-                          <TableCell>{data?.officeName || "-"}</TableCell>
-                          <TableCell>{data?.designation || "-"}</TableCell>
-                          <TableCell>{data?.segment || "-"}</TableCell>
-                          <TableCell>{data?.typeOfProfile || "-"}</TableCell>
-                        </>
-                      )}
-                      {typeOfProfile === "FPO" && (
-                        <>
-                          <TableCell>{data?.addedBy || "-"}</TableCell>
-                          <TableCell>{data?.fpoName || "-"}</TableCell>
-                          <TableCell>{data?.registrationNumber || "-"}</TableCell>
-                          <TableCell>{data?.operationalArea || "-"}</TableCell>
-                          <TableCell>{data?.segment || "-"}</TableCell>
-                          <TableCell>{data?.typeOfProfile || "-"}</TableCell>
-                        </>
-                      )}
+                      {/* <TableCell>{data?.addedBy || "-"}</TableCell> */}
+                      <TableCell>{data?.name || "-"}</TableCell>
+                      <TableCell>{data?.segment || "-"}</TableCell>
+                      <TableCell>{data?.typeOfProfile || "-"}</TableCell>
+                      <TableCell>{data?.state || "-"}</TableCell>
+                      <TableCell>{data?.city || "-"}</TableCell>
+                      <TableCell>{data?.salesPersonName || "-"}</TableCell>
                     </>
                   ) : (
                     <>
@@ -615,9 +551,9 @@ const SuperAdminIndividualDatabase = () => {
         {/* ✅ PAGINATION KEPT */}
         {!tableLoading && tableData.length > 0 && (
           <Pagination
-            currentPage={paginationData?.pagination?.currentPage}
-            totalItems={paginationData?.pagination?.totalCount}
-            totalPages={paginationData?.pagination?.totalPages}
+            currentPage={isEnviroSolution ? paginationData?.currentPage : paginationData?.pagination?.currentPage}
+            totalItems={isEnviroSolution ? paginationData?.totalItems : paginationData?.pagination?.totalCount}
+            totalPages={isEnviroSolution ? paginationData?.totalPages : paginationData?.pagination?.totalPages}
             itemsPerPage={limit}
             onPageChange={onPageChange}
             onItemsPerPageChange={onItemsPerPageChange}

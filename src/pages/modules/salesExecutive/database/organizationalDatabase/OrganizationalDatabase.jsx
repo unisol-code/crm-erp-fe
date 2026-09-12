@@ -31,6 +31,7 @@ import autoTable from "jspdf-autotable";
 import useCompany from "../../../../../hooks/common/useCompany";
 import useEnviroAdminOrgDB from "../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminOrgDB";
 import useAdminOrganizationDB from "../../../../../hooks/superAdminHook/superAdmindatabase/useAdminOrganizationDB";
+import ReactSelect from "react-select";
 
 function OrganizationalDatabase() {
   const {
@@ -49,7 +50,34 @@ function OrganizationalDatabase() {
   const [requestId, setRequestId] = useState();
   const { isEnviroSolution } = useCompany();
 
+  const [search, setSearch] = useState("");
+  const [sectionName, setSectionName] = useState("");
+  const [organizationType, setOrganizationType] = useState("");
+
   const { editRequestSender } = useDatabase();
+
+  const sectorOptions = [
+    { label: "Agriculture", value: "Agriculture" },
+    { label: "Waste Management", value: "Waste Management" },
+  ];
+
+  const orgTypeOptions = {
+    Agriculture: [
+      { label: "FPO", value: "FPO" },
+      { label: "FPC", value: "FPC" },
+      { label: "CMRC", value: "CMRC" },
+      { label: "BACHAT GAT", value: "BACHAT GAT" },
+      { label: "SELF HELP GROUP", value: "SELF HELP GROUP" },
+      { label: "GOVERNMENT", value: "GOVERNMENT" },
+    ],
+    "Waste Management": [
+      { label: "PRIVATE", value: "PRIVATE" },
+      { label: "GOVERNMENT", value: "GOVERNMENT" },
+    ],
+  };
+
+  const selectedSector = sectorOptions.find((s) => s.value === sectionName) || null;
+  const availableOrgTypes = selectedSector ? orgTypeOptions[selectedSector.value] || [] : [];
 
   const onPageChange = (data) => {
     console.log("data", data);
@@ -62,11 +90,11 @@ function OrganizationalDatabase() {
 
   useEffect(() => {
     if (isEnviroSolution) {
-      fetchEnviroAdminOrgList(page, limit);
+      fetchEnviroAdminOrgList(page, limit, search, sectionName, organizationType);
     } else {
       fetchAdminOrganizationalDB(page, limit);
     }
-  }, [page, limit, isEnviroSolution]);
+  }, [page, limit, isEnviroSolution, search, sectionName, organizationType]);
 
   const tableData = isEnviroSolution ? enviroAdminOrgList?.data : adminOrganizationalDB?.data;
   const tableLoading = isEnviroSolution ? enviroOrgListLoading : loading;
@@ -101,8 +129,10 @@ function OrganizationalDatabase() {
   };
 
   const handleExport = () => {
-    if (!adminOrganizationalDB?.data || adminOrganizationalDB.data.length === 0) {
-      return;
+    if (isEnviroSolution) {
+      if (!enviroAdminOrgList?.data || enviroAdminOrgList.data.length === 0) return;
+    } else {
+      if (!adminOrganizationalDB?.data || adminOrganizationalDB.data.length === 0) return;
     }
     const doc = new jsPDF();
 
@@ -110,42 +140,78 @@ function OrganizationalDatabase() {
     doc.setFontSize(18);
     doc.text("Organizational Database", 14, 20);
 
-    // Table columns
-    const columns = [
-      "Organization Name",
-      "Type",
-      "Speciality",
-      "Email",
-      "Address",
-    ];
+    if (isEnviroSolution) {
+      const columns = [
+        "Organization Name",
+        "Organization Type",
+        "Section Name",
+        "District",
+        "State",
+        "City/Town/Village",
+      ];
 
-    // Table rows
-    const rows = adminOrganizationalDB?.data.map((org) => [
-      org.organizationName || "N/A",
-      org.typeOfOrgOrHospital || "N/A",
-      org.speciality || "-",
-      org.emailAddress || "N/A",
-      org.address || "N/A",
-    ]);
+      const rows = enviroAdminOrgList.data.map((org) => [
+        org.organizationName || "N/A",
+        org.OrganizationType || "-",
+        org.sectionName || "-",
+        org.district || "-",
+        org.state || "-",
+        org.cityTownVillage || "-",
+      ]);
 
-    // Generate table
-    autoTable(doc, {
-      startY: 30,
-      head: [columns],
-      body: rows,
-      theme: "grid",
-      headStyles: {
-        fillColor: [
-          parseInt(theme.primaryColor.slice(1, 3), 16),
-          parseInt(theme.primaryColor.slice(3, 5), 16),
-          parseInt(theme.primaryColor.slice(5, 7), 16),
-        ],
-        textColor: [255, 255, 255],
-      },
-      styles: {
-        fontSize: 10,
-      },
-    });
+      autoTable(doc, {
+        startY: 30,
+        head: [columns],
+        body: rows,
+        theme: "grid",
+        headStyles: {
+          fillColor: [
+            parseInt(theme.primaryColor.slice(1, 3), 16),
+            parseInt(theme.primaryColor.slice(3, 5), 16),
+            parseInt(theme.primaryColor.slice(5, 7), 16),
+          ],
+          textColor: [255, 255, 255],
+        },
+        styles: { fontSize: 9 },
+      });
+    } else {
+      // Table columns
+      const columns = [
+        "Organization Name",
+        "Type",
+        "Speciality",
+        "Email",
+        "Address",
+      ];
+
+      // Table rows
+      const rows = adminOrganizationalDB?.data.map((org) => [
+        org.organizationName || "N/A",
+        org.typeOfOrgOrHospital || "N/A",
+        org.speciality || "-",
+        org.emailAddress || "N/A",
+        org.address || "N/A",
+      ]);
+
+      // Generate table
+      autoTable(doc, {
+        startY: 30,
+        head: [columns],
+        body: rows,
+        theme: "grid",
+        headStyles: {
+          fillColor: [
+            parseInt(theme.primaryColor.slice(1, 3), 16),
+            parseInt(theme.primaryColor.slice(3, 5), 16),
+            parseInt(theme.primaryColor.slice(5, 7), 16),
+          ],
+          textColor: [255, 255, 255],
+        },
+        styles: {
+          fontSize: 10,
+        },
+      });
+    }
 
     // Save file
     doc.save("organizational-database.pdf");
@@ -178,6 +244,80 @@ function OrganizationalDatabase() {
           onExportClick={handleExport}
         />
 
+        {isEnviroSolution && (
+          <Box sx={{ display: "flex", gap: 2, mb: 2, flexWrap: "wrap" }}>
+            <Box sx={{ flex: "1 1 250px", minWidth: "200px" }}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <input
+                type="text"
+                placeholder="Search organizations..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </Box>
+            <Box sx={{ flex: "1 1 200px", minWidth: "180px" }}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Section Name</label>
+              <ReactSelect
+                options={sectorOptions}
+                value={sectorOptions.find((s) => s.value === sectionName) || null}
+                onChange={(selected) => {
+                  setSectionName(selected?.value || "");
+                  setOrganizationType("");
+                  setPage(1);
+                }}
+                placeholder="Select Section"
+                isClearable
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    minHeight: "42px",
+                    borderRadius: "0.375rem",
+                    borderColor: state.isFocused ? theme.primaryColor : "#D1D5DB",
+                  }),
+                  valueContainer: (base) => ({
+                    ...base,
+                    padding: "0 8px",
+                    fontSize: "0.95rem",
+                  }),
+                  placeholder: (base) => ({ ...base, color: "#9CA3AF" }),
+                }}
+              />
+            </Box>
+            <Box sx={{ flex: "1 1 200px", minWidth: "180px" }}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Organization Type</label>
+              <ReactSelect
+                options={availableOrgTypes}
+                value={availableOrgTypes.find((o) => o.value === organizationType) || null}
+                onChange={(selected) => {
+                  setOrganizationType(selected?.value || "");
+                  setPage(1);
+                }}
+                placeholder="Select Organization Type"
+                isClearable
+                isDisabled={!selectedSector}
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    minHeight: "42px",
+                    borderRadius: "0.375rem",
+                    borderColor: state.isFocused ? theme.primaryColor : "#D1D5DB",
+                  }),
+                  valueContainer: (base) => ({
+                    ...base,
+                    padding: "0 8px",
+                    fontSize: "0.95rem",
+                  }),
+                  placeholder: (base) => ({ ...base, color: "#9CA3AF" }),
+                }}
+              />
+            </Box>
+          </Box>
+        )}
+
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -185,11 +325,12 @@ function OrganizationalDatabase() {
                 <TableCell sx={{ padding: 2 }}>Sr.No</TableCell>
                 {isEnviroSolution ? (
                   <>
-                    <TableCell sx={{ padding: 2 }}>Department Name</TableCell>
-                    <TableCell sx={{ padding: 2 }}>Jurisdiction Level</TableCell>
+                    <TableCell sx={{ padding: 2 }}>Organization Name</TableCell>
+                    <TableCell sx={{ padding: 2 }}>Organization Type</TableCell>
+                    <TableCell sx={{ padding: 2 }}>Section Name</TableCell>
                     <TableCell sx={{ padding: 2 }}>District</TableCell>
                     <TableCell sx={{ padding: 2 }}>State</TableCell>
-                    <TableCell sx={{ padding: 2 }}>Email Address</TableCell>
+                    <TableCell sx={{ padding: 2 }}>City/Town/Village</TableCell>
                   </>
                 ) : (
                   <>
@@ -222,11 +363,12 @@ function OrganizationalDatabase() {
                     <TableCell sx={{ padding: 2 }}>{(page - 1) * limit + index + 1}</TableCell>
                     {isEnviroSolution ? (
                       <>
-                        <TableCell sx={{ padding: 2 }}>{data.departmentName || "-"}</TableCell>
-                        <TableCell sx={{ padding: 2 }}>{data.jurisdictionLevel || "-"}</TableCell>
+                        <TableCell sx={{ padding: 2 }}>{data.organizationName || "-"}</TableCell>
+                        <TableCell sx={{ padding: 2 }}>{data.OrganizationType || "-"}</TableCell>
+                        <TableCell sx={{ padding: 2 }}>{data.sectionName || "-"}</TableCell>
                         <TableCell sx={{ padding: 2 }}>{data.district || "-"}</TableCell>
                         <TableCell sx={{ padding: 2 }}>{data.state || "-"}</TableCell>
-                        <TableCell sx={{ padding: 2 }}>{data.officialEmailId || "-"}</TableCell>
+                        <TableCell sx={{ padding: 2 }}>{data.cityTownVillage || "-"}</TableCell>
                       </>
                     ) : (
                       <>

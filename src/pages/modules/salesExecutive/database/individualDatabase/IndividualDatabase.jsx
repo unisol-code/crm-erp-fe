@@ -37,11 +37,12 @@ function IndividualDatabase() {
   const navigate = useNavigate();
   const { theme } = useTheme();
 
-  const [page, setPage] = useState(1);
+const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
-   const [selectedSegment, setSelectedSegment] = useState(null);
+    const [selectedSegment, setSelectedSegment] = useState(null);
   const [typeOfProfile, setTypeOfProfile] = useState(null);
+  const [selectedSection, setSelectedSection] = useState("");
   const [openRequestModal, setOpenRequestModal] = useState(false);
   const [requestId, setRequestId] = useState(null);
   const { isEnviroSolution } = useCompany();
@@ -85,39 +86,30 @@ function IndividualDatabase() {
 
   /* ===================== FETCH DROPDOWN ===================== */
   useEffect(() => {
-    // if (isEnviroSolution) {
-    //   enviroindiviualdropdown();
-    //   setSelectedDoctor(null);
-    //   setTypeOfProfile("Farmer");
-    // } else {
-    //   profileState();
-    //   setTypeOfProfile(null);
-    // }
-      if (isEnviroSolution) {
-    enviroindiviualdropdown();
-    setSelectedDoctor(null);
-  } else {
-    fetchSegment();
-    setSelectedSegment(null);
-    setSelectedDoctor(null);
-    setTypeOfProfile(null);
-  }
+    if (isEnviroSolution) {
+      fetchSegment();
+      enviroindiviualdropdown();
+      fetchEnviroIndividualList(page, limit, typeOfProfile, selectedSection);
+      setSelectedDoctor(null);
+      setTypeOfProfile(null);
+      setSelectedSection("");
+    } else {
+      fetchSegment();
+      setSelectedSegment(null);
+      setSelectedDoctor(null);
+      setTypeOfProfile(null);
+    }
   }, [isEnviroSolution]);
 
   /* ===================== FETCH DATA ===================== */
   useEffect(() => {
     if (isEnviroSolution && typeOfProfile) {
-      if (typeOfProfile === "Farmer") {
-        fetchEnviroIndividualList(page, limit);
-      } else if (typeOfProfile === "Government Officer") {
-        fetchEnviroGovtOfficerList(page, limit, typeOfProfile);
-      } else if (typeOfProfile === "FPO") {
-        fetchEnviroFPOList(page, limit, typeOfProfile);
-      }
-    } else if (!isEnviroSolution) {
+      fetchEnviroIndividualList(page, limit, typeOfProfile, selectedSection);
+    } 
+    else if (!isEnviroSolution) {
       getAllindividual(page, limit, selectedDoctor);
     }
-  }, [page, limit, selectedDoctor, isEnviroSolution, typeOfProfile]);
+  }, [page, limit, selectedDoctor, isEnviroSolution, typeOfProfile, selectedSection]);
 
   /* ===================== PAGINATION ===================== */
   const onPageChange = (data) => {
@@ -131,15 +123,15 @@ function IndividualDatabase() {
 
   /* ===================== TABLE SOURCE ===================== */
   const tableLoading = isEnviroSolution
-    ? typeOfProfile === "Farmer" ? enviroIndividualLoading : typeOfProfile === "Government Officer" ? enviroGovtOfficerLoading : enviroFPOLoading
+    ? enviroIndividualLoading
     : loading;
 
   const tableData = isEnviroSolution
-    ? typeOfProfile === "Farmer" ? enviroIndividualList?.data || [] : typeOfProfile === "Government Officer" ? enviroGovtOfficerList?.data || [] : enviroFPOList?.data || []
+    ? enviroIndividualList?.data || []
     : getAllindividualDeatils?.data || [];
 
   const paginationData = isEnviroSolution
-    ? typeOfProfile === "Farmer" ? enviroIndividualList : typeOfProfile === "Government Officer" ? enviroGovtOfficerList : enviroFPOList
+    ? enviroIndividualList
     : getAllindividualDeatils;
 
   /* ===================== HANDLERS ===================== */
@@ -161,9 +153,7 @@ function IndividualDatabase() {
       targetId: id,
     });
     if (isEnviroSolution) {
-      if (typeOfProfile === "Farmer") fetchEnviroIndividualList(page, limit);
-      else if (typeOfProfile === "Government Officer") fetchEnviroGovtOfficerList(page, limit, typeOfProfile);
-      else if (typeOfProfile === "FPO") fetchEnviroFPOList(page, limit, typeOfProfile);
+      fetchEnviroIndividualList(page, limit, typeOfProfile, selectedSection);
     } else {
       getAllindividual(page, limit, selectedDoctor);
     }
@@ -215,30 +205,16 @@ function IndividualDatabase() {
     let rows = [];
 
     if (isEnviroSolution) {
-      if (typeOfProfile === "Farmer") {
-        columns = ["Name", "Lead Owner", "Product", "Status"];
-        rows = tableData.map((item) => [
-          item?.name || "N/A",
-          item?.leadOwner || "N/A",
-          item?.productName || "N/A",
-          item?.status || "N/A",
-        ]);
-      } else if (typeOfProfile === "Government Officer") {
-        columns = ["Person Name", "Office Name", "Designation", "Coverage Area"];
-        rows = tableData.map((item) => [
-          `${item?.firstName || ""} ${item?.lastName || ""}`,
-          item?.officeName || "-",
-          item?.designation || "-",
-          item?.districtBlockRegion || "-",
-        ]);
-      } else if (typeOfProfile === "FPO") {
-        columns = ["FPO Name", "Registration No", "Operational Area"];
-        rows = tableData.map((item) => [
-          item?.fpoName || "-",
-          item?.registrationNumber || "-",
-          item?.operationalArea || "-",
-        ]);
-      }
+      columns = ["Sr. No", "Name", "Segment", "Type of Profile", "State", "City", "Sales Person"];
+      rows = tableData.map((item, index) => [
+        (page - 1) * limit + index + 1,
+        item?.name || "N/A",
+        item?.segment || "N/A",
+        item?.typeOfProfile || "N/A",
+        item?.state || "N/A",
+        item?.city || "N/A",
+        item?.salesPersonName || "N/A",
+      ]);
     } else {
       columns = ["Hospital / Dept", "Designation", "Person Name", "Speciality", "Profile", "City"];
       rows = tableData.map((item) => [
@@ -311,7 +287,35 @@ function IndividualDatabase() {
             {/* LEFT: Dropdowns */}
             <div className="flex flex-col sm:flex-row gap-3">
       
-              {/* Segment Dropdown */}
+              {/* Section Dropdown (Enviro only) */}
+              {isEnviroSolution && (
+                <div className="w-full sm:w-56">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Section
+                  </label>
+      
+                  <ReactSelect
+                    options={segmentOptions}
+                    value={
+                      segmentOptions.find(
+                        (opt) => opt.value === selectedSection
+                      ) || null
+                    }
+                    onChange={(selected) => {
+                      const val = selected?.value || "";
+                      setSelectedSection(val);
+                      setTypeOfProfile(null);
+                      enviroindiviualdropdown(val);
+                      setPage(1);
+                    }}
+                    placeholder="Select Section"
+                    isLoading={dropLoading}
+                    isClearable
+                  />
+                </div>
+              )}
+      
+              {/* Segment Dropdown (non-Enviro only) */}
               {!isEnviroSolution && (
                 <div className="w-full sm:w-56">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -390,13 +394,10 @@ function IndividualDatabase() {
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: theme.secondaryColor }}>
-              {(isEnviroSolution
-                ? typeOfProfile === "Farmer"
-                  ? ["Sr. No", "Name", "Lead owner", "Product name", "Status", "Action"]
-                  : typeOfProfile === "Government Officer"
-                    ? ["Sr. No", "Person Name", "Office Name", "Designation", "Coverage Area", "Action"]
-                    : ["Sr. No", "FPO Name", "Registration No", "Operational Area", "Action"]
-                : ["Sr. No", "Hospital / Department", "Designation", "Person Name", "Speciality", "Profile", "City", "Action"]
+              {(
+                isEnviroSolution
+                  ? ["Sr. No", "Name", "Segment", "Type of Profile", "State", "City", "Sales Person", "Action"]
+                  : ["Sr. No", "Hospital / Department", "Designation", "Person Name", "Speciality", "Profile", "City", "Action"]
               ).map((head, i) => (
                 <TableCell
                   key={i}
@@ -411,7 +412,7 @@ function IndividualDatabase() {
           <TableBody>
             {tableLoading ? (
               <TableRow>
-                <TableCell colSpan={isEnviroSolution ? 6 : 8} >
+                <TableCell colSpan={8} >
                   <div className="bg-white w-full py-4 flex justify-center items-center">
                     <LoaderSpinner />
                   </div>
@@ -426,29 +427,12 @@ function IndividualDatabase() {
 
                   {isEnviroSolution ? (
                     <>
-                      {typeOfProfile === "Farmer" && (
-                        <>
-                          <TableCell>{data?.name}</TableCell>
-                          <TableCell>{data?.leadOwner || "-"}</TableCell>
-                          <TableCell>{data?.productName || "-"}</TableCell>
-                          <TableCell>{data?.status || "-"}</TableCell>
-                        </>
-                      )}
-                      {typeOfProfile === "Government Officer" && (
-                        <>
-                          <TableCell>{`${data?.firstName || ""} ${data?.lastName || ""}`}</TableCell>
-                          <TableCell>{data?.officeName || "-"}</TableCell>
-                          <TableCell>{data?.designation || "-"}</TableCell>
-                          <TableCell>{data?.districtBlockRegion || "-"}</TableCell>
-                        </>
-                      )}
-                      {typeOfProfile === "FPO" && (
-                        <>
-                          <TableCell>{data?.fpoName || "-"}</TableCell>
-                          <TableCell>{data?.registrationNumber || "-"}</TableCell>
-                          <TableCell>{data?.operationalArea || "-"}</TableCell>
-                        </>
-                      )}
+                      <TableCell>{data?.name || "-"}</TableCell>
+                      <TableCell>{data?.segment || "-"}</TableCell>
+                      <TableCell>{data?.typeOfProfile || "-"}</TableCell>
+                      <TableCell>{data?.state || "-"}</TableCell>
+                      <TableCell>{data?.city || "-"}</TableCell>
+                      <TableCell>{data?.salesPersonName || "-"}</TableCell>
                     </>
                   ) : (
                     <>
@@ -487,7 +471,7 @@ function IndividualDatabase() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={isEnviroSolution ? 6 : 8} align="center">
+                <TableCell colSpan={8} align="center">
                   No Data Found
                 </TableCell>
               </TableRow>
