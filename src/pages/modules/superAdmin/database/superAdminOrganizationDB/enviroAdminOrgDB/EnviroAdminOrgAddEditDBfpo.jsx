@@ -155,20 +155,20 @@ const selectStyles = {
 };
 
 const validationSchema = yup.object({
-  fpoName: yup.string().trim().required("FPO Name is required"),
-  officeAddress: yup.string().trim().required("Office Address is required"),
-  officialContactNumber: yup
-    .string()
-    .trim()
-    .required("Official Contact Number is required")
-    .matches(/^[0-9+()\- ]+$/, "Enter a valid phone number"),
-  region: yup.string().trim().required("Region is required"),
-  cityTownVillage: yup.string().trim().required("City/Town/Village is required"),
-  district: yup.string().trim().required("District is required"),
-  state: yup.string().trim().required("State is required"),
+  organizationName: yup.string().trim().required("FPO Name is required"),
+  // officeAddress: yup.string().trim().required("Office Address is required"),
+  // officialContactNumber: yup
+  //   .string()
+  //   .trim()
+  //   .required("Official Contact Number is required")
+  //   .matches(/^[0-9+()\- ]+$/, "Enter a valid phone number"),
+  // region: yup.string().trim().required("Region is required"),
+  // cityTownVillage: yup.string().trim().required("City/Town/Village is required"),
+  // district: yup.string().trim().required("District is required"),
+  // state: yup.string().trim().required("State is required"),
 });
 
-const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO" }) => {
+const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO", sectionName, organizationType }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const {
@@ -183,6 +183,11 @@ const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO" }) => {
   const isEdit = mode === "edit";
   const isView = mode === "view";
   const isEditMode = Boolean(id);
+
+  const {
+    fetchEnviroSalesPersonsList,
+    salesPersonList,
+  } = useEnviroAdminIndDB();
 
   const {
     fetchPrimaryCommunicationChannels,
@@ -211,6 +216,7 @@ const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO" }) => {
   const [selectedStateCode, setSelectedStateCode] = useState("");
 
   useEffect(() => {
+    fetchEnviroSalesPersonsList();
     fetchPrimaryCommunicationChannels();
     fetchKeyBuyerTypes();
     fetchMemberCategories();
@@ -225,8 +231,10 @@ const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO" }) => {
     return () => resetEnviroFPODetails();
   }, [id]);
 
-  const formik = useFormik({
+const formik = useFormik({
     initialValues: {
+      sectionName: sectionName || "",
+      organizationType: organizationType || "",
       fpoName: "",
       registrationNumber: "",
       registrationAct: "",
@@ -272,10 +280,12 @@ const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO" }) => {
     },
   });
 
-  useEffect(() => {
+useEffect(() => {
     if (enviroFPODetails) {
       const d = enviroFPODetails;
       formik.setValues({
+        sectionName: d.sectionName || sectionName || "",
+        organizationType: d.OrganizationType || organizationType || "",
         fpoName: d.fpoName || "",
         registrationNumber: d.registrationNumber || "",
         registrationAct: d.registrationAct || "",
@@ -364,7 +374,7 @@ const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO" }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputField
                 label={`1. Orgnization Name`}
-                name="fpoName"
+                name="organizationName"
                 formik={formik}
                 placeholder={`Enter Orgnization Name`}
               />
@@ -741,6 +751,47 @@ const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO" }) => {
               />
             </div>
           </section>
+                    <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-6">
+              <p className="text-lg font-semibold text-slate-900">SECTION 8: Sales & Marketing</p>
+              <p className="mt-1 text-sm text-slate-600">Sales person information.</p>
+            </div>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div>
+                <label className="block mb-2 text-sm font-medium text-slate-700">Sales Person</label>
+                <ReactSelect
+                  className="w-full"
+                  styles={selectStyles}
+                  options={
+                    Array.isArray(salesPersonList)
+                      ? salesPersonList.map((person) => ({
+                          label: person.name,
+                          value: person._id,
+                        }))
+                      : []
+                  }
+                  value={
+                    salesPersonList
+                      ?.map((person) => ({
+                        label: person.name,
+                        value: person._id,
+                      }))
+                      .find((option) => option.value === formik.values.salesId) || null
+                  }
+                  onChange={(selected) => {
+                    formik.setFieldValue("salesId", selected?.value || "");
+                  }}
+                  onBlur={() => formik.setFieldTouched("salesId", true)}
+                  placeholder="Select Sales Person"
+                  isClearable
+                />
+                {formik.touched.salesId && formik.errors.salesId && (
+                  <div className="text-red-500 text-xs mt-1">{formik.errors.salesId}</div>
+                )}
+              </div>
+            </div>
+          </section>
+
         </fieldset>
         <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-3">

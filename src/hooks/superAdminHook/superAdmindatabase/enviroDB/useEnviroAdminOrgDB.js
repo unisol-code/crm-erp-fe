@@ -14,7 +14,7 @@ const useEnviroAdminOrgDB = () => {
     const [enviroAdminOrgDetails, setEnviroAdminOrgDetails] = useRecoilState(enviroAdminOrgDetailsAtom);
     const [servicesOfferedDrop, setServicesOfferedDrop] = useRecoilState(servicesOfferedDropAtom);
 
-    const fetchEnviroAdminOrgList = async (page, limit) => {
+    const fetchEnviroAdminOrgList = async (page, limit, search, sectionName, OrganizationType) => {
         setLoading(true);
         setError("");
         try {
@@ -22,6 +22,17 @@ const useEnviroAdminOrgDB = () => {
                 page: page,
                 limit: limit,
             });
+            if (search) {
+                params.append("search", search);
+            }
+
+            if (sectionName) {
+                params.append("sectionName", sectionName);
+            }
+
+            if (OrganizationType) {
+                params.append("OrganizationType", OrganizationType);
+            }
             const res = await fetchData({
                 method: "GET",
                 url: `${conf.apiBaseUrl}adminOrganization/getAllEnviroOrganization?${params}`,
@@ -69,13 +80,18 @@ const useEnviroAdminOrgDB = () => {
             });
             if (res) {
                 toast.success(res?.message);
+                setLoading(false);
+                return true
             }
         } catch (error) {
             console.error("Error creating Enviro Admin Org:", error);
             toast.error(error?.response?.data?.message);
+            setLoading(false);
+            return false
         } finally {
             setLoading(false);
         }
+        return false
     };
 
     const resetEnviroAdminOrgDetails = () => {
@@ -93,13 +109,18 @@ const useEnviroAdminOrgDB = () => {
             });
             if (res) {
                 toast.success(res?.message);
+                setLoading(false);
+                return true
             }
         } catch (error) {
             console.error("Error updating Enviro Admin Org:", error);
             toast.error(error?.response?.data?.message);
+            setLoading(false);
+            return false
         } finally {
             setLoading(false);
         }
+        return false
     };
 
     const deleteEnviroAdminOrg = async (id) => {

@@ -14,6 +14,7 @@ import FpoForm from "./tabs/FPO";
 import GovForm from "./tabs/Gov";
 import FarmerForm from "./tabs/Farmer";
 import useEnviroIndividualDB from "../../../../../../hooks/salesExecutiveHook/salesExecutiveDB/enviroIndividualDB/useEnviroIndividualDB";
+import { region } from "caniuse-lite";
 
 const validationSchema = Yup.object({
   firstName: Yup.string().when("typeOfProfile", {
@@ -24,10 +25,10 @@ const validationSchema = Yup.object({
     is: (val) => val === "Farmer" || val === "Government Officer",
     then: () => Yup.string().required("Required"),
   }),
-  email: Yup.string().when("typeOfProfile", {
-    is: (val) => val === "Farmer" || val === "Government Officer",
-    then: () => Yup.string().email("Invalid email format").required("Required"),
-  }),
+  // email: Yup.string().when("typeOfProfile", {
+  //   is: (val) => val === "Farmer" || val === "Government Officer",
+  //   then: () => Yup.string().email("Invalid email format").required("Required"),
+  // }),
   contact: Yup.string().when("typeOfProfile", {
     is: (val) => val === "Farmer" || val === "Government Officer",
     then: () => Yup.string()
@@ -38,10 +39,10 @@ const validationSchema = Yup.object({
     is: "FPO",
     then: () => Yup.string().required("Required"),
   }),
-  officialEmailId: Yup.string().when("typeOfProfile", {
-    is: "FPO",
-    then: () => Yup.string().email("Invalid email format").required("Required"),
-  }),
+  // officialEmailId: Yup.string().when("typeOfProfile", {
+  //   is: "FPO",
+  //   then: () => Yup.string().email("Invalid email format").required("Required"),
+  // }),
   officialContactNumber: Yup.string().when("typeOfProfile", {
     is: "FPO",
     then: () => Yup.string()
@@ -59,9 +60,11 @@ const initialValues = {
   email: "",
   contact: "",
   villageName: "",
+  region: "",
   state: "",
   district: "",
   address: "",
+  officeAddress: "",
   pinCode: "",
   leadGeneratedThrough: [],
   lastMeeting: "",
@@ -113,6 +116,11 @@ const initialValues = {
   goals: "",
   officeName: "",
   designation: "",
+  region: "",
+  state: "",
+  district: "",
+  pinCode: "",
+  officeAddress: "",
   districtBlockRegion: "",
   yearsOfExperience: "",
   frequentlyRequestedServices: [],
@@ -253,7 +261,7 @@ const EnviroIndivualform = () => {
 
       const farmerFields = [
         "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
-        "email", "contact", "villageName", "state", "district", "address",
+        "email", "contact", "villageName", "region", "state", "district", "address",
         "pinCode", "leadGeneratedThrough", "lastMeeting", "nextMeeting",
         "status", "panNo", "sprayingType", "tentativeBuyingDate", "cropType",
         "cropName", "sprayingDuration", "customerType", "department", "taluka",
@@ -262,7 +270,7 @@ const EnviroIndivualform = () => {
 
       const govOfficerFields = [
         "firstName", "lastName", "email", "contact", "birthday", "anniversary",
-        "hobbies", "goals", "officeName", "designation", "districtBlockRegion",
+        "hobbies", "goals", "officeName", "designation", "region", "state", "district","city" ,"pinCode","officeAddress","districtBlockRegion",
         "yearsOfExperience", "frequentlyRequestedServices", "frequentlyRequestedServicesOthers",
         "schemeUnderstanding", "effectiveLanguage", "dataMaintainedDigitally",
         "dataManagementTools", "dataManagementToolsOthers",

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import useFetch from '../../../useFetch';
-import { enviroAdminIndividualDetailsAtom, enviroAdminIndividualListAtom, enviroFPODetailsAtom, enviroFPOListAtom, enviroGovtOfficerDetailsAtom, enviroGovtOfficerListAtom } from '../../../../state/superAdminDatabaseState/enviroDB/enviroAdminDBState';
+import { enviroAdminIndividualDetailsAtom, enviroAdminIndividualListAtom, enviroFPODetailsAtom, enviroFPOListAtom, enviroGovtOfficerDetailsAtom, enviroGovtOfficerListAtom, salesPersonListAtom } from '../../../../state/superAdminDatabaseState/enviroDB/enviroAdminDBState';
 import { useRecoilState } from 'recoil';
 import conf from '../../../../config';
 import { toast } from "react-toastify";
@@ -19,19 +19,25 @@ const useEnviroAdminIndDB = () => {
     const [enviroGovtOfficerDetails, setEnviroGovtOfficerDetails] = useRecoilState(enviroGovtOfficerDetailsAtom);
     const [enviroFPOList, setEnviroFPOList] = useRecoilState(enviroFPOListAtom);
     const [enviroFPODetails, setEnviroFPODetails] = useRecoilState(enviroFPODetailsAtom);
+    const [salesPersonList, setSalesPersonList] = useRecoilState(salesPersonListAtom);
 
-    const fetchEnviroAdminIndividualList = async (page, limit, typeOfProfile) => {
+    const fetchEnviroAdminIndividualList = async (page, limit, typeOfProfile, sectionName) => {
         setLoading(true);
         setError("");
         try {
             const params = new URLSearchParams({
                 page: page,
                 limit: limit,
-                typeOfProfile: typeOfProfile
             });
+            if (typeOfProfile) {
+                params.append("typeOfProfile", typeOfProfile);
+            }
+            if (sectionName) {
+                params.append("sectionName", sectionName);
+            }
             const res = await fetchData({
                 method: "GET",
-                url: `${conf.apiBaseUrl}doctor/Envro-get-all-doctors?${params}`,
+                url: `${conf.apiBaseUrl}enviro-individual/getEnviroIndiviual?${params}`,
             });
             if (res) {
                 setEnviroAdminIndividualList(res);
@@ -71,7 +77,7 @@ const useEnviroAdminIndDB = () => {
         try {
             const res = await fetchData({
                 method: "POST",
-                url: `${conf.apiBaseUrl}doctor/enviro-add-doctor`,
+                url: `${conf.apiBaseUrl}individual/enviro-create-individual`,
                 data,
             });
             if (res) {
@@ -301,7 +307,8 @@ const useEnviroAdminIndDB = () => {
         try {
             const res = await fetchData({
                 method: "POST",
-                url: `${conf.apiBaseUrl}enviro-individual/add-fpo`,
+                url: `${conf.apiBaseUrl}adminOrganization/create-enviro-organization`,
+                // enviro-individual/add-fpo`,
                 data,
             });
             if (res) {
@@ -381,6 +388,24 @@ const useEnviroAdminIndDB = () => {
         }
     };
 
+        const fetchEnviroSalesPersonsList = async () => {
+        setLoading(true);
+        setError("");
+        try {
+            const res = await fetchData({
+                method: "GET",
+                url: `${conf.apiBaseUrl}enviro-individual/get-all-enviro-employees`,
+            });
+            if (res) {
+                setSalesPersonList(res.data);
+            }
+        } catch (error) {
+            console.error("Error fetching Enviro Sales Persons List:", error);
+            setError("Failed to fetch Enviro Sales Persons List.");
+        } finally {
+            setLoading(false);
+        }
+    };
     return {
         fetchEnviroAdminIndividualList,
         fetchEnviroAdminIndividualDetails,
@@ -407,7 +432,10 @@ const useEnviroAdminIndDB = () => {
         resetEnviroFPODetails,
         createEnviroFPO,
         updateEnviroFPO,
-        deleteEnviroFPO
+        deleteEnviroFPO,
+        // Sales Persons
+        fetchEnviroSalesPersonsList,
+        salesPersonList,
     }
 }
 

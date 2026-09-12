@@ -683,22 +683,27 @@ const useDropdown = () => {
     }
   };
 
-  const enviroindiviualdropdown = async () => {
-    setLoading(true);
-    try {
-      const res = await fetchData({
-        method: "GET",
-        url: `${conf.apiBaseUrl}drop-down/individual-type-dropdown`,
-      });
-      if (res) {
-        setEnviroProfile(res?.data);
-      }
-    } catch (error) {
-      console.error("Error while fetching Segment DropDown:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const enviroindiviualdropdown = async (sectionName) => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            if (sectionName) {
+                params.append("sectionName", sectionName);
+            }
+            const url = `${conf.apiBaseUrl}drop-down/individual-type-dropdown${params.toString() ? `?${params}` : ""}`;
+            const res = await fetchData({
+                method: "GET",
+                url,
+            });
+            if (res) {
+                setEnviroProfile(res?.data);
+            }
+        } catch (error) {
+            console.error("Error while fetching Enviro Individual DropDown:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
   const getWasteMagement = async () => {
     setLoading(true);

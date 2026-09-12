@@ -6,6 +6,7 @@ import { useTheme } from "../../../../../../hooks/theme/useTheme";
 import Button from "../../../../../../components/uiComponents/button/Button";
 import BreadCrumb from "../../../../../../components/uiComponents/breadcrumb/BreadCrumb";
 import useEnviroAdminOrgDB from "../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminOrgDB";
+import useEnviroAdminIndDB from "../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminIndDB";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner";
 import ReactSelect from "react-select";
@@ -13,7 +14,7 @@ import EnviroAdminOrgAddEditDBfpo from "./EnviroAdminOrgAddEditDBfpo";
 import BiomedicalAndSolidWaste from "../../../../superAdmin/database/superAdminOrganizationDB/superAdminOrganizationTabs/BiomedicalAndSolidWaste";
 import Kitchen from "../../../../superAdmin/database/superAdminOrganizationDB/superAdminOrganizationTabs/Kitchen";
 import Laundry from "../../../../superAdmin/database/superAdminOrganizationDB/superAdminOrganizationTabs/Laundry";
-import BasicInfo from "../../../../superAdmin/database/superAdminOrganizationDB/superAdminOrganizationTabs/BasicInfo";
+import EnviroBasicInfo from "../../../../superAdmin/database/superAdminOrganizationDB/superAdminOrganizationTabs/EnviroBasicInfo";
 
 const checkboxOptions = {
   services: [
@@ -92,6 +93,7 @@ const tabComponentMap = {
   ),
   kitchen: (formik, isView) => <Kitchen formik={formik} isReadOnly={isView} />,
   laundry: (formik, isView) => <Laundry formik={formik} isReadOnly={isView} />,
+  basic: (formik, isView) => <EnviroBasicInfo formik={formik} isReadOnly={isView} />,
 };
 
 const Tabs = ({ tabs, active, onChange }) => (
@@ -116,15 +118,15 @@ const Tabs = ({ tabs, active, onChange }) => (
 const validationSchema = yup.object({
   sectionName: yup.string().required("Section Name is required"),
   OrganizationType: yup.string().required("Organization Type is required"),
-  departmentName: yup.string().trim().required("Department Name is required"),
-  jurisdictionLevel: yup.string().required("Jurisdiction Level is required"),
-  region: yup.string().trim().required("Region is required"),
-  stateName: yup.string().trim().required("State / UT Name is required"),
-  officialContactNumber: yup
-    .string()
-    .trim()
-    .required("Official Contact Number is required")
-    .matches(/^[0-9+()\- ]+$/, "Enter a valid phone number"),
+  // departmentName: yup.string().trim().required("Department Name is required"),
+  // jurisdictionLevel: yup.string().required("Jurisdiction Level is required"),
+  // region: yup.string().trim().required("Region is required"),
+  // stateName: yup.string().trim().required("State / UT Name is required"),
+  // officialContactNumber: yup
+  //   .string()
+  //   .trim()
+  //   .required("Official Contact Number is required")
+  //   .matches(/^[0-9+()\- ]+$/, "Enter a valid phone number"),
 });
 
 const InputField = ({ label, name, formik, placeholder, type = "text" }) => {
@@ -252,8 +254,14 @@ const EnviroAdminOrgAddEditDB = ({ mode = "add" }) => {
     districtList,
   } = useDropdown();
 
+  const {
+    fetchEnviroSalesPersonsList,
+    salesPersonList,
+  } = useEnviroAdminIndDB();
+
   useEffect(() => {
     fetchAllRegion();
+    fetchEnviroSalesPersonsList();
   }, []);
 
   useEffect(() => {
@@ -924,6 +932,47 @@ const EnviroAdminOrgAddEditDB = ({ mode = "add" }) => {
                   />
                 </div>
               </section>
+                        <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-6">
+              <p className="text-lg font-semibold text-slate-900">SECTION 5: Sales & Marketing</p>
+              <p className="mt-1 text-sm text-slate-600">connected sales person information.</p>
+            </div>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div>
+                <label className="block mb-2 text-sm font-medium text-slate-700">Sales Person</label>
+                <ReactSelect
+                  className="w-full"
+                  styles={selectStyles}
+                  options={
+                    Array.isArray(salesPersonList)
+                      ? salesPersonList.map((person) => ({
+                          label: person.name,
+                          value: person._id,
+                        }))
+                      : []
+                  }
+                  value={
+                    salesPersonList
+                      ?.map((person) => ({
+                        label: person.name,
+                        value: person._id,
+                      }))
+                      .find((option) => option.value === formik.values.salesId) || null
+                  }
+                  onChange={(selected) => {
+                    formik.setFieldValue("salesId", selected?.value || "");
+                  }}
+                  onBlur={() => formik.setFieldTouched("salesId", true)}
+                  placeholder="Select Sales Person"
+                  isClearable
+                />
+                {formik.touched.salesId && formik.errors.salesId && (
+                  <div className="text-red-500 text-xs mt-1">{formik.errors.salesId}</div>
+                )}
+              </div>
+            </div>
+          </section>
+
             </fieldset>
             <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-3">
@@ -940,7 +989,12 @@ const EnviroAdminOrgAddEditDB = ({ mode = "add" }) => {
             </div>
           </form>
         ) : selectedOrgType?.value === "FPO" || selectedOrgType?.value === "FPC" || selectedOrgType?.value === "CMRC" || selectedOrgType?.value === "BACHAT GAT" || selectedOrgType?.value === "SELF HELP GROUP" ? (
-          <EnviroAdminOrgAddEditDBfpo OrganizationType={selectedOrgType?.value} mode={isEdit ? "edit" : isView ? "view" : "add"} />
+          <EnviroAdminOrgAddEditDBfpo 
+            OrganizationType={selectedOrgType?.value} 
+            mode={isEdit ? "edit" : isView ? "view" : "add"} 
+            sectionName={selectedSector?.value}
+            organizationType={selectedOrgType?.value}
+          />
         ) : selectedSector?.value === "Waste Management" && selectedOrgType && selectedWasteTypes.length > 0 ? (
           (() => {
             const dynamicTabs = selectedWasteTypes.map((t) => ({
@@ -960,7 +1014,7 @@ const EnviroAdminOrgAddEditDB = ({ mode = "add" }) => {
                     tabs={[{ id: "basic", label: "Basic Info" }, ...dynamicTabs]}
                   />
                   {safeActive === "basic" && (
-                    <BasicInfo formik={formik} isReadOnly={isView} />
+                    <EnviroBasicInfo formik={formik} isReadOnly={isView} />
                   )}
                   {dynamicTabs.map((t) =>
                     safeActive === t.id ? (

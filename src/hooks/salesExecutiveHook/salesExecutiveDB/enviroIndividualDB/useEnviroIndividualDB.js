@@ -12,13 +12,19 @@ const useEnviroIndividualDB = () => {
     const [enviroIndividualList, setEnviroIndividualList] = useRecoilState(enviroIndividualListAtom);
     const [enviroIndividualDetails, setEnviroIndividualDetails] = useRecoilState(enviroIndividualDetailsAtom);
 
-    const fetchEnviroIndividualList = async (page, limit) => {
+    const fetchEnviroIndividualList = async (page, limit,typeOfProfile, sectionName) => {
         setLoading(true);
         try {
             const params = new URLSearchParams({
                 page: page,
                 limit: limit,
             });
+            if (typeOfProfile) {
+                params.append("typeOfProfile", typeOfProfile);
+            }
+            if (sectionName) {
+                params.append("sectionName", sectionName);
+            }
             const res = await fetchData({
                 method: "GET",
                 url: `${conf.apiBaseUrl}individual/enviro-get-allindividuals?${params}`,
