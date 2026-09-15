@@ -68,52 +68,56 @@ const useEnviroLeadManage = () => {
     }
   };
 
-  const createEnviroLead = async (data) => {
-    setLoading(true);
-    try {
-      const res = await fetchData({
-        method: "POST",
-        url: `${conf.apiBaseUrl}lead/addLeadForEnviro`,
-        data: data,
-      });
-      if (res) {
-        toast.success(res?.message);
-        fetchCustomerType();
-      } else {
-        throw new Error(res?.message || "Failed to create the blog.");
-      }
-    } catch (error) {
-      console.error("Error creating blog:", error);
-      toast.error(
-        error.response?.data?.error || "An unexpected error occurred."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+const createEnviroLead = async (data) => {
+        setLoading(true);
+        try {
+            const res = await fetchData({
+                method: "POST",
+                url: `${conf.apiBaseUrl}lead/addLeadForEnviro`,
+                data: data,
+            });
+            if (res) {
+                toast.success(res?.message);
+                fetchCustomerType();
+                return true;
+            } else {
+                throw new Error(res?.message || "Failed to create the blog.");
+            }
+        } catch (error) {
+            console.error("Error creating blog:", error);
+            toast.error(
+                error.response?.data?.error || "An unexpected error occurred."
+            );
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const updateEnviroLead = async (id, data) => {
-    setLoading(true);
-    try {
-      const res = await fetchData({
-        method: "PUT",        
-        url: `${conf.apiBaseUrl}lead/editLeadForEnviroById/${id}`,
-        data,
-      });
-      if (res) {
-        toast.success(res?.message);
-        fetchLeadsForEnviro();
-      } else {
-        throw new Error(res?.message);
-      }
-    } catch (error) {
-      console.error("Error updating blog:", error);
-      toast.error(
-        error.response?.data?.error
-      );
-    } finally {
-      setLoading(false);
-    }
+const updateEnviroLead = async (id, data) => {
+        setLoading(true);
+        try {
+            const res = await fetchData({
+                method: "PUT",        
+                url: `${conf.apiBaseUrl}lead/editLeadForEnviroById/${id}`,
+                data,
+            });
+            if (res) {
+                toast.success(res?.message);
+                fetchLeadsForEnviro();
+                return true;
+            } else {
+                throw new Error(res?.message);
+            }
+        } catch (error) {
+            console.error("Error updating blog:", error);
+            toast.error(
+                error.response?.data?.error
+            );
+            return false;
+        } finally {
+            setLoading(false);
+        }
     }
 
   const fetchLeadByIdForEnviro = async (id) => {

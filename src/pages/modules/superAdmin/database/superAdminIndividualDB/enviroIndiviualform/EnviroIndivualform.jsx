@@ -13,6 +13,7 @@ import useEnviroAdminIndDB from "../../../../../../hooks/superAdminHook/superAdm
 import FarmerForm from "./tabs/Farmers";
 import GovForm from "./tabs/Gov";
 import FPOForm from "./tabs/FPO";
+import BasicCommonForm from "./tabs/basicCommanForm";
 import { region } from "caniuse-lite";
 
 const validationSchema = Yup.object({
@@ -61,6 +62,8 @@ const initialValues = {
   email: "",
   contact: "",
   villageName: "",
+  segment: "",
+  orgnizationName: "",
   region: "",
   state: "",
   district: "",
@@ -156,7 +159,7 @@ const renderIndividualForm = (formik, selectedUserType) => {
     case "FPO":
       return <FPOForm formik={formik} />;
     default:
-      return null;
+      return <BasicCommonForm formik={formik} />;
   }
 };
 
@@ -193,11 +196,26 @@ const EnviroIndivualform = () => {
     enviroprofile,
     enviroindiviualdropdown,
     loading: dropdownLoading,
+    fetchSegment,
+    segment,
   } = useDropdown();
 
+  const segmentOptions = Array.isArray(segment)
+    ? segment.map((seg) => ({ label: seg, value: seg }))
+    : [];
+
   useEffect(() => {
+    fetchSegment();
     enviroindiviualdropdown();
   }, []);
+
+  useEffect(() => {
+    if (selectedSector?.value) {
+      enviroindiviualdropdown(selectedSector.value);
+    } else {
+      enviroindiviualdropdown();
+    }
+  }, [selectedSector]);
 
   const {
     updateEnviroLead,
@@ -277,7 +295,7 @@ const EnviroIndivualform = () => {
 
       const govOfficerFields = [
         "firstName", "lastName", "email", "contact", "birthday", "anniversary",
-        "hobbies", "goals", "officeName", "designation",  "region", "state", "district","city" ,"pinCode","districtBlockRegion", "commentBox",
+        "hobbies", "goals", "officeName", "designation", "segment", "orgnizationName", "region", "state", "district","city" ,"pinCode","districtBlockRegion", "commentBox",
         "yearsOfExperience", "frequentlyRequestedServices", "frequentlyRequestedServicesOthers",
         "schemeUnderstanding", "effectiveLanguage", "dataMaintainedDigitally",
         "dataManagementTools", "dataManagementToolsOthers",
@@ -294,6 +312,11 @@ const EnviroIndivualform = () => {
         "salesId", "addedBy", "addedById", "hrmCompanyId", "edit"
       ];
 
+      const commonFields = [
+        "firstName", "lastName", "email", "contact",
+        "segment", "orgnizationName", "region", "state", "district", "villageName", "address", "pinCode",
+      ];
+
       let filteredValues = {};
       const profileType = selectedUserType?.value;
 
@@ -302,6 +325,7 @@ const EnviroIndivualform = () => {
       if (profileType === "Farmer") targetFields = farmerFields;
       else if (profileType === "Government Officer") targetFields = govOfficerFields;
       else if (profileType === "FPO") targetFields = fpoFields;
+      else targetFields = commonFields;
 
       targetFields.forEach(field => {
         if (values[field] !== undefined) {
@@ -319,21 +343,23 @@ const EnviroIndivualform = () => {
         let success = false;
         if (id) {
           if (profileType === "Farmer") {
-            await updateEnviroLead(id, filteredValues);
-            success = true;
+            success = await updateEnviroLead(id, filteredValues);
           } else if (profileType === "Government Officer") {
             success = await updateEnviroGovtOfficer(id, filteredValues);
           } else if (profileType === "FPO") {
             success = await updateEnviroFPO(id, filteredValues);
+          } else {
+            success = await updateEnviroLead(id, filteredValues);
           }
         } else {
           if (profileType === "Farmer") {
-            await createEnviroAdminIndividual(filteredValues);
-            success = true;
+            success = await createEnviroAdminIndividual(filteredValues);
           } else if (profileType === "Government Officer") {
             success = await createEnviroGovtOfficer(filteredValues);
           } else if (profileType === "FPO") {
             success = await createEnviroFPO(filteredValues);
+          } else {
+            success = await createEnviroAdminIndividual(filteredValues);
           }
         }
 
@@ -384,7 +410,7 @@ const EnviroIndivualform = () => {
             <SectionHeading title="Basic Information" />
             <ReactSelect
               isDisabled={isEditMode}
-              options={STATIC_SEGMENTS}
+              options={segmentOptions}
               value={selectedSector}
               onChange={(selected) => {
                 setSelectedSector(selected);
@@ -413,7 +439,7 @@ const EnviroIndivualform = () => {
               isClearable
             />
 
-            {selectedSector?.value === "Agriculture" && selectedUserType && renderIndividualForm(formik, selectedUserType)}
+            {selectedUserType && renderIndividualForm(formik, selectedUserType)}
           </div>
 
           {/* Action Buttons */}

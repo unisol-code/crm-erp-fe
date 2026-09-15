@@ -295,6 +295,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
       officialContactNumber: "",
       officialEmailId: "",
       departmentWebsite: "",
+      associatedWithOrganization: "",
       totalOfficers: "",
       activeSchemes: "",
       servicesOffered: {
@@ -387,6 +388,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
         officialContactNumber: d.officialContactNumber || "",
         officialEmailId: d.officialEmailId || "",
         departmentWebsite: d.departmentWebsite || "",
+        associatedWithOrganization: d.associatedWithOrganization || "",
         totalOfficers: d.totalOfficers || "",
         activeSchemes: d.activeSchemes || "",
         servicesOffered: {
@@ -730,6 +732,12 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
                 placeholder="Enter URL"
                 type="url"
               />
+              <InputField
+                label="10. Associated With Organization"
+                name="associatedWithOrganization"
+                formik={formik}
+                placeholder="Enter Organization Name"
+              />
             </div>
           </section>
 
@@ -737,14 +745,14 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
             <SectionHeading title="SECTION 2: Governance & Staffing" />
             <div className="grid gap-6 lg:grid-cols-2">
               <InputField
-                label="10. Number of Board Members"
+                label="11. Number of Board Members"
                 name="numberOfBoardMembers"
                 formik={formik}
                 placeholder="Enter Number"
                 type="number"
               />
               <InputField
-                label="11. Number of Staff Members"
+                label="12. Number of Staff Members"
                 name="numberOfStaffMembers"
                 formik={formik}
                 placeholder="Enter Number"
@@ -757,14 +765,14 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
             <SectionHeading title="SECTION 3: Member Profile & Engagement" />
             <div className="grid gap-6 lg:grid-cols-2">
               <InputField
-                label="12. Total Active Members"
+                label="13. Total Active Members"
                 name="totalActiveMembers"
                 formik={formik}
                 placeholder="Enter Total Members"
                 type="number"
               />
               <SearchableMultiSelect
-                label="13. Member Categories (Tick all that apply)"
+                label="14. Member Categories (Tick all that apply)"
                 name="memberCategories"
                 placeholder="Select Member Categories"
                 options={memberCategoryOptions}
@@ -780,7 +788,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
                 />
               )}
               <SearchableMultiSelect
-                label="14. Primary Communication Channels (Tick all that apply)"
+                label="15. Primary Communication Channels (Tick all that apply)"
                 name="primaryCommunicationChannels"
                 placeholder="Select Communication Channels"
                 options={communicationChannelOptions}
@@ -793,7 +801,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
             <SectionHeading title="SECTION 4: Services & Business Operations" />
             <div className="grid gap-6 lg:grid-cols-2">
               <InputField
-                label="15. Major Crops/Commodities Handled"
+                label="16. Major Crops/Commodities Handled"
                 name="majorCropsHandled"
                 formik={formik}
                 placeholder="Enter Major Crops/Commodities"
@@ -806,14 +814,14 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
             <SectionHeading title="SECTION 5: Finance & Member Benefits" />
             <div className="grid gap-6 lg:grid-cols-2">
               <InputField
-                label="16. Annual Turnover"
+                label="17. Annual Turnover"
                 name="annualTurnover"
                 formik={formik}
                 placeholder="Enter Annual Turnover"
                 type="number"
               />
               <SearchableMultiSelect
-                label="17. Major Revenue Sources (Tick all that apply)"
+                label="18. Major Revenue Sources (Tick all that apply)"
                 name="majorRevenueSources"
                 placeholder="Select Revenue Sources"
                 options={revenueSourceOptions}
@@ -835,7 +843,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
             <SectionHeading title="SECTION 6: Partnerships & Market Linkages" />
             <div className="grid gap-6 lg:grid-cols-2">
               <SearchableMultiSelect
-                label="18. Key Buyer Types (Tick all that apply)"
+                label="19. Key Buyer Types (Tick all that apply)"
                 name="keyBuyerTypes"
                 placeholder="Select Buyer Types"
                 options={buyerTypeOptions}
@@ -848,14 +856,14 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
             <SectionHeading title="SECTION 7: Innovation & Future Planning" />
             <div className="grid gap-6 lg:grid-cols-2">
               <InputField
-                label="19. Top 3 Challenges Faced by the FPO"
+                label="20. Top 3 Challenges Faced by the FPO"
                 name="topChallenges"
                 formik={formik}
                 placeholder="Enter Top 3 Challenges"
                 className="lg:col-span-2"
               />
               <InputField
-                label="20. Top 3 Improvement Priorities"
+                label="21. Top 3 Improvement Priorities"
                 name="topPriorities"
                 formik={formik}
                 placeholder="Enter Top 3 Improvement Priorities"

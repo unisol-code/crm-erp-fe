@@ -14,6 +14,36 @@ const useEnviroIndividualDrop = () => {
     const [keyBuyerTypes, setKeyBuyerTypes] = useRecoilState(keyBuyerTypesAtom);
     const [memberCategories, setMemberCategories] = useRecoilState(memberCategoriesAtom);
     const [majorRevenueSources, setMajorRevenueSources] = useRecoilState(majorRevenueSourcesAtom);
+    const [enviroOrganizationName, setEnviroOrganizationName] = useState([]);
+
+    const fetchEnviroOrganizationName = async (sectionName) => {
+        setLoading(true);
+        setError("");
+        try {
+            const params = new URLSearchParams();
+            if (sectionName) {
+                params.append("sectionName", sectionName);
+            }
+            const url = `${conf.apiBaseUrl}adminOrganization/enviro-organization-dropdown${params.toString() ? `?${params}` : ""}`;
+            const res = await fetchData({
+                method: "GET",
+                url,
+            });
+            if (res) {
+                setEnviroOrganizationName(res?.data || []);
+                setLoading(false);
+                return res?.data || [];
+            }
+        } catch (error) {
+            console.error("Error fetching Enviro Organization Name dropdown:", error);
+            setError("Failed to fetch Enviro Organization Name dropdown.");
+            setLoading(false);
+            return [];
+        } finally {
+            setLoading(false);
+        }
+        return [];
+    };
 
     const fetchFrequentlyRequestedServices = async () => {
         setLoading(true);
@@ -148,6 +178,7 @@ const useEnviroIndividualDrop = () => {
         fetchKeyBuyerTypes,
         fetchMemberCategories,
         fetchMajorRevenueSources,
+        fetchEnviroOrganizationName,
         loading,
         error,
         frequentlyRequestedServices,
@@ -155,7 +186,8 @@ const useEnviroIndividualDrop = () => {
         primaryCommunicationChannels,
         keyBuyerTypes,
         memberCategories,
-        majorRevenueSources
+        majorRevenueSources,
+        enviroOrganizationName
     }
 }
 

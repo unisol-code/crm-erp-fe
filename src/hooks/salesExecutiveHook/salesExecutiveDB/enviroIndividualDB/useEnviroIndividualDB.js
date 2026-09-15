@@ -73,13 +73,16 @@ const useEnviroIndividualDB = () => {
             if (res) {
                 toast.success(res?.message);
                 setLoading(false);
+                return true;
             }
+            return false;
         } catch (error) {
             console.error("Error creating enviro individual:", error);
             toast.error(
                 error?.response?.data?.message
             );
             setLoading(false);
+            return false;
         } finally {
             setLoading(false);
         }
@@ -96,13 +99,16 @@ const useEnviroIndividualDB = () => {
             if (res) {
                 toast.success(res?.message);
                 setLoading(false);
+                return true;
             }
+            return false;
         } catch (error) {
             console.error("Error updating enviro individual:", error);
             toast.error(
                 error?.response?.data?.message
             );
             setLoading(false);
+            return false;
         } finally {
             setLoading(false);
         }
