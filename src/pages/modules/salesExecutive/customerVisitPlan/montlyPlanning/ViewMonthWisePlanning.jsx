@@ -3,6 +3,7 @@ import { useNavigate, useParams,useSearchParams } from 'react-router-dom';
 import { useTheme } from '../../../../../hooks/theme/useTheme';
 import useMonthlyPlanning from '../../../../../hooks/salesExecutiveHook/customerVisitPlan/useMonthlyPlanning';
 import BreadCrumb from '../../../../../components/uiComponents/breadcrumb/BreadCrumb';
+import ScrollTable from '../../../../../components/uiComponents/scrollableTable/ScrollableX';
 import Pagination from '../../../../../components/uiComponents/pagination/Pagination';
 import { TiEye } from 'react-icons/ti';
 import { FiFilter, FiCalendar, FiPhone, FiPackage, FiBox } from 'react-icons/fi';
@@ -258,23 +259,24 @@ const ViewMonthWisePlanning = () => {
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
                 {/* Table */}
                 <div className="overflow-x-auto">
+                    <ScrollTable>
                     <table className="min-w-full text-sm">
                         <thead>
                             <tr style={{ backgroundColor: theme.secondaryColor }} className="border-b border-gray-200">
                                 <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: "#374151" }}>
-                                    Sr.No.
+                                    S.No.
                                 </th>
                                 <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: "#374151" }}>
-                                    Date & Time
+                                    Planned Date
                                 </th>
                                 <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: "#374151" }}>
-                                    No. of Calls
+                                    No.of Appointments
                                 </th>
                                 <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: "#374151" }}>
-                                    Products & Quantity
+                                    Target Products
                                 </th>
                                 <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: "#374151" }}>
-                                    Total Quantity
+                                    Planned Units
                                 </th>
                                 <th className="px-6 py-4 text-center text-sm font-semibold" style={{ color: "#374151" }}>
                                     Action
@@ -387,6 +389,7 @@ const ViewMonthWisePlanning = () => {
                             )}
                         </tbody>
                     </table>
+                    </ScrollTable>
                 </div>
 
                 {/* Pagination */}

@@ -24,6 +24,7 @@ import {
   Search,
   AlertCircle,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import BreadCrumb from "../../../../../components/uiComponents/breadcrumb/BreadCrumb";
 import { useTheme } from "../../../../../hooks/theme/useTheme";
 import useMonthlyPlanning from "../../../../../hooks/salesExecutiveHook/customerVisitPlan/useMonthlyPlanning";
@@ -316,6 +317,7 @@ const CreateMonthlyPlanning = () => {
       createPlanningForDate: "",
       selectOrganization: "",
       customOrganization: "",
+      uniqueCode: "",
       nameOfDoctor: "",
       customDoctor: "",
       productToBePromoted: [],
@@ -323,7 +325,7 @@ const CreateMonthlyPlanning = () => {
       designation: "",
        speciality: "",
          visitingHours: "",
-  meetingDuration: "",
+    meetingDuration: "",
     },
     validationSchema: getValidationSchema(),
     onSubmit: async (values, { resetForm, setSubmitting }) => {
@@ -384,6 +386,7 @@ const CreateMonthlyPlanning = () => {
               createPlanningForDate: values.createPlanningForDate,
               selectOrganization: "",
               customOrganization: "",
+              uniqueCode: "",
               nameOfDoctor: "",
               customDoctor: "",
               productToBePromoted: [],
@@ -424,6 +427,7 @@ const CreateMonthlyPlanning = () => {
               createPlanningForDate: values.createPlanningForDate,
               selectOrganization: "",
               customOrganization: "",
+              uniqueCode: "",
               nameOfDoctor: "",
               customDoctor: "",
               productToBePromoted: [],
@@ -526,6 +530,7 @@ const CreateMonthlyPlanning = () => {
       createPlanningForDate: "",
       selectOrganization: "",
       customOrganization: "",
+      uniqueCode: "",
       nameOfDoctor: "",
       customDoctor: "",
       productToBePromoted: [],
@@ -587,10 +592,9 @@ const CreateMonthlyPlanning = () => {
 
   const organizationOptions = [
     ...(organizationList?.data?.map((item) => ({
-      label: item.uniqueCode
-        ? `${item.hospitalName} (${item.uniqueCode})`
-        : item.hospitalName,
+      label: item.hospitalName,
       value: item.hospitalName,
+      uniqueCode: item.uniqueCode,
     })) || []),
     { label: "Other", value: "Other" },
   ];
@@ -633,6 +637,9 @@ const CreateMonthlyPlanning = () => {
     const orgExists = organizationOptions.some(
       (opt) => opt.value === entryToEdit.selectOrganization,
     );
+    const orgOption = organizationOptions.find(
+      (opt) => opt.value === entryToEdit.selectOrganization,
+    );
     const docExists = formatOptions(doctorList).some(
       (opt) => opt.value === entryToEdit.nameOfDoctor,
     );
@@ -644,6 +651,7 @@ const CreateMonthlyPlanning = () => {
       createPlanningForDate: localDateTime,
       selectOrganization: orgExists ? entryToEdit.selectOrganization : "Other",
       customOrganization: orgExists ? "" : entryToEdit.selectOrganization,
+      uniqueCode: orgExists ? orgOption?.uniqueCode || "" : "",
       nameOfDoctor: docExists ? entryToEdit.nameOfDoctor : "Other",
       customDoctor: docExists ? "" : entryToEdit.nameOfDoctor,
       productToBePromoted: Array.isArray(entryToEdit.productToBePromoted) 
@@ -674,6 +682,36 @@ const CreateMonthlyPlanning = () => {
     }),
   };
 
+  // Show existing plans as a toast notification when they change
+  useEffect(() => {
+    if (existingPlans.length > 0 && formik.values.createPlanningForDate) {
+      toast.info(
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-medium text-amber-800">
+            Existing plans for this date:
+          </p>
+          <div className="space-y-0.5">
+            {existingPlans.map((plan, idx) => (
+              <div key={idx} className="text-xs text-amber-700">
+                {plan.formattedTime} - {plan.organization}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-amber-700 mt-1">
+            Tip: Maintain at least 20 min gap for same organization, 40 min for
+            different organizations
+          </p>
+        </div>,
+        {
+          icon: "💡",
+          autoClose: 2000,
+          position: "top-right",
+          hideProgressBar: true,
+        }
+      );
+    }
+  }, [existingPlans, formik.values.createPlanningForDate]);
+
   const getStatusColor = (index) => {
     const colors = [
       "bg-gradient-to-r from-emerald-400 to-teal-400",
@@ -682,34 +720,6 @@ const CreateMonthlyPlanning = () => {
       "bg-gradient-to-r from-orange-400 to-red-400",
     ];
     return colors[index % colors.length];
-  };
-
-  // Format existing plans for display
-  const getExistingPlansDisplay = () => {
-    if (!existingPlans.length) return null;
-    
-    return (
-      <div className="mt-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
-        <div className="flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-amber-800 mb-1">
-              Existing plans for this date:
-            </p>
-            <div className="space-y-1">
-              {existingPlans.map((plan, idx) => (
-                <div key={idx} className="text-xs text-amber-700">
-                  • {plan.formattedTime} - {plan.organization}
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-amber-700 mt-2">
-              💡 Tip: Maintain at least 20 min gap for same organization, 40 min for different organizations
-            </p>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -823,16 +833,15 @@ const CreateMonthlyPlanning = () => {
               {formik.touched.createPlanningForDate &&
                 formik.errors.createPlanningForDate && (
                   <div className="mt-1 flex items-start gap-1 text-xs text-red-500">
-                    <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                    <span>{formik.errors.createPlanningForDate}</span>
-                  </div>
-                )}
+          <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                  <span>{formik.errors.createPlanningForDate}</span>
+                </div>
+              )}
               {editingEntryId && (
                 <p className="mt-1 text-xs text-amber-500">
                   Date cannot be changed while editing
                 </p>
               )}
-              {getExistingPlansDisplay()}
             </div>
 
             <div className="flex flex-col">
@@ -852,6 +861,7 @@ const CreateMonthlyPlanning = () => {
                 )}
                 onChange={(selected) => {
                   formik.setFieldValue("selectOrganization", selected?.value || "");
+                  formik.setFieldValue("uniqueCode", selected?.uniqueCode || "");
                   formik.setFieldValue("customOrganization", "");
                   // Revalidate date when organization changes
                   if (formik.values.createPlanningForDate) {
@@ -901,6 +911,20 @@ const CreateMonthlyPlanning = () => {
                     {formik.errors.customOrganization}
                   </p>
                 )}
+            </div>
+
+            <div className="flex flex-col">
+              <label className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Unique Code
+              </label>
+
+              <input
+                type="text"
+                value={formik.values.uniqueCode}
+                readOnly
+                className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
+                placeholder="Unique Code"
+              />
             </div>
 
             <div className="flex flex-col">
@@ -975,7 +999,7 @@ const CreateMonthlyPlanning = () => {
             </div>
             <div className="flex flex-col">
   <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-    Designation
+   Individual Designation
   </label>
 
   <input
@@ -988,7 +1012,7 @@ const CreateMonthlyPlanning = () => {
 </div>
 <div className="flex flex-col">
   <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-    Speciality
+   Individual Speciality
   </label>
 
   <input
@@ -1001,7 +1025,7 @@ const CreateMonthlyPlanning = () => {
 </div>
 <div className="flex flex-col">
   <label className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-    Visiting Hours
+   Individual Visiting Hours
   </label>
 
   <input
@@ -1014,7 +1038,7 @@ const CreateMonthlyPlanning = () => {
 </div>
 <div className="flex flex-col">
   <label className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-    Duration
+   Individual Available Duration
   </label>
 
   <input
