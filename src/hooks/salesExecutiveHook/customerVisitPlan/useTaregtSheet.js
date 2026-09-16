@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import {
   targetSheetListStateAtom,
   targetSheetDetailsAtom,
+  yearWiseProductTargetSheetStateAtom,
 } from "../../../state/salesExecutiveState/customerVisitPlan/targetSheetState";
 
 const useTargetSheet = () => {
@@ -15,15 +16,19 @@ const useTargetSheet = () => {
   const [targetSheetDetails, setTargetSheetDetails] = useRecoilState(
     targetSheetDetailsAtom
   );
+  const [yearWiseProductTargetSheet, setYearWiseProductTargetSheet] =
+    useRecoilState(yearWiseProductTargetSheetStateAtom);
   const [fetchData] = useFetch();
   const [loading, setLoading] = useState(false);
-  const fetchTargetSheetList = async (page, limit, filters) => {
-    console.log(filters);
+  const [yearWiseProductTargetLoading, setYearWiseProductTargetLoading] =
+    useState(false);
+  const fetchTargetSheetYearList = async () => {
+    // console.log(filters);
     setLoading(true);
     try {
       const res = await fetchData({
         method: "GET",
-        url: `${conf.apiBaseUrl}targets/get-alltargetsheet?page=${page}&limit=${limit}&city=${filters.city}&productName=${filters.productName}&personName=${filters?.personName}&organizationType=${filters.organizationType}&organizationName=${filters.organizationName}`,
+        url: `${conf.apiBaseUrl}targets/showYearWiseTargetSheet`,
       });
       if (res) {
         setTargetSheetList(res);
@@ -35,6 +40,38 @@ const useTargetSheet = () => {
       setLoading(false);
     }
   };
+
+  /**
+   * Fetches the year wise product target sheet list.
+   * Query params expected by the API: { year, page = 1, limit = 10 }
+   */
+  const fetchYearWiseProductTargetSheet = async ({
+    year,
+    page = 1,
+    limit = 10,
+  } = {}) => {
+    setYearWiseProductTargetLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (year) params.append("year", year);
+      params.append("page", page);
+      params.append("limit", limit);
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}targets/showYearWiseProductTargetSheet?${params.toString()}`,
+      });
+      if (res) {
+        setYearWiseProductTargetSheet(res);
+        return res;
+      }
+    } catch (err) {
+      console.error("Error while fetching year wise product target sheet:", err);
+      toast.error("Failed to fetch year wise product target sheet");
+    } finally {
+      setYearWiseProductTargetLoading(false);
+    }
+  };
+
   const fetchOrganizationNames = async () => {
     setLoading(true);
     try {
@@ -113,15 +150,22 @@ const useTargetSheet = () => {
   const resetTargetSheetDetails = () => {
     setTargetSheetDetails(null);
   };
+  const resetYearWiseProductTargetSheet = () => {
+    setYearWiseProductTargetSheet(null);
+  };
   return {
     targetSheetList,
     loading,
-    fetchTargetSheetList,
+    fetchTargetSheetYearList,
     createTargetSheet,
     targetSheetDetails,
     fetchTargetSheetById,
     updateTargetSheet,
     resetTargetSheetDetails,
+    yearWiseProductTargetSheet,
+    yearWiseProductTargetLoading,
+    fetchYearWiseProductTargetSheet,
+    resetYearWiseProductTargetSheet,
   };
 };
 

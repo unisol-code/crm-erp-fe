@@ -14,3 +14,9 @@ export const targetSheetDetailsAtom = atom({
   default:[],
   effects_UNSTABLE:[persistAtom]
 })
+
+export const yearWiseProductTargetSheetStateAtom = atom({
+  key: "yearWiseProductTargetSheetState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});
