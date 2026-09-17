@@ -17,7 +17,7 @@ import Select from "react-select";
 import useDropdown from "../../../../../hooks/dropdown/useDropdown";
 
 const TargetSheet = () => {
-  const { loading, targetSheetList, fetchTargetSheetList } = useTargetSheet();
+  const { loading, targetSheetList, fetchTargetSheetYearList } = useTargetSheet();
   const {
     loading: dropDownLoading,
     organizationList,
@@ -86,7 +86,7 @@ const TargetSheet = () => {
   }, [theme]);
 
   useEffect(() => {
-    fetchTargetSheetList(page, limit, filters);
+    fetchTargetSheetYearList(page, limit, filters);
   }, [page, limit]);
 
   useEffect(() => {
@@ -292,7 +292,7 @@ const TargetSheet = () => {
                 <Button
                   onClick={() => {
                     setPage(1);
-                    fetchTargetSheetList(1, limit, filters);
+                    fetchTargetSheetYearList(1, limit, filters);
                     setShowFilter(false);
                   }}
                   text="Search"

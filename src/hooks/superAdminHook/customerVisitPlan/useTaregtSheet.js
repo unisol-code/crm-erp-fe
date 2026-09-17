@@ -17,7 +17,7 @@ const useTargetSheet = () => {
   );
   const [fetchData] = useFetch();
   const [loading, setLoading] = useState(false);
-  const fetchTargetSheetList = async (page, limit, filters) => {
+  const fetchTargetSheetYearList  = async (page, limit, filters) => {
     console.log(filters);
     setLoading(true);
     try {
@@ -116,7 +116,7 @@ const useTargetSheet = () => {
   return {
     targetSheetList,
     loading,
-    fetchTargetSheetList,
+    fetchTargetSheetYearList,
     createTargetSheet,
     targetSheetDetails,
     fetchTargetSheetById,

@@ -13,6 +13,7 @@ import useEnviroAdminIndDB from "../../../../../../hooks/superAdminHook/superAdm
 import FpoForm from "./tabs/FPO";
 import GovForm from "./tabs/Gov";
 import FarmerForm from "./tabs/Farmer";
+import BasicCommonForm from "./tabs/basicCommanForm";
 import useEnviroIndividualDB from "../../../../../../hooks/salesExecutiveHook/salesExecutiveDB/enviroIndividualDB/useEnviroIndividualDB";
 import { region } from "caniuse-lite";
 
@@ -60,6 +61,8 @@ const initialValues = {
   email: "",
   contact: "",
   villageName: "",
+  segment: "",
+  orgnizationName: "",
   region: "",
   state: "",
   district: "",
@@ -188,6 +191,14 @@ const EnviroIndivualform = () => {
   }, []);
 
   useEffect(() => {
+    if (selectedSector?.value) {
+      enviroindiviualdropdown(selectedSector.value);
+    } else {
+      enviroindiviualdropdown();
+    }
+  }, [selectedSector]);
+
+  useEffect(() => {
     if (id) {
       const type = typeFromState || selectedUserType?.value;
       if (type === "Farmer") {
@@ -232,10 +243,10 @@ const EnviroIndivualform = () => {
         case "FPO":
           return <FpoForm formik={formik} />;
         default:
-          return null;
+          return <BasicCommonForm formik={formik} />;
       }
     }
-    return null;
+    return <BasicCommonForm formik={formik} />;
   };
 
   const individualTypeOptions = Array.isArray(enviroprofile)
@@ -261,7 +272,7 @@ const EnviroIndivualform = () => {
 
       const farmerFields = [
         "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
-        "email", "contact", "villageName", "region", "state", "district", "address",
+        "email", "contact", "villageName", "segment", "orgnizationName", "region", "state", "district", "address",
         "pinCode", "leadGeneratedThrough", "lastMeeting", "nextMeeting",
         "status", "panNo", "sprayingType", "tentativeBuyingDate", "cropType",
         "cropName", "sprayingDuration", "customerType", "department", "taluka",
@@ -270,7 +281,7 @@ const EnviroIndivualform = () => {
 
       const govOfficerFields = [
         "firstName", "lastName", "email", "contact", "birthday", "anniversary",
-        "hobbies", "goals", "officeName", "designation", "region", "state", "district","city" ,"pinCode","officeAddress","districtBlockRegion",
+        "hobbies", "goals", "officeName", "designation", "segment", "orgnizationName", "region", "state", "district","city" ,"pinCode","officeAddress","districtBlockRegion",
         "yearsOfExperience", "frequentlyRequestedServices", "frequentlyRequestedServicesOthers",
         "schemeUnderstanding", "effectiveLanguage", "dataMaintainedDigitally",
         "dataManagementTools", "dataManagementToolsOthers",
@@ -287,6 +298,11 @@ const EnviroIndivualform = () => {
         "salesId", "addedBy", "addedById", "hrmCompanyId", "edit"
       ];
 
+      const commonFields = [
+        "firstName", "lastName", "email", "contact",
+        "segment", "orgnizationName", "region", "state", "district", "villageName", "address", "pinCode",
+      ];
+
       let filteredValues = {};
       const profileType = selectedUserType?.value;
 
@@ -294,6 +310,7 @@ const EnviroIndivualform = () => {
       if (profileType === "Farmer") targetFields = farmerFields;
       else if (profileType === "Government Officer") targetFields = govOfficerFields;
       else if (profileType === "FPO") targetFields = fpoFields;
+      else targetFields = commonFields;
 
       targetFields.forEach(field => {
         if (values[field] !== undefined) {
@@ -310,21 +327,23 @@ const EnviroIndivualform = () => {
         let success = false;
         if (id) {
           if (profileType === "Farmer") {
-            await updateEnviroIndividual(id, filteredValues);
-            success = true;
+            success = await updateEnviroIndividual(id, filteredValues);
           } else if (profileType === "Government Officer") {
             success = await updateEnviroGovtOfficer(id, filteredValues);
           } else if (profileType === "FPO") {
             success = await updateEnviroFPO(id, filteredValues);
+          } else {
+            success = await updateEnviroIndividual(id, filteredValues);
           }
         } else {
           if (profileType === "Farmer") {
-            await createEnviroIndividual(filteredValues);
-            success = true;
+            success = await createEnviroIndividual(filteredValues);
           } else if (profileType === "Government Officer") {
             success = await createEnviroGovtOfficer(filteredValues);
           } else if (profileType === "FPO") {
             success = await createEnviroFPO(filteredValues);
+          } else {
+            success = await createEnviroIndividual(filteredValues);
           }
         }
 
@@ -409,7 +428,7 @@ const EnviroIndivualform = () => {
               isDisabled={!selectedSector || !!id}
             />
 
-            {selectedSector?.value === "Agriculture" && selectedUserType && renderIndividualForm(formik)}
+            {selectedUserType && renderIndividualForm(formik)}
           </div>
 
           {/* Action Buttons */}

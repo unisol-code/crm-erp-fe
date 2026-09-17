@@ -219,6 +219,7 @@ function ViewMonthlyPlanningDetails() {
   const meetingStatusOptions = [
     { label: "Meeting Done", value: "done" },
     { label: "Postponed", value: "postponed" },
+    { label: "Cancelled", value: "cancel" },
   ];
 
   // Validation Schema
@@ -235,6 +236,11 @@ function ViewMonthlyPlanningDetails() {
       then: (schema) => schema.required("Remark is required"),
       otherwise: (schema) => schema.notRequired(),
     }),
+    cancelReason: Yup.string().when("meetingStatus", {
+  is: "cancel",
+  then: (schema) => schema.required("Cancellation reason is required"),
+  otherwise: (schema) => schema.notRequired(),
+}),
     productFeatureBenefitExplainedStatus: Yup.string(),
     productFeatureBenefitExplainedText: Yup.string(),
     isProductDryDemoDone: Yup.string(),
@@ -288,6 +294,7 @@ function ViewMonthlyPlanningDetails() {
       meetingStatus: "",
       postponedDate: "",
       postponedRemark: "",
+      cancelReason: "",
       productFeatureBenefitExplainedStatus: "",
       productFeatureBenefitExplainedText: "",
       isProductDryDemoDone: "",
@@ -321,6 +328,9 @@ function ViewMonthlyPlanningDetails() {
           ...(values.meetingStatus === "postponed" && {
             postponedDate: values.postponedDate ? new Date(values.postponedDate).toISOString() : null,
             remark: values.postponedRemark,
+          }),
+          ...(values.meetingStatus === "cancel" && {
+            cancelReason: values.cancelReason,
           }),
         },
         productFeatureBenefitExplained: {
@@ -378,6 +388,7 @@ function ViewMonthlyPlanningDetails() {
 
   const isMeetingDone = formik.values.meetingStatus === "done";
   const isPostponed = formik.values.meetingStatus === "postponed";
+  const isCancelled = formik.values.meetingStatus === "cancel"; 
   const { canEditMeetingDetails, isPlanningMonthExpired, planningMonth } = validation;
 
   // Set initial values when data loads
@@ -388,6 +399,10 @@ function ViewMonthlyPlanningDetails() {
         meetingStatus: data.meetingStatus?.status || "",
         postponedDate: data.meetingStatus?.postponedDate ? formatDate(data.meetingStatus.postponedDate) : "",
         postponedRemark: data.meetingStatus?.remark || "",
+        cancelReason:
+  data.meetingStatus?.status === "cancel"
+    ? data.meetingStatus?.cancelReason || ""
+    : "",
         productFeatureBenefitExplainedStatus: data.productFeatureBenefitExplained?.status || "",
         productFeatureBenefitExplainedText: data.productFeatureBenefitExplained?.text || "",
         isProductDryDemoDone: data.isProductDryDemoDone?.status || "",
@@ -517,6 +532,9 @@ function ViewMonthlyPlanningDetails() {
                           formik.setFieldValue("postponedDate", "");
                           formik.setFieldValue("postponedRemark", "");
                         }
+                         if (e.target.value !== "cancel") {
+      formik.setFieldValue("cancelReason", "");
+    }
                       }}
                       options={meetingStatusOptions}
                       // disabled={!canEditMeetingDetails}
@@ -559,6 +577,26 @@ function ViewMonthlyPlanningDetails() {
                     </div>
                   </div>
                 )}
+                {/* Cancelled Reason */}
+{isCancelled && (
+  <div className="mt-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Reason for Cancellation *
+    </label>
+    <TextArea
+      name="cancelReason"
+      value={formik.values.cancelReason}
+      onChange={(val) => formik.setFieldValue("cancelReason", val)}
+      placeholder="Please specify why this meeting was cancelled..."
+      rows={3}
+      // disabled={!canEditMeetingDetails}
+      className="md:w-1/2"
+    />
+    {formik.touched.cancelReason && formik.errors.cancelReason && (
+      <p className="text-red-500 text-xs mt-1">{formik.errors.cancelReason}</p>
+    )}
+  </div>
+)}
               </div>
 
               {/* Discussion Points - Only when Meeting Done */}

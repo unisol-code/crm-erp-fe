@@ -216,6 +216,8 @@ const GovForm = ({ formik }) => {
     fetchDataManagementTools,
     frequentlyRequestedServices,
     dataManagementTools,
+    fetchEnviroOrganizationName,
+    enviroOrganizationName,
   } = useEnviroIndividualDrop();
 
   const {
@@ -234,15 +236,38 @@ const GovForm = ({ formik }) => {
     fetchAllStateName,
     fetchDistrictList,
     districtList,
+    fetchSegment,
+    segment,
   } = useDropdown();
+
+  const segmentOptions = Array.isArray(segment)
+    ? segment.map((seg) => ({ label: seg, value: seg }))
+    : [];
+
+  const organizationNameOptions = Array.isArray(enviroOrganizationName)
+    ? enviroOrganizationName.map((item) => {
+        const name = item?.name || item?.organizationName || item;
+        return { label: name, value: name };
+      })
+    : [];
 
   useEffect(() => {
     fetchFrequentlyRequestedServices();
     fetchDataManagementTools();
     fetchAllRegion();
     fetchAllStateName();
+    fetchSegment();
     fetchEnviroSalesPersonsList();
+    fetchEnviroOrganizationName();
   }, []);
+
+  useEffect(() => {
+    if (formik.values.segment) {
+      fetchEnviroOrganizationName(formik.values.segment);
+    } else {
+      fetchEnviroOrganizationName();
+    }
+  }, [formik.values.segment]);
 
   const handleSelectDistrict = (stateCode) => {
     if (stateCode) {
@@ -322,11 +347,30 @@ const GovForm = ({ formik }) => {
         formik={formik}
         placeholder="Enter Designation"
       />
-      <FormField
-        name="orgnizationName"
-        label="3. Orgnization Name "
+      <Select
+        label="Segment"
+        name="segment"
         formik={formik}
-        placeholder="Enter Orgnization Name "
+        options={segmentOptions}
+        loading={locationLoading}
+        onChange={(val) => {
+          formik.setFieldValue("segment", val || "");
+          formik.setFieldValue("orgnizationName", "");
+          fetchEnviroOrganizationName(val || "");
+        }}
+      />
+      <Select
+        label="3. Orgnization Name"
+        name="orgnizationName"
+        formik={formik}
+        options={organizationNameOptions}
+        loading={locationLoading}
+        placeholder={
+          !formik.values.segment
+            ? "Select Segment first"
+            : "Select Organization Name"
+        }
+        isDisabled={!formik.values.segment}
       />
       <FormField
         name="districtBlockRegion"

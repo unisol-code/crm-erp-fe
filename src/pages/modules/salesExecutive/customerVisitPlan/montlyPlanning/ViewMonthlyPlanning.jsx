@@ -5,6 +5,7 @@ import { FiFilter } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
 import Pagination from "../../../../../components/uiComponents/pagination/Pagination.jsx";
 import BreadCrumb from "../../../../../components/uiComponents/breadcrumb/BreadCrumb.jsx";
+import ScrollTable from "../../../../../components/uiComponents/scrollableTable/ScrollableX.jsx";
 import { useTheme } from "../../../../../hooks/theme/useTheme.js";
 import Button from "../../../../../components/uiComponents/button/Button.jsx";
 import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
@@ -281,6 +282,7 @@ const ViewMonthlyPlanning = () => {
 
         {/* Table */}
         <div className="shadow overflow-x-auto mt-3 rounded-t-2xl border border-gray-200">
+         <ScrollTable>
           <table className="min-w-full text-sm text-left text-gray-700 table-auto">
             <thead
               className="sticky top-0 z-10 text-xs uppercase bg-gray-100 border-b border-gray-300"
@@ -289,7 +291,7 @@ const ViewMonthlyPlanning = () => {
               <tr className="text-left">
                 {[
                   "Sr. No.",
-                  "Date",
+                  "Time",
                   "Organization Name",
                   "Person Name",
                   "Product To Be Promoted",
@@ -341,7 +343,8 @@ const ViewMonthlyPlanning = () => {
                         {(page - 1) * limit + index + 1}
                       </td>
                       <td className="p-4 text-[17px] text-[#252C58]">
-                        {formatDateTime(entry.date)}
+                        {/* {formatDateTime(entry.date)} */}
+                        {entry.time}
                       </td>
                       <td className="p-4 text-[17px] text-[#252C58]">
                         {entry.organizationName || "-"}
@@ -398,6 +401,7 @@ const ViewMonthlyPlanning = () => {
               )}
             </tbody>
           </table>
+          </ScrollTable>
         </div>
 
         {/* Pagination */}

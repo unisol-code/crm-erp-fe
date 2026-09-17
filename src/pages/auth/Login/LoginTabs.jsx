@@ -100,7 +100,7 @@ const LoginTabs = () => {
         <div className="w-full max-w-2xl px-6 space-y-6 md:px-10">
           {/* Tab Buttons */}
           <div className="flex flex-col justify-center w-full overflow-hidden bg-white rounded-full shadow-lg md:flex-row">
-            {["superadmin", "salesmanager", "salesExecutive"].map((role) => (
+            {["superadmin", "salesExecutive"].map((role) => (
               <button
                 key={role}
                 className={`flex-1 py-2 text-xl font-normal transition-all duration-300 ${

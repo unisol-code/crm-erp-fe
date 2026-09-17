@@ -17,7 +17,7 @@ import Select from "react-select";
 import useDropdown from "../../../../../hooks/dropdown/useDropdown";
 
 const TargetSheet = () => {
-  const { loading, targetSheetList, fetchTargetSheetList } = useTargetSheet();
+  const { loading, targetSheetList, fetchTargetSheetYearList } = useTargetSheet();
   const {
     loading: dropDownLoading,
     organizationList,
@@ -86,8 +86,8 @@ const TargetSheet = () => {
   }, [theme]);
 
   useEffect(() => {
-    fetchTargetSheetList(page, limit, filters);
-  }, [page, limit]);
+    fetchTargetSheetYearList();
+  }, []);
 
   useEffect(() => {
     fetchDoctorList();
@@ -112,17 +112,7 @@ const TargetSheet = () => {
           </h2>
 
           <div className="flex items-center gap-2">
-            {/* Toggle Filter */}
-            <button
-              onClick={() => setShowFilter(!showFilter)}
-              className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-gray-700 rounded-md hover:bg-yellow-100 text-sm "
-              style={{
-                background: theme.primaryColor,
-                color: "#ffffff",
-              }}
-            >
-              <FiFilter size={16} />
-            </button>
+
 
             {/* Create New */}
             <Button
@@ -138,169 +128,6 @@ const TargetSheet = () => {
           className="h-1 border-0"
           style={{ backgroundColor: theme.secondaryColor }}
         />
-        {/* Filter Modal Popup */}
-        {showFilter && (
-          <div className="fixed inset-0 shadow-2xl bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-white shadow-lg w-[60%] relative border border-gray-200">
-              <h2 className="text-lg font-semibold mb-4 p-2 text-black text-center bg-[var(--secondary-color)]">
-                Filter Options
-              </h2>
-
-              <button
-                onClick={() => setShowFilter(false)}
-                className="absolute top-2 right-2 text-gray-900 text-xl"
-              >
-                <AiOutlineClose />
-              </button>
-
-              <div className="grid grid-cols-2 gap-3 mb-2 p-2">
-                <Select
-                  isLoading={dropDownLoading}
-                  isClearable
-                  placeholder="Select Product name"
-                  classNamePrefix="react-select"
-                  value={
-                    filters.productName
-                      ? {
-                        label: filters.productName,
-                        value: filters.productName,
-                      }
-                      : null
-                  }
-                  onChange={(option) =>
-                    handleSelectChange(
-                      "productName",
-                      option ? option.value : ""
-                    )
-                  }
-                  options={productList?.map((pro) => ({
-                    label: pro.name,
-                    value: pro.name,
-                  }))}
-                />
-                <Select
-                  isLoading={dropDownLoading}
-                  isClearable
-                  placeholder="Select City"
-                  classNamePrefix="react-select"
-                  value={
-                    filters.city
-                      ? { label: filters.city, value: filters.city }
-                      : null
-                  }
-                  onChange={(option) =>
-                    handleSelectChange("city", option ? option.value : "")
-                  }
-                  options={
-                    Array.isArray(cityNames)
-                      ? cityNames.map((c) => ({ label: c, value: c }))
-                      : []
-                  }
-                />
-                <Select
-                  isLoading={dropDownLoading}
-                  isClearable
-                  placeholder="Select Speciality"
-                  classNamePrefix="react-select"
-                  value={
-                    filters.specialty
-                      ? { label: filters.specialty, value: filters.specialty }
-                      : null
-                  }
-                  onChange={(option) =>
-                    handleSelectChange("specialty", option ? option.value : "")
-                  }
-                  options={
-                    Array.isArray(speciality)
-                      ? speciality.map((s) => ({ label: s, value: s }))
-                      : []
-                  }
-                />
-                <Select
-                  isLoading={dropDownLoading}
-                  isClearable
-                  placeholder="Select Person name"
-                  classNamePrefix="react-select"
-                  value={
-                    filters.personName
-                      ? { label: filters.personName, value: filters.personName }
-                      : null
-                  }
-                  onChange={(option) =>
-                    handleSelectChange("personName", option ? option.value : "")
-                  }
-                  options={doctorList?.map((doc) => ({
-                    label: doc.fullName,
-                    value: doc.fullName,
-                  }))}
-                />
-                <Select
-                  isLoading={dropDownLoading}
-                  isClearable
-                  placeholder="Select Organization"
-                  classNamePrefix="react-select"
-                  value={
-                    filters.organizationName
-                      ? {
-                        label: filters.organizationName,
-                        value: filters.organizationName,
-                      }
-                      : null
-                  }
-                  onChange={(option) =>
-                    handleSelectChange(
-                      "organizationName",
-                      option ? option.value : ""
-                    )
-                  }
-                  options={organizationList?.data?.map((org) => ({
-                    label: org,
-                    value: org,
-                  }))}
-                />
-
-                <Select
-                  isLoading={dropDownLoading}
-                  isClearable
-                  placeholder="Select Organization Type"
-                  classNamePrefix="react-select"
-                  value={
-                    filters.organizationType
-                      ? {
-                        label: filters.organizationType,
-                        value: filters.organizationType,
-                      }
-                      : null
-                  }
-                  onChange={(option) =>
-                    handleSelectChange(
-                      "organizationType",
-                      option ? option.value : ""
-                    )
-                  }
-                  options={
-                    Array.isArray(organizationTypes)
-                      ? organizationTypes.map((typeOrg) => ({
-                        label: typeOrg,
-                        value: typeOrg,
-                      }))
-                      : []
-                  }
-                />
-              </div>
-              <div className="text-center p-2 w-full">
-                <Button
-                  onClick={() => {
-                    setPage(1);
-                    fetchTargetSheetList(1, limit, filters);
-                    setShowFilter(false);
-                  }}
-                  text="Search"
-                />
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Table */}
 
@@ -315,25 +142,13 @@ const TargetSheet = () => {
                   Sr. No.
                 </th>
                 <th className="p-4 text-base font-semibold text-center">
-                  Name of Hospital
+                  Year
                 </th>
                 <th className="p-4 text-base font-semibold text-center">
-                  Product Target Quantity(Yearly)
+                  Product Count
                 </th>
                 <th className="p-4 text-base font-semibold text-center">
-                  Product Achievement(Yearly)
-                </th>
-                <th className="p-4 text-base font-semibold text-center">
-                  Product Target Quantity(Quarterly)
-                </th>
-                <th className="p-4 text-base font-semibold text-center">
-                  Product Achievement(Quarterly)
-                </th>
-                <th className="p-4 text-base font-semibold text-center">
-                  Product Target Quantity(Monthly)
-                </th>
-                <th className="p-4 text-base font-semibold text-center">
-                  Product Achievement(Monthly)
+                  Hospital count 
                 </th>
                 <th className="p-4 text-base font-semibold text-center">
                   Action
@@ -359,25 +174,13 @@ const TargetSheet = () => {
                       {(page - 1) * limit + index + 1}
                     </td>
                     <td className="p-2 text-[17px] font-normal text-center  text-[#252C58]">
-                      {target.organization || "N/A"}
+                      {target.year || "N/A"}
                     </td>
                     <td className="px-3 py-3 text-[17px] font-normal text-center text-[#252C58]">
-                      {target?.year?.target || "N/A"}
+                      {target?.productCount || "N/A"}
                     </td>
                     <td className="p-4 text-[17px] font-normal  text-center  text-[#252C58]">
-                      {target?.year?.achievement || "N/A"}
-                    </td>
-                    <td className="px-3 py-3 text-[17px] font-normal text-center text-[#252C58]">
-                      {target?.quarter?.target || "N/A"}
-                    </td>
-                    <td className="p-4 text-[17px] font-normal  text-center  text-[#252C58]">
-                      {target?.quarter?.achievement || "N/A"}
-                    </td>
-                    <td className="px-3 py-3 text-[17px] font-normal text-center text-[#252C58]">
-                      {target?.month?.target || "N/A"}
-                    </td>
-                    <td className="p-4 text-[17px] font-normal  text-center  text-[#252C58]">
-                      {target?.month?.achievement || "N/A"}
+                      {target?.hospitalCount || "N/A"}
                     </td>
                     <td className="p-2 text-center text-[19px] font-normal text-[#252C58] align-middle">
                       <div className="flex justify-center">

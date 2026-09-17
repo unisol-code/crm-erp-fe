@@ -203,7 +203,7 @@ const validationSchema = yup.object({
   //   otherwise: (schema) => schema.nullable(),
   // }),
   // primaryCommunicationChannels: yup.array().min(1, "Select at least one communication channel").required("Communication Channels are required"),
-  // majorCropsHandled: yup.string().trim().required("Major Crops/Commodities are required"),
+  // majorCropsHandledHandled: yup.string().trim().required("Major Crops/Commodities are required"),
   // annualTurnover: yup
   //   .number()
   //   .typeError("Enter a number")
@@ -295,6 +295,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
       officialContactNumber: "",
       officialEmailId: "",
       departmentWebsite: "",
+      associatedWithOrganization: "",
       totalOfficers: "",
       activeSchemes: "",
       servicesOffered: {
@@ -337,7 +338,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
       memberCategories: [],
       memberCategoriesOthers: "",
       primaryCommunicationChannels: [],
-      majorCropsHandled: "",
+      majorCropsHandled: [{ crop: "", duration: "" }],
       annualTurnover: "",
       majorRevenueSources: [],
       majorRevenueSourcesOthers: "",
@@ -387,12 +388,13 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
         officialContactNumber: d.officialContactNumber || "",
         officialEmailId: d.officialEmailId || "",
         departmentWebsite: d.departmentWebsite || "",
+        associatedWithOrganization: d.associatedWithOrganization || "",
         totalOfficers: d.totalOfficers || "",
         activeSchemes: d.activeSchemes || "",
         servicesOffered: {
           Subsidy: false, Insurance: false, Training: false,
           "Soil Testing": false, "Seed Distribution": false,
-          Advisory: false, "Credit Support": false, Others: false,
+          Advisory: false, "Credit Support": false, Others: false,    
         },
         servicesOthersText: "",
         communicationChannels: {
@@ -416,7 +418,14 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
         memberCategories: d.memberCategories || [],
         memberCategoriesOthers: d.memberCategoriesOthers || "",
         primaryCommunicationChannels: d.primaryCommunicationChannels || [],
-        majorCropsHandled: d.majorCropsHandled || "",
+        majorCropsHandled:
+          Array.isArray(d.majorCropsHandled) && d.majorCropsHandled.length
+            ? d.majorCropsHandled.map((item) =>
+                typeof item === "string" ? { crop: item, duration: "" } : item
+              )
+            : d.majorCropsHandled
+              ? [{ crop: d.majorCropsHandled, duration: "" }]
+              : [{ crop: "", duration: "" }],
         annualTurnover: d.annualTurnover || "",
         majorRevenueSources: d.majorRevenueSources || [],
         majorRevenueSourcesOthers: d.majorRevenueSourcesOthers || "",
@@ -474,6 +483,29 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
     label: item,
     value: item,
   }));
+
+  const handleCropChange = (index, field, value) => {
+    const updated = [...(formik.values.majorCropsHandled || [])];
+    updated[index] = { ...updated[index], [field]: value };
+    formik.setFieldValue("majorCropsHandled", updated);
+  };
+
+  const addCropRow = () => {
+    formik.setFieldValue("majorCropsHandled", [
+      ...(formik.values.majorCropsHandled || []),
+      { crop: "", duration: "" },
+    ]);
+  };
+
+  const removeCropRow = (index) => {
+    const updated = (formik.values.majorCropsHandled || []).filter(
+      (_, i) => i !== index
+    );
+    formik.setFieldValue(
+      "majorCropsHandled",
+      updated.length ? updated : [{ crop: "", duration: "" }]
+    );
+  };
 
   return (
     <div className="">
@@ -730,6 +762,12 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
                 placeholder="Enter URL"
                 type="url"
               />
+              <InputField
+                label="10. Associated With Organization"
+                name="associatedWithOrganization"
+                formik={formik}
+                placeholder="Enter Organization Name"
+              />
             </div>
           </section>
 
@@ -737,14 +775,14 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
             <SectionHeading title="SECTION 2: Governance & Staffing" />
             <div className="grid gap-6 lg:grid-cols-2">
               <InputField
-                label="10. Number of Board Members"
+                label="11. Number of Board Members"
                 name="numberOfBoardMembers"
                 formik={formik}
                 placeholder="Enter Number"
                 type="number"
               />
               <InputField
-                label="11. Number of Staff Members"
+                label="12. Number of Staff Members"
                 name="numberOfStaffMembers"
                 formik={formik}
                 placeholder="Enter Number"
@@ -757,14 +795,14 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
             <SectionHeading title="SECTION 3: Member Profile & Engagement" />
             <div className="grid gap-6 lg:grid-cols-2">
               <InputField
-                label="12. Total Active Members"
+                label="13. Total Active Members"
                 name="totalActiveMembers"
                 formik={formik}
                 placeholder="Enter Total Members"
                 type="number"
               />
               <SearchableMultiSelect
-                label="13. Member Categories (Tick all that apply)"
+                label="14. Member Categories (Tick all that apply)"
                 name="memberCategories"
                 placeholder="Select Member Categories"
                 options={memberCategoryOptions}
@@ -780,7 +818,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
                 />
               )}
               <SearchableMultiSelect
-                label="14. Primary Communication Channels (Tick all that apply)"
+                label="15. Primary Communication Channels (Tick all that apply)"
                 name="primaryCommunicationChannels"
                 placeholder="Select Communication Channels"
                 options={communicationChannelOptions}
@@ -792,13 +830,68 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
           <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
             <SectionHeading title="SECTION 4: Services & Business Operations" />
             <div className="grid gap-6 lg:grid-cols-2">
-              <InputField
-                label="15. Major Crops/Commodities Handled"
-                name="majorCropsHandled"
-                formik={formik}
-                placeholder="Enter Major Crops/Commodities"
-                className="lg:col-span-2"
-              />
+              <div className="lg:col-span-2 flex flex-col gap-3">
+                <label className="text-sm font-semibold text-slate-700">
+                  16. Major Crops/Commodities Handled
+                </label>
+
+                <div className="hidden sm:flex sm:items-center sm:gap-3">
+                  <span className="flex-1 text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Crop / Commodity
+                  </span>
+                  <span className="flex-1 text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Duration
+                  </span>
+                  <span className="w-[46px] shrink-0" />
+                </div>
+
+                {(formik.values.majorCropsHandled || []).map((row, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col gap-3 sm:flex-row sm:items-center"
+                  >
+                    <input
+                      type="text"
+                      value={row.crop || ""}
+                      onChange={(e) =>
+                        handleCropChange(index, "crop", e.target.value)
+                      }
+                      placeholder="Enter Crop/Commodity"
+                      className="w-full flex-1 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    />
+                    <input
+                      type="text"
+                      value={row.duration || ""}
+                      onChange={(e) =>
+                        handleCropChange(index, "duration", e.target.value)
+                      }
+                      placeholder="Enter Duration (e.g. 4 months)"
+                      className="w-full flex-1 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeCropRow(index)}
+                      disabled={
+                        isView || (formik.values.majorCropsHandled || []).length === 1
+                      }
+                      className="flex h-[46px] w-full shrink-0 items-center justify-center rounded-2xl border border-red-200 bg-red-50 text-lg font-bold text-red-500 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40 sm:w-[46px]"
+                      aria-label="Remove crop"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addCropRow}
+                  disabled={isView}
+                  className="flex w-fit items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-600 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <span className="text-lg leading-none">+</span> Add
+                  Crop/Commodity
+                </button>
+              </div>
             </div>
           </section>
 
@@ -806,14 +899,14 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
             <SectionHeading title="SECTION 5: Finance & Member Benefits" />
             <div className="grid gap-6 lg:grid-cols-2">
               <InputField
-                label="16. Annual Turnover"
+                label="17. Annual Turnover"
                 name="annualTurnover"
                 formik={formik}
                 placeholder="Enter Annual Turnover"
                 type="number"
               />
               <SearchableMultiSelect
-                label="17. Major Revenue Sources (Tick all that apply)"
+                label="18. Major Revenue Sources (Tick all that apply)"
                 name="majorRevenueSources"
                 placeholder="Select Revenue Sources"
                 options={revenueSourceOptions}
@@ -835,7 +928,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
             <SectionHeading title="SECTION 6: Partnerships & Market Linkages" />
             <div className="grid gap-6 lg:grid-cols-2">
               <SearchableMultiSelect
-                label="18. Key Buyer Types (Tick all that apply)"
+                label="19. Key Buyer Types (Tick all that apply)"
                 name="keyBuyerTypes"
                 placeholder="Select Buyer Types"
                 options={buyerTypeOptions}
@@ -848,14 +941,14 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
             <SectionHeading title="SECTION 7: Innovation & Future Planning" />
             <div className="grid gap-6 lg:grid-cols-2">
               <InputField
-                label="19. Top 3 Challenges Faced by the FPO"
+                label="20. Top 3 Challenges Faced by the FPO"
                 name="topChallenges"
                 formik={formik}
                 placeholder="Enter Top 3 Challenges"
                 className="lg:col-span-2"
               />
               <InputField
-                label="20. Top 3 Improvement Priorities"
+                label="21. Top 3 Improvement Priorities"
                 name="topPriorities"
                 formik={formik}
                 placeholder="Enter Top 3 Improvement Priorities"
