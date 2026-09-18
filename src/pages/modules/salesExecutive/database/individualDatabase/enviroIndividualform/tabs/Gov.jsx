@@ -348,13 +348,13 @@ const GovForm = ({ formik }) => {
         loading={locationLoading}
         onChange={(val) => {
           formik.setFieldValue("segment", val || "");
-          formik.setFieldValue("orgnizationName", "");
+          formik.setFieldValue("organizationName", "");
           fetchEnviroOrganizationName(val || "");
         }}
       />
       <Select
-        label="3. Orgnization Name"
-        name="orgnizationName"
+        label="3. Organization Name"
+        name="organizationName"
         formik={formik}
         options={organizationNameOptions}
         loading={locationLoading}
