@@ -60,6 +60,9 @@ import {
   TargetSheetForm,
   PreviewTargetSheet,
   EditTargetSheet,
+  ViewYearWiseProductTargetSheet,
+  ViewHospitalIdWiseTargetSheet,
+  ViewProductIdWiseTargetSheet,
 } from "./pages/modules/salesExecutive/customerVisitPlan/targetSheet/index";
 import TerritorySnapshot from "./pages/modules/salesExecutive/customerVisitPlan/territorySnapshot/TerritorySnapshot";
 
@@ -853,6 +856,41 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <PreviewTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+          <Route
+            path="/sales-executive/target-sheet/view-year-wise-product/:id"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <ViewYearWiseProductTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+
+            <Route
+            path="/sales-executive/target-sheet/view-hospital-id-wise/:id"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <ViewHospitalIdWiseTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+
+          <Route
+            path="/sales-executive/target-sheet/view-product-id-wise/:id"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <ViewProductIdWiseTargetSheet />
               </SalesExecutiveLayout>
             }
           />

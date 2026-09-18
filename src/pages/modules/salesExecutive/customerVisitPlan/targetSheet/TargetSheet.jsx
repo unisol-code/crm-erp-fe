@@ -55,7 +55,7 @@ const TargetSheet = () => {
     }));
   };
   const handleViewClick = (id) => {
-    navigate(`/sales-executive/target-sheet/view-target-sheet/${id}`);
+    navigate(`/sales-executive/target-sheet/view-year-wise-product/${id}`);
   };
 
   const onPageChange = (data) => {
@@ -185,7 +185,7 @@ const TargetSheet = () => {
                     <td className="p-2 text-center text-[19px] font-normal text-[#252C58] align-middle">
                       <div className="flex justify-center">
                         <button
-                          onClick={() => handleViewClick(target._id)}
+                          onClick={() => handleViewClick(target.year)}
                           className="text-black hover:bg-blue-200  rounded-full w-8 h-8 flex items-center justify-center"
                           style={{
                             color: theme.primaryColor,

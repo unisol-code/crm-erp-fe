@@ -7,6 +7,9 @@ import {
   targetSheetListStateAtom,
   targetSheetDetailsAtom,
   yearWiseProductTargetSheetStateAtom,
+  hospitalWiseTargetSheetStateAtom,
+  hospitalIdWiseTargetSheetStateAtom,
+  productIdWiseTargetSheetStateAtom,
 } from "../../../state/salesExecutiveState/customerVisitPlan/targetSheetState";
 
 const useTargetSheet = () => {
@@ -18,9 +21,21 @@ const useTargetSheet = () => {
   );
   const [yearWiseProductTargetSheet, setYearWiseProductTargetSheet] =
     useRecoilState(yearWiseProductTargetSheetStateAtom);
+  const [hospitalWiseTargetSheet, setHospitalWiseTargetSheet] =
+    useRecoilState(hospitalWiseTargetSheetStateAtom);
+  const [hospitalIdWiseTargetSheet, setHospitalIdWiseTargetSheet] =
+    useRecoilState(hospitalIdWiseTargetSheetStateAtom);
+  const [productIdWiseTargetSheet, setProductIdWiseTargetSheet] =
+    useRecoilState(productIdWiseTargetSheetStateAtom);
   const [fetchData] = useFetch();
   const [loading, setLoading] = useState(false);
   const [yearWiseProductTargetLoading, setYearWiseProductTargetLoading] =
+    useState(false);
+  const [hospitalWiseTargetLoading, setHospitalWiseTargetLoading] =
+    useState(false);
+  const [hospitalIdWiseTargetLoading, setHospitalIdWiseTargetLoading] =
+    useState(false);
+  const [productIdWiseTargetLoading, setProductIdWiseTargetLoading] =
     useState(false);
   const fetchTargetSheetYearList = async () => {
     // console.log(filters);
@@ -70,6 +85,115 @@ const useTargetSheet = () => {
     } finally {
       setYearWiseProductTargetLoading(false);
     }
+  };
+
+  /**
+   * Fetches the hospital wise target sheet list.
+   * Query params expected by the API: { year, page = 1, limit = 10 }
+   */
+  const fetchHospitalWiseTargetSheet = async ({
+    year,
+    page = 1,
+    limit = 10,
+  } = {}) => {
+    setHospitalWiseTargetLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (year) params.append("year", year);
+      params.append("page", page);
+      params.append("limit", limit);
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}targets/showhospitalWiseTargetSheet?${params.toString()}`,
+      });
+      if (res) {
+        setHospitalWiseTargetSheet(res);
+        return res;
+      }
+    } catch (err) {
+      console.error("Error while fetching hospital wise target sheet:", err);
+      toast.error("Failed to fetch hospital wise target sheet");
+    } finally {
+      setHospitalWiseTargetLoading(false);
+    }
+  };
+
+  const resetHospitalWiseTargetSheet = () => {
+    setHospitalWiseTargetSheet(null);
+  };
+
+  /**
+   * Fetches the hospital id wise target sheet list.
+   * Query params expected by the API: { id, page = 1, limit = 10 }
+   */
+  const fetchHospitalIdWiseTargetSheet = async ({
+    id,
+    page = 1,
+    limit = 10,
+  } = {}) => {
+    setHospitalIdWiseTargetLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.append("page", page);
+      params.append("limit", limit);
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}targets/show-hospital-id-wise-target-sheet/${id}?${params.toString()}`,
+      });
+      if (res) {
+        setHospitalIdWiseTargetSheet(res);
+        return res;
+      }
+    } catch (err) {
+      console.error(
+        "Error while fetching hospital id wise target sheet:",
+        err
+      );
+      toast.error("Failed to fetch hospital id wise target sheet");
+    } finally {
+      setHospitalIdWiseTargetLoading(false);
+    }
+  };
+
+  const resetHospitalIdWiseTargetSheet = () => {
+    setHospitalIdWiseTargetSheet(null);
+  };
+
+  /**
+   * Fetches the product id wise target sheet list.
+   * Query params expected by the API: { id, page = 1, limit = 10 }
+   */
+  const fetchProductIdWiseTargetSheet = async ({
+    id,
+    page = 1,
+    limit = 10,
+  } = {}) => {
+    setProductIdWiseTargetLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.append("page", page);
+      params.append("limit", limit);
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}targets/show-product-id-wise-target-sheet/${id}?${params.toString()}`,
+      });
+      if (res) {
+        setProductIdWiseTargetSheet(res);
+        return res;
+      }
+    } catch (err) {
+      console.error(
+        "Error while fetching product id wise target sheet:",
+        err
+      );
+      toast.error("Failed to fetch product id wise target sheet");
+    } finally {
+      setProductIdWiseTargetLoading(false);
+    }
+  };
+
+  const resetProductIdWiseTargetSheet = () => {
+    setProductIdWiseTargetSheet(null);
   };
 
   const fetchOrganizationNames = async () => {
@@ -166,6 +290,18 @@ const useTargetSheet = () => {
     yearWiseProductTargetLoading,
     fetchYearWiseProductTargetSheet,
     resetYearWiseProductTargetSheet,
+    hospitalWiseTargetSheet,
+    hospitalWiseTargetLoading,
+    fetchHospitalWiseTargetSheet,
+    resetHospitalWiseTargetSheet,
+    hospitalIdWiseTargetSheet,
+    hospitalIdWiseTargetLoading,
+    fetchHospitalIdWiseTargetSheet,
+    resetHospitalIdWiseTargetSheet,
+    productIdWiseTargetSheet,
+    productIdWiseTargetLoading,
+    fetchProductIdWiseTargetSheet,
+    resetProductIdWiseTargetSheet,
   };
 };
 
