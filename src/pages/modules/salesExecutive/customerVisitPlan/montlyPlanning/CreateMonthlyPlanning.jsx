@@ -319,6 +319,7 @@ const CreateMonthlyPlanning = () => {
       customOrganization: "",
       uniqueCode: "",
       nameOfDoctor: "",
+       individualUniqueCode: "",
       customDoctor: "",
       productToBePromoted: [],
       callObjective: "",
@@ -606,6 +607,7 @@ const CreateMonthlyPlanning = () => {
   ...(doctorList?.map((doctor) => ({
     label: doctor.fullName,
     value: doctor.fullName,
+     uniqueCode: doctor.uniqueCode,
     designation: doctor.designation,
     speciality: doctor.speciality,
     visitDetails: doctor.visitDetails,
@@ -915,7 +917,7 @@ const CreateMonthlyPlanning = () => {
 
             <div className="flex flex-col">
               <label className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Unique Code
+               Orgnization Unique Code
               </label>
 
               <input
@@ -923,7 +925,7 @@ const CreateMonthlyPlanning = () => {
                 value={formik.values.uniqueCode}
                 readOnly
                 className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
-                placeholder="Unique Code"
+                placeholder="Organization Unique Code"
               />
             </div>
 
@@ -944,6 +946,10 @@ const CreateMonthlyPlanning = () => {
                 )}
                 onChange={(selected) => {
                   formik.setFieldValue("nameOfDoctor", selected?.value || "");
+                      formik.setFieldValue(
+      "individualUniqueCode",
+      selected?.uniqueCode || ""
+    );
                     formik.setFieldValue("designation", selected?.designation || "");
                       formik.setFieldValue("speciality", selected?.speciality || "");
                         formik.setFieldValue(
@@ -997,6 +1003,20 @@ const CreateMonthlyPlanning = () => {
                 </p>
               )}
             </div>
+            <div className="flex flex-col">
+  <label className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+    Individual Unique Code
+  </label>
+
+  <input
+    type="text"
+    value={formik.values.individualUniqueCode}
+    readOnly
+    className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
+    placeholder="Individual Unique Code"
+  />
+</div>
+            
             <div className="flex flex-col">
   <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
    Individual Designation

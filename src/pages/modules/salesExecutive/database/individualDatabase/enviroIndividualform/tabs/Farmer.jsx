@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getIn } from "formik";
 import useDropdown from "../../../../../../../hooks/dropdown/useDropdown";
+import useEnviroIndividualDrop from "../../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroIndividualDrop";
 import ReactSelect from "react-select";
 import _ from "lodash";
 
@@ -54,6 +55,7 @@ const Select = ({
   loading,
   placeholder,
   onChange,
+  isDisabled,
 }) => {
   const value = getIn(formik.values, name, "");
   const touched = getIn(formik.touched, name, false);
@@ -73,6 +75,7 @@ const Select = ({
         isLoading={loading}
         name={name}
         value={selectedOption}
+        isDisabled={isDisabled}
         onChange={(selected) => {
           formik.setFieldValue(name, selected?.value || "");
           if (onChange) onChange(selected?.value || "");
@@ -158,6 +161,10 @@ const CheckboxGroup = ({ name, label, options, formik }) => {
 const FarmerForm = ({ formik }) => {
   const [selectedStateCode, setSelectedStateCode] = useState("");
   const {
+    fetchEnviroOrganizationName,
+    enviroOrganizationName,
+  } = useEnviroIndividualDrop();
+  const {
     fetchAllRegion,
     region,
     allStateName,
@@ -167,12 +174,35 @@ const FarmerForm = ({ formik }) => {
     fetchAllStateName,
     fetchDistrictList,
     districtList,
+    fetchSegment,
+    segment,
   } = useDropdown();
+
+  const segmentOptions = Array.isArray(segment)
+    ? segment.map((seg) => ({ label: seg, value: seg }))
+    : [];
+
+  const organizationNameOptions = Array.isArray(enviroOrganizationName)
+    ? enviroOrganizationName.map((item) => {
+        const name = item?.name || item?.organizationName || item;
+        return { label: name, value: name };
+      })
+    : [];
 
   useEffect(() => {
     fetchAllRegion();
     fetchAllStateName();
+    fetchSegment();
+    fetchEnviroOrganizationName();
   }, []);
+
+  useEffect(() => {
+    if (formik.values.segment) {
+      fetchEnviroOrganizationName(formik.values.segment);
+    } else {
+      fetchEnviroOrganizationName();
+    }
+  }, [formik.values.segment]);
 
   const handleSelectDistrict = (stateCode) => {
     if (stateCode) {
@@ -227,6 +257,33 @@ const FarmerForm = ({ formik }) => {
         label="Total Land Owned"
         formik={formik}
         placeholder="Enter total land"
+      />
+
+      {/* Segment & Organization Name */}
+      <Select
+        label="Segment"
+        name="segment"
+        formik={formik}
+        options={segmentOptions}
+        loading={locationLoading}
+        onChange={(val) => {
+          formik.setFieldValue("segment", val || "");
+          formik.setFieldValue("orgnizationName", "");
+          fetchEnviroOrganizationName(val || "");
+        }}
+      />
+      <Select
+        label="Orgnization Name"
+        name="orgnizationName"
+        formik={formik}
+        options={organizationNameOptions}
+        loading={locationLoading}
+        placeholder={
+          !formik.values.segment
+            ? "Select Segment first"
+            : "Select Organization Name"
+        }
+        isDisabled={!formik.values.segment}
       />
 
       {/* Address Details */}
