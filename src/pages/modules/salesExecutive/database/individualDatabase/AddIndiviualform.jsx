@@ -485,6 +485,12 @@ const AddNewIndividual = () => {
 
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedSector, setSelectedSector] = useState(null);
+  const [selectedType, setSelectedType] = useState(null);
+  const typeOptions = [
+    { label: "Customer", value: "Customer" },
+    { label: "Vendor", value: "Vendor" },
+    { label: "Client", value: "Client" },
+  ];
   const { theme } = useTheme();
   const {
     fetchSegment,
@@ -532,6 +538,13 @@ const AddNewIndividual = () => {
       label: getindividualByID.segment,
       value: getindividualByID.segment,
     });
+
+    if (getindividualByID.type) {
+      setSelectedType({
+        label: getindividualByID.type,
+        value: getindividualByID.type,
+      });
+    }
   }, [getindividualByID]);
 
   const getInitialValues = () => {
@@ -608,7 +621,7 @@ const AddNewIndividual = () => {
 
         <div className="p-6 bg-white shadow-md rounded-b-[10px]">
           {/* Doctor and Segment Dropdowns */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Segment Dropdown */}
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -636,6 +649,44 @@ const AddNewIndividual = () => {
   }
 }}
                 placeholder="Select Segment"
+                isClearable
+                isDisabled={isEdit || isView}
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    minHeight: "50px",
+                    borderRadius: "0.5rem",
+                    borderColor: state.isFocused ? "#60A5FA" : "#556581",
+                    boxShadow: state.isFocused ? "0 0 0 2px #60A5FA" : "none",
+                  }),
+                  valueContainer: (base) => ({
+                    ...base,
+                    padding: "0 6px",
+                    fontSize: "1rem",
+                  }),
+                  input: (base) => ({
+                    ...base,
+                    margin: 0,
+                    padding: 0,
+                  }),
+                  placeholder: (base) => ({
+                    ...base,
+                    color: "#9CA3AF",
+                  }),
+                }}
+              />
+            </div>
+
+            {/* Type Dropdown (Customer / Vendor / Client) */}
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Type:
+              </label>
+              <ReactSelect
+                options={typeOptions}
+                value={selectedType}
+                onChange={(selected) => setSelectedType(selected)}
+                placeholder="Select Type"
                 isClearable
                 isDisabled={isEdit || isView}
                 styles={{
@@ -724,6 +775,7 @@ const AddNewIndividual = () => {
                   const payload = {
                     ...values,
                     segment: selectedSector?.value,
+                    type: selectedType?.value,
                     officialEmail: values.officialEmail,
                     personalEmail: values.personalEmail,
                     designation: values.otherDesignation
@@ -798,6 +850,12 @@ const AddNewIndividual = () => {
                     formik.setFieldValue("segment", selectedSector.value);
                   }
                 }, [selectedSector]);
+
+                useEffect(() => {
+                  if (selectedType) {
+                    formik.setFieldValue("type", selectedType.value);
+                  }
+                }, [selectedType]);
 
                 console.log("Formik State:", {
                   isValid: formik.isValid,
