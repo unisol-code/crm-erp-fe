@@ -27,3 +27,5 @@ export const keyBuyerTypesAtom = atom(createPersistedAtom("keyBuyerTypesKey", []
 export const memberCategoriesAtom = atom(createPersistedAtom("memberCategoriesKey", []));
 export const majorRevenueSourcesAtom = atom(createPersistedAtom("majorRevenueSourcesKey", []));
 export const salesPersonListAtom = atom(createPersistedAtom("salesPersonListKey", []));
+
+export const enviroIndDropdownAtom = atom(createPersistedAtom("enviroIndDropdownKey", []));
