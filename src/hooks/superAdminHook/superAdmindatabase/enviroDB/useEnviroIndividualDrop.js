@@ -1,7 +1,7 @@
 import { useState } from "react";
 import useFetch from "../../../useFetch";
 import { useRecoilState } from "recoil";
-import { dataManagementToolsAtom, frequentlyRequestedServicesAtom, keyBuyerTypesAtom, majorRevenueSourcesAtom, memberCategoriesAtom, primaryCommunicationChannelsAtom } from "../../../../state/superAdminDatabaseState/enviroDB/enviroAdminDBState";
+import { dataManagementToolsAtom, frequentlyRequestedServicesAtom, keyBuyerTypesAtom, majorRevenueSourcesAtom, memberCategoriesAtom, primaryCommunicationChannelsAtom, enviroIndDropdownAtom } from "../../../../state/superAdminDatabaseState/enviroDB/enviroAdminDBState";
 import conf from "../../../../config";
 
 const useEnviroIndividualDrop = () => {
@@ -15,6 +15,7 @@ const useEnviroIndividualDrop = () => {
     const [memberCategories, setMemberCategories] = useRecoilState(memberCategoriesAtom);
     const [majorRevenueSources, setMajorRevenueSources] = useRecoilState(majorRevenueSourcesAtom);
     const [enviroOrganizationName, setEnviroOrganizationName] = useState([]);
+    const [enviroIndDropdown, setEnviroIndDropdown] = useRecoilState(enviroIndDropdownAtom);
 
     const fetchEnviroOrganizationName = async (sectionName) => {
         setLoading(true);
@@ -37,6 +38,38 @@ const useEnviroIndividualDrop = () => {
         } catch (error) {
             console.error("Error fetching Enviro Organization Name dropdown:", error);
             setError("Failed to fetch Enviro Organization Name dropdown.");
+            setLoading(false);
+            return [];
+        } finally {
+            setLoading(false);
+        }
+        return [];
+    };
+
+    const fetchEnviroIndDropdown = async (segment, typeOfProfile) => {
+        setLoading(true);
+        setError("");
+        try {
+            const params = new URLSearchParams();
+            if (segment) {
+                params.append("segment", segment);
+            }
+            if (typeOfProfile) {
+                params.append("typeOfProfile", typeOfProfile);
+            }
+            const url = `${conf.apiBaseUrl}enviro-individual/get-dropdown-for-enviro-individuals${params.toString() ? `?${params}` : ""}`;
+            const res = await fetchData({
+                method: "GET",
+                url,
+            });
+            if (res) {
+                setEnviroIndDropdown(res?.data || []);
+                setLoading(false);
+                return res?.data || [];
+            }
+        } catch (error) {
+            console.error("Error fetching Enviro Ind Dropdown:", error);
+            setError("Failed to fetch Enviro Ind Dropdown.");
             setLoading(false);
             return [];
         } finally {
@@ -179,6 +212,7 @@ const useEnviroIndividualDrop = () => {
         fetchMemberCategories,
         fetchMajorRevenueSources,
         fetchEnviroOrganizationName,
+        fetchEnviroIndDropdown,
         loading,
         error,
         frequentlyRequestedServices,
@@ -187,7 +221,8 @@ const useEnviroIndividualDrop = () => {
         keyBuyerTypes,
         memberCategories,
         majorRevenueSources,
-        enviroOrganizationName
+        enviroOrganizationName,
+        enviroIndDropdown,
     }
 }
 

@@ -268,13 +268,13 @@ const FarmerForm = ({ formik }) => {
         loading={locationLoading}
         onChange={(val) => {
           formik.setFieldValue("segment", val || "");
-          formik.setFieldValue("orgnizationName", "");
+          formik.setFieldValue("organizationName", "");
           fetchEnviroOrganizationName(val || "");
         }}
       />
       <Select
-        label="Orgnization Name"
-        name="orgnizationName"
+        label="Organization Name"
+        name="organizationName"
         formik={formik}
         options={organizationNameOptions}
         loading={locationLoading}

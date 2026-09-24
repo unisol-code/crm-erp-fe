@@ -27,8 +27,10 @@ import {
 import { toast } from "react-toastify";
 import BreadCrumb from "../../../../../components/uiComponents/breadcrumb/BreadCrumb";
 import { useTheme } from "../../../../../hooks/theme/useTheme";
+import useCompany from "../../../../../hooks/common/useCompany";
 import useMonthlyPlanning from "../../../../../hooks/salesExecutiveHook/customerVisitPlan/useMonthlyPlanning";
 import useDropdown from "../../../../../hooks/dropdown/useDropdown";
+import useEnviroIndividualDrop from "../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroIndividualDrop";
 import Button from "../../../../../components/uiComponents/button/Button";
 import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderSpinner";
 
@@ -220,6 +222,7 @@ const getExistingPlansForDate = (selectedDateTimeLocal, existingEntries) => {
 
 const CreateMonthlyPlanning = () => {
   const { theme } = useTheme();
+  const { isEnviroSolution } = useCompany();
   const navigate = useNavigate();
   const {
     createMonthlyPlanning,
@@ -241,8 +244,19 @@ const CreateMonthlyPlanning = () => {
     productList,
     fetchDoctorList,
     doctorList,
+    fetchSegment,
+    segment,
+    enviroindiviualdropdown,
+    enviroprofile,
     loading: dropdownLoading,
   } = useDropdown();
+
+  const {
+    fetchEnviroOrganizationName,
+    fetchEnviroIndDropdown,
+    enviroOrganizationName,
+    enviroIndDropdown,
+  } = useEnviroIndividualDrop();
 
   const [planningEntries, setPlanningEntries] = useState([]);
   const [showTable, setShowTable] = useState(false);
@@ -255,6 +269,9 @@ const CreateMonthlyPlanning = () => {
     fetchProductsNames();
     fetchOrganizationNames();
     fetchDoctorList();
+    fetchSegment();
+    enviroindiviualdropdown();
+    fetchEnviroIndDropdown();
   }, []);
 
   // Validation schema with dynamic date validation
@@ -326,7 +343,9 @@ const CreateMonthlyPlanning = () => {
       designation: "",
        speciality: "",
          visitingHours: "",
-    meetingDuration: "",
+      meetingDuration: "",
+      segment: "",
+      profileType: "",
     },
     validationSchema: getValidationSchema(),
     onSubmit: async (values, { resetForm, setSubmitting }) => {
@@ -395,7 +414,9 @@ const CreateMonthlyPlanning = () => {
                 designation: '',
     speciality: '',
     visitingHours: '',
-    meetingDuration: '',
+      meetingDuration: '',
+      segment: "",
+      profileType: "",
             }
           });
           // Clear any validation errors
@@ -432,11 +453,13 @@ const CreateMonthlyPlanning = () => {
               nameOfDoctor: "",
               customDoctor: "",
               productToBePromoted: [],
-              callObjective: "",
+               callObjective: "",
                     designation: '',
     speciality: '',
     visitingHours: '',
-    meetingDuration: '',
+     meetingDuration: '',
+      segment: "",
+      profileType: "",
             }
           });
           // Clear any validation errors
@@ -470,6 +493,18 @@ const CreateMonthlyPlanning = () => {
 
     return () => clearTimeout(debounceTimer);
   }, [formik.values.createPlanningForDate, editingEntryId]);
+
+  // Fetch organizations and individuals when segment/profile changes (enviro mode)
+  useEffect(() => {
+    if (isEnviroSolution) {
+      if (formik.values.segment) {
+        fetchEnviroOrganizationName(formik.values.segment);
+      } else {
+        fetchEnviroOrganizationName();
+      }
+      fetchEnviroIndDropdown(formik.values.segment, formik.values.profileType);
+    }
+  }, [formik.values.segment, formik.values.profileType, isEnviroSolution]);
 
   // Update existing plans when data changes
   useEffect(() => {
@@ -536,6 +571,8 @@ const CreateMonthlyPlanning = () => {
       customDoctor: "",
       productToBePromoted: [],
       callObjective: "",
+      segment: "",
+      profileType: "",
     });
     formik.setErrors({});
     formik.setTouched({});
@@ -591,30 +628,50 @@ const CreateMonthlyPlanning = () => {
     });
   };
 
-  const organizationOptions = [
-    ...(organizationList?.data?.map((item) => ({
-      label: item.hospitalName,
-      value: item.hospitalName,
-      uniqueCode: item.uniqueCode,
-    })) || []),
-    { label: "Other", value: "Other" },
-  ];
+  const organizationOptions = isEnviroSolution
+    ? [
+        ...(enviroOrganizationName?.map((item) => ({
+          label: item?.name || item?.organizationName || item,
+          value: item?.name || item?.organizationName || item,
+          uniqueCode: item?.uniqueCode || "",
+        })) || []),
+        { label: "Other", value: "Other" },
+      ]
+    : [
+        ...(organizationList?.data?.map((item) => ({
+          label: item.hospitalName,
+          value: item.hospitalName,
+          uniqueCode: item.uniqueCode,
+        })) || []),
+        { label: "Other", value: "Other" },
+      ];
   // const doctorOptions = [
   //   ...formatOptions(doctorList),
   //   { label: "Other", value: "Other" },
   // ];
-  const doctorOptions = [
-  ...(doctorList?.map((doctor) => ({
-    label: doctor.fullName,
-    value: doctor.fullName,
-     uniqueCode: doctor.uniqueCode,
-    designation: doctor.designation,
-    speciality: doctor.speciality,
-    visitDetails: doctor.visitDetails,
-
-  })) || []),
-  { label: "Other", value: "Other" },
-];
+  const doctorOptions = isEnviroSolution
+    ? [
+        ...(enviroIndDropdown?.map((individual) => ({
+          label: individual?.name || individual?.fullName || individual,
+          value: individual?.name || individual?.fullName || individual,
+          uniqueCode: individual?.uniqueCode || "",
+          designation: individual?.designation || "",
+          speciality: individual?.speciality || "",
+          visitDetails: individual?.visitDetails || {},
+        })) || []),
+        { label: "Other", value: "Other" },
+      ]
+    : [
+        ...(doctorList?.map((doctor) => ({
+          label: doctor.fullName,
+          value: doctor.fullName,
+           uniqueCode: doctor.uniqueCode,
+          designation: doctor.designation,
+          speciality: doctor.speciality,
+          visitDetails: doctor.visitDetails,
+        })) || []),
+        { label: "Other", value: "Other" },
+      ];
   const productOptions = formatOptions(productList);
   const callObjectiveOptions = formatOptions(
     [
@@ -642,22 +699,28 @@ const CreateMonthlyPlanning = () => {
     const orgOption = organizationOptions.find(
       (opt) => opt.value === entryToEdit.selectOrganization,
     );
-    const docExists = formatOptions(doctorList).some(
+    const docExists = (isEnviroSolution ? formatOptions(enviroIndDropdown) : formatOptions(doctorList)).some(
       (opt) => opt.value === entryToEdit.nameOfDoctor,
     );
 
     // Convert UTC to local datetime-local format
     const localDateTime = convertUTCToLocalDateTime(entryToEdit.createPlanningForDate);
 
+    if (isEnviroSolution) {
+      fetchEnviroOrganizationName();
+    }
+
     formik.setValues({
       createPlanningForDate: localDateTime,
+      segment: "",
+      profileType: "",
       selectOrganization: orgExists ? entryToEdit.selectOrganization : "Other",
       customOrganization: orgExists ? "" : entryToEdit.selectOrganization,
       uniqueCode: orgExists ? orgOption?.uniqueCode || "" : "",
       nameOfDoctor: docExists ? entryToEdit.nameOfDoctor : "Other",
       customDoctor: docExists ? "" : entryToEdit.nameOfDoctor,
-      productToBePromoted: Array.isArray(entryToEdit.productToBePromoted) 
-        ? entryToEdit.productToBePromoted 
+      productToBePromoted: Array.isArray(entryToEdit.productToBePromoted)
+        ? entryToEdit.productToBePromoted
         : [entryToEdit.productToBePromoted],
       callObjective: entryToEdit.callObjective || "",
     });
@@ -846,6 +909,52 @@ const CreateMonthlyPlanning = () => {
               )}
             </div>
 
+            {isEnviroSolution && (
+              <div className="flex flex-col">
+                <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Section
+                </label>
+                <Select
+                  key={`section-select-${formik.values.segment}`}
+                  isLoading={dropdownLoading}
+                  options={
+                    Array.isArray(segment)
+                      ? segment.map((seg) => ({ label: seg, value: seg }))
+                      : []
+                  }
+                  value={
+                    Array.isArray(segment)
+                      ? segment.find((s) => s === formik.values.segment)
+                        ? { label: formik.values.segment, value: formik.values.segment }
+                        : null
+                      : null
+                  }
+                  onChange={(selected) => {
+                    formik.setFieldValue("segment", selected?.value || "");
+                    formik.setFieldValue("profileType", "");
+                    formik.setFieldValue("selectOrganization", "");
+                    formik.setFieldValue("customOrganization", "");
+                    formik.setFieldValue("uniqueCode", "");
+                    formik.setFieldValue("nameOfDoctor", "");
+                    formik.setFieldValue("customDoctor", "");
+                    if (selected?.value) {
+                      enviroindiviualdropdown(selected.value);
+                    }
+                  }}
+                  onBlur={() => formik.setFieldTouched("segment", true)}
+                  isClearable
+                  placeholder="Select Section"
+                  styles={customSelectStyles}
+                  classNamePrefix="react-select"
+                />
+                {formik.touched.segment && formik.errors.segment && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {formik.errors.segment}
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-col">
               <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 <Building2
@@ -928,6 +1037,37 @@ const CreateMonthlyPlanning = () => {
                 placeholder="Organization Unique Code"
               />
             </div>
+
+            {Array.isArray(enviroprofile) && enviroprofile.length > 0 && (
+              <div className="flex flex-col">
+                <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Profile Type
+                </label>
+                <Select
+                  key={`profile-select-${formik.values.profileType}`}
+                  isLoading={dropdownLoading}
+                  options={enviroprofile.map((item) => ({ label: item, value: item }))}
+                  value={
+                    enviroprofile.find((p) => p === formik.values.profileType)
+                      ? { label: formik.values.profileType, value: formik.values.profileType }
+                      : null
+                  }
+                  onChange={(selected) => {
+                    formik.setFieldValue("profileType", selected?.value || "");
+                  }}
+                  onBlur={() => formik.setFieldTouched("profileType", true)}
+                  isClearable
+                  placeholder="Select Profile Type"
+                  styles={customSelectStyles}
+                  classNamePrefix="react-select"
+                />
+                {formik.touched.profileType && formik.errors.profileType && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {formik.errors.profileType}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="flex flex-col">
               <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -1017,58 +1157,62 @@ const CreateMonthlyPlanning = () => {
   />
 </div>
             
-            <div className="flex flex-col">
-  <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-   Individual Designation
-  </label>
+              {!isEnviroSolution && (
+                <>
+                  <div className="flex flex-col">
+    <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+     Individual Designation
+    </label>
 
-  <input
-    type="text"
-    value={formik.values.designation}
-    readOnly
-    className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
-    placeholder="Designation"
-  />
-</div>
-<div className="flex flex-col">
-  <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-   Individual Speciality
-  </label>
+    <input
+      type="text"
+      value={formik.values.designation}
+      readOnly
+      className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
+      placeholder="Designation"
+    />
+  </div>
+  <div className="flex flex-col">
+    <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+     Individual Speciality
+    </label>
 
-  <input
-    type="text"
-    value={formik.values.speciality}
-    readOnly
-    className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
-    placeholder="Speciality"
-  />
-</div>
-<div className="flex flex-col">
-  <label className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-   Individual Visiting Hours
-  </label>
+    <input
+      type="text"
+      value={formik.values.speciality}
+      readOnly
+      className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
+      placeholder="Speciality"
+    />
+  </div>
+  <div className="flex flex-col">
+    <label className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+     Individual Visiting Hours
+    </label>
 
-  <input
-    type="text"
-    value={formik.values.visitingHours}
-    readOnly
-    className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
-    placeholder="Visiting Hours"
-  />
-</div>
-<div className="flex flex-col">
-  <label className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-   Individual Available Duration
-  </label>
+    <input
+      type="text"
+      value={formik.values.visitingHours}
+      readOnly
+      className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
+      placeholder="Visiting Hours"
+    />
+  </div>
+  <div className="flex flex-col">
+    <label className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+     Individual Available Duration
+    </label>
 
-  <input
-    type="text"
-    value={formik.values.meetingDuration}
-    readOnly
-    className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
-    placeholder="Duration"
-  />
-</div>
+    <input
+      type="text"
+      value={formik.values.meetingDuration}
+      readOnly
+      className="w-full rounded-xl border border-slate-200 bg-gray-100 p-2 text-sm"
+      placeholder="Duration"
+    />
+  </div>
+                </>
+              )}
 <div className="md:col-span-2">
   <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
     <p className="text-sm font-medium text-amber-800">

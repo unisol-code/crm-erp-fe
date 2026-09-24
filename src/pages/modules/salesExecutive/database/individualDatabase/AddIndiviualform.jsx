@@ -485,6 +485,7 @@ const AddNewIndividual = () => {
 
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedSector, setSelectedSector] = useState(null);
+
   const { theme } = useTheme();
   const {
     fetchSegment,
@@ -532,6 +533,7 @@ const AddNewIndividual = () => {
       label: getindividualByID.segment,
       value: getindividualByID.segment,
     });
+
   }, [getindividualByID]);
 
   const getInitialValues = () => {
@@ -724,6 +726,7 @@ const AddNewIndividual = () => {
                   const payload = {
                     ...values,
                     segment: selectedSector?.value,
+                    type: selectedType?.value,
                     officialEmail: values.officialEmail,
                     personalEmail: values.personalEmail,
                     designation: values.otherDesignation

@@ -62,7 +62,7 @@ const initialValues = {
   contact: "",
   villageName: "",
   segment: "",
-  orgnizationName: "",
+  organizationName: "",
   region: "",
   state: "",
   district: "",
@@ -272,7 +272,7 @@ const EnviroIndivualform = () => {
 
       const farmerFields = [
         "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
-        "email", "contact", "villageName", "segment", "orgnizationName", "region", "state", "district", "address",
+        "email", "contact", "villageName", "segment", "organizationName", "region", "state", "district", "address",
         "pinCode", "leadGeneratedThrough", "lastMeeting", "nextMeeting",
         "status", "panNo", "sprayingType", "tentativeBuyingDate", "cropType",
         "cropName", "sprayingDuration", "customerType", "department", "taluka",
@@ -281,7 +281,7 @@ const EnviroIndivualform = () => {
 
       const govOfficerFields = [
         "firstName", "lastName", "email", "contact", "birthday", "anniversary",
-        "hobbies", "goals", "officeName", "designation", "segment", "orgnizationName", "region", "state", "district","city" ,"pinCode","officeAddress","districtBlockRegion",
+        "hobbies", "goals", "officeName", "designation", "segment", "organizationName", "region", "state", "district","city" ,"pinCode","officeAddress","districtBlockRegion",
         "yearsOfExperience", "frequentlyRequestedServices", "frequentlyRequestedServicesOthers",
         "schemeUnderstanding", "effectiveLanguage", "dataMaintainedDigitally",
         "dataManagementTools", "dataManagementToolsOthers",
@@ -300,7 +300,7 @@ const EnviroIndivualform = () => {
 
       const commonFields = [
         "firstName", "lastName", "email", "contact",
-        "segment", "orgnizationName", "region", "state", "district", "villageName", "address", "pinCode",
+        "segment", "organizationName", "region", "state", "district", "villageName", "address", "pinCode",
       ];
 
       let filteredValues = {};

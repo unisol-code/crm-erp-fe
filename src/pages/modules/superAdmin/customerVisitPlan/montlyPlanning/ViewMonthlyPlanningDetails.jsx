@@ -507,7 +507,7 @@ function ViewMonthlyPlanningDetails() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Visit Date *</label>
                     <DateInput
                       name="visitDate"
-                      value={formik.values.visitDate}
+                      value={data.createPlanningForDate ? formatDate(data.createPlanningForDate) : ""}
                       onChange={(val) => formik.setFieldValue("visitDate", val)}
                       // disabled={!canEditMeetingDetails}
                     />

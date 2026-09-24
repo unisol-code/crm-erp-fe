@@ -97,6 +97,7 @@ const ViewMonthlyPlanning = () => {
       "Person Name": entry.personName || "-",
       "Product To Be Promoted": entry.productToBePromoted || "-",
       "Call Objective": entry.callObjective || "-",
+      "Meeting Status": entry.meetingStatus.status || "-",
     }));
 
     const ws = XLSX.utils.json_to_sheet(dataRows);
@@ -119,6 +120,7 @@ const ViewMonthlyPlanning = () => {
       { wch: 25 }, // Person Name
       { wch: 30 }, // Product To Be Promoted
       { wch: 25 }, // Call Objective
+      { wch: 25 }, // Meeting Status
     ];
 
     const wb = XLSX.utils.book_new();
@@ -296,6 +298,7 @@ const ViewMonthlyPlanning = () => {
                   "Person Name",
                   "Product To Be Promoted",
                   "Call Objective",
+                  "Meeting Status",
                   "Action",
                 ].map((heading, idx) => (
                   <th
@@ -357,6 +360,11 @@ const ViewMonthlyPlanning = () => {
                       </td>
                       <td className="p-4 text-[17px] text-[#252C58]">
                         {entry.callObjective || "-"}
+                      </td>
+                        <td className="p-4 text-[17px] text-[#252C58]">
+                        {/* {entry.meetingStatus.status || "-"} */}
+                        {(entry.meetingStatus.status ? entry.meetingStatus.status.charAt(0).toUpperCase() + entry.meetingStatus.status.slice(1) : "-")}
+
                       </td>
                       <td className="p-2 text-[19px] text-[#252C58] align-middle">
                         <div className="flex justify-center">
