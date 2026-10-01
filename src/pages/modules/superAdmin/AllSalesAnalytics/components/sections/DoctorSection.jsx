@@ -56,6 +56,7 @@ export function DoctorSection({
   onItemsPerPageChange,
   onSearch,
   onSalesPersonFilter,
+  isEnviroSolution = false,
 }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(null);
@@ -330,7 +331,8 @@ export function DoctorSection({
         />
       </div>
 
-      {/* ✅ Doctor Directory Table */}
+      {/* ✅ Doctor Directory Table - hidden for Enviro Solution (Individuals tab is used instead) */}
+      {!isEnviroSolution && (
       <ChartCard title="Doctor Directory" subtitle="Click a row for full drill-down" className="mt-4">
         {/* Search and Filter Controls */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -479,6 +481,7 @@ export function DoctorSection({
           )}
         </div>
       </ChartCard>
+      )}
 
       {/* Doctor Detail Dialog */}
       <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>

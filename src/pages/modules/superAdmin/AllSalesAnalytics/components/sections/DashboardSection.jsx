@@ -12,8 +12,6 @@ import {
   Legend,
   Pie,
   PieChart,
-  RadialBar,
-  RadialBarChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -89,7 +87,6 @@ export function DashboardSection({
    organizationData,
    onSearch,
    specialityData,
-   targetData,
    overviewData,
    allIndividualData,
    fetchAllIndividualData,
@@ -99,6 +96,11 @@ export function DashboardSection({
     fetchAllOrganizationsData,
     specificOrganizationData,
     fetchSpecificOrganizationData,
+    isEnviroSolution = false,
+    enviroData = null,
+    enviroKpis = [],
+    enviroLoading = false,
+    enviroError = null,
   }) {
    const [drillDistrict, setDrillDistrict] = useState(null);
    const [productCat, setProductCat] = useState("All");
@@ -117,6 +119,7 @@ export function DashboardSection({
    const [orgLoading, setOrgLoading] = useState(false);
    const [orgPage, setOrgPage] = useState(1);
   const [orgLimit, setOrgLimit] = useState(10);
+  const [showAllSpecialities, setShowAllSpecialities] = useState(false);
 
   // Use props pagination or local state
   const currentPage = paginationData.currentPage || page;
@@ -219,18 +222,46 @@ export function DashboardSection({
     });
   }, [filteredHospitals]);
 
-  const specialityChartData = useMemo(() => {
-    if (specialityData?.data && Array.isArray(specialityData.data)) {
-      return specialityData.data.map((item) => ({
-        name: item.speciality || "Unknown",
-        value: item.totalDoctors || 0,
-        profiles: item.profiles || [],
-        totalDoctors: item.totalDoctors || 0,
-      }));
-    }
-    return [];
-  }, [specialityData]);
+ const specialityChartData = useMemo(() => {
+  const data = specialityData?.data;
 
+  // âœ… NEW format: { specialityWise: {...}, profileWiseSpeciality: {...} }
+  if (data?.specialityWise && typeof data.specialityWise === "object") {
+    const { specialityWise, profileWiseSpeciality = {} } = data;
+
+    return Object.entries(specialityWise).map(([name, value]) => {
+      // Build profiles breakdown for tooltip
+      const profiles = [];
+      Object.entries(profileWiseSpeciality).forEach(([profileType, specialities]) => {
+        if (specialities?.[name]) {
+          profiles.push({
+            typeOfDoctorProfile: profileType,
+            count: specialities[name],
+          });
+        }
+      });
+
+      return {
+        name,
+        value,
+        profiles,
+        totalDoctors: value,
+      };
+    });
+  }
+
+  // ðŸ” Fallback: old array format (keep for backward compatibility)
+  if (Array.isArray(data)) {
+    return data.map((item) => ({
+      name: item.speciality || "Unknown",
+      value: item.totalDoctors || 0,
+      profiles: item.profiles || [],
+      totalDoctors: item.totalDoctors || 0,
+    }));
+  }
+
+  return [];
+}, [specialityData]);
   const formatSpecialityName = (name) => {
     if (!name) return "Unknown";
     // Remove speciality codes like (CARDIO), (ENDO) etc.
@@ -238,84 +269,67 @@ export function DashboardSection({
     return cleanName;
   };
 
-  // ✅ Get top speciality
+  // âœ… Get top speciality
   const topSpeciality = useMemo(() => {
     if (specialityChartData.length === 0) return { name: "N/A", value: 0 };
     const sorted = [...specialityChartData].sort((a, b) => b.value - a.value);
     return sorted[0];
   }, [specialityChartData]);
 
-  // ✅ Calculate total doctors across all specialities
+  // âœ… Calculate total doctors across all specialities
   const totalDoctors = useMemo(() => {
     return specialityChartData.reduce((sum, item) => sum + item.value, 0);
   }, [specialityChartData]);
 
-  // ✅ Get profile distribution (Physician vs Surgeon)
-  const profileDistribution = useMemo(() => {
-    const profiles = {
-      Physician: 0,
-      Surgeon: 0,
-    };
+  // âœ… Doctors grouped by profile type (Surgeon, Physician, Administration, ...)
+  //    Feeds the "Doctors by Profile Type" donut + legend.
+  const profileTotals = useMemo(() => {
+    const result = [];
+    const profileWise = specialityData?.data?.profileWiseSpeciality;
 
-    specialityData?.data?.forEach((item) => {
-      item.profiles?.forEach((profile) => {
-        if (profile.typeOfDoctorProfile === "Physician") {
-          profiles.Physician += profile.count || 0;
-        } else if (profile.typeOfDoctorProfile === "Surgeon") {
-          profiles.Surgeon += profile.count || 0;
-        }
+    if (profileWise && typeof profileWise === "object") {
+      Object.entries(profileWise).forEach(([profileType, specialities]) => {
+        const total = Object.values(specialities || {}).reduce(
+          (sum, v) => sum + (Number(v) || 0),
+          0
+        );
+        if (total > 0) result.push({ name: profileType, value: total });
       });
-    });
+    } else if (Array.isArray(specialityData?.data)) {
+      // Fallback for old array format
+      const byProfile = {};
+      specialityData.data.forEach((item) => {
+        item.profiles?.forEach((profile) => {
+          byProfile[profile.typeOfDoctorProfile] =
+            (byProfile[profile.typeOfDoctorProfile] || 0) + (profile.count || 0);
+        });
+      });
+      Object.entries(byProfile).forEach(([name, value]) => {
+        if (value > 0) result.push({ name, value });
+      });
+    }
 
-    return profiles;
+    return result.sort((a, b) => b.value - a.value);
   }, [specialityData]);
 
-  // ✅ Process target data from API
-  const targetChartData = useMemo(() => {
-    if (targetData?.data && Array.isArray(targetData.data)) {
-      return targetData.data;
-    }
-    return [];
-  }, [targetData]);
+  // âœ… Specialities sorted by doctors - biggest first (ranked bar list)
+  const sortedSpecialities = useMemo(
+    () => [...specialityChartData].sort((a, b) => b.value - a.value),
+    [specialityChartData],
+  );
 
-  // ✅ Process target data from API - FIXED for array response
-  const targetStats = useMemo(() => {
-    if (!targetData?.data || !Array.isArray(targetData.data) || targetData.data.length === 0) {
-      console.log("ℹ️ No target data available");
-      return {
-        totalTarget: 0,
-        totalAchieved: 0,
-        achievementPercentage: 0,
-        monthlyTarget: 0,
-        monthlyAchieved: 0,
-        quarterlyTarget: 0,
-        quarterlyAchieved: 0,
-        yearlyTarget: 0,
-        yearlyAchieved: 0,
-      };
-    }
-
-    const data = targetData.data[0];
-    console.log("📊 Target Data:", data);
-
-    return {
-      totalTarget: data.totalTarget || data.monthlyTarget || 0,
-      totalAchieved: data.totalAchieved || data.monthlyAchieved || 0,
-      achievementPercentage: Math.round(
-        data.monthlyPercentage || data.yearlyPercentage || 0,
-      ),
-      monthlyTarget: data.monthlyTarget || 0,
-      monthlyAchieved: data.monthlyAchieved || 0,
-      quarterlyTarget: data.quarterlyTarget || 0,
-      quarterlyAchieved: data.quarterlyAchieved || 0,
-      yearlyTarget: data.yearlyTarget || 0,
-      yearlyAchieved: data.yearlyAchieved || 0,
-      monthlyPercentage: data.monthlyPercentage || 0,
-      quarterlyPercentage: data.quarterlyPercentage || 0,
-      yearlyPercentage: data.yearlyPercentage || 0,
-    };
-  }, [targetData]);
-  const displayKpis = kpis && kpis.length > 0 ? kpis : updatedKPIS;
+  // âœ… Only the first 10 unless the user clicks "Show all"
+  const visibleSpecialities = useMemo(
+    () =>
+      showAllSpecialities
+        ? sortedSpecialities
+        : sortedSpecialities.slice(0, 10),
+    [showAllSpecialities, sortedSpecialities],
+  );
+  const displayKpis = isEnviroSolution && Array.isArray(enviroKpis) && enviroKpis.length > 0 
+    ? enviroKpis.filter(k => k.key !== "totalAgriculture" && k.key !== "totalWasteManagement")
+    : (Array.isArray(kpis) && kpis.length > 0 ? kpis : updatedKPIS);
+  const displayLoading = isEnviroSolution ? enviroLoading : loading;
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
@@ -341,6 +355,25 @@ export function DashboardSection({
     if (kpi.key === "organizationCount") {
       navigate("/sales-analyticsAll/hospital-type-breakdown");
     }
+    // Enviro Analytics KPIs
+    if (kpi.key === "employeeCount") {
+      // Enviro employees -> dedicated breakdown page
+      // (dashboard/getAllemployeeEnviroAnalytics)
+      navigate("/sales-analyticsAll/enviro-employee-breakdown");
+      return;
+    }
+    if (kpi.key === "totalIndividuals") {
+      navigate("/sales-analyticsAll/enviro-analytics-breakdown/individualsProfileBreakdown");
+    }
+    if (kpi.key === "totalOrganizations") {
+      navigate("/sales-analyticsAll/enviro-analytics-breakdown/organizationBreakdown");
+    }
+    // if (kpi.key === "totalAgriculture") {
+    //   navigate("/sales-analyticsAll/enviro-analytics-breakdown/agricultureBreakdown");
+    // }
+    // if (kpi.key === "totalWasteManagement") {
+    //   navigate("/sales-analyticsAll/enviro-analytics-breakdown/wasteManagementBreakdown");
+    // }
   };
 
   const handleIndividualPageChange = (newPage) => {
@@ -404,6 +437,10 @@ export function DashboardSection({
     setOrgPage(1);
   };
 
+  // ---------- Enviro employees list ----------
+  // The employee breakdown now lives on its own route
+  // (/sales-analyticsAll/enviro-employee-breakdown), so nothing to keep here.
+
   return (
     <div>
       {/* Header Section */}
@@ -446,7 +483,7 @@ export function DashboardSection({
         </div>
       </div>
       {/* KPI Cards */}
-      {loading ? (
+      {displayLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="rounded-xl border border-[var(--theme-border)] p-4 bg-[var(--theme-card-bg)] animate-pulse">
@@ -474,394 +511,202 @@ export function DashboardSection({
         </div>
       )}
 
-        {/* Row 2: Speciality Intelligence + Target vs Achievement */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <ChartCard
-          title="Speciality Intelligence"
-          subtitle={`${specialityChartData.length} specialities • ${totalDoctors} total doctors`}
-          className="lg:col-span-2"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Left: Pie Chart */}
-            <div className="lg:col-span-2">
+        {/* Row 2: Speciality Intelligence */}
+        {!isEnviroSolution && (
+          <ChartCard
+            title="Speciality Intelligence"
+            subtitle={`${specialityChartData.length} specialities  ${totalDoctors} total doctors`}
+            className="mt-4"
+          >
+            {/* 1. Quick summary */}
+            {loading ? (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {[...Array(4)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl border border-[var(--theme-border)] p-4 bg-[var(--theme-card-bg)] animate-pulse"
+                  >
+                    <div className="h-3 w-20 bg-gray-200 rounded mb-2" />
+                    <div className="h-6 w-24 bg-gray-200 rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <SummaryStat
+                  label="ðŸ† Top Speciality"
+                  value={formatSpecialityName(topSpeciality?.name) || "N/A"}
+                  hint={`${topSpeciality?.value || 0} doctors`}
+                />
+                <SummaryStat
+                  label="ðŸ©º Top Profile"
+                  value={profileTotals[0]?.name || "N/A"}
+                  hint={`${profileTotals[0]?.value || 0} doctors`}
+                />
+                <SummaryStat
+                  label="ðŸ“Š Total Specialities"
+                  value={String(specialityChartData.length)}
+                  hint="unique specialities"
+                />
+                <SummaryStat
+                  label="ðŸ‘¥ Total Doctors"
+                  value={String(totalDoctors)}
+                  hint="across all specialities"
+                />
+              </div>
+            )}
+
+            {/* 2. Doctors by profile type - only a few slices, so a donut stays readable */}
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 rounded-xl border border-[var(--theme-border)] p-4 bg-[var(--theme-card-bg)]">
+              <div className="md:col-span-1">
+                <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider mb-1">
+                  Doctors by Profile Type
+                </p>
+                {loading ? (
+                  <div className="flex items-center justify-center h-[180px]">
+                    <LoaderSpinner />
+                  </div>
+                ) : profileTotals.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={180}>
+                    <PieChart>
+                      <Pie
+                        data={profileTotals}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={45}
+                        outerRadius={70}
+                        paddingAngle={2}
+                      >
+                        {profileTotals.map((_, i) => (
+                          <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: 12,
+                          border: "1px solid var(--theme-bg-sidebar)",
+                          background: "#ffffff",
+                          padding: "12px",
+                        }}
+                        formatter={(value, name) => [`${value} doctors`, name]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[180px] text-sm text-gray-400">
+                    No profile data available
+                  </div>
+                )}
+              </div>
+              <div className="md:col-span-2 space-y-2 self-center">
+                {profileTotals.map((p, i) => (
+                  <div
+                    key={p.name}
+                    className="flex items-center justify-between gap-3 text-sm"
+                  >
+                    <span className="flex items-center gap-2 text-[var(--theme-text-primary)]">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                      />
+                      {p.name}
+                    </span>
+                    <span className="font-semibold text-[var(--theme-text-primary)] whitespace-nowrap">
+                      {p.value}
+                      <span className="ml-1 text-xs font-normal text-[var(--theme-text-secondary)]">
+                        ({totalDoctors ? Math.round((p.value / totalDoctors) * 100) : 0}%)
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Speciality-wise doctors - ranked bars (Top 10 by default) */}
+            <div className="mt-4 pt-4 border-t border-[var(--theme-border)]">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
+                  Speciality-wise Doctors
+                </p>
+                {sortedSpecialities.length > 10 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllSpecialities((prev) => !prev)}
+                    className="text-xs font-medium text-[var(--theme-primary)] hover:underline"
+                  >
+                    {showAllSpecialities
+                      ? "Show top 10 only"
+                      : `Show all ${sortedSpecialities.length}`}
+                  </button>
+                )}
+              </div>
+
               {loading ? (
-                <div className="flex items-center justify-center h-[260px]">
-                  <LoaderSpinner />
+                <div className="space-y-2">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="h-6 w-full bg-gray-200 rounded animate-pulse" />
+                  ))}
                 </div>
-              ) : specialityChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <PieChart>
-                    <Pie
-                      data={specialityChartData}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={50}
-                      outerRadius={90}
-                      paddingAngle={2}
-                      label={({ name, percent }) =>
-                        `${formatSpecialityName(name)} ${(percent * 100).toFixed(0)}%`
-                      }
-                      labelLine={{ stroke: "var(--theme-bg-sidebar)", strokeWidth: 1 }}
-                    >
-                      {specialityChartData.map((_, i) => (
-                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: 12,
-                        border: "1px solid var(--theme-bg-sidebar)",
-                        background: "#ffffff",
-                        padding: "12px",
-                      }}
-                      formatter={(value, name, props) => {
-                        const item = specialityChartData.find(
-                          (d) => d.name === name,
-                        );
-                        const profileText =
-                          item?.profiles
-                            ?.map((p) => `${p.typeOfDoctorProfile}: ${p.count}`)
-                            .join(" | ") || "";
-                        return [
-                          `${value} doctors${profileText ? `\n${profileText}` : ""}`,
-                          formatSpecialityName(name),
-                        ];
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-[260px] text-gray-400">
+              ) : sortedSpecialities.length === 0 ? (
+                <div className="py-8 text-center text-sm text-gray-400">
                   No speciality data available
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                  {visibleSpecialities.map((item, index) => {
+                    const barPct = topSpeciality?.value
+                      ? Math.round((item.value / topSpeciality.value) * 100)
+                      : 0;
+                    const share = totalDoctors
+                      ? Math.round((item.value / totalDoctors) * 100)
+                      : 0;
+                    const profileSplit = item.profiles
+                      ?.map((p) => `${p.typeOfDoctorProfile}: ${p.count}`)
+                      .join(", ");
+
+                    return (
+                      <div
+                        key={item.name}
+                        className="flex items-center gap-3"
+                        title={profileSplit ? `Profile split - ${profileSplit}` : undefined}
+                      >
+                        <span className="w-5 shrink-0 text-right text-xs text-[var(--theme-text-secondary)]">
+                          {index + 1}
+                        </span>
+                        <span
+                          className="w-36 sm:w-44 shrink-0 truncate text-sm text-[var(--theme-text-primary)]"
+                          title={formatSpecialityName(item.name)}
+                        >
+                          {formatSpecialityName(item.name)}
+                        </span>
+                        <div className="flex-1 h-2.5 bg-[var(--theme-bg-light)] rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${barPct}%`,
+                              backgroundColor: COLORS[index % COLORS.length],
+                            }}
+                          />
+                        </div>
+                        <span className="w-16 shrink-0 text-right text-xs font-semibold text-[var(--theme-text-primary)]">
+                          {item.value}
+                          <span className="ml-1 font-normal text-[var(--theme-text-secondary)]">
+                            ({share}%)
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Right: Stats Cards */}
-            {loading ? (
-              <div className="space-y-2">
-                <div className="bg-[var(--theme-card-bg)] rounded-xl p-3 border border-[var(--theme-border)] animate-pulse">
-                  <div className="h-3 w-24 bg-gray-200 rounded mb-2" />
-                  <div className="h-5 w-32 bg-gray-200 rounded" />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 animate-pulse">
-                    <div className="h-3 w-16 bg-gray-200 rounded mb-2" />
-                    <div className="h-6 w-10 bg-gray-200 rounded" />
-                  </div>
-                  <div className="bg-green-50 rounded-xl p-3 border border-green-100 animate-pulse">
-                    <div className="h-3 w-16 bg-gray-200 rounded mb-2" />
-                    <div className="h-6 w-10 bg-gray-200 rounded" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 animate-pulse">
-                    <div className="h-3 w-20 bg-gray-200 rounded mb-2" />
-                    <div className="h-6 w-8 bg-gray-200 rounded" />
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 animate-pulse">
-                    <div className="h-3 w-20 bg-gray-200 rounded mb-2" />
-                    <div className="h-6 w-8 bg-gray-200 rounded" />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {/* Top Speciality Card */}
-                <div className="bg-gradient-to-r from-[var(--theme-primary)]/10 to-[var(--theme-primary)]/5 rounded-xl p-3 border border-[var(--theme-primary)]/20">
-                  <p className="text-xs text-[var(--theme-text-secondary)] font-medium">
-                    🏆 Top Speciality
-                  </p>
-                  <p className="text-lg font-bold text-[var(--theme-text-primary)]">
-                    {formatSpecialityName(topSpeciality?.name) || "N/A"}
-                  </p>
-                  <p className="text-sm text-[var(--theme-primary)]">
-                    {topSpeciality?.value || 0} doctors
-                  </p>
-                </div>
 
-                {/* Doctor Distribution */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
-                    <p className="text-xs text-blue-600 font-medium">
-                      👨‍⚕️ Physicians
-                    </p>
-                    <p className="text-xl font-bold text-blue-700">
-                      {profileDistribution.Physician}
-                    </p>
-                    <p className="text-xs text-blue-500">General medicine</p>
-                  </div>
-                  <div className="bg-green-50 rounded-xl p-3 border border-green-100">
-                    <p className="text-xs text-green-600 font-medium">
-                      🔬 Surgeons
-                    </p>
-                    <p className="text-xl font-bold text-green-700">
-                      {profileDistribution.Surgeon}
-                    </p>
-                    <p className="text-xs text-green-500">Surgical specialists</p>
-                  </div>
-                </div>
-
-                {/* Total Stats */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                    <p className="text-xs text-gray-500 font-medium">
-                      📊 Total Specialities
-                    </p>
-                    <p className="text-xl font-bold text-gray-700">
-                      {specialityChartData.length}
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                    <p className="text-xs text-gray-500 font-medium">
-                      👤 Total Doctors
-                    </p>
-                    <p className="text-xl font-bold text-gray-700">
-                      {totalDoctors}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Bottom: Speciality List */}
-          {loading ? (
-            <div className="mt-4 pt-4 border-t border-[var(--theme-border)]">
-              <div className="flex flex-wrap gap-2">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="h-8 w-24 bg-gray-200 rounded-full animate-pulse" />
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="mt-4 pt-4 border-t border-[var(--theme-border)]">
-              <div className="flex flex-wrap gap-2">
-                {specialityChartData.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-[var(--theme-card-bg)] rounded-full border border-[var(--theme-border)] hover:bg-[var(--theme-primary)]/10 transition-colors cursor-default"
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    />
-                    <span className="text-sm text-[var(--theme-text-primary)]">
-                      {formatSpecialityName(item.name)}
-                    </span>
-                    <span className="text-xs text-[var(--theme-primary)] font-medium">
-                      ({item.value})
-                    </span>
-                  </div>
-                ))}
-                {specialityChartData.length === 0 && (
-                  <div className="text-sm text-gray-400">
-                    No specialities available
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </ChartCard>
+      )}
 
-        {/* ✅ Target vs Achievement - Multiple Radial Bars */}
-        <ChartCard
-          title="Target vs Achievement"
-          subtitle="Monthly, Quarterly & Yearly performance"
-        >
-          {loading ? (
-            <div className="flex items-center justify-center h-52">
-              <LoaderSpinner />
-            </div>
-          ) : (
-            <>
-              {/* Multiple Radial Bars */}
-              <div className="relative h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart
-                innerRadius="60%"
-                outerRadius="100%"
-                data={[
-                  {
-                    name: "Monthly",
-                    value: targetStats.monthlyPercentage || 0,
-                    fill: "var(--theme-primary)",
-                  },
-                  {
-                    name: "Quarterly",
-                    value: targetStats.quarterlyPercentage || 0,
-                    fill: "var(--theme-highlight)",
-                  },
-                  {
-                    name: "Yearly",
-                    value: targetStats.yearlyPercentage || 0,
-                    fill: "var(--theme-secondary)",
-                  },
-                ]}
-                startAngle={225}
-                endAngle={-45}
-              >
-                <RadialBar
-                  background={{ fill: "var(--theme-bg-sidebar)" }}
-                  dataKey="value"
-                  cornerRadius={20}
-                  barSize={15}
-                />
-                <Legend
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: 11, paddingTop: "8px" }}
-                  formatter={(value, entry) => {
-                    const item = entry.payload;
-                    return `${value} (${item.value.toFixed(1)}%)`;
-                  }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: 12,
-                    border: "1px solid var(--theme-bg-sidebar)",
-                    background: "#ffffff",
-                    padding: "10px 14px",
-                  }}
-                  formatter={(value) => [`${value.toFixed(1)}%`, "Achievement"]}
-                />
-              </RadialBarChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 grid place-items-center pointer-events-none">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-[var(--theme-primary)]">
-                  {(
-                    (targetStats.monthlyPercentage +
-                      targetStats.quarterlyPercentage +
-                      targetStats.yearlyPercentage) /
-                    3
-                  ).toFixed(1)}
-                  %
-                </p>
-                <p className="text-[10px] text-gray-500 mt-0.5">
-                  Avg. achievement
-                </p>
-              </div>
-            </div>
-          </div>
 
-          {/* Target Stats Grid - Monthly, Quarterly, Yearly */}
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            {/* Monthly */}
-            <div className="bg-[var(--theme-card-bg)] rounded-xl p-2.5 border border-[var(--theme-border)] text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: "var(--theme-primary)" }}
-                />
-                <p className="text-[10px] text-[var(--theme-text-secondary)] font-medium">
-                  Monthly
-                </p>
-              </div>
-              <p className="text-sm font-bold text-[var(--theme-text-primary)]">
-                {targetStats.monthlyAchieved}/{targetStats.monthlyTarget}
-              </p>
-              <p
-                className={`text-xs font-semibold ${targetStats.monthlyPercentage >= 100 ? "text-green-600" : targetStats.monthlyPercentage >= 80 ? "text-[var(--theme-primary)]" : "text-red-500"}`}
-              >
-                {targetStats.monthlyPercentage}%
-              </p>
-            </div>
 
-            {/* Quarterly */}
-            <div className="bg-[var(--theme-card-bg)] rounded-xl p-2.5 border border-[var(--theme-border)] text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: "var(--theme-highlight)" }}
-                />
-                <p className="text-[10px] text-[var(--theme-text-secondary)] font-medium">
-                  Quarterly
-                </p>
-              </div>
-              <p className="text-sm font-bold text-[var(--theme-text-primary)]">
-                {targetStats.quarterlyAchieved}/{targetStats.quarterlyTarget}
-              </p>
-              <p
-                className={`text-xs font-semibold ${targetStats.quarterlyPercentage >= 100 ? "text-green-600" : targetStats.quarterlyPercentage >= 80 ? "text-[var(--theme-primary)]" : "text-red-500"}`}
-              >
-                {targetStats.quarterlyPercentage}%
-              </p>
-            </div>
-
-            {/* Yearly */}
-            <div className="bg-[var(--theme-card-bg)] rounded-xl p-2.5 border border-[var(--theme-border)] text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: "var(--theme-secondary)" }}
-                />
-                <p className="text-[10px] text-[var(--theme-text-secondary)] font-medium">Yearly</p>
-              </div>
-              <p className="text-sm font-bold text-[var(--theme-text-primary)]">
-                {targetStats.yearlyAchieved}/{targetStats.yearlyTarget}
-              </p>
-              <p
-                className={`text-xs font-semibold ${targetStats.yearlyPercentage >= 100 ? "text-green-600" : targetStats.yearlyPercentage >= 80 ? "text-[var(--theme-primary)]" : "text-red-500"}`}
-              >
-                {targetStats.yearlyPercentage}%
-              </p>
-            </div>
-          </div>
-
-          {/* Progress Bars for each period */}
-          <div className="mt-3 space-y-1.5">
-            {/* Monthly Progress */}
-            <div>
-              <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
-                <span>Monthly Progress</span>
-                <span>{targetStats.monthlyPercentage}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[var(--theme-primary)] rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(targetStats.monthlyPercentage || 0, 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Quarterly Progress */}
-            <div>
-              <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
-                <span>Quarterly Progress</span>
-                <span>{targetStats.quarterlyPercentage}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[var(--theme-highlight)] rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(targetStats.quarterlyPercentage || 0, 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Yearly Progress */}
-            <div>
-              <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
-                <span>Yearly Progress</span>
-                <span>{targetStats.yearlyPercentage}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[var(--theme-secondary)] rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(targetStats.yearlyPercentage || 0, 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-            </>
-          )}
-        </ChartCard>
-      </div>
       {/* Sales Executive Performance - Grouped Bar Chart */}
       <ChartCard
         title="Sales Executive Performance"
@@ -966,8 +811,7 @@ export function DashboardSection({
       </ChartCard>
       {/* Row 5: Hospitals Table - Employee List Style */}
       {/* Table */}
-      <div className="shadow overflow-x-auto">
-        {/* Hospital Table - Using the new component */}
+      {/* <div className="shadow overflow-x-auto">
         <div className="mt-4">
         <HospitalTable
               data={organizationData}
@@ -982,7 +826,7 @@ export function DashboardSection({
               onSearch={onSearch}
             />
         </div>
-      </div>
+      </div> */}
 
       {/* District Drill-down Dialog */}
       <Dialog open={!!drillDistrict} onOpenChange={(o) => !o && setDrillDistrict(null)}>

@@ -1,10 +1,10 @@
 // components/common/Dialog.jsx
 
-export function Dialog({ open, onOpenChange, children }) {
+export function Dialog({ open, onOpenChange, children, maxWidth = "max-w-2xl" }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 bg-black/50" onClick={() => onOpenChange(false)}>
-      <div className="fixed left-[50%] top-[50%] z-50 w-full max-w-2xl translate-x-[-50%] translate-y-[-50%] border border-gray-200 bg-white shadow-lg rounded-lg p-6" onClick={e => e.stopPropagation()}>
+      <div className={`fixed left-[50%] top-[50%] z-50 w-full ${maxWidth} translate-x-[-50%] translate-y-[-50%] border border-gray-200 bg-white shadow-lg rounded-lg p-6`} onClick={e => e.stopPropagation()}>
         {children}
       </div>
     </div>
