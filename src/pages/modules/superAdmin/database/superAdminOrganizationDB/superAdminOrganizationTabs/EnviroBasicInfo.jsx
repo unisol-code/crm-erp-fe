@@ -137,10 +137,34 @@ const EnviroBasicInfo = ({ formik, isReadOnly = false }) => {
   };
 
   const handleSelectCity = (districtCode) => {
-    if (districtCode) {
+    if (districtCode && selectedStateCode) {
       fetchAllCities(selectedStateCode, districtCode);
     }
   };
+
+  // Auto-fetch districts + cities when a record is opened in edit/view mode.
+  // Mirrors the FarmerForm cascade: districts key off the state NAME,
+  // cities key off the state CODE (resolved from the fetched state list) + district.
+  useEffect(() => {
+    const stateName = formik.values?.stateName;
+    if (stateName) {
+      const selectedState = allStateName?.find(
+        (s) => (s.name || s.stateName) === stateName
+      );
+      if (selectedState) {
+        setSelectedStateCode(selectedState.code || selectedState.stateCode || "");
+        handleSelectDistrict(stateName);
+      }
+    }
+  }, [formik.values?.stateName, allStateName]);
+
+  useEffect(() => {
+    const stateName = formik.values?.stateName;
+    const district = formik.values?.districtName;
+    if (stateName && district && selectedStateCode) {
+      fetchAllCities(selectedStateCode, district);
+    }
+  }, [formik.values?.stateName, formik.values?.districtName, selectedStateCode]);
 
   return (
     <div className="p-4">
@@ -173,6 +197,7 @@ const EnviroBasicInfo = ({ formik, isReadOnly = false }) => {
               formik.setFieldValue("stateName", "");
               formik.setFieldValue("districtName", "");
               formik.setFieldValue("cityTownVillage", "");
+              setSelectedStateCode("");
               fetchAllStateName(val || "");
             }}
           />
@@ -193,13 +218,14 @@ const EnviroBasicInfo = ({ formik, isReadOnly = false }) => {
             loading={locationLoading}
             onChange={(val) => {
               formik.setFieldValue("stateName", val || "");
-              setSelectedStateCode(
-                allStateName?.find((s) => (s.name || s.stateName) === val)
-                  ?.stateCode || ""
+              const selectedState = allStateName?.find(
+                (s) => (s.name || s.stateName) === val
               );
+              setSelectedStateCode(selectedState?.code || selectedState?.stateCode || "");
               formik.setFieldValue("districtName", "");
               formik.setFieldValue("cityTownVillage", "");
-              handleSelectDistrict(val || "");
+              // Districts are fetched by the effect that watches `stateName`
+              // (single source of truth) - do not fetch here too.
             }}
           />
           <Select
@@ -219,7 +245,8 @@ const EnviroBasicInfo = ({ formik, isReadOnly = false }) => {
             onChange={(val) => {
               formik.setFieldValue("districtName", val || "");
               formik.setFieldValue("cityTownVillage", "");
-              handleSelectCity(val || "");
+              // Cities are fetched by the effect that watches `districtName`
+              // (single source of truth) - do not fetch here too.
             }}
           />
           <Select

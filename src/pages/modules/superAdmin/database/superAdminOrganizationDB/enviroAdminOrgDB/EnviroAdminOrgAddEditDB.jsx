@@ -370,21 +370,21 @@ const EnviroAdminOrgAddEditDB = ({ mode = "add" }) => {
     }
   }, [selectedSector, selectedOrgType]);
 
-  useEffect(() => {
-    if (selectedSector) {
-      setSelectedOrgType(null);
-      setSelectedWasteTypes([]);
-      setActiveTab("basic");
-      formik.setFieldValue("wasteManagementType", []);
-    }
-  }, [selectedSector]);
+  // NOTE: the dependent fields (Organization Type, waste types, active tab) are
+  // reset from the Sector dropdown's own onChange below - deliberately NOT from an
+  // effect on `selectedSector`. An effect here also ran when the sector was
+  // populated from the API response, which wiped the just-matched Organization
+  // Type and left that dropdown blank in view/edit mode.
 
   useEffect(() => {
     if (enviroAdminOrgDetails) {
       const d = enviroAdminOrgDetails;
       const matchedSector = sectorOptions.find((s) => s.value === d.sectionName) || null;
-      const matchedOrgType = matchedSector
-        ? (orgTypeOptions[matchedSector.value] || []).find((o) => o.value === d.OrganizationType) || null
+      // Fall back to a synthesised option so an unknown / stale Organization Type
+      // returned by the API still shows up in the dropdown instead of rendering blank.
+      const matchedOrgType = matchedSector && d.OrganizationType
+        ? (orgTypeOptions[matchedSector.value] || []).find((o) => o.value === d.OrganizationType) ||
+          { label: d.OrganizationType, value: d.OrganizationType }
         : null;
       formik.setValues({
         sectionName: d.sectionName || "",
@@ -495,6 +495,7 @@ const EnviroAdminOrgAddEditDB = ({ mode = "add" }) => {
                 setSelectedSector(selected);
                 setSelectedOrgType(null);
                 setSelectedWasteTypes([]);
+                setActiveTab("basic");
                 formik.setFieldValue("sectionName", selected?.value || "");
                 formik.setFieldValue("OrganizationType", "");
                 formik.setFieldValue("wasteManagementType", []);

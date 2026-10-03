@@ -220,15 +220,13 @@ const validationSchema = yup.object({
   // topPriorities: yup.string().trim().required("Top Priorities are required"),
 });
 
-const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) => {
+const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", orgDetails = null }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const {
     createEnviroFPO,
     loading,
-    resetEnviroFPODetails,
     enviroFPODetails,
-    fetchEnviroFPODetails,
     updateEnviroFPO,
   } = useEnviroAdminIndDB();
   const { theme } = useTheme();
@@ -263,6 +261,16 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
   const [companyResolved, setCompanyResolved] = useState(false);
   const [selectedStateCode, setSelectedStateCode] = useState("");
 
+  // Turns an array of selected strings into the { option: boolean } shape
+  // the checkbox groups in this form expect.
+  const arrayToCheckboxObj = (arr, defaultObj) => {
+    const result = { ...defaultObj };
+    (Array.isArray(arr) ? arr : []).forEach((key) => {
+      if (key in result) result[key] = true;
+    });
+    return result;
+  };
+
   useEffect(() => {
     fetchPrimaryCommunicationChannels();
     fetchKeyBuyerTypes();
@@ -272,12 +280,12 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
     // fetchAllStateName();
   }, []);
 
-  useEffect(() => {
-    if (id) {
-      fetchEnviroFPODetails(id);
-    }
-    return () => resetEnviroFPODetails();
-  }, [id]);
+  // NOTE: the record is fetched once by the parent (EnviroEmpOrgAddEditDB) through
+  // the common `fetchEnviroAdminOrgDetails` hook and passed down as `orgDetails`.
+  // This component used to run its own `fetchEnviroFPODetails(id)`, which meant a
+  // second request to the individual-DB endpoint for the same record. That endpoint
+  // returns a different shape, so it overwrote the form with empty values - and its
+  // cleanup also reset a shared Recoil atom on unmount.
 
   const formik = useFormik({
     initialValues: {
@@ -370,9 +378,13 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
     formik.setFieldValue("OrganizationType", orgType || "");
   }, [sectionName, orgType]);
 
+  // `orgDetails` (the parent's single common fetch) is the source of truth;
+  // `enviroFPODetails` stays as a fallback so this component still works standalone.
+  const details = orgDetails || enviroFPODetails;
+
   useEffect(() => {
-    if (enviroFPODetails) {
-      const d = enviroFPODetails;
+    if (details) {
+      const d = details;
       formik.setValues({
         sectionName: d.sectionName || formik.values.sectionName,
         OrganizationType: d.OrganizationType || formik.values.OrganizationType,
@@ -391,21 +403,21 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
         associatedWithOrganization: d.associatedWithOrganization || "",
         totalOfficers: d.totalOfficers || "",
         activeSchemes: d.activeSchemes || "",
-        servicesOffered: {
+        servicesOffered: arrayToCheckboxObj(d.servicesOffered, {
           Subsidy: false, Insurance: false, Training: false,
           "Soil Testing": false, "Seed Distribution": false,
-          Advisory: false, "Credit Support": false, Others: false,    
-        },
-        servicesOthersText: "",
-        communicationChannels: {
+          Advisory: false, "Credit Support": false, Others: false,
+        }),
+        servicesOthersText: d.servicesOthersText || "",
+        communicationChannels: arrayToCheckboxObj(d.communicationChannels, {
           Helpline: false, WhatsApp: false, SMS: false,
           "Mobile App": false, Email: false, "In-person": false, IVR: false,
-        },
+        }),
         farmersRegistered: d.totalFarmersRegistered || "",
-        grievanceChannels: {
+        grievanceChannels: arrayToCheckboxObj(d.grievanceChannels, {
           Portal: false, Helpline: false, "Office Visit": false,
           "Mobile App": false, "Written Application": false,
-        },
+        }),
         organizationName: d.organizationName || "",
         registrationNumber: d.registrationNumber || "",
         registrationAct: d.registrationAct || "",
@@ -434,7 +446,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
         topPriorities: d.topPriorities || "",
       });
     }
-  }, [enviroFPODetails]);
+  }, [details]);
 
   // Log validation errors when submission is attempted
   useEffect(() => {
@@ -449,7 +461,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "" }) 
       ? `Edit ${orgType}`
       : `Add New ${orgType}`;
 
-  if (loading && !enviroFPODetails && id) {
+  if (loading && !details && id) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoaderSpinner />

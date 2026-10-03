@@ -56,7 +56,7 @@ const useEnviroAdminIndDB = () => {
         try {
             const res = await fetchData({
                 method: "GET",
-                url: `${conf.apiBaseUrl}doctor/Envro-get-doctor-by-id/${id}`,
+                url: `${conf.apiBaseUrl}doctor/get-enviro-individual-by-id/${id}`,
             });
             if (res) {
                 setEnviroAdminIndividualDetails(res?.data);

@@ -61,6 +61,42 @@ const kpiConfig = {
   },
 };
 
+// Icon + tint used by the Individuals Profile Breakdown cards.
+// These are borderless tinted surfaces so they read as content tiles
+// instead of a "box inside a box" inside the surrounding ChartCard.
+const profileCardStyles = {
+  Agriculture: {
+    icon: LucideIcons.Sprout,
+    surface: "bg-amber-50",
+    iconBg: "bg-amber-100 text-amber-700",
+    value: "text-amber-700",
+  },
+  "Waste Management": {
+    icon: LucideIcons.Recycle,
+    surface: "bg-teal-50",
+    iconBg: "bg-teal-100 text-teal-700",
+    value: "text-teal-700",
+  },
+};
+
+const profileCardFallback = {
+  icon: LucideIcons.Users,
+  surface: "bg-blue-50",
+  iconBg: "bg-blue-100 text-blue-700",
+  value: "text-blue-700",
+};
+
+// Tints cycled through by the Profile Type cards on the detail view so each
+// profile type gets its own colour. Flat / borderless, same as the section cards.
+const profileTypeCardPalette = [
+  { surface: "bg-amber-50", iconBg: "bg-amber-100 text-amber-700", value: "text-amber-700" },
+  { surface: "bg-teal-50", iconBg: "bg-teal-100 text-teal-700", value: "text-teal-700" },
+  { surface: "bg-sky-50", iconBg: "bg-sky-100 text-sky-700", value: "text-sky-700" },
+  { surface: "bg-rose-50", iconBg: "bg-rose-100 text-rose-700", value: "text-rose-700" },
+  { surface: "bg-violet-50", iconBg: "bg-violet-100 text-violet-700", value: "text-violet-700" },
+  { surface: "bg-emerald-50", iconBg: "bg-emerald-100 text-emerald-700", value: "text-emerald-700" },
+];
+
 const EnviroAnalyticsBreakdown = () => {
   const { breakdownType, breakdownId } = useParams();
   const navigate = useNavigate();
@@ -516,6 +552,68 @@ const EnviroAnalyticsBreakdown = () => {
           return (
             <div className="mt-4">
               <ChartCard title={getBreakdownTitle(selectedBreakdown)} subtitle="Click view for details">
+                {/* Individuals Profile Breakdown -> KPI cards instead of a table */}
+                {isProfileBreakdown && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {entries.map(([category, categoryData]) => {
+                      const isObj = typeof categoryData === "object" && categoryData !== null;
+                      const subTypes = isObj ? Object.entries(categoryData) : [];
+                      const total = isObj
+                        ? Object.values(categoryData).reduce((sum, v) => sum + (Number(v) || 0), 0)
+                        : categoryData;
+                      const { icon: CardIcon, surface, iconBg, value } =
+                        profileCardStyles[category] || profileCardFallback;
+                      return (
+                        <div
+                          key={category}
+                          onClick={() => handleViewDetail(category, category)}
+                          className={`group relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-xl ${surface}`}
+                        >
+                          {/* soft decorative circle for depth */}
+                          <span className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/40" />
+
+                          <div className="relative flex items-start justify-between gap-3">
+                            <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl shadow-sm ${iconBg}`}>
+                              <CardIcon size={20} />
+                            </span>
+                            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--theme-text-secondary)]">
+                              Profile Section
+                            </span>
+                          </div>
+
+                          <p className="relative mt-4 text-sm font-semibold text-[var(--theme-text-primary)]">
+                            {category}
+                          </p>
+                          <p className={`relative mt-0.5 text-4xl font-bold tracking-tight ${value}`}>
+                            {total}
+                          </p>
+
+                          {subTypes.length > 0 && (
+                            <div className="relative mt-3 flex flex-wrap gap-1.5">
+                              {subTypes.map(([subType, count]) => (
+                                <span
+                                  key={subType}
+                                  className="rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-medium text-[var(--theme-text-secondary)]"
+                                >
+                                  {subType}: {count}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          <span className="relative mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[var(--theme-primary)]">
+                            View details
+                            <LucideIcons.ArrowRight
+                              size={14}
+                              className="transition-transform duration-300 group-hover:translate-x-1"
+                            />
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {!isProfileBreakdown && (
                 <div className="shadow overflow-x-auto rounded-t-2xl border border-gray-200">
                   <Table>
                     <TableHeader className="sticky top-0 bg-white z-10">
@@ -586,6 +684,7 @@ const EnviroAnalyticsBreakdown = () => {
                     </TableBody>
                   </Table>
                 </div>
+                )}
               </ChartCard>
             </div>
           );
@@ -656,19 +755,6 @@ const EnviroAnalyticsBreakdown = () => {
                           : detailData}
                       </p>
                     </div>
-                    {isProfileBreakdown && (
-                      <div className="col-span-2">
-                        <p className="text-[10px] text-gray-500 font-medium">Profile Types Breakdown</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
-                          {typeof detailData === 'object' && detailData !== null && Object.entries(detailData).map(([subType, count]) => (
-                            <div key={subType} className="bg-[var(--theme-primary)]/5 border border-[var(--theme-primary)]/20 rounded-xl p-3">
-                              <p className="text-xs text-[var(--theme-text-secondary)] font-medium">{subType}</p>
-                              <p className="text-2xl font-bold text-[var(--theme-primary)] mt-1">{count}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     {(isOrgBreakdown || isAgriOrWasteBreakdown) && orgTypeCards.length > 0 && (
                       <>
                         <div className="col-span-2">
@@ -909,42 +995,57 @@ const EnviroAnalyticsBreakdown = () => {
                   );
                 })()}
 
-                {/* For individualsProfileBreakdown, show sub-types as a table */}
+                {/* For individualsProfileBreakdown, show profile types as KPI cards */}
 
                 {isProfileBreakdown && !selectedSubType && typeof detailData === 'object' && detailData !== null && Object.keys(detailData).length > 0 && (
-                  <div className="rounded-xl border border-[var(--theme-border)] bg-white p-4">
-                    <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider mb-3">
-                      Profile Types Table
-                    </p>
-                    <div className="shadow overflow-x-auto rounded-t-2xl border border-gray-200">
-                      <Table>
-                        <TableHeader className="sticky top-0 bg-white z-10">
-                          <TableRow className="bg-[var(--theme-bg-light)]">
-                            <TableHead className="text-base font-semibold">Sr. No.</TableHead>
-                            <TableHead className="text-base font-semibold">Profile Type</TableHead>
-                            <TableHead className="text-base font-semibold">Count</TableHead>
-                            <TableHead className="text-base font-semibold text-center">View</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody className="divide-y divide-gray-200">
-                          {Object.entries(detailData).map(([subType, count], idx) => (
-                            <TableRow key={subType} className="hover:bg-gray-50 transition-all">
-                              <td className="p-4 text-[17px] font-normal text-[#252C58]">{idx + 1}</td>
-                              <td className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[var(--theme-primary)]">{subType}</td>
-                              <td className="px-4 py-3 text-[15px] whitespace-nowrap font-bold text-[var(--theme-text-primary)]">{count}</td>
-                              <td className="p-4 text-center align-middle">
-                                <button
-                                  onClick={() => handleViewIndividuals(subType)}
-                                  className="text-[var(--theme-primary)] hover:bg-[var(--theme-primary)]/10 rounded-full w-9 h-9 flex items-center justify-center mx-auto transition-colors"
-                                  aria-label="View details"
-                                >
-                                  <LucideIcons.Eye size={18} />
-                                </button>
-                              </td>
-                            </TableRow>
-                          ))}
-               </TableBody>
-                      </Table>
+                  <div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                      <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
+                        Profile Types
+                      </p>
+                      <span className="text-[11px] text-[var(--theme-text-secondary)] font-medium">
+                        Click a profile type to view its individuals
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {Object.entries(detailData).map(([subType, count], idx) => {
+                        const { surface, iconBg, value } =
+                          profileTypeCardPalette[idx % profileTypeCardPalette.length];
+                        return (
+                          <div
+                            key={subType}
+                            onClick={() => handleViewIndividuals(subType)}
+                            className={`group relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-xl ${surface}`}
+                          >
+                            {/* soft decorative circle for depth */}
+                            <span className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/40" />
+
+                            <div className="relative flex items-start justify-between gap-3">
+                              <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl shadow-sm ${iconBg}`}>
+                                <LucideIcons.Users size={20} />
+                              </span>
+                              <span className="rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--theme-text-secondary)]">
+                                Profile
+                              </span>
+                            </div>
+
+                            <p className="relative mt-4 text-sm font-semibold text-[var(--theme-text-primary)]">
+                              {subType}
+                            </p>
+                            <p className={`relative mt-0.5 text-4xl font-bold tracking-tight ${value}`}>
+                              {count}
+                            </p>
+
+                            <span className="relative mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[var(--theme-primary)]">
+                              View individuals
+                              <LucideIcons.ArrowRight
+                                size={14}
+                                className="transition-transform duration-300 group-hover:translate-x-1"
+                              />
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
