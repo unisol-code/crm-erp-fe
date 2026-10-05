@@ -85,11 +85,13 @@ const [page, setPage] = useState(1);
   const { editRequestSender } = useDatabase();
 
   /* ===================== FETCH DROPDOWN ===================== */
+  // Dropdowns / filter resets only. The list itself is fetched by the effect
+  // below (which also runs on mount) - fetching here as well would send the
+  // same request twice on every load.
   useEffect(() => {
     if (isEnviroSolution) {
       fetchSegment();
       enviroindiviualdropdown();
-      fetchEnviroIndividualList(page, limit, typeOfProfile, selectedSection);
       setSelectedDoctor(null);
       setTypeOfProfile(null);
       setSelectedSection("");
@@ -102,11 +104,16 @@ const [page, setPage] = useState(1);
   }, [isEnviroSolution]);
 
   /* ===================== FETCH DATA ===================== */
+  // Single source of truth for the list: it runs on mount AND on every
+  // page / rows-per-page / filter change.
+  // NOTE: the enviro branch must fetch even when no profile type is selected -
+  // the unfiltered list is paginated too (page 1 of 2, page 2 of 2, ...). Gating
+  // it on `typeOfProfile` meant every page / rows-per-page click silently did
+  // nothing, leaving the rows on page 1 while the pager moved on.
   useEffect(() => {
-    if (isEnviroSolution && typeOfProfile) {
+    if (isEnviroSolution) {
       fetchEnviroIndividualList(page, limit, typeOfProfile, selectedSection);
-    } 
-    else if (!isEnviroSolution) {
+    } else {
       getAllindividual(page, limit, selectedDoctor);
     }
   }, [page, limit, selectedDoctor, isEnviroSolution, typeOfProfile, selectedSection]);
@@ -133,6 +140,40 @@ const [page, setPage] = useState(1);
   const paginationData = isEnviroSolution
     ? enviroIndividualList
     : getAllindividualDeatils;
+
+  // Pagination meta exactly as the API returns it for the enviro list:
+  //   { success, currentPage, totalPages, totalItems, limit,
+  //     hasNextPage, hasPrevPage, data: [...] }
+  // The healthcare list nests its meta under `pagination` and calls the total
+  // `totalCount` instead of `totalItems`, hence the fallbacks.
+  // Local `page` / `limit` stay the source of truth for REQUESTS so the pager
+  // reacts to a click immediately; these come from the SERVER because only it
+  // knows the totals.
+  const serverPage =
+    paginationData?.currentPage || paginationData?.pagination?.currentPage;
+  const serverTotalPages =
+    paginationData?.totalPages || paginationData?.pagination?.totalPages;
+  const serverTotalItems =
+    paginationData?.totalItems ||
+    paginationData?.pagination?.totalItems ||
+    paginationData?.pagination?.totalCount;
+
+  // The API clamps a page that is out of range (e.g. the last page disappears
+  // when the total shrinks). Pull the local page back down to what it actually
+  // served, otherwise the next request would ask for a page that no longer
+  // exists and the pager would be stuck.
+  //
+  // The condition MUST be `page > serverTotalPages` and NOT `serverPage < page`:
+  // right after a click, the previous response is still the newest one we have,
+  // so `serverPage < page` is true for the very page we are fetching and would
+  // instantly snap the pager back to the previous page (killing the request).
+  // `page > serverTotalPages` cannot happen in that window, because the page
+  // buttons are rendered from `totalPages` - you can never click past it.
+  useEffect(() => {
+    if (serverTotalPages && page > serverTotalPages) {
+      setPage(serverPage || serverTotalPages);
+    }
+  }, [serverTotalPages, serverPage, page]);
 
   /* ===================== HANDLERS ===================== */
   const handleView = (id, type) => {
@@ -480,9 +521,9 @@ const [page, setPage] = useState(1);
         </Table>
 
         <Pagination
-          currentPage={paginationData?.currentPage || paginationData?.pagination?.currentPage}
-          totalItems={paginationData?.totalItems || paginationData?.pagination?.totalCount}
-          totalPages={paginationData?.totalPages || paginationData?.pagination?.totalPages}
+          currentPage={page}
+          totalItems={serverTotalItems}
+          totalPages={serverTotalPages}
           itemsPerPage={limit}
           onPageChange={onPageChange}
           onItemsPerPageChange={onItemsPerPageChange}

@@ -36,7 +36,18 @@ const ViewEnviroIndForm = () => {
     const navigate = useNavigate();
     const { theme } = useTheme();
     const location = useLocation();
-    const typeOfProfile = location.state?.typeOfProfile || 'Farmer';
+    // ✅ Profile used for branching. The API's own `typeOfProfile` wins over the
+    //    router hint because the API is what actually describes THIS record
+    //    (and newer Waste Management rows come back as e.g. "Government",
+    //    which would otherwise drop into the wrong branch).
+    const routerProfileType = location.state?.typeOfProfile;
+    const resolvedTypeOfProfile =
+        enviroIndividualDetails?.typeOfProfile || routerProfileType || 'Farmer';
+    const typeOfProfile = resolvedTypeOfProfile;
+    // Government rows are stored as "Government" (Waste Management) or
+    // "Government Officer" (Agriculture) - render both through the same branch.
+    const isGovernmentType =
+        typeOfProfile === 'Government Officer' || typeOfProfile === 'Government';
 
     useEffect(() => {
         if (id)
@@ -143,6 +154,7 @@ const ViewEnviroIndForm = () => {
     const {
         firstName,
         lastName,
+        organizationName,
         contact,
         email,
         address,
@@ -150,7 +162,13 @@ const ViewEnviroIndForm = () => {
         taluka,
         district,
         state,
+        region,
         pinCode,
+        uniqueId,
+        addedBy,
+        addedById,
+        createdAt,
+        updatedAt,
         panNo,
         bankName,
         existingLoan,
@@ -250,14 +268,14 @@ const ViewEnviroIndForm = () => {
                             {typeOfProfile === 'Farmer' ? (
                                 <>
                                     <p className="text-white/90 mb-1">Lead Owner</p>
-                                    <p className="text-white font-semibold text-lg">{leadOwner}</p>
+                                    <p className="text-white font-semibold text-lg">{leadOwner || 'Not provided'}</p>
                                     <p className="text-white/90 mt-2 mb-1">Sales Person</p>
-                                    <p className="text-white font-semibold text-lg">{salesPersonName}</p>
+                                    <p className="text-white font-semibold text-lg">{salesPersonName || 'Not provided'}</p>
                                 </>
                             ) : (
                                 <>
                                     <p className="text-white/90 mb-1">Added By</p>
-                                    <p className="text-white font-semibold text-lg">{salesPersonName}</p>
+                                    <p className="text-white font-semibold text-lg">{salesPersonName || 'Not provided'}</p>
                                 </>
                             )}
                         </div>
@@ -307,13 +325,14 @@ const ViewEnviroIndForm = () => {
                                 </div>
                             </InfoCard>
                         </>
-                    ) : typeOfProfile === 'Government Officer' ? (
+                    ) : isGovernmentType ? (
                         <>
                             {/* Officer Profile */}
                             <InfoCard title="Officer Profile" icon={FiUser}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <InfoRow label="First Name" value={firstName} icon={FiUser} />
                                     <InfoRow label="Last Name" value={lastName} icon={FiUser} />
+                                    <InfoRow label="Organization" value={organizationName} icon={FiUsers} />
                                     <InfoRow label="Designation" value={designation} icon={FiBriefcase} />
                                     <InfoRow label="Experience" value={yearsOfExperience} icon={FiClock} />
                                 </div>
@@ -334,6 +353,10 @@ const ViewEnviroIndForm = () => {
                                 <div className="space-y-2">
                                     <InfoRow label="Office Name" value={officeName} icon={FiHome} />
                                     <InfoRow label="Jurisdiction Area" value={districtBlockRegion} icon={FiMap} />
+                                    <InfoRow label="Region" value={region} icon={FiGlobe} />
+                                    <InfoRow label="Village" value={villageName} icon={FiHome} />
+                                    <InfoRow label="District" value={district} icon={FiMap} />
+                                    <InfoRow label="State" value={state} icon={FiMap} />
                                     <InfoRow label="Effective Language" value={effectiveLanguage} icon={FiGlobe} />
                                 </div>
                             </InfoCard>
@@ -528,8 +551,20 @@ const ViewEnviroIndForm = () => {
                                 </div>
                             </InfoCard>
                         </>
-                    ) : typeOfProfile === 'Government Officer' ? (
+                    ) : isGovernmentType ? (
                         <>
+                            {/* Record Information - the fields this response
+                                actually returns for a Waste Management org. */}
+                            <InfoCard title="Record Information" icon={FiHash}>
+                                <div className="space-y-2">
+                                    <InfoRow label="Unique ID" value={uniqueId} icon={FiHash} />
+                                    <InfoRow label="Segment" value={segment} icon={FiGrid} />
+                                    <InfoRow label="Added By" value={addedBy} icon={FiUser} />
+                                    <InfoRow label="Created On" value={formatDate(createdAt)} icon={FiCalendar} />
+                                    <InfoRow label="Last Updated" value={formatDate(updatedAt)} icon={FiClock} />
+                                </div>
+                            </InfoCard>
+
                             <InfoCard title="Profile Preferences" icon={FiTarget}>
                                 <div className="space-y-2">
                                     <InfoRow label="Hobbies" value={hobbies} icon={FiActivity} />

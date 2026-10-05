@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import useEnviroAdminIndDB from "../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminIndDB";
 import ReactSelect from "react-select";
@@ -130,6 +130,51 @@ const EnviroBasicInfo = ({ formik, isReadOnly = false }) => {
     fetchEnviroSalesPersonsList();
   }, []);
 
+  // Helpers that tolerate the API sending a location list in any of the shapes
+  // it has used historically - an array of strings ("Maharashtra"), an array of
+  // objects ({ name } / { stateName } ...), or an object keyed by value.
+  // Without this, one odd list silently empties the whole dropdown chain.
+  const toNameList = (list) => {
+    if (Array.isArray(list)) return list;
+    if (list && typeof list === "object") return Object.values(list);
+    return [];
+  };
+
+  const locationNameOf = (entry) => {
+    if (typeof entry === "string") return entry;
+    if (entry && typeof entry === "object") {
+      const picked =
+        entry.name ||
+        entry.stateName ||
+        entry.districtName ||
+        entry.district ||
+        entry.city ||
+        entry.cityName ||
+        entry.town ||
+        entry.village ||
+        entry.villageName ||
+        entry.label ||
+        entry.title ||
+        entry.value ||
+        "";
+      if (typeof picked === "string") return picked;
+      if (picked && typeof picked === "object") return locationNameOf(picked);
+    }
+    return "";
+  };
+
+  const locationCodeOf = (entry) =>
+    (entry && typeof entry === "object" && (entry.code || entry.stateCode)) ||
+    "";
+
+  const ensureCurrentOption = (options, current) => {
+    const normalizedCurrent = (current ?? "").toString().trim();
+    if (!normalizedCurrent) return options;
+    return options.some((opt) => opt.value === normalizedCurrent)
+      ? options
+      : [{ label: normalizedCurrent, value: normalizedCurrent }, ...options];
+  };
+
   const handleSelectDistrict = (stateCode) => {
     if (stateCode) {
       fetchDistrictList(stateCode);
@@ -145,26 +190,48 @@ const EnviroBasicInfo = ({ formik, isReadOnly = false }) => {
   // Auto-fetch districts + cities when a record is opened in edit/view mode.
   // Mirrors the FarmerForm cascade: districts key off the state NAME,
   // cities key off the state CODE (resolved from the fetched state list) + district.
+  //
+  // Region scoping matters: `allStateName` is refreshed per region whenever the
+  // user picks one, so on an edit this list may contain only the record's own
+  // region (or still be empty while it loads). When the record's state is not
+  // in the list we re-fetch the record's region before giving up - otherwise
+  // State/District/City all stay blank.
+  // The refill runs once per region. A manual region change needs no help -
+  // its onChange already fetches states and clears `stateName`.
+  const fetchedRegionRef = useRef("");
+  const stateName = formik.values?.stateName;
+  const district = formik.values?.districtName;
+  const recordRegion = formik.values?.region;
+
   useEffect(() => {
-    const stateName = formik.values?.stateName;
+    if (!stateName || !recordRegion) return;
+    const found = toNameList(allStateName).some(
+      (s) => locationNameOf(s) === stateName
+    );
+    if (!found && fetchedRegionRef.current !== recordRegion) {
+      fetchedRegionRef.current = recordRegion;
+      fetchAllStateName(recordRegion);
+    }
+  }, [stateName, recordRegion, allStateName]);
+
+  useEffect(() => {
     if (stateName) {
-      const selectedState = allStateName?.find(
-        (s) => (s.name || s.stateName) === stateName
+      const selectedState = toNameList(allStateName)?.find(
+        (s) => locationNameOf(s) === stateName
       );
       if (selectedState) {
-        setSelectedStateCode(selectedState.code || selectedState.stateCode || "");
+        const fetchedCode = locationCodeOf(selectedState);
+        if (fetchedCode) setSelectedStateCode(fetchedCode);
         handleSelectDistrict(stateName);
       }
     }
-  }, [formik.values?.stateName, allStateName]);
+  }, [stateName, allStateName]);
 
   useEffect(() => {
-    const stateName = formik.values?.stateName;
-    const district = formik.values?.districtName;
     if (stateName && district && selectedStateCode) {
       fetchAllCities(selectedStateCode, district);
     }
-  }, [formik.values?.stateName, formik.values?.districtName, selectedStateCode]);
+  }, [stateName, district, selectedStateCode]);
 
   return (
     <div className="p-4">
@@ -183,14 +250,13 @@ const EnviroBasicInfo = ({ formik, isReadOnly = false }) => {
             name="region"
             formik={formik}
             isReadOnly={isReadOnly}
-            options={
-              Array.isArray(region)
-                ? region.map((reg) => ({
-                    label: reg.name || reg,
-                    value: reg.name || reg,
-                  }))
-                : []
-            }
+            options={ensureCurrentOption(
+              toNameList(region).map((reg) => ({
+                label: locationNameOf(reg),
+                value: locationNameOf(reg),
+              })),
+              formik.values.region
+            )}
             loading={locationLoading}
             onChange={(val) => {
               formik.setFieldValue("region", val || "");
@@ -206,22 +272,21 @@ const EnviroBasicInfo = ({ formik, isReadOnly = false }) => {
             name="stateName"
             formik={formik}
             isReadOnly={isReadOnly}
-            options={
-              Array.isArray(allStateName)
-                ? allStateName.map((state) => ({
-                    label: state.name || state.stateName,
-                    value: state.name || state.stateName,
-                    stateCode: state.code || state.stateCode,
-                  }))
-                : []
-            }
+            options={ensureCurrentOption(
+              toNameList(allStateName).map((state) => ({
+                label: locationNameOf(state),
+                value: locationNameOf(state),
+                stateCode: locationCodeOf(state),
+              })),
+              formik.values.stateName
+            )}
             loading={locationLoading}
             onChange={(val) => {
               formik.setFieldValue("stateName", val || "");
-              const selectedState = allStateName?.find(
-                (s) => (s.name || s.stateName) === val
+              const selectedState = toNameList(allStateName)?.find(
+                (s) => locationNameOf(s) === val
               );
-              setSelectedStateCode(selectedState?.code || selectedState?.stateCode || "");
+              setSelectedStateCode(locationCodeOf(selectedState));
               formik.setFieldValue("districtName", "");
               formik.setFieldValue("cityTownVillage", "");
               // Districts are fetched by the effect that watches `stateName`
@@ -233,14 +298,13 @@ const EnviroBasicInfo = ({ formik, isReadOnly = false }) => {
             name="districtName"
             formik={formik}
             isReadOnly={isReadOnly}
-            options={
-              Array.isArray(districtList)
-                ? districtList.map((district) => ({
-                    label: district,
-                    value: district,
-                  }))
-                : []
-            }
+            options={ensureCurrentOption(
+              toNameList(districtList).map((district) => ({
+                label: locationNameOf(district),
+                value: locationNameOf(district),
+              })),
+              formik.values.districtName
+            )}
             loading={locationLoading}
             onChange={(val) => {
               formik.setFieldValue("districtName", val || "");
@@ -254,14 +318,13 @@ const EnviroBasicInfo = ({ formik, isReadOnly = false }) => {
             name="cityTownVillage"
             formik={formik}
             isReadOnly={isReadOnly}
-            options={
-              Array.isArray(cities)
-                ? cities.map((city) => ({
-                    label: city,
-                    value: city,
-                  }))
-                : []
-            }
+            options={ensureCurrentOption(
+              toNameList(cities).map((city) => ({
+                label: locationNameOf(city),
+                value: locationNameOf(city),
+              })),
+              formik.values.cityTownVillage
+            )}
             loading={locationLoading}
           />
           <Input

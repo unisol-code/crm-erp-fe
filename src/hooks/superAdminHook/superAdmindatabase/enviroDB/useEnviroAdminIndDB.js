@@ -21,7 +21,7 @@ const useEnviroAdminIndDB = () => {
     const [enviroFPODetails, setEnviroFPODetails] = useRecoilState(enviroFPODetailsAtom);
     const [salesPersonList, setSalesPersonList] = useRecoilState(salesPersonListAtom);
 
-    const fetchEnviroAdminIndividualList = async (page, limit, typeOfProfile, sectionName) => {
+    const fetchEnviroAdminIndividualList = async (page, limit, typeOfProfile, segment) => {
         setLoading(true);
         setError("");
         try {
@@ -32,8 +32,8 @@ const useEnviroAdminIndDB = () => {
             if (typeOfProfile) {
                 params.append("typeOfProfile", typeOfProfile);
             }
-            if (sectionName) {
-                params.append("sectionName", sectionName);
+            if (segment) {
+                params.append("segment", segment);
             }
             const res = await fetchData({
                 method: "GET",

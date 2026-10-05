@@ -23,6 +23,80 @@ const monthlyListToMap = (groups) => {
   return map;
 };
 
+// ✅ Same list for the healthcare monthlyPlanning map, but every value is
+//    forced to an array so `.length` / `.map` can never throw.
+const toMonthMap = (value) => {
+  if (Array.isArray(value)) return monthlyListToMap(value);
+  if (!value || typeof value !== "object") return {};
+  const map = {};
+  Object.entries(value).forEach(([key, val]) => {
+    map[key] = Array.isArray(val) ? val : [];
+  });
+  return map;
+};
+
+// Fields that identify one person / organization row. Used to tell a real row
+// apart from a counts object like { Farmer: 5, FPO: 2 }.
+const ROW_KEYS = [
+  "_id",
+  "id",
+  "fullName",
+  "name",
+  "organizationName",
+  "hospitalName",
+  "department",
+  "segment",
+  "typeOfProfile",
+  "uniqueId",
+  "hospitalData",
+];
+
+// ✅ `individuals` / `organizations` have come back from the two detail APIs as
+//    an array of rows, a map keyed by type, a wrapper object ({ data: [...] })
+//    or even a single row. The tables only know how to read an array, and
+//    calling `.filter` on anything else crashes the whole page - so normalize
+//    every shape here instead of assuming the happy path.
+const toRows = (value) => {
+  if (Array.isArray(value)) return value;
+  if (!value || typeof value !== "object") return [];
+
+  const values = Object.values(value);
+  if (values.length === 0) return [];
+
+  // A map of arrays, e.g. { Farmer: [...], "Government Officer": [...] }
+  if (values.every((item) => Array.isArray(item))) return values.flat();
+
+  // A wrapper, e.g. { data: [...] } / { individuals: [...] }
+  const nested =
+    value.data || value.individuals || value.organizations || value.rows || value.list;
+  if (Array.isArray(nested)) return nested;
+
+  // A single row - show it rather than dropping it on the floor.
+  return ROW_KEYS.some((key) => key in value) ? [value] : [];
+};
+
+// ✅ Same idea for the year -> hospitals target map: an array, a map, or junk
+//    all become a plain object whose values are plain objects, so
+//    `Object.entries(hospitalWiseTarget[year])` is always safe.
+const toYearMap = (value) => {
+  const source = Array.isArray(value)
+    ? Object.fromEntries(value.map((entry, index) => [String(entry?.year ?? index), entry]))
+    : value && typeof value === "object"
+      ? value
+      : {};
+
+  const map = {};
+  Object.entries(source).forEach(([key, val]) => {
+    if (val && typeof val === "object" && !Array.isArray(val)) map[key] = val;
+  });
+  return map;
+};
+
+// ✅ The search touches fields that are missing or numeric on some rows, so
+//    stringify before matching - `undefined` / `5` must not throw.
+const includesTerm = (value, term) =>
+  String(value ?? "").toLowerCase().includes(term);
+
 const ExecutiveProfileBreakdown = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -91,12 +165,14 @@ const ExecutiveProfileBreakdown = () => {
   const salesPerson = data?.salesPerson;
   const salesPersonName =
     data?.salesPersonName || salesPerson?.fullName || '';
-  const individuals = data?.individuals || [];
-  const organizations = data?.organizations || [];
+  // ✅ Normalized: the detail API has sent these as arrays, maps or wrapper
+  //    objects, and `.filter` on a non-array crashed the whole page.
+  const individuals = toRows(data?.individuals);
+  const organizations = toRows(data?.organizations);
   const monthlyPlanning = isEnviroSolution
     ? monthlyListToMap(data?.monthlyPlannings)
-    : data?.monthlyPlanning || {};
-  const hospitalWiseTarget = data?.hospitalWiseTarget || {};
+    : toMonthMap(data?.monthlyPlanning);
+  const hospitalWiseTarget = toYearMap(data?.hospitalWiseTarget);
 
   // ✅ Enviro has no hospital target data, so its tab is only shown when there
   //    is something to display (healthcare keeps showing it as before).
@@ -111,32 +187,42 @@ const ExecutiveProfileBreakdown = () => {
     { text: salesPerson?.fullName || salesPersonName || 'Executive Profile' },
   ];
 
-  const filteredIndividuals = individuals.filter(ind =>
-    ind.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ind.typeOfDoctorProfile?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ind.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    // ✅ Enviro individual fields
-    ind.segment?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ind.uniqueId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ind.organizationName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ind.villageName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ind.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ind.district?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ind.state?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredIndividuals = individuals.filter((ind) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+    // ⚠ Every field is stringified first: `undefined` and numbers must not
+    //    throw `.toLowerCase()` the way a raw optional chain can.
+    return [
+      ind?.fullName,
+      ind?.typeOfDoctorProfile,
+      ind?.department,
+      // ✅ Enviro individual fields
+      ind?.segment,
+      ind?.uniqueId,
+      ind?.organizationName,
+      ind?.villageName,
+      ind?.city,
+      ind?.district,
+      ind?.state,
+    ].some((field) => includesTerm(field, term));
+  });
 
-  const filteredOrganizations = organizations.filter(org =>
-    org.hospitalName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.typeOfHospital?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    // ✅ Enviro organization fields
-    org.organizationName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.sectionName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.OrganizationType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.uniqueId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.cityTownVillage?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.district?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.state?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOrganizations = organizations.filter((org) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+    return [
+      org?.hospitalName,
+      org?.typeOfHospital,
+      // ✅ Enviro organization fields
+      org?.organizationName,
+      org?.sectionName,
+      org?.OrganizationType,
+      org?.uniqueId,
+      org?.cityTownVillage,
+      org?.district,
+      org?.state,
+    ].some((field) => includesTerm(field, term));
+  });
 
   const planningMonths = Object.keys(monthlyPlanning);
   const targetYears = Object.keys(hospitalWiseTarget);
@@ -458,13 +544,14 @@ const ExecutiveProfileBreakdown = () => {
                           spec.name && (
                             <div key={specIdx} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                               <p className="text-sm font-bold text-black mb-2">{spec.name}</p>
-                              {spec.surgeries && spec.surgeries.length > 0 && (
+                              {Array.isArray(spec.surgeries) &&
+                                spec.surgeries.length > 0 && (
                                 <div className="flex flex-wrap gap-2">
-                                  {spec.surgeries.filter(s => s.surgeryType).map((surgery, surgIdx) => (
+                                  {spec.surgeries.filter(s => s?.surgeryType).map((surgery, surgIdx) => (
                                     <div key={surgIdx} className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-md border border-gray-200">
                                       <LucideIcons.Scissors size={12} className="text-indigo-600" />
-                                      <span className="text-xs font-medium text-gray-700">{surgery.surgeryType}:</span>
-                                      <span className="text-xs font-bold text-indigo-600">{surgery.numberOfSurgeries}</span>
+                                      <span className="text-xs font-medium text-gray-700">{surgery?.surgeryType}:</span>
+                                      <span className="text-xs font-bold text-indigo-600">{surgery?.numberOfSurgeries}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -560,7 +647,7 @@ const ExecutiveProfileBreakdown = () => {
                   <LucideIcons.Target size={20} className="text-indigo-600" />
                   Year {year}
                 </h3>
-                {Object.entries(hospitalWiseTarget[year]).map(([hospitalName, hospitalData]) => (
+                {Object.entries(hospitalWiseTarget[year] || {}).map(([hospitalName, hospitalData]) => (
                   <div key={hospitalName} className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
                     <div className="bg-green-50 px-5 py-3 border-b border-green-100">
                       <div className="flex items-center gap-2">

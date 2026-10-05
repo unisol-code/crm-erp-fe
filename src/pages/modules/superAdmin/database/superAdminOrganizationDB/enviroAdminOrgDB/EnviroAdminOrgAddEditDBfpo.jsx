@@ -168,15 +168,13 @@ const validationSchema = yup.object({
   // state: yup.string().trim().required("State is required"),
 });
 
-const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO", sectionName, organizationType }) => {
+const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO", sectionName, organizationType, orgDetails = null }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const {
     createEnviroFPO,
     loading,
-    resetEnviroFPODetails,
     enviroFPODetails,
-    fetchEnviroFPODetails,
     updateEnviroFPO,
   } = useEnviroAdminIndDB();
   const { theme } = useTheme();
@@ -215,7 +213,7 @@ const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO", sectionName
 
   const [selectedStateCode, setSelectedStateCode] = useState("");
 
-  useEffect(() => {
+useEffect(() => {
     fetchEnviroSalesPersonsList();
     fetchPrimaryCommunicationChannels();
     fetchKeyBuyerTypes();
@@ -224,18 +222,29 @@ const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO", sectionName
     fetchAllRegion();
   }, []);
 
-  useEffect(() => {
-    if (id) {
-      fetchEnviroFPODetails(id);
-    }
-    return () => resetEnviroFPODetails();
-  }, [id]);
+  // NOTE: the record is fetched ONCE by the parent (EnviroAdminOrgAddEditDB)
+  // through the common `fetchEnviroAdminOrgDetails(id)` hook and handed down as
+  // `orgDetails`. This component used to run its own `fetchEnviroFPODetails(id)`,
+  // which is a SECOND request to the individual-FPO endpoint for the same org.
+  // That endpoint returns a different shape, so it overwrote the form with empty
+  // values (blank view) - and its cleanup also reset a shared Recoil atom while
+  // the parent was still using it.
+  //
+  // `enviroFPODetails` stays as a fallback so this component still works
+  // standalone.
 
-const formik = useFormik({
+  // `orgDetails` (the parent's single common fetch) is the source of truth.
+  const details = orgDetails || enviroFPODetails;
+
+  const formik = useFormik({
     initialValues: {
       sectionName: sectionName || "",
       organizationType: organizationType || "",
-      fpoName: "",
+      // `organizationName` is what the form renders and what the API returns for
+      // an organization record. It MUST exist in initialValues - without it the
+      // Organization Name input renders blank and yup's required check can never
+      // pass, because Formik has no key to read or write.
+      organizationName: "",
       registrationNumber: "",
       registrationAct: "",
       yearOfEstablishment: "",
@@ -251,6 +260,7 @@ const formik = useFormik({
       state: "",
       pincode: "",
       landmark: "",
+      salesId: "",
       numberOfBoardMembers: "",
       numberOfStaffMembers: "",
       totalActiveMembers: "",
@@ -269,12 +279,15 @@ const formik = useFormik({
     onSubmit: async (values) => {
       try {
         console.log("FPO Form onSubmit called with values:", values);
+        let success = false;
         if (isEditMode) {
-          await updateEnviroFPO(id, values);
+          success = await updateEnviroFPO(id, values);
         } else {
-          await createEnviroFPO(values);
+          success = await createEnviroFPO(values);
         }
-        navigate(-1);
+        if (success) {
+          navigate(-1);
+        }
       } catch (err) {
         console.error("Submission failed:", err);
       }
@@ -282,44 +295,54 @@ const formik = useFormik({
   });
 
 useEffect(() => {
-    if (enviroFPODetails) {
-      const d = enviroFPODetails;
-      formik.setValues({
-        sectionName: d.sectionName || sectionName || "",
-        organizationType: d.OrganizationType || organizationType || "",
-        fpoName: d.fpoName || "",
-        registrationNumber: d.registrationNumber || "",
-        registrationAct: d.registrationAct || "",
-        yearOfEstablishment: d.yearOfEstablishment || "",
-        operationalArea: d.operationalArea || "",
-        officeAddress: d.officeAddress || "",
-        officialContactNumber: d.officialContactNumber || "",
-        officialEmailId: d.officialEmailId || "",
-        websiteAppUrl: d.websiteAppUrl || "",
-        associatedWithOrganization: d.associatedWithOrganization || "",
-        region: d.region || "",
-        cityTownVillage: d.cityTownVillage || "",
-        district: d.district || "",
-        state: d.state || "",
-        pincode: d.pincode || "",
-        landmark: d.landmark || "",
-        numberOfBoardMembers: d.numberOfBoardMembers || "",
-        numberOfStaffMembers: d.numberOfStaffMembers || "",
-        totalActiveMembers: d.totalActiveMembers || "",
-        memberCategories: d.memberCategories || [],
-        memberCategoriesOthers: d.memberCategoriesOthers || "",
-        primaryCommunicationChannels: d.primaryCommunicationChannels || [],
-        majorCropsHandled: d.majorCropsHandled || "",
-        annualTurnover: d.annualTurnover || "",
-        majorRevenueSources: d.majorRevenueSources || [],
-        majorRevenueSourcesOthers: d.majorRevenueSourcesOthers || "",
-        keyBuyerTypes: d.keyBuyerTypes || [],
-        topChallenges: d.topChallenges || "",
-        topPriorities: d.topPriorities || "",
-        salesId: d.salesId || "",
-      });
-    }
-  }, [enviroFPODetails]);
+    formik.setFieldValue("sectionName", sectionName || "");
+    formik.setFieldValue("organizationType", organizationType || orgType || "");
+  }, [sectionName, organizationType, orgType]);
+
+  useEffect(() => {
+    if (!details) return;
+    const d = details;
+    formik.setValues({
+      sectionName: d.sectionName || sectionName || "",
+      organizationType: d.OrganizationType || d.organizationType || organizationType || "",
+      // The org endpoint returns `organizationName`; older FPO records stored it
+      // as `fpoName`. Read both so either storage shape opens populated.
+      organizationName: d.organizationName || d.fpoName || "",
+      registrationNumber: d.registrationNumber || "",
+      registrationAct: d.registrationAct || "",
+      yearOfEstablishment: d.yearOfEstablishment || "",
+      operationalArea: d.operationalArea || "",
+      officeAddress: d.officeAddress || "",
+      officialContactNumber: d.officialContactNumber || "",
+      officialEmailId: d.officialEmailId || d.officialEmail || "",
+      websiteAppUrl: d.websiteAppUrl || "",
+      associatedWithOrganization: d.associatedWithOrganization || "",
+      region: d.region || "",
+      cityTownVillage: d.cityTownVillage || "",
+      district: d.district || d.districtName || "",
+      state: d.state || d.stateName || "",
+      pincode: d.pincode || "",
+      landmark: d.landmark || "",
+      salesId: d.salesId || "",
+      numberOfBoardMembers: d.numberOfBoardMembers || "",
+      numberOfStaffMembers: d.numberOfStaffMembers || "",
+      totalActiveMembers: d.totalActiveMembers || "",
+      memberCategories: d.memberCategories || [],
+      memberCategoriesOthers: d.memberCategoriesOthers || "",
+      primaryCommunicationChannels: d.primaryCommunicationChannels || [],
+      majorCropsHandled: Array.isArray(d.majorCropsHandled)
+        ? d.majorCropsHandled.map((item) =>
+          typeof item === "string" ? item : item?.crop || ""
+        ).filter(Boolean).join(", ")
+        : d.majorCropsHandled || "",
+      annualTurnover: d.annualTurnover || "",
+      majorRevenueSources: d.majorRevenueSources || [],
+      majorRevenueSourcesOthers: d.majorRevenueSourcesOthers || "",
+      keyBuyerTypes: d.keyBuyerTypes || [],
+      topChallenges: d.topChallenges || "",
+      topPriorities: d.topPriorities || "",
+    });
+  }, [details]);
 
   useEffect(() => {
     if (formik.submitCount > 0 && !formik.isValid) {
@@ -333,7 +356,7 @@ useEffect(() => {
       ? `Edit ${orgType}`
       : `Add New ${orgType}`;
 
-  if (loading && !enviroFPODetails && id) {
+  if (loading && !details && id) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoaderSpinner />

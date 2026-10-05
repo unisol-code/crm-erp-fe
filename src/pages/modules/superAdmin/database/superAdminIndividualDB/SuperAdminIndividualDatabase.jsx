@@ -348,6 +348,11 @@ const SuperAdminIndividualDatabase = () => {
             <ReactSelect
               options={segmentOptions}
               value={
+                // ⚠ Must read the SAME state that `handleSectionChange` writes.
+                //    It sets `selectedSection` (the filter actually sent to the
+                //    API) - looking up `selectedSegment` here left that always
+                //    null in enviro mode, so the pick was never shown and the
+                //    control snapped back to "Select Section".
                 segmentOptions.find(
                   (opt) => opt.value === selectedSection
                 ) || null

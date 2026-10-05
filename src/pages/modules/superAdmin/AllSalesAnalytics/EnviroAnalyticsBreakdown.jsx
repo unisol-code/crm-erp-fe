@@ -28,6 +28,11 @@ const BASE_ROUTE = "/sales-analyticsAll/enviro-analytics-breakdown";
 const ORGANIZATION_BREAKDOWN_ROUTE = `${BASE_ROUTE}/organizationBreakdown`;
 const CHILD_BREAKDOWNS = ["agricultureBreakdown", "wasteManagementBreakdown"];
 
+// Profile types the database "view individual" page understands. That page
+// chooses which API to call from its router state, so only these exact values
+// work there (see ViewEnviroAdminIndForm).
+const ENVIRO_PROFILE_TYPES = ["Farmer", "Government Officer", "FPO"];
+
 const kpiConfig = {
   employeeCount: {
     label: "Total Employees",
@@ -275,6 +280,50 @@ const EnviroAnalyticsBreakdown = () => {
   const handleIndividualsLimitChange = (limit) => {
     setDetailLimit(limit);
     setDetailPage(1);
+  };
+
+  // ✅ Opens the full view/edit form for one organization row in the detail
+  //    view's "All organization types in this section" table.
+  //    Enviro breakdown shows organizations from the WHOLE section
+  //    (Agriculture / Waste Management), so the target has to be the section's
+  //    own add/edit form (/database/edit-enviro-organization/:id) - that page
+  //    understands every enviro organization shape (FPO, PRIVATE, GOVERNMENT,
+  //    ...). A stable `_id` is required before navigating anywhere.
+  const handleViewOrganizationDetails = (org) => {
+    const identifier = org?._id || org?.id;
+    if (!identifier) return;
+
+    navigate(`/database/edit-enviro-organization/${identifier}`);
+  };
+
+  // ✅ Open the full "View Individual" page for one row of the individuals list.
+  //    The route (/database/view-enviro-individual-details/:id) needs the profile
+  //    type in its router state to know which API to call (Farmer /
+  //    Government Officer / FPO).
+  //    This list is always filtered by the profile type that was opened
+  //    (selectedSubType), so that value is used whenever the row itself does not
+  //    carry a usable typeOfProfile - otherwise the details page would have no
+  //    type to work with and would not call any API at all.
+  const handleViewIndividualDetails = (person) => {
+    const identifier = person?._id || person?.id;
+    if (!identifier) return;
+
+    const rowType = person?.typeOfProfile;
+    const typeOfProfile = ENVIRO_PROFILE_TYPES.includes(rowType)
+      ? rowType
+      : selectedSubType || rowType || "";
+
+    navigate(`/database/view-enviro-individual-details/${identifier}`, {
+      state: {
+        name: person?.fullname || "",
+        typeOfProfile,
+        // "Go Back" on the view page returns to this exact detail view
+        backTo: {
+          pathname: `${BASE_ROUTE}/${selectedBreakdown}/${selectedDetailId}`,
+          label: "Back to Individuals",
+        },
+      },
+    });
   };
 
   // ---- Organizations drill-down (sectionName = selectedDetailId, OrganizationType = subType) ----
@@ -827,12 +876,13 @@ const EnviroAnalyticsBreakdown = () => {
                               <TableHead className="text-base font-semibold">Region</TableHead>
                               <TableHead className="text-base font-semibold">Village / Town</TableHead>
                               <TableHead className="text-base font-semibold">District</TableHead>
+                              <TableHead className="text-base font-semibold text-center">View</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody className="divide-y divide-gray-200">
                             {enviroIndividualsLoading ? (
                               <tr>
-                                <td colSpan={9} className="p-6">
+                                <td colSpan={10} className="p-6">
                                   <div className="py-4 flex items-center justify-center">
                                     <LoaderSpinner />
                                   </div>
@@ -858,11 +908,24 @@ const EnviroAnalyticsBreakdown = () => {
                                   <td className="px-4 py-3 text-[15px] whitespace-nowrap">{person?.region || "-"}</td>
                                   <td className="px-4 py-3 text-[15px] whitespace-nowrap">{person?.villageName || "-"}</td>
                                   <td className="px-4 py-3 text-[15px] whitespace-nowrap">{person?.district || "-"}</td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center justify-center">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleViewIndividualDetails(person)}
+                                        title="View individual details"
+                                        aria-label={`View details of ${person?.fullname || "individual"}`}
+                                        className="inline-flex items-center justify-center rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-light)] p-2 text-[var(--theme-primary)] transition-colors hover:bg-[var(--theme-primary)] hover:text-white"
+                                      >
+                                        <LucideIcons.Eye size={16} />
+                                      </button>
+                                    </div>
+                                  </td>
                                 </TableRow>
                               ))
                             ) : (
                               <tr>
-                                <td colSpan={9} className="p-6 text-center text-[15px] font-semibold text-[var(--theme-text-secondary)]">
+                                <td colSpan={10} className="p-6 text-center text-[15px] font-semibold text-[var(--theme-text-secondary)]">
                                   No individuals found
                                 </td>
                               </tr>
@@ -937,12 +1000,13 @@ const EnviroAnalyticsBreakdown = () => {
                               <TableHead className="text-base font-semibold">Region</TableHead>
                               <TableHead className="text-base font-semibold">Village / Town</TableHead>
                               <TableHead className="text-base font-semibold">District</TableHead>
+                              <TableHead className="text-base font-semibold text-center">View</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody className="divide-y divide-gray-200">
                             {enviroOrganizationsLoading ? (
                               <tr>
-                                <td colSpan={9} className="p-6">
+                                <td colSpan={10} className="p-6">
                                   <div className="py-4 flex items-center justify-center">
                                     <LoaderSpinner />
                                   </div>
@@ -968,11 +1032,24 @@ const EnviroAnalyticsBreakdown = () => {
                                   <td className="px-4 py-3 text-[15px] whitespace-nowrap">{org?.region || "-"}</td>
                                   <td className="px-4 py-3 text-[15px] whitespace-nowrap">{org?.cityTownVillage || org?.villageName || "-"}</td>
                                   <td className="px-4 py-3 text-[15px] whitespace-nowrap">{org?.districtName || org?.district || "-"}</td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center justify-center">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleViewOrganizationDetails(org)}
+                                        title="View organization details"
+                                        aria-label={`View details of ${org?.organizationName || "organization"}`}
+                                        className="inline-flex items-center justify-center rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-light)] p-2 text-[var(--theme-primary)] transition-colors hover:bg-[var(--theme-primary)] hover:text-white"
+                                      >
+                                        <LucideIcons.Eye size={16} />
+                                      </button>
+                                    </div>
+                                  </td>
                                 </TableRow>
                               ))
                             ) : (
                               <tr>
-                                <td colSpan={9} className="p-6 text-center text-[15px] font-semibold text-[var(--theme-text-secondary)]">
+                                <td colSpan={10} className="p-6 text-center text-[15px] font-semibold text-[var(--theme-text-secondary)]">
                                   No organizations found
                                 </td>
                               </tr>
