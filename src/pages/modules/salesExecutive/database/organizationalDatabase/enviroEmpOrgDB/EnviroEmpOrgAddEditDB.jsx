@@ -72,6 +72,43 @@ const wasteManagementTypeOptions = [
   { label: "Laundry", value: "laundry" },
 ];
 
+// The create / update API expects the human readable options under
+// `selectWasteManagement`:
+//   selectWasteManagement: ["Laundry", "Kitchen", "Solid Waste Management"]
+// The form keeps the short codes in `wasteManagementType` because the tabs and
+// the form state are keyed on them, so the codes are mapped to labels at
+// submit time only. Unknown codes fall through unchanged rather than being
+// dropped, so nothing the user picked can silently disappear.
+const toSelectWasteManagement = (codes) =>
+  (Array.isArray(codes) ? codes : []).map(
+    (code) =>
+      wasteManagementTypeOptions.find((opt) => opt.value === code)?.label ||
+      code
+  );
+
+// Reverse of the above: the API sends `selectWasteManagement` back as labels
+//   selectWasteManagement: ["Solid Waste Management", "Kitchen", "Laundry"]
+// while the form / tabs are keyed on the short codes ("solid", "kitchen", ...).
+// Matching accepts EITHER a label or a code, so records stored the old way
+// (codes in `wasteManagementType`) and the new way both hydrate correctly, and
+// an unrecognised value passes through instead of being dropped.
+const toWasteManagementCodes = (list) =>
+  (Array.isArray(list) ? list : []).map(
+    (entry) =>
+      wasteManagementTypeOptions.find(
+        (opt) => opt.label === entry || opt.value === entry
+      )?.value || entry
+  );
+
+// Which field carries the selection on a fetched record? New records only have
+// `selectWasteManagement`; older ones only `wasteManagementType`.
+const readWasteManagementType = (d) =>
+  toWasteManagementCodes(
+    Array.isArray(d?.selectWasteManagement) && d.selectWasteManagement.length
+      ? d.selectWasteManagement
+      : d?.wasteManagementType
+  );
+
 const wasteTypeLabel = {
   biomedical: "Biomedical Waste",
   solid: "Solid Waste",
@@ -334,6 +371,7 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
         IVR: false,
       },
       farmersRegistered: "",
+      salesId: "",
       grievanceChannels: {
         Portal: false,
         Helpline: false,
@@ -364,12 +402,21 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
     validationSchema,
     onSubmit: async (values) => {
       try {
-        console.log("Enviro Org data submitting:", values);
+        // `wasteManagementType` holds the codes for the UI; the API wants the
+        // labels in `selectWasteManagement` (sent for create AND update so both
+        // paths carry the same contract).
+        const payload = {
+          ...values,
+          selectWasteManagement: toSelectWasteManagement(
+            values.wasteManagementType
+          ),
+        };
+        console.log("Enviro Org data submitting:", payload);
         let success = false;
         if (isEditMode) {
-          success = await updateEnviroAdminOrg(id, values);
+          success = await updateEnviroAdminOrg(id, payload);
         } else {
-          success = await createEnviroAdminOrg(values);
+          success = await createEnviroAdminOrg(payload);
         }
         if (success) {
           navigate(-1);
@@ -398,25 +445,26 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
     }
   }, [selectedSector, selectedOrgType]);
 
-  useEffect(() => {
-    if (selectedSector) {
-      setSelectedOrgType(null);
-      setSelectedWasteTypes([]);
-      setActiveTab("basic");
-      formik.setFieldValue("wasteManagementType", []);
-    }
-  }, [selectedSector]);
+  // NOTE: the dependent fields (Organization Type, waste types, active tab) are
+  // reset from the Sector dropdown's own onChange below - deliberately NOT from an
+  // effect on `selectedSector`. An effect here also ran when the sector was
+  // populated from the API response, which wiped the just-matched Organization
+  // Type and left that dropdown blank in view/edit mode.
 
   useEffect(() => {
     if (enviroAdminOrgDetails) {
       const d = enviroAdminOrgDetails;
       const matchedSector = sectorOptions.find((s) => s.value === d.sectionName) || null;
-      const matchedOrgType = matchedSector
-        ? (orgTypeOptions[matchedSector.value] || []).find((o) => o.value === d.OrganizationType) || null
+      // Fall back to a synthesised option so an unknown / stale Organization Type
+      // returned by the API still shows up in the dropdown instead of rendering blank.
+      const matchedOrgType = matchedSector && d.OrganizationType
+        ? (orgTypeOptions[matchedSector.value] || []).find((o) => o.value === d.OrganizationType) ||
+          { label: d.OrganizationType, value: d.OrganizationType }
         : null;
       formik.setValues({
         sectionName: d.sectionName || "",
         OrganizationType: d.OrganizationType || "",
+        organizationName: d.organizationName || "",
         departmentName: d.departmentName || "",
         jurisdictionLevel: d.jurisdictionLevel || "",
         region: d.region || "",
@@ -442,11 +490,12 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
           "Mobile App": false, Email: false, "In-person": false, IVR: false,
         }),
         farmersRegistered: d.totalFarmersRegistered || "",
+        salesId: d.salesId || "",
         grievanceChannels: arrayToCheckboxObj(d.grievanceChannels, {
           Portal: false, Helpline: false, "Office Visit": false,
           "Mobile App": false, "Written Application": false,
         }),
-        wasteManagementType: Array.isArray(d.wasteManagementType) ? d.wasteManagementType : [],
+        wasteManagementType: readWasteManagementType(d),
         bioMedicalWaste: d.bioMedicalWaste || {},
         solidWaste: d.solidWaste || {},
         wasteWaterManagement: d.wasteWaterManagement || {},
@@ -466,9 +515,9 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
           address: "",
         },
       });
-      if (Array.isArray(d.wasteManagementType)) {
-        setSelectedWasteTypes(d.wasteManagementType);
-      }
+      // Always set (even to []) so switching between records can never leave
+      // the previous record's waste types selected.
+      setSelectedWasteTypes(readWasteManagementType(d));
       if (matchedSector) setSelectedSector(matchedSector);
       if (matchedOrgType) setSelectedOrgType(matchedOrgType);
     }
@@ -524,6 +573,7 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
                 setSelectedSector(selected);
                 setSelectedOrgType(null);
                 setSelectedWasteTypes([]);
+                setActiveTab("basic");
                 formik.setFieldValue("sectionName", selected?.value || "");
                 formik.setFieldValue("OrganizationType", "");
                 formik.setFieldValue("wasteManagementType", []);
@@ -660,6 +710,12 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
+              <InputField
+                label="Organization Name"
+                name="organizationName"
+                formik={formik}
+                placeholder="Enter organization name"
+              />
               <InputField
                 label="Department Name"
                 name="departmentName"
@@ -978,7 +1034,7 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
          </div>
        </form>
            ) : selectedOrgType?.value === "FPO" || selectedOrgType?.value === "FPC" || selectedOrgType?.value === "CMRC" || selectedOrgType?.value === "BACHAT GAT" || selectedOrgType?.value === "SELF HELP GROUP" ? (
-            <EnviroEmpAddDBfpo orgType={selectedOrgType?.value} sectionName={selectedSector?.value} mode={isEdit ? "edit" : isView ? "view" : "add"} />
+            <EnviroEmpAddDBfpo orgType={selectedOrgType?.value} sectionName={selectedSector?.value} mode={isEdit ? "edit" : isView ? "view" : "add"} orgDetails={enviroAdminOrgDetails} />
           ) : selectedSector?.value === "Waste Management" && selectedOrgType && selectedWasteTypes.length > 0 ? (
             (() => {
               const dynamicTabs = selectedWasteTypes.map((t) => ({

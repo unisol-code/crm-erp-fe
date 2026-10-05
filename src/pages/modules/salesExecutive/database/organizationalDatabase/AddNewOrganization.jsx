@@ -206,6 +206,40 @@ const withFileNames = (values) => {
   return payload;
 };
 
+// ✅ The Vendor form (Vendor.jsx) uses flat field names - the same shape as the
+// individual module - but the organization API stores the vendor's basic details
+// under `Basic` (identical to the organization form). These two field sets carry
+// the same data, so map the flat vendor values onto `Basic` before submitting;
+// otherwise the API rejects the request with:
+//   Missing required fields: Basic.hospitalName, Basic.typeOfHospital,
+//   Basic.typeOfOrgOrHospital, Basic.address, Basic.city, Basic.district,
+//   Basic.state, Basic.region
+const VENDOR_TO_BASIC_FIELDS = {
+  hospitalName: "companyName",             // Basic.hospitalName       <- Company Name
+  typeOfHospital: "vendorType",            // Basic.typeOfHospital     <- Vendor Type
+  typeOfOrgOrHospital: "organizationType", // Basic.typeOfOrgOrHospital<- Organization Type
+  address: "completeAddress",              // Basic.address            <- Complete Address
+  district: "district",
+  state: "state",
+  region: "region",
+  city: "city",
+  emailAddress: "emailAddress",
+};
+
+// Copies the vendor values into `Basic`. A vendor value only overwrites `Basic`
+// when it is actually filled in - so values already written to `Basic` directly
+// (e.g. Basic.segment set from the Segment dropdown) are preserved.
+const withVendorBasicFields = (values) => {
+  const Basic = { ...(values.Basic || {}) };
+  Object.entries(VENDOR_TO_BASIC_FIELDS).forEach(([basicKey, vendorKey]) => {
+    const vendorValue = values[vendorKey];
+    if (vendorValue !== undefined && vendorValue !== null && vendorValue !== "") {
+      Basic[basicKey] = vendorValue;
+    }
+  });
+  return { ...values, Basic };
+};
+
 // ✅ Segment + vendor profile selectors. The parent owns both values (so it can decide
 //    whether the Vendor form has to be rendered); nothing is stored in formik here.
 const SegmentSelector = ({
@@ -367,9 +401,17 @@ const AddNewOrganization = ({ mode = "add" }) => {
       console.log("Submitting values:", values);
       if (isView) return;
 
+      // Vendor form -> map the flat vendor fields onto `Basic` first so the
+      // organization API receives the required Basic.hospitalName /
+      // Basic.typeOfHospital / Basic.address / ... fields in the expected format.
+      const normalizedValues = showVendorForm
+        ? withVendorBasicFields(values)
+        : values;
+
       // File objects (vendor documents) are replaced by their file names so the
       // uploads are actually part of the JSON payload
-      const payload = withFileNames(values);
+      const payload = withFileNames(normalizedValues);
+      console.log("Submitting payload:", payload);
 
       // wait until the API confirms success before leaving the page.
       // on failure stay on the form (the hook already shows the error toast)

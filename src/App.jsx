@@ -109,6 +109,10 @@ import AllSalesAnalytics from "./pages/modules/superAdmin/AllSalesAnalytics/inde
 import DoctorProfileBreakdown from "./pages/modules/superAdmin/AllSalesAnalytics/DoctorProfileBreakdown";
 import HospitalTypeBreakdown from "./pages/modules/superAdmin/AllSalesAnalytics/HospitalTypeBreakdown";
 import ExecutiveProfileBreakdown from "./pages/modules/superAdmin/AllSalesAnalytics/ExecutiveProfileBreakdown";
+import EnviroAnalyticsBreakdown from "./pages/modules/superAdmin/AllSalesAnalytics/EnviroAnalyticsBreakdown";
+import EnviroEmployeeBreakdown from "./pages/modules/superAdmin/AllSalesAnalytics/EnviroEmployeeBreakdown";
+import EnviroOrganizationDetails from "./pages/modules/superAdmin/AllSalesAnalytics/EnviroOrganizationDetails";
+import EnviroIndividualDetails from "./pages/modules/superAdmin/AllSalesAnalytics/EnviroIndividualDetails";
 
 function App() {
   const [activeTab, setActiveTab] = useState("/crm-dashboard");
@@ -570,6 +574,72 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <ExecutiveProfileBreakdown />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/enviro-analytics-breakdown"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroAnalyticsBreakdown />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/enviro-analytics-breakdown/:breakdownType"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroAnalyticsBreakdown />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/enviro-analytics-breakdown/:breakdownType/:breakdownId"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroAnalyticsBreakdown />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/enviro-employee-breakdown"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroEmployeeBreakdown />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/enviro-organization-details/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroOrganizationDetails />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/sales-analyticsAll/enviro-individual-details/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroIndividualDetails />
               </SuperAdminLayout>
             }
           />

@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import * as LucideIcons from "lucide-react";
 import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
+import useCompany from "../../../../../../hooks/common/useCompany";
 import Select from "react-select";
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
 import { 
@@ -131,6 +132,11 @@ export function FilterBar({
     fetchSpecialityIndividual, getspeciality,
     fetchAllRegion, region,
   } = useDropdown();
+
+  // ✅ Enviro Solution has no specialities, so its "Speciality" filter is
+  //    hidden below (the enviro analytics API does not accept a `speciality`
+  //    query param either, so nothing is being sent for it behind the scenes).
+  const { isEnviroSolution } = useCompany();
 
   const [selectedStateCode, setSelectedStateCode] = useState(null);
 
@@ -407,6 +413,14 @@ export function FilterBar({
     //   isSearchable: true
     // },
   ];
+
+  // ✅ Enviro Solution has no specialities, so drop that filter from the bar
+  //    entirely (rather than rendering an empty control) - the grid re-flows
+  //    and nothing can be selected for it by accident.
+  const visibleFilterItems = isEnviroSolution
+    ? filterItems.filter((item) => item.key !== "speciality")
+    : filterItems;
+
   return (
     <div className="bg-white rounded-2xl border border-[var(--theme-border)] shadow-md">
       <div className="px-5 py-4">
@@ -431,7 +445,7 @@ export function FilterBar({
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {filterItems.map((item) => {
+          {visibleFilterItems.map((item) => {
             const selectedOption = getSelectedOption(item);
             const hasValue = item.value && item.value !== "";
             

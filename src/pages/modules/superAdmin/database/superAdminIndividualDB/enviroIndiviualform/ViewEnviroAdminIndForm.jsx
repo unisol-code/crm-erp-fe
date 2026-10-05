@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../../../../../../hooks/theme/useTheme';
 import useEnviroAdminIndDB from '../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminIndDB';
 import LoaderSpinner from '../../../../../../components/uiComponents/loader/LoaderSpinner';
@@ -38,48 +38,31 @@ import {
 } from 'react-icons/fi';
 
 const ViewEnviroAdminIndForm = () => {
+    // ONE fetcher for every profile type. The same "by id" API returns a
+    // Farmer, a Government Officer or an FPO, so there is no need to pick a
+    // different hook based on the profile type.
     const {
         fetchEnviroAdminIndividualDetails,
         enviroAdminIndividualDetails,
-        fetchEnviroGovtOfficerDetails,
-        enviroGovtOfficerDetails,
-        resetEnviroFPODetails,
-        fetchEnviroFPODetails,
-        enviroFPODetails,
-        resetEnviroGovtOfficerDetails,
         loading,
         resetEnviroAdminIndividualDetails
     } = useEnviroAdminIndDB();
     const { id } = useParams();
-    const location = useLocation();
-    const typeOfProfileFromState = location.state?.typeOfProfile;
     const navigate = useNavigate();
     const { theme } = useTheme();
 
+    // ✅ Loads the individual the route points at.
+    //    The same API is used for every profile type (Farmer / Government
+    //    Officer / FPO) - the response carries its own `typeOfProfile`, and that
+    //    value is what decides how the page is rendered below.
     useEffect(() => {
-        if (id) {
-            if (typeOfProfileFromState === "Farmer") {
-                fetchEnviroAdminIndividualDetails(id);
-                resetEnviroFPODetails();
-                resetEnviroGovtOfficerDetails();
-            } else if (typeOfProfileFromState === "Government Officer") {
-                fetchEnviroGovtOfficerDetails(id);
-                resetEnviroFPODetails();
-                resetEnviroAdminIndividualDetails();
-            } else if (typeOfProfileFromState === "FPO") {
-                fetchEnviroFPODetails(id);
-                resetEnviroGovtOfficerDetails();
-                resetEnviroAdminIndividualDetails();
-            } else {
-                resetEnviroFPODetails();
-                resetEnviroGovtOfficerDetails();
-            }
-        }
-    }, [id, typeOfProfileFromState]);
+        if (!id) return;
 
-    console.log(enviroAdminIndividualDetails, "enviroAdminIndividualDetails");
-    console.log(enviroFPODetails, "enviroFPODetails");
-    console.log(enviroGovtOfficerDetails, "enviroGovtOfficerDetails");
+        // Drop the previously opened individual first, so the page can never
+        // show data that belongs to the row before this one.
+        resetEnviroAdminIndividualDetails();
+        fetchEnviroAdminIndividualDetails(id);
+    }, [id]);
 
     const formatDate = (dateString) => {
         if (!dateString) return 'Not set';
@@ -102,6 +85,40 @@ const ViewEnviroAdminIndForm = () => {
         } catch {
             return `₹${amount}`;
         }
+    };
+
+    const toList = (value) => {
+        if (Array.isArray(value)) {
+            return value.filter((item) => item !== null && item !== undefined && item !== '');
+        }
+        if (value === null || value === undefined || value === '') return [];
+        if (typeof value === 'string') {
+            return value.split(',').map((item) => item.trim()).filter(Boolean);
+        }
+        return [value];
+    };
+
+    const ChipList = ({ items, tone = 'blue' }) => {
+        const tones = {
+            blue: 'bg-blue-50 text-blue-700 border-blue-100',
+            green: 'bg-green-50 text-green-700 border-green-100',
+            yellow: 'bg-yellow-50 text-yellow-700 border-yellow-100',
+            purple: 'bg-purple-50 text-purple-700 border-purple-100',
+            gray: 'bg-gray-100 text-gray-700 border-gray-200'
+        };
+        const list = toList(items);
+        if (!list.length) return <p className="text-sm text-gray-400">Not provided</p>;
+        return (
+            <div className="flex flex-wrap gap-2">
+                {list.map((item, i) => (
+                    <span key={i} className={`px-2 py-1 rounded text-xs border ${tones[tone]}`}>
+                        {typeof item === 'object' && item !== null
+                            ? (item.name || item.value || item.label || JSON.stringify(item))
+                            : String(item)}
+                    </span>
+                ))}
+            </div>
+        );
     };
 
     const InfoCard = ({ title, icon: Icon, children, className = '', action }) => (
@@ -211,7 +228,7 @@ const ViewEnviroAdminIndForm = () => {
             </div>
         );
     }
-    const details = enviroAdminIndividualDetails || enviroGovtOfficerDetails || enviroFPODetails;
+    const details = enviroAdminIndividualDetails;
 
     if (!details) {
         return (
@@ -258,6 +275,11 @@ const ViewEnviroAdminIndForm = () => {
         leadOwner,
         salesPersonName,
         status,
+        // Common / Waste Management fields
+        uniqueId,
+        region,
+        organizationName,
+        addedBy,
         // Farmer fields
         panNo,
         customerType,
@@ -324,13 +346,30 @@ const ViewEnviroAdminIndForm = () => {
         _id
     } = details;
 
+    // Agriculture rows use "Farmer" / "Government Officer" / "FPO".
+    // Waste Management rows use "Private" / "Government", so they must not fall
+    // into the FPO branch - they get their own layout built from the fields the
+    // API actually returns for that segment.
+    const isFarmerProfile = typeOfProfile === 'Farmer';
+    const isGovernmentProfile = typeOfProfile === 'Government Officer' || typeOfProfile === 'Government';
+    const isFpoProfile = typeOfProfile === 'FPO';
+    const isWasteProfile =
+        segment === 'Waste Management' && !isFarmerProfile && !isGovernmentProfile && !isFpoProfile;
+
+    const displayName =
+        fpoName ||
+        [firstName, lastName].filter(Boolean).join(' ').trim() ||
+        organizationName ||
+        uniqueId ||
+        'Unknown Individual';
+
     return (
         <div className="min-h-screen">
             <BreadCrumb
                 linkText={[
                     { text: 'Database' },
                     { text: 'Individual Database', href: '/database' },
-                    { text: fpoName || `${firstName} ${lastName}` },
+                    { text: displayName },
                 ]}
             />
 
@@ -357,35 +396,48 @@ const ViewEnviroAdminIndForm = () => {
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div className="flex-1">
                                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                                    {fpoName || `${firstName} ${lastName}`}
+                                    {displayName}
                                 </h1>
                                 <div className="flex flex-wrap items-center gap-3 mb-4">
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                        <FiMail className="text-sm" />
-                                        <span className="text-sm">{officialEmailId || email}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                        <FiPhone className="text-sm" />
-                                        <span className="text-sm">{officialContactNumber || contact}</span>
-                                    </div>
+                                    {(officialEmailId || email) && (
+                                        <div className="flex items-center gap-2 text-gray-600">
+                                            <FiMail className="text-sm" />
+                                            <span className="text-sm">{officialEmailId || email}</span>
+                                        </div>
+                                    )}
+                                    {(officialContactNumber || contact) && (
+                                        <div className="flex items-center gap-2 text-gray-600">
+                                            <FiPhone className="text-sm" />
+                                            <span className="text-sm">{officialContactNumber || contact}</span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                    <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">
-                                        <FiUser className="inline mr-1" /> {typeOfProfile}
-                                    </span>
-                                    <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-medium border border-green-100">
-                                        <FiTag className="inline mr-1" /> {segment}
-                                    </span>
-                                    {typeOfProfile === "Farmer" && customerType && (
+                                    {typeOfProfile && (
+                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">
+                                            <FiUser className="inline mr-1" /> {typeOfProfile}
+                                        </span>
+                                    )}
+                                    {segment && (
+                                        <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-medium border border-green-100">
+                                            <FiTag className="inline mr-1" /> {segment}
+                                        </span>
+                                    )}
+                                    {uniqueId && (
+                                        <span className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium border border-indigo-100">
+                                            <FiHash className="inline mr-1" /> {uniqueId}
+                                        </span>
+                                    )}
+                                    {isFarmerProfile && customerType && (
                                         <span className="px-3 py-1.5 bg-purple-50 text-purple-700 rounded-full text-sm font-medium border border-purple-100">
                                             <FiUsers className="inline mr-1" /> {customerType}
                                         </span>
                                     )}
-                                    <StatusBadge status={status} />
+                                    {status ? <StatusBadge status={status} /> : null}
                                 </div>
                             </div>
                             <div className="flex flex-col gap-3">
-                                {typeOfProfile === "Farmer" ? (
+                                {isFarmerProfile ? (
                                     <>
                                         <div className="text-right">
                                             <p className="text-sm text-gray-500 mb-1">Lead Owner</p>
@@ -399,10 +451,18 @@ const ViewEnviroAdminIndForm = () => {
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="text-right">
-                                        <p className="text-sm text-gray-500 mb-1">Added By</p>
-                                        <p className="font-semibold text-gray-800">{details?.addedBy || 'System'}</p>
-                                    </div>
+                                    <>
+                                        <div className="text-right">
+                                            <p className="text-sm text-gray-500 mb-1">Added By</p>
+                                            <p className="font-semibold text-gray-800">{addedBy || 'System'}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm text-gray-500 mb-1">Sales Person</p>
+                                            <p className="font-semibold text-gray-800">
+                                                {salesPersonName || 'Not assigned'}
+                                            </p>
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -414,7 +474,7 @@ const ViewEnviroAdminIndForm = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Left Column - 2/3 width */}
                 <div className="lg:col-span-2 space-y-4">
-                    {typeOfProfile === "Farmer" ? (
+                    {isFarmerProfile ? (
                         <>
                             {/* Farmer Specific Content */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -465,7 +525,7 @@ const ViewEnviroAdminIndForm = () => {
                                 </div>
                             </InfoCard>
                         </>
-                    ) : typeOfProfile === "Government Officer" ? (
+                    ) : isGovernmentProfile ? (
                         <>
                             {/* Government Officer Specific Content */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -522,7 +582,7 @@ const ViewEnviroAdminIndForm = () => {
                                 </div>
                             </InfoCard>
                         </>
-                    ) : (
+                    ) : isFpoProfile ? (
                         <>
                             {/* FPO Specific Content */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -638,12 +698,72 @@ const ViewEnviroAdminIndForm = () => {
                                 </InfoCard>
                             </div>
                         </>
+                    ) : (
+                        <>
+                            {/* Waste Management / Generic individual content */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <InfoCard title="Individual Details" icon={FiUser}>
+                                    <div className="space-y-4">
+                                        <InfoRow label="First Name" value={firstName} icon={FiUser} />
+                                        <InfoRow label="Last Name" value={lastName} icon={FiUser} />
+                                        <InfoRow label="Unique ID" value={uniqueId} icon={FiHash} highlight />
+                                        <InfoRow label="Profile Type" value={typeOfProfile} icon={FiUsers} />
+                                    </div>
+                                </InfoCard>
+
+                                <InfoCard title="Contact Information" icon={FiPhone}>
+                                    <div className="space-y-4">
+                                        <InfoRow label="Phone Number" value={contact} icon={FiPhone} highlight />
+                                        <InfoRow label="Email Address" value={email} icon={FiMail} />
+                                        <InfoRow label="Associated Organization" value={organizationName} icon={FiBriefcase} />
+                                    </div>
+                                </InfoCard>
+                            </div>
+
+                            <InfoCard title="Address & Location" icon={FiMapPin}>
+                                <div className="space-y-4">
+                                    <InfoRow label="Complete Address" value={address} icon={FiMapPin} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <InfoRow label="Region" value={region} icon={FiGlobe} />
+                                        <InfoRow label="Village/Town" value={villageName} icon={FiHome} />
+                                        <InfoRow label="Taluka" value={taluka} icon={FiMap} />
+                                        <InfoRow label="District" value={district} icon={FiMap} />
+                                        <InfoRow label="State" value={state} icon={FiMap} />
+                                        <InfoRow label="PIN Code" value={pinCode} />
+                                    </div>
+                                </div>
+                            </InfoCard>
+
+                            <InfoCard
+                                title={isWasteProfile ? 'Waste Management Details' : 'Segment & Lead Information'}
+                                icon={FiActivity}
+                            >
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <InfoRow label="Segment" value={segment} icon={FiTag} highlight />
+                                        <InfoRow label="Lead Owner" value={leadOwner} icon={FiUser} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500 mb-2 font-medium">Lead Generated Through</p>
+                                        <ChipList items={leadGeneratedThrough} tone="blue" />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <InfoRow label="Last Meeting" value={formatDate(lastMeeting)} icon={FiClock} />
+                                        <InfoRow
+                                            label="Next Meeting"
+                                            value={formatDate(toList(nextMeeting)[0])}
+                                            icon={FiCalendar}
+                                        />
+                                    </div>
+                                </div>
+                            </InfoCard>
+                        </>
                     )}
                 </div>
 
                 {/* Right Column - 1/3 width */}
                 <div className="space-y-4">
-                    {typeOfProfile === "Farmer" ? (
+                    {isFarmerProfile ? (
                         <>
                             <InfoCard title="Financial Summary" icon={FiDollarSign}>
                                 <div className="space-y-4">
@@ -675,24 +795,47 @@ const ViewEnviroAdminIndForm = () => {
                                 </div>
                             </InfoCard>
                         </>
-                    ) : typeOfProfile === "FPO" ? (
+                    ) : isFpoProfile ? (
                         <InfoCard title="Banking Details" icon={FiCreditCard}>
                             <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
                                 <p className="text-xs text-blue-600 mb-1">Account Info</p>
                                 <p className="text-sm font-semibold text-gray-900 whitespace-pre-wrap">{bankAccountDetails}</p>
                             </div>
                         </InfoCard>
-                    ) : (
+                    ) : isGovernmentProfile ? (
                         <InfoCard title="Profile Preferences" icon={FiTarget}>
                             <div className="space-y-4">
                                 <InfoRow label="Hobbies" value={hobbies} icon={FiActivity} />
                                 <InfoRow label="Goals" value={goals} icon={FiTarget} highlight />
                             </div>
                         </InfoCard>
+                    ) : (
+                        <>
+                            <InfoCard title="Lead Information" icon={FiActivity}>
+                                <div className="space-y-4">
+                                    <InfoRow label="Unique ID" value={uniqueId} icon={FiHash} highlight />
+                                    <InfoRow label="Segment" value={segment} icon={FiTag} />
+                                    <InfoRow label="Region" value={region} icon={FiGlobe} />
+                                </div>
+                            </InfoCard>
+
+                            <InfoCard title="Lead Source" icon={FiTarget}>
+                                <ChipList items={leadGeneratedThrough} tone="green" />
+                            </InfoCard>
+
+                            <InfoCard title="Record Information" icon={FiClock}>
+                                <div className="space-y-4">
+                                    <InfoRow label="Created On" value={formatDate(createdAt)} icon={FiCalendar} />
+                                    <InfoRow label="Last Updated" value={formatDate(updatedAt)} icon={FiClock} />
+                                    <InfoRow label="Added By" value={addedBy || 'System'} icon={FiUser} />
+                                    <InfoRow label="Sales Person" value={salesPersonName || 'Not assigned'} icon={FiBriefcase} />
+                                </div>
+                            </InfoCard>
+                        </>
                     )}
 
                     {/* Engagement Section (Farmer Only) */}
-                    {typeOfProfile === "Farmer" && (
+                    {isFarmerProfile && (
                         <InfoCard title="Engagement Status" icon={FiClock}>
                             <div className="space-y-4">
                                 <InfoRow
@@ -713,7 +856,7 @@ const ViewEnviroAdminIndForm = () => {
                                     </div>
                                     <div className="p-3 bg-green-50 rounded-lg text-center">
                                         <p className="text-xs text-green-600 mb-1">Next Meeting</p>
-                                        <p className="text-sm font-bold text-gray-900">{formatDate(nextMeeting?.[0])}</p>
+                                        <p className="text-sm font-bold text-gray-900">{formatDate(toList(nextMeeting)[0])}</p>
                                     </div>
                                 </div>
                             </div>

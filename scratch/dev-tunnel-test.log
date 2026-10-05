@@ -1,0 +1,180 @@
+
+> my-react-app@0.0.0 dev
+> concurrently --names "vite,ngrok" --prefix-colors "cyan,magenta" "npm:dev:web" "npm:tunnel"
+
+[vite] 
+[vite] > my-react-app@0.0.0 dev:web
+[vite] > vite
+[vite] 
+[ngrok] 
+[ngrok] > my-react-app@0.0.0 tunnel
+[ngrok] > ngrok http 3000 --url https://penalty-rubbed-scoreless.ngrok-free.dev
+[ngrok] 
+[vite] 
+[vite]   [32m[1mVITE[22m v6.3.5[39m  [2mready in [0m[1m3861[22m[2m[0m ms[22m
+[vite] 
+[vite]   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
+[vite]   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.29.175:[1m3000[22m/[39m
+[vite] Browserslist: browsers data (caniuse-lite) is 13 months old. Please run:
+[vite]   npx update-browserslist-db@latest
+[vite]   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[vite] [2m11:00:58 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "region" in object literal[33m
+[vite] 118|    officeName: "",
+[vite] 119|    designation: "",
+[vite] 120|    region: "",
+[vite]    |    ^
+[vite] 121|    state: "",
+[vite] 122|    district: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/superAdmin/database/superAdminIndividualDB/enviroIndiviualform/EnviroIndivualform.jsx[39m
+[vite] [2m11:00:58 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "state" in object literal[33m
+[vite] 119|    designation: "",
+[vite] 120|    region: "",
+[vite] 121|    state: "",
+[vite]    |    ^
+[vite] 122|    district: "",
+[vite] 123|    pinCode: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/superAdmin/database/superAdminIndividualDB/enviroIndiviualform/EnviroIndivualform.jsx[39m
+[vite] [2m11:00:58 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "district" in object literal[33m
+[vite] 120|    region: "",
+[vite] 121|    state: "",
+[vite] 122|    district: "",
+[vite]    |    ^
+[vite] 123|    pinCode: "",
+[vite] 124|    officeAddress: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/superAdmin/database/superAdminIndividualDB/enviroIndiviualform/EnviroIndivualform.jsx[39m
+[vite] [2m11:00:58 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "pinCode" in object literal[33m
+[vite] 121|    state: "",
+[vite] 122|    district: "",
+[vite] 123|    pinCode: "",
+[vite]    |    ^
+[vite] 124|    officeAddress: "",
+[vite] 125|    districtBlockRegion: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/superAdmin/database/superAdminIndividualDB/enviroIndiviualform/EnviroIndivualform.jsx[39m
+[vite] [2m11:00:58 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "officeAddress" in object literal[33m
+[vite] 122|    district: "",
+[vite] 123|    pinCode: "",
+[vite] 124|    officeAddress: "",
+[vite]    |    ^
+[vite] 125|    districtBlockRegion: "",
+[vite] 126|    yearsOfExperience: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/superAdmin/database/superAdminIndividualDB/enviroIndiviualform/EnviroIndivualform.jsx[39m
+[vite] [2m11:00:58 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "commentBox" in object literal[33m
+[vite] 132|    dataManagementTools: [],
+[vite] 133|    dataManagementToolsOthers: "",
+[vite] 134|    commentBox: "", salesId: "",
+[vite]    |    ^
+[vite] 135|  
+[vite] 136|    // FPO fields
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/superAdmin/database/superAdminIndividualDB/enviroIndiviualform/EnviroIndivualform.jsx[39m
+[vite] [2m11:00:58 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "salesId" in object literal[33m
+[vite] 132|    dataManagementTools: [],
+[vite] 133|    dataManagementToolsOthers: "",
+[vite] 134|    commentBox: "", salesId: "",
+[vite]    |                    ^
+[vite] 135|  
+[vite] 136|    // FPO fields
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/superAdmin/database/superAdminIndividualDB/enviroIndiviualform/EnviroIndivualform.jsx[39m
+[vite] [2m11:00:58 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "officeAddress" in object literal[33m
+[vite] 140|    yearOfEstablishment: "",
+[vite] 141|    operationalArea: "",
+[vite] 142|    officeAddress: "",
+[vite]    |    ^
+[vite] 143|    officialContactNumber: "",
+[vite] 144|    officialEmailId: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/superAdmin/database/superAdminIndividualDB/enviroIndiviualform/EnviroIndivualform.jsx[39m
+[vite] [2m11:00:58 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "salesId" in object literal[33m
+[vite] 156|    keyBuyerTypes: [],
+[vite] 157|    topChallenges: "",
+[vite] 158|    topPriorities: "", salesId: ""
+[vite]    |                       ^
+[vite] 159|  };
+[vite] 160|  
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/superAdmin/database/superAdminIndividualDB/enviroIndiviualform/EnviroIndivualform.jsx[39m
+[vite] [2m11:00:59 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "officeAddress" in object literal[33m
+[vite] 114|    yearOfEstablishment: "",
+[vite] 115|    operationalArea: "",
+[vite] 116|    officeAddress: "",
+[vite]    |    ^
+[vite] 117|    officialContactNumber: "",
+[vite] 118|    officialEmailId: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/salesExecutive/database/individualDatabase/enviroIndividualform/EnviroIndivualForm.jsx[39m
+[vite] [2m11:00:59 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "region" in object literal[33m
+[vite] 139|    officeName: "",
+[vite] 140|    designation: "",
+[vite] 141|    region: "",
+[vite]    |    ^
+[vite] 142|    state: "",
+[vite] 143|    district: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/salesExecutive/database/individualDatabase/enviroIndividualform/EnviroIndivualForm.jsx[39m
+[vite] [2m11:00:59 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "state" in object literal[33m
+[vite] 140|    designation: "",
+[vite] 141|    region: "",
+[vite] 142|    state: "",
+[vite]    |    ^
+[vite] 143|    district: "",
+[vite] 144|    pinCode: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/salesExecutive/database/individualDatabase/enviroIndividualform/EnviroIndivualForm.jsx[39m
+[vite] [2m11:00:59 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "district" in object literal[33m
+[vite] 141|    region: "",
+[vite] 142|    state: "",
+[vite] 143|    district: "",
+[vite]    |    ^
+[vite] 144|    pinCode: "",
+[vite] 145|    officeAddress: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/salesExecutive/database/individualDatabase/enviroIndividualform/EnviroIndivualForm.jsx[39m
+[vite] [2m11:00:59 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "pinCode" in object literal[33m
+[vite] 142|    state: "",
+[vite] 143|    district: "",
+[vite] 144|    pinCode: "",
+[vite]    |    ^
+[vite] 145|    officeAddress: "",
+[vite] 146|    districtBlockRegion: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/salesExecutive/database/individualDatabase/enviroIndividualform/EnviroIndivualForm.jsx[39m
+[vite] [2m11:00:59 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate key "officeAddress" in object literal[33m
+[vite] 143|    district: "",
+[vite] 144|    pinCode: "",
+[vite] 145|    officeAddress: "",
+[vite]    |    ^
+[vite] 146|    districtBlockRegion: "",
+[vite] 147|    yearsOfExperience: "",
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/salesExecutive/database/individualDatabase/enviroIndividualform/EnviroIndivualForm.jsx[39m
+[vite] [2m11:01:04 am[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate "styles" attribute in JSX element[33m
+[vite] 461|              placeholder="Select State"
+[vite] 462|              isClearable
+[vite] 463|              styles={selectStyles} />
+[vite]    |              ^
+[vite] 464|            
+[vite] 465|  
+[vite] [39m
+[vite]   Plugin: [35mvite:esbuild[39m
+[vite]   File: [36mF:/UNISOLE/crm-erp-fe/src/pages/modules/salesExecutive/database/individualDatabase/tabs/NonClinical.jsx[39m

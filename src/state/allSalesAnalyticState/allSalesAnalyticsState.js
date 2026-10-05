@@ -79,3 +79,116 @@ export const specificOrganizationDataStateAtom = atom(createPersistedAtom("speci
 
 // ✅ Sales Person Specific Data State
 export const specificSalesPersonDataStateAtom = atom(createPersistedAtom("specificSalesPersonDataState", null));
+
+// Enviro Analytics State
+export const enviroAnalyticsFiltersStateAtom = atom(createPersistedAtom("enviroAnalyticsFiltersState", {
+  state: "",
+  region: "",
+  cityTownVillage: "",
+  district: "",
+  salesPersonName: "",
+  segment: "",
+  typeOfProfile: "",
+  page: 1,
+  limit: 10,
+}));
+
+export const enviroAnalyticsErrorStateAtom = atom(createPersistedAtom("enviroAnalyticsErrorState", null));
+
+export const enviroAnalyticsDataStateAtom = atom(createPersistedAtom("enviroAnalyticsDataState", null));
+
+export const enviroAnalyticsKPIsStateAtom = atom(createPersistedAtom("enviroAnalyticsKPIsState", []));
+
+// Enviro Individuals Analytics State
+export const enviroIndividualsFiltersStateAtom = atom(createPersistedAtom("enviroIndividualsFiltersState", {
+  state: "",
+  region: "",
+  cityTownVillage: "",
+  district: "",
+  salesPersonName: "",
+  segment: "",
+  typeOfProfile: "",
+  page: 1,
+  limit: 10,
+}));
+
+export const enviroIndividualsErrorStateAtom = atom(createPersistedAtom("enviroIndividualsErrorState", null));
+
+export const enviroIndividualsDataStateAtom = atom(createPersistedAtom("enviroIndividualsDataState", null));
+
+export const enviroIndividualsKPIsStateAtom = atom(createPersistedAtom("enviroIndividualsKPIsState", []));
+
+export const enviroIndividualsLoadingStateAtom = atom(createPersistedAtom("enviroIndividualsLoadingState", false));
+
+// Enviro Organizations Analytics State
+export const enviroOrganizationsFiltersStateAtom = atom(createPersistedAtom("enviroOrganizationsFiltersState", {
+  state: "",
+  region: "",
+  cityTownVillage: "",
+  district: "",
+  salesPersonName: "",
+  segment: "",
+  typeOfProfile: "",
+  page: 1,
+  limit: 10,
+}));
+
+export const enviroOrganizationsErrorStateAtom = atom(createPersistedAtom("enviroOrganizationsErrorState", null));
+
+export const enviroOrganizationsDataStateAtom = atom(createPersistedAtom("enviroOrganizationsDataState", null));
+
+export const enviroOrganizationsLoadingStateAtom = atom(createPersistedAtom("enviroOrganizationsLoadingState", false));
+
+// Enviro Employees Analytics State
+export const enviroEmployeesFiltersStateAtom = atom(createPersistedAtom("enviroEmployeesFiltersState", {
+  state: "",
+  region: "",
+  cityTownVillage: "",
+  district: "",
+  salesPersonName: "",
+  segment: "",
+  typeOfProfile: "",
+  page: 1,
+  limit: 10,
+}));
+
+export const enviroEmployeesErrorStateAtom = atom(createPersistedAtom("enviroEmployeesErrorState", null));
+
+export const enviroEmployeesDataStateAtom = atom(createPersistedAtom("enviroEmployeesDataState", null));
+
+export const enviroEmployeesLoadingStateAtom = atom(createPersistedAtom("enviroEmployeesLoadingState", false));
+
+// Enviro Specific Organization Data State
+export const enviroSpecificOrganizationFiltersStateAtom = atom(createPersistedAtom("enviroSpecificOrganizationFiltersState", {
+  year: "",
+}));
+
+export const enviroSpecificOrganizationErrorStateAtom = atom(createPersistedAtom("enviroSpecificOrganizationErrorState", null));
+
+export const enviroSpecificOrganizationDataStateAtom = atom(createPersistedAtom("enviroSpecificOrganizationDataState", null));
+
+export const enviroSpecificOrganizationLoadingStateAtom = atom(createPersistedAtom("enviroSpecificOrganizationLoadingState", false));
+
+// Enviro Specific Individual Data State
+// (single individual detail view: GET dashboard/getEnviroSpecificIndividualData/:id?year=..)
+export const enviroSpecificIndividualFiltersStateAtom = atom(createPersistedAtom("enviroSpecificIndividualFiltersState", {
+  year: "",
+}));
+
+export const enviroSpecificIndividualErrorStateAtom = atom(createPersistedAtom("enviroSpecificIndividualErrorState", null));
+
+export const enviroSpecificIndividualDataStateAtom = atom(createPersistedAtom("enviroSpecificIndividualDataState", null));
+
+export const enviroSpecificIndividualLoadingStateAtom = atom(createPersistedAtom("enviroSpecificIndividualLoadingState", false));
+
+// Enviro Specific Sales Person Data State
+// (single sales person detail view: GET dashboard/getEnviroSpecificSalesPersonData/:id?year=..)
+export const enviroSpecificSalesPersonFiltersStateAtom = atom(createPersistedAtom("enviroSpecificSalesPersonFiltersState", {
+  year: "",
+}));
+
+export const enviroSpecificSalesPersonErrorStateAtom = atom(createPersistedAtom("enviroSpecificSalesPersonErrorState", null));
+
+export const enviroSpecificSalesPersonDataStateAtom = atom(createPersistedAtom("enviroSpecificSalesPersonDataState", null));
+
+export const enviroSpecificSalesPersonLoadingStateAtom = atom(createPersistedAtom("enviroSpecificSalesPersonLoadingState", false));
