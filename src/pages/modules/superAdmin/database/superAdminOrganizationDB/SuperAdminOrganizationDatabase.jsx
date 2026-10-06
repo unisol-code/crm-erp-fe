@@ -410,7 +410,7 @@ const SuperAdminOrganizationDatabase = () => {
                     {isEnviroSolution ? (
                       <>
                         <TableCell sx={{ padding: 2 }}>
-                          {data.addedBy || "-"}
+                          {data.addedBy || data.salesPersonName || "-"}
                         </TableCell>
                         <TableCell sx={{ padding: 2 }}>
                           {data.organizationName || "-"}

@@ -44,6 +44,12 @@ import {
   enviroSpecificSalesPersonErrorStateAtom,
   enviroSpecificSalesPersonDataStateAtom,
   enviroSpecificSalesPersonLoadingStateAtom,
+  enviroOrganizationsGrphicalErrorStateAtom,
+  enviroOrganizationsGrphicalDataStateAtom,
+  enviroOrganizationsGrphicalLoadingStateAtom,
+  individualGrphicalErrorStateAtom,
+  individualGrphicalDataStateAtom,
+  individualGrphicalLoadingStateAtom,
 } from "../../../state/allSalesAnalyticState/allSalesAnalyticsState";
 
 // Query parameters accepted by the enviro APIs
@@ -74,6 +80,18 @@ const ENVIRO_SPECIFIC_INDIVIDUAL_KEYS = ["year"];
 
 // Query parameters of the single-sales-person API (only `year`)
 const ENVIRO_SPECIFIC_SALESPERSON_KEYS = ["year"];
+
+// Query parameters of the individual graphical analytics API
+// (same dashboard filters as the rest of the analytics pages)
+const INDIVIDUAL_GRAPHICAL_KEYS = [
+  "state",
+  "region",
+  "cityTownVillage",
+  "district",
+  "salesPersonName",
+  "segment",
+  "typeOfProfile",
+];
 
 // Empty filter values, reused by both reset functions below
 const EMPTY_ENVIRO_FILTERS = {
@@ -143,6 +161,16 @@ const useAllSalesEnviroAnalytics = () => {
   const [enviroSpecificSalesPersonData, setEnviroSpecificSalesPersonData] = useRecoilState(enviroSpecificSalesPersonDataStateAtom);
   const enviroSpecificSalesPersonFiltersRef = useRef(enviroSpecificSalesPersonFilters);
 
+  // ---------- Enviro organizations graphical analytics ----------
+  const [enviroOrganizationsGrphicalLoading, setEnviroOrganizationsGrphicalLoading] = useRecoilState(enviroOrganizationsGrphicalLoadingStateAtom);
+  const [enviroOrganizationsGrphicalError, setEnviroOrganizationsGrphicalError] = useRecoilState(enviroOrganizationsGrphicalErrorStateAtom);
+  const [enviroOrganizationsGrphicalData, setEnviroOrganizationsGrphicalData] = useRecoilState(enviroOrganizationsGrphicalDataStateAtom);
+
+  // ---------- Individual graphical analytics ----------
+  const [individualGrphicalLoading, setIndividualGrphicalLoading] = useRecoilState(individualGrphicalLoadingStateAtom);
+  const [individualGrphicalError, setIndividualGrphicalError] = useRecoilState(individualGrphicalErrorStateAtom);
+  const [individualGrphicalData, setIndividualGrphicalData] = useRecoilState(individualGrphicalDataStateAtom);
+
   // Keep a ref copy of the filters so the fetch functions below can always read
   // the newest values (without being re-created on every render).
   useEffect(() => {
@@ -199,6 +227,14 @@ const useAllSalesEnviroAnalytics = () => {
   const getSpecificSalesPerson = useAnalyticsApi({
     setLoading: setEnviroSpecificSalesPersonLoading,
     setError: setEnviroSpecificSalesPersonError,
+  });
+  const getEnviroOrganizationsGrphical = useAnalyticsApi({
+    setLoading: setEnviroOrganizationsGrphicalLoading,
+    setError: setEnviroOrganizationsGrphicalError,
+  });
+  const getIndividualGrphical = useAnalyticsApi({
+    setLoading: setIndividualGrphicalLoading,
+    setError: setIndividualGrphicalError,
   });
 
   // ---------- 6. Builds the KPI cards from the API response ----------
@@ -388,6 +424,51 @@ const useAllSalesEnviroAnalytics = () => {
     return res;
   }, [getSpecificSalesPerson, setEnviroSpecificSalesPersonData, setEnviroSpecificSalesPersonFilters]);
 
+  // ---------- API 8: enviro organizations graphical analytics ----------
+  // GET dashboard/getEnviroOrganizationsGrphicalAnalytics
+  // Returns graphical/chart data for enviro organizations.
+  const fetchEnviroOrganizationsGrphicalAnalytics = useCallback(async (filterParams = {}, silent = false) => {
+    const allFilters = { ...filtersRef.current, ...filterParams };
+
+    const res = await getEnviroOrganizationsGrphical({
+      path: "dashboard/getEnviroOrganizationsGrphicalAnalytics",
+      keys: ENVIRO_KEYS,
+      filters: allFilters,
+      label: "enviro organizations graphical analytics",
+      silent,
+    });
+    if (!res) return null;
+
+    setEnviroOrganizationsGrphicalData(res);
+    setFilters(allFilters);
+    return res;
+  }, [getEnviroOrganizationsGrphical, setEnviroOrganizationsGrphicalData, setFilters]);
+
+  // ---------- API 9: individual graphical analytics ----------
+  // GET dashboard/getIndividualGrphicalAnalytics
+  // Returns the summary + every chart used on the individual analytics page:
+  //   summary { totalIndividuals, totalFarmers, totalGovernmentOfficers }
+  //   charts  { bySegment, segmentProfileTypes, byProfileType, byRegion,
+  //             byState, byDistrict, monthlyTrend, leadSources, byAddedBy }
+  //   farmerAnalytics          { byProduct, byCropType, byPaymentMode, .. }
+  //   governmentOfficerAnalytics { frequentlyRequestedServices, .. }
+  const fetchIndividualGrphicalAnalytics = useCallback(async (filterParams = {}, silent = false) => {
+    const allFilters = { ...filtersRef.current, ...filterParams };
+
+    const res = await getIndividualGrphical({
+      path: "dashboard/getIndividualGrphicalAnalytics",
+      keys: INDIVIDUAL_GRAPHICAL_KEYS,
+      filters: allFilters,
+      label: "individual graphical analytics",
+      silent,
+    });
+    if (!res) return null;
+
+    setIndividualGrphicalData(res);
+    setFilters(allFilters);
+    return res;
+  }, [getIndividualGrphical, setIndividualGrphicalData, setFilters]);
+
   // ---------- 12. Filter helpers ----------
   const resetFilters = useCallback(() => {
     setFilters(EMPTY_ENVIRO_FILTERS);
@@ -513,6 +594,14 @@ const useAllSalesEnviroAnalytics = () => {
     setEnviroSpecificSalesPersonData(null);
   }, [setEnviroSpecificSalesPersonData]);
 
+  const resetEnviroOrganizationsGrphicalData = useCallback(() => {
+    setEnviroOrganizationsGrphicalData(null);
+  }, [setEnviroOrganizationsGrphicalData]);
+
+  const resetIndividualGrphicalData = useCallback(() => {
+    setIndividualGrphicalData(null);
+  }, [setIndividualGrphicalData]);
+
   // ---------- 14. What the page gets ----------
   return {
     // main enviro analytics
@@ -587,6 +676,22 @@ const useAllSalesEnviroAnalytics = () => {
     enviroSpecificSalesPersonData,
     fetchSpecificEnviroSalesPersonData,
     resetEnviroSpecificSalesPersonData,
+
+    // enviro organizations graphical analytics
+    // GET dashboard/getEnviroOrganizationsGrphicalAnalytics
+    enviroOrganizationsGrphicalLoading,
+    enviroOrganizationsGrphicalError,
+    enviroOrganizationsGrphicalData,
+    fetchEnviroOrganizationsGrphicalAnalytics,
+    resetEnviroOrganizationsGrphicalData,
+
+    // individual graphical analytics
+    // GET dashboard/getIndividualGrphicalAnalytics
+    individualGrphicalLoading,
+    individualGrphicalError,
+    individualGrphicalData,
+    fetchIndividualGrphicalAnalytics,
+    resetIndividualGrphicalData,
   };
 };
 

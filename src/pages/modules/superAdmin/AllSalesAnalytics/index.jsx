@@ -79,6 +79,20 @@ const AllSalesAnalytics = () => {
     enviroOrganizationsLoading,
     fetchEnviroOrganizationsAnalytics,
     resetEnviroOrganizationsFilters,
+    // ✅ Enviro organizations graphical analytics (Organization & Turnover Analytics on Overview)
+    enviroOrganizationsGrphicalData,
+    enviroOrganizationsGrphicalLoading,
+    enviroOrganizationsGrphicalError,
+    fetchEnviroOrganizationsGrphicalAnalytics,
+    // ✅ Individual graphical analytics (Agricultural Analytics & Farmer Profiles on Overview)
+    individualGrphicalData,
+    individualGrphicalLoading,
+    individualGrphicalError,
+    fetchIndividualGrphicalAnalytics,
+    // ✅ Enviro employees (used by the Executive tab in enviro mode)
+    enviroEmployeesData,
+    enviroEmployeesLoading,
+    fetchEnviroEmployeesAnalytics,
   } = useAllSalesEnviroAnalytics();
 
   // State for hospital pagination
@@ -119,6 +133,8 @@ const [orgListPageSize, setOrgListPageSize] = useState(10);
 
 const [targetPage, setTargetPage] = useState(1);
 const [targetPageSize, setTargetPageSize] = useState(10);
+
+  const [enviroEmployeesTableLoading, setEnviroEmployeesTableLoading] = useState(false);
 
   // ✅ Function to fetch doctor data with current pagination
   const loadDoctorData = useCallback(async (silent = false) => {
@@ -197,6 +213,19 @@ const [targetPageSize, setTargetPageSize] = useState(10);
     }
   }, [isEnviroSolution, fetchEnviroOrganizationsAnalytics, buildEnviroOrganizationsParams, enviroOrgsPage, enviroOrgsLimit]);
 
+  // ✅ Fetch the enviro employees list for the Executive tab (enviro mode)
+  const loadEnviroEmployees = useCallback(async (silent = false) => {
+    if (!isEnviroSolution) return;
+    try {
+      setEnviroEmployeesTableLoading(true);
+      await fetchEnviroEmployeesAnalytics({}, silent);
+    } catch (error) {
+      console.error('Error loading enviro employees data:', error);
+    } finally {
+      setEnviroEmployeesTableLoading(false);
+    }
+  }, [isEnviroSolution, fetchEnviroEmployeesAnalytics]);
+
    // ✅ Reset filters and pagination when tab changes
    useEffect(() => {
       resetFilters();
@@ -253,14 +282,18 @@ const [targetPageSize, setTargetPageSize] = useState(10);
            case 'enviroOrganizations':
              await loadEnviroOrganizations(false);
              break;
-           case 'executives':
-             await fetchSalesPerformance();
-             await fetchSalesPersonAnalytics();
-             await fetchSalesPersonTargetAnalytics({
-               page: targetPage,
-               limit: targetPageSize,
-             });
-             break;
+            case 'executives':
+              if (isEnviroSolution) {
+                await loadEnviroEmployees(false);
+              } else {
+                await fetchSalesPerformance();
+                await fetchSalesPersonAnalytics();
+                await fetchSalesPersonTargetAnalytics({
+                  page: targetPage,
+                  limit: targetPageSize,
+                });
+              }
+              break;
            case 'hospitals':
              await fetchOrganizationAnalytics({
                page: hospitalPage,
@@ -304,35 +337,49 @@ const [targetPageSize, setTargetPageSize] = useState(10);
    //    opened (and when the enviro flag resolves after the first render).
    //    A ref is used on purpose: the loaders change on every search keystroke,
    //    and re-running here would fire a second request for the same search.
-   const loadEnviroIndividualsRef = useRef(loadEnviroIndividuals);
-   const loadEnviroOrganizationsRef = useRef(loadEnviroOrganizations);
+    const loadEnviroIndividualsRef = useRef(loadEnviroIndividuals);
+    const loadEnviroOrganizationsRef = useRef(loadEnviroOrganizations);
+    const loadEnviroEmployeesRef = useRef(loadEnviroEmployees);
 
-   useEffect(() => {
-     loadEnviroIndividualsRef.current = loadEnviroIndividuals;
-   }, [loadEnviroIndividuals]);
+    useEffect(() => {
+      loadEnviroIndividualsRef.current = loadEnviroIndividuals;
+    }, [loadEnviroIndividuals]);
 
-   useEffect(() => {
-     loadEnviroOrganizationsRef.current = loadEnviroOrganizations;
-   }, [loadEnviroOrganizations]);
+    useEffect(() => {
+      loadEnviroOrganizationsRef.current = loadEnviroOrganizations;
+    }, [loadEnviroOrganizations]);
 
-   useEffect(() => {
-     if (isEnviroSolution && selectedTab === 'individuals') {
-       loadEnviroIndividualsRef.current(false);
-     }
-   }, [isEnviroSolution, selectedTab]);
+    useEffect(() => {
+      loadEnviroEmployeesRef.current = loadEnviroEmployees;
+    }, [loadEnviroEmployees]);
 
-   useEffect(() => {
-     if (isEnviroSolution && selectedTab === 'enviroOrganizations') {
-       loadEnviroOrganizationsRef.current(false);
-     }
-   }, [isEnviroSolution, selectedTab]);
+    useEffect(() => {
+      if (isEnviroSolution && selectedTab === 'individuals') {
+        loadEnviroIndividualsRef.current(false);
+      }
+    }, [isEnviroSolution, selectedTab]);
+
+    useEffect(() => {
+      if (isEnviroSolution && selectedTab === 'enviroOrganizations') {
+        loadEnviroOrganizationsRef.current(false);
+      }
+    }, [isEnviroSolution, selectedTab]);
+
+    useEffect(() => {
+      if (isEnviroSolution && selectedTab === 'executives') {
+        loadEnviroEmployeesRef.current(false);
+      }
+    }, [isEnviroSolution, selectedTab]);
 
    // ✅ Fetch enviro analytics when isEnviroSolution becomes true (e.g., after sessionStorage read)
+   //    (includes the individual graphical analytics: Enviro Solution companies only)
    useEffect(() => {
      if (isEnviroSolution && selectedTab === 'overview') {
        fetchEnviroAnalytics();
+       fetchEnviroOrganizationsGrphicalAnalytics();
+       fetchIndividualGrphicalAnalytics();
      }
-   }, [isEnviroSolution, selectedTab, fetchEnviroAnalytics]);
+   }, [isEnviroSolution, selectedTab, fetchEnviroAnalytics, fetchEnviroOrganizationsGrphicalAnalytics, fetchIndividualGrphicalAnalytics]);
 
    // ✅ For Enviro Solution the "Doctors" tab does not exist - move to "Individuals"
    //    (isEnviroSolution is read from sessionStorage, so it can arrive after mount)
@@ -750,12 +797,16 @@ const handleTargetPageSizeChange = async (pageSize) => {
           );
           break;
         case 'executives':
-          await fetchSalesPerformance();
-          await fetchSalesPersonAnalytics();
-          await fetchSalesPersonTargetAnalytics({
-            page: targetPage,
-            limit: targetPageSize,
-          });
+          if (isEnviroSolution) {
+            await loadEnviroEmployees(false);
+          } else {
+            await fetchSalesPerformance();
+            await fetchSalesPersonAnalytics();
+            await fetchSalesPersonTargetAnalytics({
+              page: targetPage,
+              limit: targetPageSize,
+            });
+          }
           break;
         case 'hospitals':
           await fetchOrganizationAnalytics({
@@ -787,8 +838,11 @@ const handleTargetPageSizeChange = async (pageSize) => {
       }
       
       // ✅ Fetch enviro analytics after other data for overview tab
+      //    (org graphical + individual graphical: Enviro Solution companies only)
       if (isEnviroSolution && tab === 'overview') {
         await fetchEnviroAnalytics();
+        await fetchEnviroOrganizationsGrphicalAnalytics();
+        await fetchIndividualGrphicalAnalytics();
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -860,6 +914,12 @@ const handleTargetPageSizeChange = async (pageSize) => {
         enviroKpis={enviroKpis}
         enviroLoading={enviroLoading}
         enviroError={enviroError}
+        enviroGraphicalData={enviroOrganizationsGrphicalData}
+        enviroGraphicalLoading={enviroOrganizationsGrphicalLoading}
+        enviroGraphicalError={enviroOrganizationsGrphicalError}
+        individualGrphicalData={individualGrphicalData}
+        individualGrphicalLoading={individualGrphicalLoading}
+        individualGrphicalError={individualGrphicalError}
       />
     },
     // ✅ Enviro Solution: doctors are not used, individuals replace them
@@ -912,13 +972,15 @@ const handleTargetPageSizeChange = async (pageSize) => {
       icon: LucideIcons.Users,
       component: <ExecutiveSection
   executives={executives}
-  salesPersonData={salesPersonData}
-  salesPersonTargetData={salesPersonTargetData}
+  salesPersonData={isEnviroSolution ? null : salesPersonData}
+  salesPersonTargetData={isEnviroSolution ? null : salesPersonTargetData}
   filters={filters}
-  loading={loading}
-  tableLoading={targetTableLoading}
+  loading={isEnviroSolution ? enviroEmployeesLoading : loading}
+  tableLoading={isEnviroSolution ? enviroEmployeesTableLoading : targetTableLoading}
   onTargetPageChange={handleTargetPageChange}
   onTargetItemsPerPageChange={handleTargetPageSizeChange}
+  enviroEmployeesData={enviroEmployeesData}
+  isEnviroSolution={isEnviroSolution}
 />
     },
     // { 

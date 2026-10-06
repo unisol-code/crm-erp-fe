@@ -32,17 +32,17 @@ function Sidebar({ collapsed, setCollapsed }) {
       name: "Dashboard",
       path: "/crm-dashboard",
     },
-    {
-      id: 2,
-      icon: <IoPeopleCircleOutline className="w-6 h-6" />,
-      name: "Lead Management",
-      hasSubMenu: true,
-      subItems: [
-        { id: 21, name: "Create Lead", path: "/lead/createlead" },
-        { id: 22, name: "Manage Lead", path: "/lead/lead-tracking" },
-        { id: 23, name: "View Lead", path: "/lead/view-lead" },
-      ],
-    },
+    // {
+    //   id: 2,
+    //   icon: <IoPeopleCircleOutline className="w-6 h-6" />,
+    //   name: "Lead Management",
+    //   hasSubMenu: true,
+    //   subItems: [
+    //     { id: 21, name: "Create Lead", path: "/lead/createlead" },
+    //     { id: 22, name: "Manage Lead", path: "/lead/lead-tracking" },
+    //     { id: 23, name: "View Lead", path: "/lead/view-lead" },
+    //   ],
+    // },
     {
       id: 3,
       icon: <Database className="w-6 h-6" />,

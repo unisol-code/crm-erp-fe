@@ -200,16 +200,9 @@ const EnviroIndivualform = () => {
 
   useEffect(() => {
     if (id) {
-      const type = typeFromState || selectedUserType?.value;
-      if (type === "Farmer") {
+     
         fetchEnviroIndividualDetails(id);
-      } else if (type === "Government Officer") {
-        fetchEnviroGovtOfficerDetails(id);
-      } else if (type === "FPO") {
-        fetchEnviroFPODetails(id);
-      } else {
-        fetchEnviroIndividualDetails(id);
-      }
+      
     }
     return () => {
       resetEnviroIndividualDetails();

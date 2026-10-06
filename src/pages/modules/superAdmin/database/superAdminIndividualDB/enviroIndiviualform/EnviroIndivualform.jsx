@@ -63,6 +63,10 @@ const initialValues = {
   contact: "",
   villageName: "",
   segment: "",
+  // `organizationName` is the correct key - it is what the API returns and what the
+  // view pages read. `orgnizationName` (misspelled) is the legacy key still used by
+  // the common tab; it is kept only so that tab keeps hydrating.
+  organizationName: "",
   orgnizationName: "",
   region: "",
   state: "",
@@ -264,6 +268,19 @@ const EnviroIndivualform = () => {
     }
   }, [currentDetails]);
 
+  // `selectedSector` (the Fragment dropdown) is the single source of truth for the
+  // segment, so mirror it into the form state. onSubmit reads the segment from
+  // `selectedSector`, while the individual form tabs read
+  // `formik.values.segment` to load the matching organization list - keeping both in
+  // step here means the tab always reflects the fragment actually chosen, including
+  // in edit mode where the sector is populated from the API record.
+  useEffect(() => {
+    const sectorValue = selectedSector?.value || "";
+    if (sectorValue !== formik.values.segment) {
+      formik.setFieldValue("segment", sectorValue);
+    }
+  }, [selectedSector]);
+
   const individualTypeOptions = Array.isArray(enviroprofile)
     ? enviroprofile.map((item) => ({
       label: item,
@@ -290,12 +307,16 @@ const EnviroIndivualform = () => {
         "pinCode", "leadGeneratedThrough", "lastMeeting", "nextMeeting",
         "status", "panNo", "sprayingType", "tentativeBuyingDate", "cropType",
         "cropName", "sprayingDuration", "customerType", "department", "taluka", "commentBox",
-        "purposeForBuying", "paymentMode", "existingLoan", "bankName", "salesId", "edit" 
+        "purposeForBuying", "paymentMode", "existingLoan", "bankName", "salesId", "edit",
+        // "Associated with Organization" - picked on the Farmer tab from the
+        // organization list of the selected Fragment. Without it here the field
+        // renders but is stripped from the payload and never reaches the API.
+        "organizationName"
       ];
 
       const govOfficerFields = [
         "firstName", "lastName", "email", "contact", "birthday", "anniversary",
-        "hobbies", "goals", "officeName", "designation", "segment", "orgnizationName", "region", "state", "district","city" ,"pinCode","districtBlockRegion", "commentBox",
+        "hobbies", "goals", "officeName", "designation", "segment", "organizationName", "region", "state", "district","city" ,"pinCode","districtBlockRegion", "commentBox",
         "yearsOfExperience", "frequentlyRequestedServices", "frequentlyRequestedServicesOthers",
         "schemeUnderstanding", "effectiveLanguage", "dataMaintainedDigitally",
         "dataManagementTools", "dataManagementToolsOthers",
@@ -315,6 +336,8 @@ const EnviroIndivualform = () => {
       const commonFields = [
         "firstName", "lastName", "email", "contact",
         "segment", "orgnizationName", "region", "state", "district", "villageName", "address", "pinCode",
+        // Sales Person dropdown (same salesId key as the Farmers tab)
+        "salesId",
       ];
 
       let filteredValues = {};

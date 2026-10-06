@@ -181,6 +181,14 @@ export const enviroSpecificIndividualDataStateAtom = atom(createPersistedAtom("e
 
 export const enviroSpecificIndividualLoadingStateAtom = atom(createPersistedAtom("enviroSpecificIndividualLoadingState", false));
 
+// Enviro Organizations Graphical Analytics State
+// (GET dashboard/getEnviroOrganizationsGrphicalAnalytics)
+export const enviroOrganizationsGrphicalErrorStateAtom = atom(createPersistedAtom("enviroOrganizationsGrphicalErrorState", null));
+
+export const enviroOrganizationsGrphicalDataStateAtom = atom(createPersistedAtom("enviroOrganizationsGrphicalDataState", null));
+
+export const enviroOrganizationsGrphicalLoadingStateAtom = atom(createPersistedAtom("enviroOrganizationsGrphicalLoadingState", false));
+
 // Enviro Specific Sales Person Data State
 // (single sales person detail view: GET dashboard/getEnviroSpecificSalesPersonData/:id?year=..)
 export const enviroSpecificSalesPersonFiltersStateAtom = atom(createPersistedAtom("enviroSpecificSalesPersonFiltersState", {
@@ -192,3 +200,11 @@ export const enviroSpecificSalesPersonErrorStateAtom = atom(createPersistedAtom(
 export const enviroSpecificSalesPersonDataStateAtom = atom(createPersistedAtom("enviroSpecificSalesPersonDataState", null));
 
 export const enviroSpecificSalesPersonLoadingStateAtom = atom(createPersistedAtom("enviroSpecificSalesPersonLoadingState", false));
+
+// Individual Graphical Analytics State
+// (GET dashboard/getIndividualGrphicalAnalytics)
+export const individualGrphicalErrorStateAtom = atom(createPersistedAtom("individualGrphicalErrorState", null));
+
+export const individualGrphicalDataStateAtom = atom(createPersistedAtom("individualGrphicalDataState", null));
+
+export const individualGrphicalLoadingStateAtom = atom(createPersistedAtom("individualGrphicalLoadingState", false));

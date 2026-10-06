@@ -107,7 +107,7 @@ const ViewMonthWisePlanning = () => {
     const stats = [
     {
         id: "hospital",
-        label: "Total Hospital Coverage",
+        label: "Total Organization Coverage",
         value: monthWisePlanning?.totalHospitals || 0,
         icon: HiOutlineDocumentText,
         color: "blue",
@@ -115,7 +115,7 @@ const ViewMonthWisePlanning = () => {
     },
     {
         id: "doctor",
-        label: "Total Doctor Coverage",
+        label: "Total Individual Coverage",
         value:
             monthWisePlanning?.totalDoctors|| 0,
         icon: FiPhone,
