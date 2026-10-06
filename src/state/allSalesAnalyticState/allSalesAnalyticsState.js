@@ -181,6 +181,14 @@ export const enviroSpecificIndividualDataStateAtom = atom(createPersistedAtom("e
 
 export const enviroSpecificIndividualLoadingStateAtom = atom(createPersistedAtom("enviroSpecificIndividualLoadingState", false));
 
+// Enviro Organizations Graphical Analytics State
+// (GET dashboard/getEnviroOrganizationsGrphicalAnalytics)
+export const enviroOrganizationsGrphicalErrorStateAtom = atom(createPersistedAtom("enviroOrganizationsGrphicalErrorState", null));
+
+export const enviroOrganizationsGrphicalDataStateAtom = atom(createPersistedAtom("enviroOrganizationsGrphicalDataState", null));
+
+export const enviroOrganizationsGrphicalLoadingStateAtom = atom(createPersistedAtom("enviroOrganizationsGrphicalLoadingState", false));
+
 // Enviro Specific Sales Person Data State
 // (single sales person detail view: GET dashboard/getEnviroSpecificSalesPersonData/:id?year=..)
 export const enviroSpecificSalesPersonFiltersStateAtom = atom(createPersistedAtom("enviroSpecificSalesPersonFiltersState", {

@@ -79,6 +79,11 @@ const AllSalesAnalytics = () => {
     enviroOrganizationsLoading,
     fetchEnviroOrganizationsAnalytics,
     resetEnviroOrganizationsFilters,
+    // ✅ Enviro organizations graphical analytics (Organization & Turnover Analytics on Overview)
+    enviroOrganizationsGrphicalData,
+    enviroOrganizationsGrphicalLoading,
+    enviroOrganizationsGrphicalError,
+    fetchEnviroOrganizationsGrphicalAnalytics,
   } = useAllSalesEnviroAnalytics();
 
   // State for hospital pagination
@@ -331,8 +336,9 @@ const [targetPageSize, setTargetPageSize] = useState(10);
    useEffect(() => {
      if (isEnviroSolution && selectedTab === 'overview') {
        fetchEnviroAnalytics();
+       fetchEnviroOrganizationsGrphicalAnalytics();
      }
-   }, [isEnviroSolution, selectedTab, fetchEnviroAnalytics]);
+   }, [isEnviroSolution, selectedTab, fetchEnviroAnalytics, fetchEnviroOrganizationsGrphicalAnalytics]);
 
    // ✅ For Enviro Solution the "Doctors" tab does not exist - move to "Individuals"
    //    (isEnviroSolution is read from sessionStorage, so it can arrive after mount)
@@ -789,6 +795,7 @@ const handleTargetPageSizeChange = async (pageSize) => {
       // ✅ Fetch enviro analytics after other data for overview tab
       if (isEnviroSolution && tab === 'overview') {
         await fetchEnviroAnalytics();
+        await fetchEnviroOrganizationsGrphicalAnalytics();
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -860,6 +867,9 @@ const handleTargetPageSizeChange = async (pageSize) => {
         enviroKpis={enviroKpis}
         enviroLoading={enviroLoading}
         enviroError={enviroError}
+        enviroGraphicalData={enviroOrganizationsGrphicalData}
+        enviroGraphicalLoading={enviroOrganizationsGrphicalLoading}
+        enviroGraphicalError={enviroOrganizationsGrphicalError}
       />
     },
     // ✅ Enviro Solution: doctors are not used, individuals replace them

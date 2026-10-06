@@ -44,6 +44,9 @@ import {
   enviroSpecificSalesPersonErrorStateAtom,
   enviroSpecificSalesPersonDataStateAtom,
   enviroSpecificSalesPersonLoadingStateAtom,
+  enviroOrganizationsGrphicalErrorStateAtom,
+  enviroOrganizationsGrphicalDataStateAtom,
+  enviroOrganizationsGrphicalLoadingStateAtom,
 } from "../../../state/allSalesAnalyticState/allSalesAnalyticsState";
 
 // Query parameters accepted by the enviro APIs
@@ -143,6 +146,11 @@ const useAllSalesEnviroAnalytics = () => {
   const [enviroSpecificSalesPersonData, setEnviroSpecificSalesPersonData] = useRecoilState(enviroSpecificSalesPersonDataStateAtom);
   const enviroSpecificSalesPersonFiltersRef = useRef(enviroSpecificSalesPersonFilters);
 
+  // ---------- Enviro organizations graphical analytics ----------
+  const [enviroOrganizationsGrphicalLoading, setEnviroOrganizationsGrphicalLoading] = useRecoilState(enviroOrganizationsGrphicalLoadingStateAtom);
+  const [enviroOrganizationsGrphicalError, setEnviroOrganizationsGrphicalError] = useRecoilState(enviroOrganizationsGrphicalErrorStateAtom);
+  const [enviroOrganizationsGrphicalData, setEnviroOrganizationsGrphicalData] = useRecoilState(enviroOrganizationsGrphicalDataStateAtom);
+
   // Keep a ref copy of the filters so the fetch functions below can always read
   // the newest values (without being re-created on every render).
   useEffect(() => {
@@ -199,6 +207,10 @@ const useAllSalesEnviroAnalytics = () => {
   const getSpecificSalesPerson = useAnalyticsApi({
     setLoading: setEnviroSpecificSalesPersonLoading,
     setError: setEnviroSpecificSalesPersonError,
+  });
+  const getEnviroOrganizationsGrphical = useAnalyticsApi({
+    setLoading: setEnviroOrganizationsGrphicalLoading,
+    setError: setEnviroOrganizationsGrphicalError,
   });
 
   // ---------- 6. Builds the KPI cards from the API response ----------
@@ -388,6 +400,26 @@ const useAllSalesEnviroAnalytics = () => {
     return res;
   }, [getSpecificSalesPerson, setEnviroSpecificSalesPersonData, setEnviroSpecificSalesPersonFilters]);
 
+  // ---------- API 8: enviro organizations graphical analytics ----------
+  // GET dashboard/getEnviroOrganizationsGrphicalAnalytics
+  // Returns graphical/chart data for enviro organizations.
+  const fetchEnviroOrganizationsGrphicalAnalytics = useCallback(async (filterParams = {}, silent = false) => {
+    const allFilters = { ...filtersRef.current, ...filterParams };
+
+    const res = await getEnviroOrganizationsGrphical({
+      path: "dashboard/getEnviroOrganizationsGrphicalAnalytics",
+      keys: ENVIRO_KEYS,
+      filters: allFilters,
+      label: "enviro organizations graphical analytics",
+      silent,
+    });
+    if (!res) return null;
+
+    setEnviroOrganizationsGrphicalData(res);
+    setFilters(allFilters);
+    return res;
+  }, [getEnviroOrganizationsGrphical, setEnviroOrganizationsGrphicalData, setFilters]);
+
   // ---------- 12. Filter helpers ----------
   const resetFilters = useCallback(() => {
     setFilters(EMPTY_ENVIRO_FILTERS);
@@ -513,6 +545,10 @@ const useAllSalesEnviroAnalytics = () => {
     setEnviroSpecificSalesPersonData(null);
   }, [setEnviroSpecificSalesPersonData]);
 
+  const resetEnviroOrganizationsGrphicalData = useCallback(() => {
+    setEnviroOrganizationsGrphicalData(null);
+  }, [setEnviroOrganizationsGrphicalData]);
+
   // ---------- 14. What the page gets ----------
   return {
     // main enviro analytics
@@ -587,6 +623,14 @@ const useAllSalesEnviroAnalytics = () => {
     enviroSpecificSalesPersonData,
     fetchSpecificEnviroSalesPersonData,
     resetEnviroSpecificSalesPersonData,
+
+    // enviro organizations graphical analytics
+    // GET dashboard/getEnviroOrganizationsGrphicalAnalytics
+    enviroOrganizationsGrphicalLoading,
+    enviroOrganizationsGrphicalError,
+    enviroOrganizationsGrphicalData,
+    fetchEnviroOrganizationsGrphicalAnalytics,
+    resetEnviroOrganizationsGrphicalData,
   };
 };
 

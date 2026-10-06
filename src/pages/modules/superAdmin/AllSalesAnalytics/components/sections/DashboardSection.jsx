@@ -9,6 +9,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   Legend,
   Pie,
   PieChart,
@@ -74,6 +75,58 @@ function MiniStat({ label, value, tone }) {
   );
 }
 
+// ---------- Helpers for the "Organization & Turnover Analytics" grid ----------
+// Formats a number as Indian-style currency: ₹16,51,537 (matches the mock UI)
+const formatINR = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
+
+// Compact currency for chart axes: ₹16.5L / ₹1.2Cr
+const formatCompactINR = (value) => {
+  const n = Number(value) || 0;
+  if (Math.abs(n) >= 1e7) return `₹${(n / 1e7).toFixed(1)}Cr`;
+  if (Math.abs(n) >= 1e5) return `₹${(n / 1e5).toFixed(1)}L`;
+  if (Math.abs(n) >= 1e3) return `₹${(n / 1e3).toFixed(1)}K`;
+  return `₹${n}`;
+};
+
+// Section donut palette (Agriculture = blue, Waste Management = green, ...)
+const SECTION_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#9ca3af", "#8b5cf6", "#ef4444"];
+
+// "Kitchen Waste Management" -> "Kitchen Waste Mgmt" (shorter label, like the mock)
+const shortCategoryName = (name) => (name || "").replace(/Management/g, "Mgmt");
+
+// One horizontal bar row used by the "Waste Management Details" card
+function BarRow({ label, value, max, color }) {
+  const pct = max > 0 ? (Number(value) / max) * 100 : 0;
+  return (
+    <div className="flex items-center gap-3">
+      <span
+        className="w-36 sm:w-44 shrink-0 text-right text-xs font-medium text-[var(--theme-text-primary)] truncate"
+        title={label}
+      >
+        {label}
+      </span>
+      <div className="flex-1 h-4 bg-[var(--theme-bg-light)] rounded overflow-hidden">
+        <div
+          className="h-full rounded transition-all duration-500"
+          style={{ width: `${pct}%`, backgroundColor: color }}
+        />
+      </div>
+      <span className="w-6 shrink-0 text-xs font-semibold text-[var(--theme-text-primary)]">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// Centered banner showing a total ("Total Agriculture Turnover: ₹16,51,537")
+function TotalStrip({ children }) {
+  return (
+    <div className="rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-light)] py-2 px-3 text-center text-sm font-bold text-[var(--theme-text-primary)]">
+      {children}
+    </div>
+  );
+}
+
 export function DashboardSection({
    hospitals,
    filters,
@@ -101,6 +154,9 @@ export function DashboardSection({
     enviroKpis = [],
     enviroLoading = false,
     enviroError = null,
+    enviroGraphicalData = null,
+    enviroGraphicalLoading = false,
+    enviroGraphicalError = null,
   }) {
    const [drillDistrict, setDrillDistrict] = useState(null);
    const [productCat, setProductCat] = useState("All");
@@ -120,6 +176,8 @@ export function DashboardSection({
    const [orgPage, setOrgPage] = useState(1);
   const [orgLimit, setOrgLimit] = useState(10);
   const [showAllSpecialities, setShowAllSpecialities] = useState(false);
+  // Type selected in the "… Annual Turnover" organizations table
+  const [selectedAgriType, setSelectedAgriType] = useState("");
 
   // Use props pagination or local state
   const currentPage = paginationData.currentPage || page;
@@ -331,6 +389,155 @@ export function DashboardSection({
     : (Array.isArray(kpis) && kpis.length > 0 ? kpis : updatedKPIS);
   const displayLoading = isEnviroSolution ? enviroLoading : loading;
 
+  // =====================================================================
+  // Enviro: "Organization & Turnover Analytics" grid
+  // Data comes from fetchEnviroOrganizationsGrphicalAnalytics
+  // (GET dashboard/getEnviroOrganizationsGrphicalAnalytics), whose response is
+  // { data: [sections], wasteManagement, annualTurnoverAnalytics,
+  //   wasteManagementAnnualTurnoverAnalytics }
+  // =====================================================================
+  const grphical = enviroGraphicalData;
+
+  const grphicalSections = useMemo(
+    () => (Array.isArray(grphical?.data) ? grphical.data : []),
+    [grphical],
+  );
+
+  // Donut slices -> [{ name: "Agriculture", value: 39 }, ...]
+  const sectionPieData = useMemo(() => {
+    const withCount = grphicalSections.filter((s) => (s.total || 0) > 0);
+    return (withCount.length ? withCount : grphicalSections).map((s) => ({
+      name: s.sectionName || "Unknown",
+      value: s.total || 0,
+    }));
+  }, [grphicalSections]);
+
+  // The section the turnover payload belongs to (Agriculture in the mock)
+  const agricultureSection = useMemo(() => {
+    if (!grphicalSections.length) return null;
+    const turnoverSection = grphical?.annualTurnoverAnalytics?.sectionName;
+    return (
+      grphicalSections.find((s) => s.sectionName === turnoverSection) ||
+      grphicalSections.find((s) => (s.sectionName || "").toLowerCase() === "agriculture") ||
+      grphicalSections.find((s) => !/waste/i.test(s.sectionName || "")) ||
+      grphicalSections[0]
+    );
+  }, [grphicalSections, grphical]);
+
+  // "Agriculture Organizations by Type" - only types that have organizations
+  const agricultureTypeChart = useMemo(
+    () =>
+      [...(agricultureSection?.types || [])]
+        .filter((t) => (t.count || 0) > 0)
+        .sort((a, b) => b.count - a.count)
+        .map((t) => ({ type: t.type, count: t.count })),
+    [agricultureSection],
+  );
+
+  // ---- Waste Management Details card ----
+  const wasteDetails = grphical?.wasteManagement || null;
+
+  const wasteCategoryBars = useMemo(
+    () => (wasteDetails?.categories || []).filter((c) => (c.count || 0) > 0),
+    [wasteDetails],
+  );
+
+  // Type counts aggregated across every waste-related section
+  const wasteTypeBars = useMemo(() => {
+    const totals = new Map();
+    grphicalSections
+      .filter((s) => /waste/i.test(s.sectionName || ""))
+      .forEach((s) =>
+        (s.types || []).forEach((t) =>
+          totals.set(t.type, (totals.get(t.type) || 0) + (t.count || 0)),
+        ),
+      );
+    if (totals.size > 0) {
+      return Array.from(totals, ([type, count]) => ({ type, count }));
+    }
+    // Fallback: type counts from the turnover payload
+    return (grphical?.wasteManagementAnnualTurnoverAnalytics?.byType || []).map((t) => ({
+      type: t.type,
+      count: t.organizations || 0,
+    }));
+  }, [grphicalSections, grphical]);
+
+  // ---- Agriculture annual turnover ----
+  const agriTurnover = grphical?.annualTurnoverAnalytics || null;
+
+  const agriTurnoverTotal = useMemo(
+    () =>
+      (agriTurnover?.byType || []).reduce(
+        (sum, t) => sum + (Number(t.totalTurnover) || 0),
+        0,
+      ),
+    [agriTurnover],
+  );
+
+  const agriTurnoverChart = useMemo(
+    () =>
+      (agriTurnover?.byType || []).map((t) => ({
+        type: t.type,
+        turnover: Number(t.totalTurnover) || 0,
+        turnoverLabel: formatINR(t.totalTurnover),
+      })),
+    [agriTurnover],
+  );
+
+  // ---- Waste management annual turnover ----
+  const wasteTurnover = grphical?.wasteManagementAnnualTurnoverAnalytics || null;
+
+  const wasteTurnoverTotal = useMemo(
+    () =>
+      (wasteTurnover?.byType || []).reduce(
+        (sum, t) => sum + (Number(t.totalTurnover) || 0),
+        0,
+      ),
+    [wasteTurnover],
+  );
+
+  const wasteTurnoverChart = useMemo(
+    () =>
+      (wasteTurnover?.byType || []).map((t) => ({
+        type: t.type,
+        turnover: Number(t.totalTurnover) || 0,
+        turnoverLabel: formatINR(t.totalTurnover),
+      })),
+    [wasteTurnover],
+  );
+
+  // ---- Organization lists for the two tables ----
+  const agriOrganizations = useMemo(() => {
+    const typeBlock = (agriTurnover?.byType || []).find((t) => t.type === selectedAgriType);
+    return typeBlock?.organizationsList || [];
+  }, [agriTurnover, selectedAgriType]);
+
+  const wasteOrganizations = useMemo(
+    () =>
+      (wasteTurnover?.byType || []).flatMap((t) =>
+        (t.organizationsList || []).map((o) => ({ ...o, type: t.type })),
+      ),
+    [wasteTurnover],
+  );
+
+  // Default the agriculture table to the first type that has organizations
+  useEffect(() => {
+    const byType = agriTurnover?.byType || [];
+    if (byType.length === 0) return;
+    if (!byType.some((t) => t.type === selectedAgriType)) {
+      const firstWithOrgs = byType.find((t) => (t.organizations || 0) > 0);
+      setSelectedAgriType((firstWithOrgs || byType[0]).type);
+    }
+  }, [agriTurnover, selectedAgriType]);
+
+  const hasGraphicalData =
+    grphicalSections.length > 0 || !!wasteDetails || !!agriTurnover || !!wasteTurnover;
+
+  const agricultureLabel = agricultureSection?.sectionName || "Agriculture";
+  const wasteTurnoverLabel = wasteTurnover?.sectionName || "Waste Management";
+  const wasteCategoryMax = Math.max(0, ...wasteCategoryBars.map((c) => c.count || 0));
+  const wasteTypeMax = Math.max(0, ...wasteTypeBars.map((t) => t.count || 0));
+
   const handlePageChange = (newPage) => {
     setPage(newPage);
     if (onPageChange) {
@@ -508,6 +715,405 @@ export function DashboardSection({
               />
             );
           })}
+        </div>
+      )}
+
+      {/* ✅ Enviro: Organization & Turnover Analytics
+          (rendered from fetchEnviroOrganizationsGrphicalAnalytics response) */}
+      {isEnviroSolution && (
+        <div className="mt-6">
+          <div className="mb-3">
+            <h2 className="text-lg md:text-xl font-bold text-[var(--theme-text-primary)]">
+              Organization &amp; Turnover Analytics
+            </h2>
+            <p className="text-xs text-[var(--theme-text-secondary)] mt-0.5 font-medium">
+              Section-wise organizations, waste management breakdown &amp; annual turnover insights
+            </p>
+          </div>
+
+          {enviroGraphicalLoading && !hasGraphicalData ? (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-card-bg)] p-6 animate-pulse"
+                >
+                  <div className="h-4 w-56 bg-gray-200 rounded mb-4" />
+                  <div className="h-40 w-full bg-gray-100 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : !hasGraphicalData ? (
+            <div className="rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-card-bg)] p-8 text-center">
+              <p className="text-sm font-medium text-[var(--theme-text-primary)]">
+                {enviroGraphicalError
+                  ? enviroGraphicalError
+                  : "No graphical analytics data available"}
+              </p>
+              <p className="text-xs text-[var(--theme-text-secondary)] mt-1">
+                Try changing the filters to load organization &amp; turnover analytics.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              {/* 1. Section Overview (Agriculture vs. Waste Management) */}
+              <ChartCard title="Section Overview (Agriculture vs. Waste Management)">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                  {/* Donut: organizations per section */}
+                  <div>
+                    {sectionPieData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={200}>
+                        <PieChart>
+                          <Pie
+                            data={sectionPieData}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius={52}
+                            outerRadius={80}
+                            paddingAngle={2}
+                            label={({ value }) => `${value} orgs`}
+                          >
+                            {sectionPieData.map((_, i) => (
+                              <Cell
+                                key={i}
+                                fill={SECTION_COLORS[i % SECTION_COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              borderRadius: 12,
+                              border: "1px solid var(--theme-bg-sidebar)",
+                              background: "#ffffff",
+                            }}
+                            formatter={(value, name) => [`${value} orgs`, name]}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex items-center justify-center h-[200px] text-sm text-gray-400">
+                        No section data available
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col">
+                    {/* Legend */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center">
+                      {sectionPieData.map((s, i) => (
+                        <span
+                          key={`${s.name}-${i}`}
+                          className="flex items-center gap-1.5 text-xs text-[var(--theme-text-primary)]"
+                        >
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{
+                              backgroundColor: SECTION_COLORS[i % SECTION_COLORS.length],
+                            }}
+                          />
+                          {s.name}
+                          <span className="font-semibold">{s.value} orgs</span>
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Agriculture Organizations by Type */}
+                    <div className="mt-3 rounded-xl border border-[var(--theme-border)] p-3">
+                      <p className="text-xs font-semibold text-[var(--theme-text-primary)] text-center mb-1">
+                        {agricultureLabel} Organizations by Type
+                      </p>
+                      {agricultureTypeChart.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={160}>
+                          <BarChart
+                            data={agricultureTypeChart}
+                            margin={{ top: 12, right: 8, left: -18, bottom: 0 }}
+                          >
+                            <CartesianGrid vertical={false} stroke="var(--theme-bg-sidebar)" />
+                            <XAxis
+                              dataKey="type"
+                              stroke="#6b7280"
+                              fontSize={10}
+                              interval={0}
+                              tickLine={false}
+                            />
+                            <YAxis stroke="#6b7280" fontSize={10} allowDecimals={false} />
+                            <Tooltip
+                              cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                              formatter={(value) => [`${value} organizations`, "Organizations"]}
+                            />
+                            <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                              <LabelList
+                                dataKey="count"
+                                position="top"
+                                fontSize={11}
+                                fontWeight={600}
+                              />
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-[160px] text-sm text-gray-400">
+                          No type data available
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </ChartCard>
+
+              {/* 2. Waste Management Details */}
+              <ChartCard title="Waste Management Details">
+                <TotalStrip>
+                  Total Waste Organizations:{" "}
+                  <span className="font-bold">{wasteDetails?.totalOrganizations ?? 0}</span>
+                </TotalStrip>
+
+                <p className="text-center text-xs font-semibold text-[var(--theme-text-primary)] uppercase tracking-wider mt-4">
+                  By Category
+                </p>
+                <div className="mt-2 space-y-2">
+                  {wasteCategoryBars.length > 0 ? (
+                    wasteCategoryBars.map((c) => (
+                      <BarRow
+                        key={c.category}
+                        label={shortCategoryName(c.category)}
+                        value={c.count || 0}
+                        max={wasteCategoryMax}
+                        color="#22c55e"
+                      />
+                    ))
+                  ) : (
+                    <p className="text-center text-xs text-gray-400 py-2">
+                      No category data available
+                    </p>
+                  )}
+                </div>
+
+                <p className="text-center text-xs font-semibold text-[var(--theme-text-primary)] uppercase tracking-wider mt-4">
+                  By Type
+                </p>
+                <div className="mt-2 space-y-2">
+                  {wasteTypeBars.length > 0 ? (
+                    wasteTypeBars.map((t) => (
+                      <BarRow
+                        key={t.type}
+                        label={t.type}
+                        value={t.count || 0}
+                        max={wasteTypeMax}
+                        color="#f59e0b"
+                      />
+                    ))
+                  ) : (
+                    <p className="text-center text-xs text-gray-400 py-2">
+                      No type data available
+                    </p>
+                  )}
+                </div>
+              </ChartCard>
+
+              {/* 3. Agriculture Annual Turnover */}
+              <ChartCard title={`${agricultureLabel} Annual Turnover`}>
+                <TotalStrip>
+                  Total {agricultureLabel} Turnover:{" "}
+                  <span className="font-bold">{formatINR(agriTurnoverTotal)}</span>
+                </TotalStrip>
+
+                <div className="mt-3">
+                  {agriTurnoverChart.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart
+                        data={agriTurnoverChart}
+                        margin={{ top: 15, right: 8, left: 0, bottom: 0 }}
+                      >
+                        <CartesianGrid vertical={false} stroke="var(--theme-bg-sidebar)" />
+                        <XAxis
+                          dataKey="type"
+                          stroke="#6b7280"
+                          fontSize={10}
+                          interval={0}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          stroke="#6b7280"
+                          fontSize={10}
+                          width={55}
+                          tickFormatter={formatCompactINR}
+                        />
+                        <Tooltip
+                          cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                          formatter={(value) => [formatINR(value), "Annual Turnover"]}
+                        />
+                        <Bar dataKey="turnover" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                          <LabelList
+                            dataKey="turnoverLabel"
+                            position="top"
+                            fontSize={10}
+                            fontWeight={600}
+                          />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-[180px] text-sm text-gray-400">
+                      No turnover data available
+                    </div>
+                  )}
+                </div>
+
+                {/* Organizations of the selected type */}
+                <div className="mt-4 flex items-center justify-between gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                    {selectedAgriType || "Agriculture"} Organizations
+                  </p>
+                  {(agriTurnover?.byType || []).length > 1 && (
+                    <select
+                      value={selectedAgriType}
+                      onChange={(e) => setSelectedAgriType(e.target.value)}
+                      className="text-xs border border-[var(--theme-border)] rounded-lg px-2 py-1 bg-[var(--theme-card-bg)] text-[var(--theme-text-primary)]"
+                    >
+                      {(agriTurnover?.byType || []).map((t) => (
+                        <option key={t.type} value={t.type}>
+                          {t.type} ({t.organizations || 0})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div className="mt-2 max-h-[220px] overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Unique ID</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>District</TableHead>
+                        <TableHead className="text-right">Annual Turnover</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {agriOrganizations.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={4}
+                            className="text-center py-6 text-sm text-gray-400"
+                          >
+                            No organizations found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        agriOrganizations.map((org, idx) => (
+                          <TableRow key={`${org.uniqueId}-${idx}`}>
+                            <TableCell className="text-xs whitespace-nowrap">
+                              {org.uniqueId}
+                            </TableCell>
+                            <TableCell className="text-xs font-medium">{org.name}</TableCell>
+                            <TableCell className="text-xs">{org.district}</TableCell>
+                            <TableCell className="text-xs text-right whitespace-nowrap">
+                              {Number(org.annualTurnover || 0).toLocaleString("en-IN")}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </ChartCard>
+
+              {/* 4. Waste Management Annual Turnover */}
+              <ChartCard title={`${wasteTurnoverLabel} Annual Turnover`}>
+                <TotalStrip>
+                  Total {wasteTurnoverLabel} Turnover:{" "}
+                  <span className="font-bold">{formatINR(wasteTurnoverTotal)}</span>
+                </TotalStrip>
+
+                <div className="mt-3">
+                  {wasteTurnoverChart.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart
+                        data={wasteTurnoverChart}
+                        margin={{ top: 15, right: 8, left: 0, bottom: 0 }}
+                      >
+                        <CartesianGrid vertical={false} stroke="var(--theme-bg-sidebar)" />
+                        <XAxis
+                          dataKey="type"
+                          stroke="#6b7280"
+                          fontSize={10}
+                          interval={0}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          stroke="#6b7280"
+                          fontSize={10}
+                          width={55}
+                          tickFormatter={formatCompactINR}
+                        />
+                        <Tooltip
+                          cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                          formatter={(value) => [formatINR(value), "Annual Turnover"]}
+                        />
+                        <Bar dataKey="turnover" fill="#f59e0b" radius={[4, 4, 0, 0]}>
+                          <LabelList
+                            dataKey="turnoverLabel"
+                            position="top"
+                            fontSize={10}
+                            fontWeight={600}
+                          />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-[180px] text-sm text-gray-400">
+                      No turnover data available
+                    </div>
+                  )}
+                </div>
+
+                <p className="mt-4 text-sm font-semibold text-[var(--theme-text-primary)]">
+                  Waste Management Organizations
+                </p>
+
+                <div className="mt-2 max-h-[220px] overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Unique ID</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>District</TableHead>
+                        <TableHead className="text-right">Annual Turnover</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {wasteOrganizations.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={5}
+                            className="text-center py-6 text-sm text-gray-400"
+                          >
+                            No organizations found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        wasteOrganizations.map((org, idx) => (
+                          <TableRow key={`${org.uniqueId}-${idx}`}>
+                            <TableCell className="text-xs whitespace-nowrap">
+                              {org.uniqueId}
+                            </TableCell>
+                            <TableCell className="text-xs font-medium">{org.name}</TableCell>
+                            <TableCell className="text-xs">{org.type}</TableCell>
+                            <TableCell className="text-xs">{org.district}</TableCell>
+                            <TableCell className="text-xs text-right whitespace-nowrap">
+                              {Number(org.annualTurnover || 0).toLocaleString("en-IN")}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </ChartCard>
+            </div>
+          )}
         </div>
       )}
 
