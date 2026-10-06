@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import { useParams, useNavigate } from "react-router-dom";
@@ -212,6 +212,9 @@ const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO", sectionName
   } = useDropdown();
 
   const [selectedStateCode, setSelectedStateCode] = useState("");
+  // `allStateName` is scoped per region; this tracks the region already refilled so
+  // the cascade effect below refetches at most once per record.
+  const fetchedRegionRef = useRef("");
 
 useEffect(() => {
     fetchEnviroSalesPersonsList();
@@ -343,6 +346,44 @@ useEffect(() => {
       topPriorities: d.topPriorities || "",
     });
   }, [details]);
+
+  // Auto-hydrate the Region -> State -> District -> City cascade when a record is
+  // opened in view/edit mode. Each ReactSelect resolves its displayed value against
+  // its own option list, so it renders blank until that list has loaded - and on
+  // mount only `region` is fetched, which left "5. Operational Area" empty on view.
+  const recordRegion = formik.values?.region;
+  const recordState = formik.values?.state;
+  const recordDistrict = formik.values?.district;
+
+  const stateNameOf = (entry) => entry?.name || entry?.stateName || entry || "";
+  const stateCodeOf = (entry) => entry?.code || entry?.stateCode || "";
+
+  useEffect(() => {
+    if (!recordState || !recordRegion) return;
+    const found = (Array.isArray(allStateName) ? allStateName : []).some(
+      (s) => stateNameOf(s) === recordState
+    );
+    if (!found && fetchedRegionRef.current !== recordRegion) {
+      fetchedRegionRef.current = recordRegion;
+      fetchAllStateName(recordRegion);
+    }
+  }, [recordState, recordRegion, allStateName]);
+
+  useEffect(() => {
+    if (!recordState) return;
+    const selectedState = (Array.isArray(allStateName) ? allStateName : []).find(
+      (s) => stateNameOf(s) === recordState
+    );
+    const code = stateCodeOf(selectedState);
+    if (code) setSelectedStateCode(code);
+    fetchDistrictList(recordState);
+  }, [recordState, allStateName]);
+
+  useEffect(() => {
+    if (recordState && recordDistrict && selectedStateCode) {
+      fetchAllCities(selectedStateCode, recordDistrict);
+    }
+  }, [recordState, recordDistrict, selectedStateCode]);
 
   useEffect(() => {
     if (formik.submitCount > 0 && !formik.isValid) {

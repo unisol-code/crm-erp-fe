@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import { useParams, useNavigate } from "react-router-dom";
@@ -174,8 +174,11 @@ const validationSchema = yup.object({
   // websiteAppUrl: yup.string().trim().nullable().notRequired().url("Enter a valid URL"),
   region: yup.string().trim().required("Region is required"),
   cityTownVillage: yup.string().trim().required("City/Town/Village is required"),
-  district: yup.string().trim().required("District is required"),
-  state: yup.string().trim().required("State is required"),
+  // The form state keys are `stateName` / `districtName` (they are what the org
+  // payload carries). Validating `state` / `district` checked keys Formik never
+  // has, so those required rules could never fire.
+  districtName: yup.string().trim().required("District is required"),
+  stateName: yup.string().trim().required("State is required"),
   // pincode: yup.string().trim().required("Pincode is required").matches(/^(?!0{6})[0-9]{6}$/, "Must be a valid 6-digit pincode"),
   // landmark: yup.string().trim().required("Landmark is required"),
   // numberOfBoardMembers: yup
@@ -260,6 +263,10 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
 
   const [companyResolved, setCompanyResolved] = useState(false);
   const [selectedStateCode, setSelectedStateCode] = useState("");
+  // `allStateName` is scoped to whichever region was last requested, so it needs a
+  // one-shot refill per region when a record is opened. See the cascade effects
+  // below the hydration effect.
+  const fetchedRegionRef = useRef("");
 
   // Turns an array of selected strings into the { option: boolean } shape
   // the checkbox groups in this form expect.
@@ -448,6 +455,52 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
     }
   }, [details]);
 
+  // Auto-hydrate the Region -> State -> District -> City cascade when a record is
+  // opened in view/edit mode.
+  //
+  // Each ReactSelect resolves its displayed value by looking that value up in its
+  // own option list, so a select renders blank until its list has loaded. On mount
+  // only `region` is fetched (states are fetched per region on demand), so State,
+  // District and City all stayed empty on view even though the record had values -
+  // which is why "5. Operational Area (State/District/Block/Village)" looked blank.
+  const recordRegion = formik.values?.region;
+  const recordState = formik.values?.stateName;
+  const recordDistrict = formik.values?.districtName;
+
+  const stateNameOf = (entry) => entry?.name || entry?.stateName || entry || "";
+  const stateCodeOf = (entry) => entry?.code || entry?.stateCode || "";
+
+  // Refill the region-scoped state list once when the record's state is missing
+  // from it (the list may still be empty, or scoped to a different region).
+  useEffect(() => {
+    if (!recordState || !recordRegion) return;
+    const found = (Array.isArray(allStateName) ? allStateName : []).some(
+      (s) => stateNameOf(s) === recordState
+    );
+    if (!found && fetchedRegionRef.current !== recordRegion) {
+      fetchedRegionRef.current = recordRegion;
+      fetchAllStateName(recordRegion);
+    }
+  }, [recordState, recordRegion, allStateName]);
+
+  // Once states are loaded, resolve the record's state code and fetch its districts.
+  useEffect(() => {
+    if (!recordState) return;
+    const selectedState = (Array.isArray(allStateName) ? allStateName : []).find(
+      (s) => stateNameOf(s) === recordState
+    );
+    const code = stateCodeOf(selectedState);
+    if (code) setSelectedStateCode(code);
+    fetchDistrictList(recordState);
+  }, [recordState, allStateName]);
+
+  // Cities are keyed off the state CODE + district, so this runs last.
+  useEffect(() => {
+    if (recordState && recordDistrict && selectedStateCode) {
+      fetchAllCities(selectedStateCode, recordDistrict);
+    }
+  }, [recordState, recordDistrict, selectedStateCode]);
+
   // Log validation errors when submission is attempted
   useEffect(() => {
     if (formik.submitCount > 0 && !formik.isValid) {
@@ -611,8 +664,8 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
                   }
                   onChange={(selected) => {
                     formik.setFieldValue("region", selected?.value || "");
-                    formik.setFieldValue("state", "");
-                    formik.setFieldValue("district", "");
+                    formik.setFieldValue("stateName", "");
+                    formik.setFieldValue("districtName", "");
                     formik.setFieldValue("cityTownVillage", "");
                     fetchAllStateName(selected?.value || "");
                   }}
@@ -647,21 +700,21 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
                         value: state.name || state.stateName,
                         stateCode: state.code || state.stateCode,
                       }))
-                      .find((option) => option.value === formik.values.state) || null
+                      .find((option) => option.value === formik.values.stateName) || null
                   }
                   onChange={(selected) => {
-                    formik.setFieldValue("state", selected?.value || "");
+                    formik.setFieldValue("stateName", selected?.value || "");
                     setSelectedStateCode(selected?.stateCode || "");
-                    formik.setFieldValue("district", "");
+                    formik.setFieldValue("districtName", "");
                     formik.setFieldValue("cityTownVillage", "");
                     fetchDistrictList(selected?.value);
                   }}
-                  onBlur={() => formik.setFieldTouched("state", true)}
+                  onBlur={() => formik.setFieldTouched("stateName", true)}
                   placeholder="Select State"
                   isClearable
                 />
-                {formik.touched.state && formik.errors.state && (
-                  <div className="text-red-500 text-xs mt-1">{formik.errors.state}</div>
+                {formik.touched.stateName && formik.errors.stateName && (
+                  <div className="text-red-500 text-xs mt-1">{formik.errors.stateName}</div>
                 )}
               </div>
               <div>
@@ -670,7 +723,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
                   className="w-full"
                   isLoading={locationLoading}
                   styles={selectStyles}
-                  isDisabled={!formik.values.state}
+                  isDisabled={!formik.values.stateName}
                   options={
                     Array.isArray(districtList)
                       ? districtList.map((district) => ({
@@ -685,19 +738,19 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
                         label: district,
                         value: district,
                       }))
-                      .find((option) => option.value === formik.values.district) || null
+                      .find((option) => option.value === formik.values.districtName) || null
                   }
                   onChange={(selected) => {
-                    formik.setFieldValue("district", selected?.value || "");
+                    formik.setFieldValue("districtName", selected?.value || "");
                     formik.setFieldValue("cityTownVillage", "");
                     fetchAllCities(selectedStateCode, selected?.value);
                   }}
-                  onBlur={() => formik.setFieldTouched("district", true)}
+                  onBlur={() => formik.setFieldTouched("districtName", true)}
                   placeholder="Select District"
                   isClearable
                 />
-                {formik.touched.district && formik.errors.district && (
-                  <div className="text-red-500 text-xs mt-1">{formik.errors.district}</div>
+                {formik.touched.districtName && formik.errors.districtName && (
+                  <div className="text-red-500 text-xs mt-1">{formik.errors.districtName}</div>
                 )}
               </div>
               <div>
@@ -706,7 +759,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
                   className="w-full"
                   isLoading={locationLoading}
                   styles={selectStyles}
-                  isDisabled={!formik.values.district}
+                  isDisabled={!formik.values.districtName}
                   options={
                     Array.isArray(cities)
                       ? cities.map((city) => ({

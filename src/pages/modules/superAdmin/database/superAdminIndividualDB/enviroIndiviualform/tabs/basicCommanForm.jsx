@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getIn } from "formik";
 import ReactSelect from "react-select";
 import useDropdown from "../../../../../../../hooks/dropdown/useDropdown";
@@ -75,7 +75,7 @@ const Select = ({
           if (onChange) onChange(selected?.value || "");
         }}
         onBlur={() => formik.setFieldTouched(name, true)}
-        placeholder={`Select ${label}`}
+        placeholder={placeholder || `Select ${label}`}
         classNamePrefix="react-select"
         styles={{
           control: (base, state) => ({
@@ -120,18 +120,12 @@ const BasicCommonForm = ({ formik }) => {
     fetchAllStateName,
     fetchDistrictList,
     districtList,
-    fetchSegment,
-    segment,
   } = useDropdown();
 
   const {
     fetchEnviroOrganizationName,
     enviroOrganizationName,
   } = useEnviroIndividualDrop();
-
-  const segmentOptions = Array.isArray(segment)
-    ? segment.map((seg) => ({ label: seg, value: seg }))
-    : [];
 
   const organizationNameOptions = Array.isArray(enviroOrganizationName)
     ? enviroOrganizationName.map((item) => {
@@ -143,15 +137,30 @@ const BasicCommonForm = ({ formik }) => {
   useEffect(() => {
     fetchAllRegion();
     fetchAllStateName();
-    fetchSegment();
-    fetchEnviroOrganizationName();
   }, []);
 
+  // The Segment is chosen once in the parent form's "Fragment" dropdown, which
+  // writes straight into `formik.values.segment` - so it is not repeated here.
+  // This form only reacts to it: reload the organization list for that segment and
+  // drop an organization picked under the previous segment.
   useEffect(() => {
-    if (formik.values.segment) {
-      fetchEnviroOrganizationName(formik.values.segment);
-    } else {
-      fetchEnviroOrganizationName();
+    fetchEnviroOrganizationName(formik.values.segment || "");
+  }, [formik.values.segment]);
+
+  // Changing segment must invalidate the chosen organization. The first pass is
+  // skipped on purpose: in edit mode the record hydrates `segment` and
+  // `orgnizationName` together, so clearing there would wipe the saved value.
+  const previousSegmentRef = useRef(undefined);
+
+  useEffect(() => {
+    const currentSegment = formik.values.segment || "";
+    if (previousSegmentRef.current === undefined) {
+      previousSegmentRef.current = currentSegment;
+      return;
+    }
+    if (previousSegmentRef.current !== currentSegment) {
+      previousSegmentRef.current = currentSegment;
+      formik.setFieldValue("orgnizationName", "");
     }
   }, [formik.values.segment]);
 
@@ -200,18 +209,6 @@ const BasicCommonForm = ({ formik }) => {
       {/* Associated with Organization */}
       <SectionHeading title="Associated with Organization" />
       <Select
-        label="Segment"
-        name="segment"
-        formik={formik}
-        options={segmentOptions}
-        loading={locationLoading}
-        onChange={(val) => {
-          formik.setFieldValue("segment", val || "");
-          formik.setFieldValue("orgnizationName", "");
-          fetchEnviroOrganizationName(val || "");
-        }}
-      />
-      <Select
         label="Organization Name"
         name="orgnizationName"
         formik={formik}
@@ -219,7 +216,7 @@ const BasicCommonForm = ({ formik }) => {
         loading={locationLoading}
         placeholder={
           !formik.values.segment
-            ? "Select Segment first"
+            ? "Select Fragment first"
             : "Select Organization Name"
         }
         isDisabled={!formik.values.segment}

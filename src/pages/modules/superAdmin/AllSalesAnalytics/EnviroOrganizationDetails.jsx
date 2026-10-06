@@ -136,8 +136,8 @@ const EnviroOrganizationDetails = () => {
     [monthGroups],
   );
 
-  // ✅ Year options: the years the API returned, the filtered year and the
-  //    current year, so the dropdown is never empty on a fresh organization.
+  // ✅ Year options: the years the API returned, the filtered year and a
+  //    rolling last-10-years window, so the dropdown always has a useful range.
   const yearOptions = useMemo(() => {
     const years = new Set();
     monthGroups.forEach((group) => {
@@ -146,7 +146,10 @@ const EnviroOrganizationDetails = () => {
     if (enviroSpecificOrganizationData?.filteredYear) {
       years.add(Number(enviroSpecificOrganizationData.filteredYear));
     }
-    years.add(new Date().getFullYear());
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear; y >= currentYear - 9; y--) {
+      years.add(y);
+    }
 
     return [...years]
       .sort((a, b) => b - a)

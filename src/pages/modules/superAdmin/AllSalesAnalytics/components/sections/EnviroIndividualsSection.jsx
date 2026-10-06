@@ -214,6 +214,7 @@ export function EnviroIndividualsSection({
             <TableHeader className="sticky top-0 bg-white z-10">
               <TableRow className="bg-[var(--theme-bg-light)]">
                 <TableHead className="text-base font-semibold">Sr. No.</TableHead>
+                <TableHead className="text-base font-semibold">Sales Person</TableHead>
                 <TableHead className="text-base font-semibold">Full Name</TableHead>
                 <TableHead className="text-base font-semibold">Segment</TableHead>
                 <TableHead className="text-base font-semibold">Profile Type</TableHead>
@@ -242,6 +243,9 @@ export function EnviroIndividualsSection({
                   >
                     <TableCell className="p-4 text-[17px] font-normal text-[#252C58]">
                       {(page - 1) * perPage + index + 1}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-[15px] whitespace-nowrap">
+                      {person?.salesPersonName || "-"}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-[15px] whitespace-nowrap font-medium text-[var(--theme-primary)]">
                       {person?.fullname || "-"}
