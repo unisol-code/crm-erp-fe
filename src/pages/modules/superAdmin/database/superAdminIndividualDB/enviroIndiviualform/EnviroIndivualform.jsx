@@ -336,6 +336,8 @@ const EnviroIndivualform = () => {
       const commonFields = [
         "firstName", "lastName", "email", "contact",
         "segment", "orgnizationName", "region", "state", "district", "villageName", "address", "pinCode",
+        // Sales Person dropdown (same salesId key as the Farmers tab)
+        "salesId",
       ];
 
       let filteredValues = {};

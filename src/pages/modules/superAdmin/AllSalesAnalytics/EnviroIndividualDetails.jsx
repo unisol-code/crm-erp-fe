@@ -25,6 +25,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import * as LucideIcons from "lucide-react";
 import Select from "react-select";
+import { TiEye } from "react-icons/ti";
 import { useTheme } from "../../../../hooks/theme/useTheme";
 import BreadCrumb from "../../../../components/uiComponents/breadcrumb/BreadCrumb";
 import LoaderSpinner from "../../../../components/uiComponents/loader/LoaderSpinner";
@@ -40,7 +41,7 @@ import {
   TableCell,
 } from "./components/common";
 
-const PLANNING_COLUMNS = 9;
+const PLANNING_COLUMNS = 10;
 
 const MONTH_ORDER = [
   "January", "February", "March", "April", "May", "June",
@@ -57,6 +58,19 @@ const formatDate = (value) => {
     month: "short",
     year: "numeric",
   });
+};
+
+// "2026-09-23T11:09:00.000Z" -> "2026-09-23" (local calendar date).
+// Used for the day-wise planning route:
+//   /admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/:id/:date
+const formatRouteDate = (value) => {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return value;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
 };
 
 // Sorts the month groups of the API (month name + year) newest first
@@ -587,7 +601,7 @@ const EnviroIndividualDetails = () => {
               </div>
 
               <div className="overflow-x-auto">
-                <Table className="min-w-[1080px]">
+                <Table className="min-w-[1140px]">
                   <TableHeader>
                     <TableRow className="border-b border-[var(--theme-border)] bg-[var(--theme-bg-light)]">
                       <TableHead className="w-16 text-xs font-bold uppercase tracking-wider text-[var(--theme-text-secondary)]">
@@ -616,6 +630,9 @@ const EnviroIndividualDetails = () => {
                       </TableHead>
                       <TableHead className="whitespace-nowrap text-xs font-bold uppercase tracking-wider text-[var(--theme-text-secondary)]">
                         Status
+                      </TableHead>
+                      <TableHead className="w-20 whitespace-nowrap text-center text-xs font-bold uppercase tracking-wider text-[var(--theme-text-secondary)]">
+                        Action
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -675,6 +692,28 @@ const EnviroIndividualDetails = () => {
                               >
                                 {status || "not available"}
                               </span>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-center">
+                              {(() => {
+                                const routeDate = formatRouteDate(planning?.createPlanningForDate);
+                                const canView = Boolean(planning?._id && routeDate);
+                                return (
+                                  <button
+                                    type="button"
+                                    title={canView ? "View day-wise planning" : "Planning details not available"}
+                                    aria-label="View day-wise planning"
+                                    disabled={!canView}
+                                    onClick={() =>
+                                      navigate(
+                                        `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${planning._id}/${routeDate}`,
+                                      )
+                                    }
+                                    className="inline-flex items-center justify-center rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-light)] p-2 text-[var(--theme-primary)] transition-colors hover:bg-[var(--theme-primary)] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-[var(--theme-bg-light)] disabled:hover:text-[var(--theme-primary)]"
+                                  >
+                                    <TiEye size={16} />
+                                  </button>
+                                );
+                              })()}
                             </TableCell>
                           </TableRow>
                         );

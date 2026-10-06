@@ -200,3 +200,11 @@ export const enviroSpecificSalesPersonErrorStateAtom = atom(createPersistedAtom(
 export const enviroSpecificSalesPersonDataStateAtom = atom(createPersistedAtom("enviroSpecificSalesPersonDataState", null));
 
 export const enviroSpecificSalesPersonLoadingStateAtom = atom(createPersistedAtom("enviroSpecificSalesPersonLoadingState", false));
+
+// Individual Graphical Analytics State
+// (GET dashboard/getIndividualGrphicalAnalytics)
+export const individualGrphicalErrorStateAtom = atom(createPersistedAtom("individualGrphicalErrorState", null));
+
+export const individualGrphicalDataStateAtom = atom(createPersistedAtom("individualGrphicalDataState", null));
+
+export const individualGrphicalLoadingStateAtom = atom(createPersistedAtom("individualGrphicalLoadingState", false));

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { getIn } from "formik";
 import ReactSelect from "react-select";
 import useDropdown from "../../../../../../../hooks/dropdown/useDropdown";
+import useEnviroAdminIndDB from "../../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminIndDB";
 import useEnviroIndividualDrop from "../../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroIndividualDrop";
 import _ from "lodash";
 
@@ -127,6 +128,12 @@ const BasicCommonForm = ({ formik }) => {
     enviroOrganizationName,
   } = useEnviroIndividualDrop();
 
+  // Sales persons list (same source as the Farmers tab: name -> label, _id -> value)
+  const {
+    fetchEnviroSalesPersonsList,
+    salesPersonList,
+  } = useEnviroAdminIndDB();
+
   const organizationNameOptions = Array.isArray(enviroOrganizationName)
     ? enviroOrganizationName.map((item) => {
         const name = item?.name || item?.organizationName || item;
@@ -137,6 +144,7 @@ const BasicCommonForm = ({ formik }) => {
   useEffect(() => {
     fetchAllRegion();
     fetchAllStateName();
+    fetchEnviroSalesPersonsList();
   }, []);
 
   // The Segment is chosen once in the parent form's "Fragment" dropdown, which
@@ -315,6 +323,21 @@ const BasicCommonForm = ({ formik }) => {
         formik={formik}
         type="text"
         placeholder="Enter 6-digit pincode"
+      />
+      {/* Sales Person (stored in formik.values.salesId, same as the Farmers tab) */}
+      <Select
+        label="Sales Person"
+        name="salesId"
+        formik={formik}
+        options={
+          Array.isArray(salesPersonList)
+            ? salesPersonList.map((person) => ({
+                label: person.name,
+                value: person._id,
+              }))
+            : []
+        }
+        loading={false}
       />
     </div>
   );

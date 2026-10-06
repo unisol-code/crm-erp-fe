@@ -88,6 +88,8 @@ export function ExecutiveSection({
   tableLoading = false,
   onTargetPageChange,
   onTargetItemsPerPageChange,
+  enviroEmployeesData,
+  isEnviroSolution = false,
 }) {
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
@@ -98,6 +100,24 @@ export function ExecutiveSection({
 
   // ✅ Process sales person data from API
   const salesPersons = useMemo(() => {
+    if (isEnviroSolution && enviroEmployeesData?.data && Array.isArray(enviroEmployeesData.data)) {
+      return enviroEmployeesData.data.map((item) => ({
+        name: item.employeeName || 'N/A',
+        id: item._id || 'N/A',
+        company: item.reportingManagerName || 'Enviro',
+        totalVisits: item.totalVisitCount || 0,
+        successVisits: item.successVisitCount || 0,
+        totalHospitals: 0,
+        totalIndividuals: item.totalIndividuals || 0,
+        successPercentage: item.totalVisitCount > 0 ? Math.round((item.successVisitCount / item.totalVisitCount) * 100) : 0,
+        completionRate: item.totalVisitCount > 0 
+          ? Math.round((item.successVisitCount / item.totalVisitCount) * 100) 
+          : 0,
+        productivityScore: item.totalOrganizations > 0 
+          ? Math.round((item.successVisitCount / item.totalOrganizations) * 100) 
+          : 0,
+      }));
+    }
     if (salesPersonData?.data && Array.isArray(salesPersonData.data)) {
       return salesPersonData.data.map((item) => ({
         name: item.salesPersonName || 'N/A',
@@ -117,7 +137,7 @@ export function ExecutiveSection({
       }));
     }
     return executives || [];
-  }, [salesPersonData, executives]);
+  }, [salesPersonData, executives, enviroEmployeesData, isEnviroSolution]);
 
   console.log("sales persons", salesPersons);
 
@@ -311,25 +331,27 @@ export function ExecutiveSection({
             </span>
           )}
         </button>
-        <button
-          onClick={() => setActiveTab("targets")}
-          className={`
-            flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap
-            rounded-lg
-            ${activeTab === "targets"
-              ? 'bg-[var(--theme-primary)] text-white shadow-md shadow-[var(--theme-primary)]/20'
-              : 'text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-hover)] hover:text-[var(--theme-primary)]'
-            }
-          `}
-        >
-          <LucideIcons.Target size={18} />
-          Targets
-          {activeTab === "targets" && (
-            <span className="ml-1 px-2 py-0.5 text-xs bg-white/20 text-white rounded-full">
-              Active
-            </span>
-          )}
-        </button>
+        {!isEnviroSolution && (
+          <button
+            onClick={() => setActiveTab("targets")}
+            className={`
+              flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap
+              rounded-lg
+              ${activeTab === "targets"
+                ? 'bg-[var(--theme-primary)] text-white shadow-md shadow-[var(--theme-primary)]/20'
+                : 'text-[var(--theme-text-muted)] hover:bg-[var(--theme-bg-hover)] hover:text-[var(--theme-primary)]'
+              }
+            `}
+          >
+            <LucideIcons.Target size={18} />
+            Targets
+            {activeTab === "targets" && (
+              <span className="ml-1 px-2 py-0.5 text-xs bg-white/20 text-white rounded-full">
+                Active
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Overview Tab */}
@@ -600,7 +622,7 @@ export function ExecutiveSection({
       )}
 
       {/* Targets Tab */}
-      {activeTab === "targets" && (
+      {activeTab === "targets" && !isEnviroSolution && (
         <div>
           {/* Target KPI Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
