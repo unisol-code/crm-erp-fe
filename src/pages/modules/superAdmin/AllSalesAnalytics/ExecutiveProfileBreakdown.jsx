@@ -118,6 +118,40 @@ const ExecutiveProfileBreakdown = () => {
     navigate(backTo?.pathname || '/sales-analyticsAll');
   };
 
+  // ✅ Opens the full "View Individual" page for one individual card.
+  //    The route (/database/view-enviro-individual-details/:id) reads the id
+  //    from the URL; the router state carries the name / profile type and the
+  //    exact page "Back" has to return to (this executive profile).
+  //    A stable `_id` is required before navigating anywhere.
+  const handleViewIndividualDetails = (person) => {
+    const identifier = person?._id || person?.id;
+    if (!identifier) return;
+
+    navigate(`/database/view-enviro-individual-details/${identifier}`, {
+      state: {
+        name: person?.fullName || '',
+        typeOfProfile: person?.typeOfProfile || person?.typeOfDoctorProfile || '',
+        // "Back" on the view page returns to this exact profile
+        backTo: {
+          pathname: location.pathname,
+          label: 'Back to Executive Profile',
+        },
+      },
+    });
+  };
+
+  // ✅ Opens the organization's view page for one organization card.
+  //    The route (/database/edit-enviro-organization/:id) renders the enviro
+  //    organization form, which understands every enviro organization shape
+  //    (FPO, PRIVATE, GOVERNMENT, ...). A stable `_id` is required before
+  //    navigating anywhere.
+  const handleViewOrganizationDetails = (org) => {
+    const identifier = org?._id || org?.id;
+    if (!identifier) return;
+
+    navigate(`/database/edit-enviro-organization/${identifier}`);
+  };
+
   const { specificSalesPersonData, fetchSpecificSalesPersonData, loading } = useAllSalesAnalytics();
 
   // ✅ Enviro Solution uses its own API for this page
@@ -379,6 +413,18 @@ const ExecutiveProfileBreakdown = () => {
                     <p className="font-bold text-black truncate">{ind.fullName || 'N/A'}</p>
                     <span className="text-xs font-semibold text-indigo-600">{ind.typeOfDoctorProfile || 'N/A'}</span>
                   </div>
+                  {/* ✅ Open the full view page for this individual */}
+                  {(ind._id || ind.id) && (
+                    <button
+                      type="button"
+                      onClick={() => handleViewIndividualDetails(ind)}
+                      title="View individual details"
+                      aria-label={`View details of ${ind.fullName || 'individual'}`}
+                      className="inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 p-2 text-indigo-600 transition-colors hover:bg-indigo-600 hover:text-white flex-shrink-0"
+                    >
+                      <LucideIcons.Eye size={16} />
+                    </button>
+                  )}
                 </div>
                 <div className="space-y-2 bg-gray-50 rounded-lg p-3">
                   {/* ✅ Only when the API sent a designation (enviro does not send one) */}
@@ -562,6 +608,18 @@ const ExecutiveProfileBreakdown = () => {
                       </div>
                     )}
                   </div>
+                  {/* ✅ Open the full view page for this organization */}
+                  {(org._id || org.id) && (
+                    <button
+                      type="button"
+                      onClick={() => handleViewOrganizationDetails(org)}
+                      title="View organization details"
+                      aria-label={`View details of ${org.hospitalName || org.organizationName || 'organization'}`}
+                      className="inline-flex items-center justify-center rounded-lg border border-green-200 bg-green-50 p-2 text-green-700 transition-colors hover:bg-green-600 hover:text-white flex-shrink-0"
+                    >
+                      <LucideIcons.Eye size={16} />
+                    </button>
+                  )}
                 </div>
               </div>
             ))

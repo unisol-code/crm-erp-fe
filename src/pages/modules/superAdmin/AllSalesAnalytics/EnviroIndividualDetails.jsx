@@ -60,6 +60,21 @@ const formatDate = (value) => {
   });
 };
 
+const formatTime = (dateString) => {
+  if (!dateString) return "—";
+
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
+  });
+};
+
 // "2026-09-23T11:09:00.000Z" -> "2026-09-23" (local calendar date).
 // Used for the day-wise planning route:
 //   /admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/:id/:date
@@ -613,6 +628,9 @@ const EnviroIndividualDetails = () => {
                       <TableHead className="whitespace-nowrap text-xs font-bold uppercase tracking-wider text-[var(--theme-text-secondary)]">
                         Planning Date
                       </TableHead>
+                                            <TableHead className="whitespace-nowrap text-xs font-bold uppercase tracking-wider text-[var(--theme-text-secondary)]">
+                        Meeting Time
+                      </TableHead>
                       <TableHead className="min-w-[180px] whitespace-nowrap text-xs font-bold uppercase tracking-wider text-[var(--theme-text-secondary)]">
                         Individual
                       </TableHead>
@@ -653,6 +671,9 @@ const EnviroIndividualDetails = () => {
                             </TableCell>
                             <TableCell className="whitespace-nowrap text-sm text-[var(--theme-text-primary)]">
                               {formatDate(planning?.createPlanningForDate)}
+                            </TableCell>
+                              <TableCell className="whitespace-nowrap text-sm text-[var(--theme-text-primary)]">
+                              {formatTime(planning?.createPlanningForDate)}
                             </TableCell>
                             <TableCell className="text-sm font-medium text-[var(--theme-text-primary)]">
                               {planning?.nameOfDoctor || "—"}
@@ -705,7 +726,7 @@ const EnviroIndividualDetails = () => {
                                     disabled={!canView}
                                     onClick={() =>
                                       navigate(
-                                        `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${planning._id}/${routeDate}`,
+                                        `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/${planning._id}`,
                                       )
                                     }
                                     className="inline-flex items-center justify-center rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-light)] p-2 text-[var(--theme-primary)] transition-colors hover:bg-[var(--theme-primary)] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-[var(--theme-bg-light)] disabled:hover:text-[var(--theme-primary)]"

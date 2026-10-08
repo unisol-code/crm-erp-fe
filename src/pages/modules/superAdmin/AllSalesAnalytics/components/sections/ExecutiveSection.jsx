@@ -107,7 +107,7 @@ export function ExecutiveSection({
         company: item.reportingManagerName || 'Enviro',
         totalVisits: item.totalVisitCount || 0,
         successVisits: item.successVisitCount || 0,
-        totalHospitals: 0,
+        totalHospitals: item.totalOrganizations || 0,
         totalIndividuals: item.totalIndividuals || 0,
         successPercentage: item.totalVisitCount > 0 ? Math.round((item.successVisitCount / item.totalVisitCount) * 100) : 0,
         completionRate: item.totalVisitCount > 0 
