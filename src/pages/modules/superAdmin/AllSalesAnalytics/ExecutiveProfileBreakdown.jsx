@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import * as LucideIcons from "lucide-react";
 import useAllSalesAnalytics from '../../../../hooks/superAdminHook/allSalesAnalytics/useAllSalesAnalytics';
@@ -6,6 +6,7 @@ import useAllSalesEnviroAnalytics from '../../../../hooks/superAdminHook/allSale
 import useCompany from '../../../../hooks/common/useCompany';
 import LoaderSpinner from '../../../../components/uiComponents/loader/LoaderSpinner.jsx';
 import BreadCrumb from '../../../../components/uiComponents/breadcrumb/BreadCrumb.jsx';
+import Pagination from '../../../../components/uiComponents/pagination/Pagination.jsx';
 
 // ✅ Enviro Solution sends the monthly planning as a LIST
 //      [ { month, year, plannings: [...] } ]
@@ -97,6 +98,27 @@ const toYearMap = (value) => {
 const includesTerm = (value, term) =>
   String(value ?? "").toLowerCase().includes(term);
 
+// ✅ The enviro detail API pages its lists SERVER-side and wraps each one as
+//    { totalRecords, totalPages, currentPage, limit, data: [...] }.
+//    Anything else (a plain array / junk) carries no paging info -> null, so
+//    the pagination bar is simply not rendered for it.
+const toPaginationMeta = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+
+  const totalPages = Number(value.totalPages);
+  const currentPage = Number(value.currentPage);
+  const totalRecords = Number(value.totalRecords);
+  const limit = Number(value.limit);
+  if (!Number.isFinite(totalPages) || totalPages <= 0) return null;
+
+  return {
+    totalPages,
+    currentPage: Number.isFinite(currentPage) && currentPage > 0 ? currentPage : 1,
+    totalRecords: Number.isFinite(totalRecords) && totalRecords >= 0 ? totalRecords : undefined,
+    limit: Number.isFinite(limit) && limit > 0 ? limit : undefined,
+  };
+};
+
 const ExecutiveProfileBreakdown = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -152,6 +174,21 @@ const ExecutiveProfileBreakdown = () => {
     navigate(`/database/edit-enviro-organization/${identifier}`);
   };
 
+  // ✅ Opens the full monthly planning details page for one planning row.
+  //    The route
+  //    (/admin/sales-executive/monthly-planning/view-month-wise/
+  //    view-day-wise-planning/view-monthly-planning-details/:id)
+  //    reads the planning id from the URL, so a stable `_id` is required
+  //    before navigating anywhere.
+  const handleViewPlanningDetails = (plan) => {
+    const identifier = plan?._id || plan?.id;
+    if (!identifier) return;
+
+    navigate(
+      `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/${identifier}`
+    );
+  };
+
   const { specificSalesPersonData, fetchSpecificSalesPersonData, loading } = useAllSalesAnalytics();
 
   // ✅ Enviro Solution uses its own API for this page
@@ -167,15 +204,72 @@ const ExecutiveProfileBreakdown = () => {
   const [activeTab, setActiveTab] = useState('individuals');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // ✅ Individuals + organizations are paged on the SERVER with ONE shared
+  //    ?page=&limit= pair (both lists arrive in the same response). The
+  //    healthcare API has no paging params, so its tab simply never renders
+  //    the pagination bar (see individualsMeta / organizationsMeta below).
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  // ✅ true while a background page/limit refresh runs - no full page loader,
+  //    the current rows just dim until the new ones arrive.
+  const [isPaging, setIsPaging] = useState(false);
+  const initialLoadRef = useRef(true);
+
+  // ✅ A different executive starts at page 1 again. This runs DURING RENDER
+  //    (the documented React pattern for adjusting state when props change),
+  //    so the fetch effect below never fires once with the previous
+  //    executive's page number.
+  const [prevProfileId, setPrevProfileId] = useState(id);
+  if (prevProfileId !== id) {
+    setPrevProfileId(id);
+    setPage(1);
+    setLimit(10);
+    initialLoadRef.current = true;
+  }
+
+  // ✅ Monthly planning months are collapsed by default, so a long list of
+  //    months stays scannable. Each month opens independently (multiple can
+  //    be open at once).
+  const [expandedMonths, setExpandedMonths] = useState([]);
+
+  const isMonthExpanded = (month) => expandedMonths.includes(month);
+
+  const toggleMonth = (month) => {
+    setExpandedMonths((prev) =>
+      prev.includes(month)
+        ? prev.filter((m) => m !== month)
+        : [...prev, month]
+    );
+  };
+
+  const expandAllMonths = () => setExpandedMonths(planningMonths);
+  const collapseAllMonths = () => setExpandedMonths([]);
+
   // ✅ Pick the API matching the solution. `isEnviroSolution` is read from
   //    sessionStorage, so it can resolve AFTER the first render - that is why
   //    it is part of the dependency list.
+  //    Enviro also pages both lists on the SERVER, so page/limit changes
+  //    re-run the request:
+  //      - first load (or another executive): clear old rows + full loader
+  //      - page / rows-per-change: SILENT refresh, the current rows stay on
+  //        screen (dimmed) until the new ones arrive - no flash of spinner.
   useEffect(() => {
     if (!id) return;
 
     if (isEnviroSolution) {
-      resetEnviroSpecificSalesPersonData();
-      fetchSpecificEnviroSalesPersonData(id);
+      const isFirstLoad = initialLoadRef.current;
+      initialLoadRef.current = false;
+
+      if (isFirstLoad) {
+        resetEnviroSpecificSalesPersonData();
+        fetchSpecificEnviroSalesPersonData(id, { page, limit });
+        return;
+      }
+
+      setIsPaging(true);
+      fetchSpecificEnviroSalesPersonData(id, { page, limit }, true).finally(() =>
+        setIsPaging(false)
+      );
       return;
     }
 
@@ -183,6 +277,8 @@ const ExecutiveProfileBreakdown = () => {
   }, [
     id,
     isEnviroSolution,
+    page,
+    limit,
     fetchSpecificSalesPersonData,
     fetchSpecificEnviroSalesPersonData,
     resetEnviroSpecificSalesPersonData,
@@ -203,6 +299,14 @@ const ExecutiveProfileBreakdown = () => {
   //    objects, and `.filter` on a non-array crashed the whole page.
   const individuals = toRows(data?.individuals);
   const organizations = toRows(data?.organizations);
+
+  // ✅ Server paging metadata (enviro sends it per list, healthcare does not).
+  //    The same ?page=&limit= cut both lists, so ONE shared page state drives
+  //    the pagination bar of whichever tab is open.
+  const individualsMeta = toPaginationMeta(data?.individuals);
+  const organizationsMeta = toPaginationMeta(data?.organizations);
+  const individualsTotal = individualsMeta?.totalRecords ?? individuals.length;
+  const organizationsTotal = organizationsMeta?.totalRecords ?? organizations.length;
   const monthlyPlanning = isEnviroSolution
     ? monthlyListToMap(data?.monthlyPlannings)
     : toMonthMap(data?.monthlyPlanning);
@@ -261,6 +365,20 @@ const ExecutiveProfileBreakdown = () => {
   const planningMonths = Object.keys(monthlyPlanning);
   const targetYears = Object.keys(hospitalWiseTarget);
 
+  // ✅ Pagination bar callbacks. `Pagination` calls onItemsPerPageChange and
+  //    then onPageChange(1) itself when the rows-per-page select changes.
+  const handlePageChange = (nextPage) => {
+    if (nextPage === page) return;
+    setPage(nextPage);
+  };
+
+  const handleItemsPerPageChange = (nextLimit) => {
+    setLimit(nextLimit);
+    // The component already resets to page 1 right after this call; make sure
+    // the reset also happens when it does not (defensive).
+    setPage((current) => (current === 1 ? current : 1));
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -310,11 +428,11 @@ const ExecutiveProfileBreakdown = () => {
           </div>
           <div className="flex items-center gap-3">
             <div className="bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-100">
-              <p className="text-2xl font-bold text-indigo-700">{individuals.length}</p>
+              <p className="text-2xl font-bold text-indigo-700">{individualsTotal}</p>
               <p className="text-xs text-indigo-600">Individuals</p>
             </div>
             <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-100">
-              <p className="text-2xl font-bold text-green-700">{organizations.length}</p>
+              <p className="text-2xl font-bold text-green-700">{organizationsTotal}</p>
               <p className="text-xs text-green-600">Organizations</p>
             </div>
           </div>
@@ -335,7 +453,7 @@ const ExecutiveProfileBreakdown = () => {
             <LucideIcons.Users size={16} />
             <span>Individuals</span>
             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'individuals' ? 'bg-white/20' : 'bg-gray-200'}`}>
-              {individuals.length}
+              {individualsTotal}
             </span>
           </button>
           <button
@@ -349,7 +467,7 @@ const ExecutiveProfileBreakdown = () => {
             <LucideIcons.Building size={16} />
             <span>Organizations</span>
             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'organizations' ? 'bg-white/20' : 'bg-gray-200'}`}>
-              {organizations.length}
+              {organizationsTotal}
             </span>
           </button>
           <button
@@ -401,7 +519,8 @@ const ExecutiveProfileBreakdown = () => {
 
       {/* Individuals Tab */}
       {activeTab === 'individuals' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <>
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 transition-opacity ${isPaging ? 'opacity-60 pointer-events-none' : ''}`}>
           {filteredIndividuals.length > 0 ? (
             filteredIndividuals.map((ind, index) => (
               <div key={index} className="bg-white rounded-xl border-2 border-gray-200 p-4 hover:border-indigo-300 hover:shadow-md transition-all">
@@ -505,12 +624,29 @@ const ExecutiveProfileBreakdown = () => {
               <p className="text-black font-semibold">No individuals found</p>
             </div>
           )}
-        </div>
+          </div>
+          {/* ✅ Server-side paging for the individuals list (enviro only -
+              healthcare sends no paging metadata, so nothing renders) */}
+          {individualsMeta && individualsMeta.totalRecords > 0 && (
+            <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
+              <Pagination
+                currentPage={Math.min(page, individualsMeta.totalPages)}
+                totalPages={individualsMeta.totalPages}
+                totalItems={individualsMeta.totalRecords}
+                itemsPerPage={individualsMeta.limit ?? limit}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+                showRowPerPage
+              />
+            </div>
+          )}
+        </>
       )}
 
       {/* Organizations Tab */}
       {activeTab === 'organizations' && (
-        <div className="space-y-4">
+        <>
+        <div className={`space-y-4 transition-opacity ${isPaging ? 'opacity-60 pointer-events-none' : ''}`}>
           {filteredOrganizations.length > 0 ? (
             filteredOrganizations.map((org, index) => (
               <div key={index} className="bg-white rounded-xl border-2 border-gray-200 p-5 hover:border-green-300 hover:shadow-md transition-all">
@@ -630,62 +766,249 @@ const ExecutiveProfileBreakdown = () => {
             </div>
           )}
         </div>
+        {/* ✅ Server-side paging for the organizations list (enviro only -
+            healthcare sends no paging metadata, so nothing renders) */}
+        {organizationsMeta && organizationsMeta.totalRecords > 0 && (
+          <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
+            <Pagination
+              currentPage={Math.min(page, organizationsMeta.totalPages)}
+              totalPages={organizationsMeta.totalPages}
+              totalItems={organizationsMeta.totalRecords}
+              itemsPerPage={organizationsMeta.limit ?? limit}
+              onPageChange={handlePageChange}
+              onItemsPerPageChange={handleItemsPerPageChange}
+              showRowPerPage
+            />
+          </div>
+        )}
+        </>
       )}
 
       {/* Monthly Planning Tab */}
       {activeTab === 'planning' && (
         <div className="space-y-6">
           {planningMonths.length > 0 ? (
-            planningMonths.map((month) => (
-              <div key={month} className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
-                <div className="bg-indigo-50 px-5 py-3 border-b border-indigo-100">
-                  <h3 className="font-bold text-indigo-700 flex items-center gap-2">
-                    <LucideIcons.Calendar size={18} />
-                    {month}
-                    <span className="text-xs bg-indigo-100 px-2 py-0.5 rounded-full">
-                      {monthlyPlanning[month].length} plans
-                    </span>
-                  </h3>
-                </div>
-                <div className="divide-y divide-gray-100">
-                  {monthlyPlanning[month].map((plan, index) => (
-                    <div key={index} className="p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                        <div className="flex items-center gap-2 min-w-[140px]">
-                          <LucideIcons.CalendarCheck size={16} className="text-gray-400" />
-                          <span className="text-sm font-medium text-black">
-                            {new Date(plan.createPlanningForDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </span>
-                        </div>
-                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                          <div className="flex items-center gap-2">
-                            <LucideIcons.User size={14} className="text-gray-400" />
-                            <span className="text-sm text-black font-medium truncate">{plan.nameOfDoctor || 'N/A'}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <LucideIcons.Building size={14} className="text-gray-400" />
-                            <span className="text-sm text-black truncate">{plan.selectOrganization || 'N/A'}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <LucideIcons.Package size={14} className="text-gray-400" />
-                            <span className="text-sm text-black truncate">
-                              {Array.isArray(plan.productToBePromoted) ? plan.productToBePromoted.join(', ') : plan.productToBePromoted || 'N/A'}
-                            </span>
-                          </div>
-                        </div>
-                        {plan.wantToBuy && (
-                          <span className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap ${
-                            plan.wantToBuy.status === 'yes' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                          }`}>
-                            Want to Buy: {plan.wantToBuy.status}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <>
+              {/* ✅ Expand / collapse every month at once */}
+              <div className="flex justify-end">
+                {expandedMonths.length === planningMonths.length ? (
+                  <button
+                    type="button"
+                    onClick={collapseAllMonths}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                  >
+                    <LucideIcons.EyeOff size={16} />
+                    Collapse all
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={expandAllMonths}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                  >
+                    <LucideIcons.Eye size={16} />
+                    Expand all
+                  </button>
+                )}
               </div>
-            ))
+              {planningMonths.map((month) => {
+                const isExpanded = isMonthExpanded(month);
+                return (
+                  <div key={month} className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
+                    {/* ✅ Clicking the header toggles this month's rows */}
+                    <button
+                      type="button"
+                      onClick={() => toggleMonth(month)}
+                      aria-expanded={isExpanded}
+                      className="w-full flex items-center justify-between gap-3 px-5 py-3 bg-indigo-50 hover:bg-indigo-100 transition-colors text-left border-b border-indigo-100"
+                    >
+                      <span className="font-bold text-indigo-700 flex items-center gap-2">
+                        <LucideIcons.Calendar size={18} />
+                        {month}
+                        <span className="text-xs bg-indigo-100 px-2 py-0.5 rounded-full">
+                          {monthlyPlanning[month].length} plans
+                        </span>
+                      </span>
+                      <LucideIcons.ChevronDown
+                        size={18}
+                        className={`text-indigo-600 transition-transform duration-200 flex-shrink-0 ${
+                          isExpanded ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    {isExpanded && (
+                      <div className="divide-y divide-gray-100">
+                        {monthlyPlanning[month].map((plan, index) => (
+  <div
+    key={plan._id || plan.id || index}
+    className="group border-b border-gray-100 last:border-b-0 px-4 py-3.5 transition-colors hover:bg-indigo-50/40"
+  >
+    <div className="flex items-center gap-4">
+
+      {/* Date & Time */}
+      <div className="w-[150px] flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <LucideIcons.CalendarDays
+            size={15}
+            className="text-indigo-500 flex-shrink-0"
+          />
+
+          <div>
+            <p className="text-sm font-semibold text-gray-800 whitespace-nowrap">
+              {new Date(plan.createPlanningForDate).toLocaleDateString(
+                "en-IN",
+                {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                }
+              )}
+            </p>
+
+            <p className="mt-0.5 text-xs text-gray-500">
+              {new Date(plan.createPlanningForDate).toLocaleTimeString(
+                "en-IN",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                }
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Doctor */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <LucideIcons.User
+            size={14}
+            className="text-gray-400 flex-shrink-0"
+          />
+
+          <div className="min-w-0">
+            <p
+              className="truncate text-sm font-medium text-gray-800"
+              title={plan.nameOfDoctor || "N/A"}
+            >
+              {plan.nameOfDoctor || "N/A"}
+            </p>
+
+            <p className="text-[11px] text-gray-400">
+              Doctor
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Organization */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <LucideIcons.Building2
+            size={14}
+            className="text-gray-400 flex-shrink-0"
+          />
+
+          <div className="min-w-0">
+            <p
+              className="truncate text-sm font-medium text-gray-800"
+              title={plan.selectOrganization || "N/A"}
+            >
+              {plan.selectOrganization || "N/A"}
+            </p>
+
+            <p className="text-[11px] text-gray-400">
+              Organization
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Product */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <LucideIcons.Package
+            size={14}
+            className="text-gray-400 flex-shrink-0"
+          />
+
+          <div className="min-w-0">
+            <p
+              className="truncate text-sm font-medium text-gray-800"
+              title={
+                Array.isArray(plan.productToBePromoted)
+                  ? plan.productToBePromoted.join(", ")
+                  : plan.productToBePromoted || "N/A"
+              }
+            >
+              {Array.isArray(plan.productToBePromoted)
+                ? plan.productToBePromoted.join(", ")
+                : plan.productToBePromoted || "N/A"}
+            </p>
+
+            <p className="text-[11px] text-gray-400">
+              Product
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Want To Buy */}
+      <div className="w-[105px] flex-shrink-0">
+        {plan.wantToBuy ? (
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+              plan.wantToBuy.status === "yes"
+                ? "bg-green-50 text-green-700"
+                : "bg-red-50 text-red-700"
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                plan.wantToBuy.status === "yes"
+                  ? "bg-green-500"
+                  : "bg-red-500"
+              }`}
+            />
+
+            {plan.wantToBuy.status === "yes"
+              ? "Want to Buy"
+              : "Not Interested"}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400">
+            —
+          </span>
+        )}
+      </div>
+
+      {/* View */}
+      <div className="w-[42px] flex-shrink-0 flex justify-end">
+        {(plan._id || plan.id) && (
+          <button
+            type="button"
+            onClick={() => handleViewPlanningDetails(plan)}
+            title="View planning details"
+            aria-label={`View planning details of ${
+              plan.nameOfDoctor || "plan"
+            }`}
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-indigo-500 hover:bg-indigo-500 hover:text-white"
+          >
+            <LucideIcons.Eye size={15} />
+          </button>
+        )}
+      </div>
+
+    </div>
+  </div>
+))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </>
           ) : (
             <div className="text-center py-16 bg-white rounded-xl border-2 border-gray-200">
               <LucideIcons.Calendar size={40} className="mx-auto text-gray-400 mb-3" />

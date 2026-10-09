@@ -504,11 +504,26 @@ const EnviroIndividualDetails = () => {
 
         {/* ✅ Individual profile (data.individual) */}
         <div className="rounded-2xl border border-[var(--theme-border)] bg-white p-4 shadow-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <LucideIcons.UserRound size={16} className="text-[var(--theme-primary)]" />
-            <h2 className="text-base font-bold text-[var(--theme-text-primary)]">
-              Individual Profile
-            </h2>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <LucideIcons.UserRound size={16} className="text-[var(--theme-primary)]" />
+              <h2 className="text-base font-bold text-[var(--theme-text-primary)]">
+                Individual Profile
+              </h2>
+            </div>
+            {resolvedId && (
+              <button
+                type="button"
+                title="View individual database record"
+                aria-label="View individual database record"
+                onClick={() =>
+                  navigate(`/database/view-enviro-individual-details/${resolvedId}`)
+                }
+                className="inline-flex items-center justify-center rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-light)] p-2 text-[var(--theme-primary)] transition-colors hover:bg-[var(--theme-primary)] hover:text-white"
+              >
+                <TiEye size={16} />
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {profileRows.map((row) => (

@@ -78,8 +78,10 @@ const ENVIRO_SPECIFIC_ORGANIZATION_KEYS = ["year"];
 // Query parameters of the single-individual API (only `year`)
 const ENVIRO_SPECIFIC_INDIVIDUAL_KEYS = ["year"];
 
-// Query parameters of the single-sales-person API (only `year`)
-const ENVIRO_SPECIFIC_SALESPERSON_KEYS = ["year"];
+// Query parameters of the single-sales-person API. `year` plus the shared
+// paging pair: individuals + organizations arrive in ONE response and are cut
+// with the same ?page=&limit= (see the pagination block each list returns).
+const ENVIRO_SPECIFIC_SALESPERSON_KEYS = ["year", "page", "limit"];
 
 // Query parameters of the individual graphical analytics API
 // (same dashboard filters as the rest of the analytics pages)
