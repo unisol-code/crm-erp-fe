@@ -421,6 +421,81 @@ const EnviroIndRequestAction = () => {
         </>
     );
 
+    // � Vendor rows come back with a limited field set
+    //    (firstName / lastName / fullName / segment / uniqueId / region /
+    //    email / contact / address / villageName / district / state / pinCode /
+    //    leadGeneratedThrough / addedBy / createdAt / updatedAt). They must NOT
+    //    fall through to the Farmer / FPO / Government layouts - those surface
+    //    pan / bank / crop / designation fields that Vendors do not have and
+    //    would just render a wall of "Not provided". This branch only shows
+    //    the fields that actually exist on a Vendor.
+    const renderVendorDetails = () => (
+        <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                {/* Personal Information */}
+                <InfoCard title="Personal Information" icon={FiUser}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InfoRow label="Full Name" value={targetDetails?.fullName} icon={FiUser} highlight />
+                        <InfoRow label="First Name" value={targetDetails?.firstName} icon={FiUser} />
+                        <InfoRow label="Last Name" value={targetDetails?.lastName} icon={FiUser} />
+                        <InfoRow label="Contact Number" value={targetDetails?.contact} icon={FiPhone} highlight />
+                        <InfoRow label="Email Address" value={targetDetails?.email} icon={FiMail} />
+                        <InfoRow label="Profile Type" value={targetDetails?.typeOfProfile} />
+                    </div>
+                </InfoCard>
+
+                {/* Address Details */}
+                <InfoCard title="Address Details" icon={FiMapPin}>
+                    <div className="space-y-3">
+                        <InfoRow label="Full Address" value={targetDetails?.address} icon={FiMapPin} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <InfoRow label="Village/Town" value={targetDetails?.villageName} icon={FiHome} />
+                            <InfoRow label="District" value={targetDetails?.district} />
+                            <InfoRow label="State" value={targetDetails?.state} />
+                            <InfoRow label="PIN Code" value={targetDetails?.pinCode} />
+                        </div>
+                        <InfoRow label="Region" value={targetDetails?.region} icon={FiGlobe} />
+                        <InfoRow label="Unique ID" value={targetDetails?.uniqueId} highlight />
+                    </div>
+                </InfoCard>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                {/* Lead Information */}
+                <InfoCard title="Lead Information" icon={FiTarget}>
+                    <div className="space-y-3">
+                        <InfoRow
+                            label="Lead Generated Through"
+                            value={Array.isArray(targetDetails?.leadGeneratedThrough)
+                                ? targetDetails.leadGeneratedThrough.join(', ')
+                                : targetDetails?.leadGeneratedThrough}
+                            icon={FiTarget}
+                        />
+                        <InfoRow label="Added By" value={targetDetails?.addedBy} highlight />
+                    </div>
+                </InfoCard>
+
+                {/* System Information */}
+                <InfoCard title="System Information" icon={FiEdit2}>
+                    <div className="space-y-3">
+                        <InfoRow label="Segment" value={targetDetails?.segment} />
+                        <InfoRow label="Unique ID" value={targetDetails?.uniqueId} />
+                        <InfoRow
+                            label="Created On"
+                            value={formatDate(targetDetails?.createdAt)}
+                            icon={FiCalendar}
+                        />
+                        <InfoRow
+                            label="Last Updated"
+                            value={formatDate(targetDetails?.updatedAt)}
+                            icon={FiClock}
+                        />
+                    </div>
+                </InfoCard>
+            </div>
+        </>
+    );
+
     const renderDetails = () => {
         switch (targetDetails?.typeOfProfile) {
             case 'Farmer':
@@ -429,6 +504,8 @@ const EnviroIndRequestAction = () => {
                 return renderGovOfficerDetails();
             case 'FPO':
                 return renderFPODetails();
+            case 'Vendor':
+                return renderVendorDetails();
             default:
                 return renderFarmerDetails(); // Default to farmer if type is unknown
         }

@@ -60,6 +60,21 @@ const formatDate = (value) => {
   });
 };
 
+const formatTime = (dateString) => {
+  if (!dateString) return "—";
+
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
+  });
+};
+
 // "2026-09-23T11:09:00.000Z" -> "2026-09-23" (local calendar date).
 // Used for the day-wise planning route:
 //   /admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/:id/:date
@@ -248,17 +263,22 @@ const EnviroIndividualDetails = () => {
     [monthGroups],
   );
 
-  // ✅ Year options: the years the API returned, the filtered year and the
-  //    current year, so the dropdown is never empty on a fresh individual.
+  // ✅ Year options: always offer the current year down to 10 years ago, plus
+  //    any year the API actually returned or that was filtered (in case the
+  //    planning spans outside the default 10-year window). The dropdown is
+  //    therefore never empty, even on a fresh individual with no data yet.
   const yearOptions = useMemo(() => {
     const years = new Set();
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear; y >= currentYear - 10; y--) {
+      years.add(y);
+    }
     monthGroups.forEach((group) => {
       if (group?.year) years.add(Number(group.year));
     });
     if (payload?.filteredYear) {
       years.add(Number(payload.filteredYear));
     }
-    years.add(new Date().getFullYear());
 
     return [...years]
       .sort((a, b) => b - a)
@@ -489,11 +509,26 @@ const EnviroIndividualDetails = () => {
 
         {/* ✅ Individual profile (data.individual) */}
         <div className="rounded-2xl border border-[var(--theme-border)] bg-white p-4 shadow-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <LucideIcons.UserRound size={16} className="text-[var(--theme-primary)]" />
-            <h2 className="text-base font-bold text-[var(--theme-text-primary)]">
-              Individual Profile
-            </h2>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <LucideIcons.UserRound size={16} className="text-[var(--theme-primary)]" />
+              <h2 className="text-base font-bold text-[var(--theme-text-primary)]">
+                Individual Profile
+              </h2>
+            </div>
+            {resolvedId && (
+              <button
+                type="button"
+                title="View individual database record"
+                aria-label="View individual database record"
+                onClick={() =>
+                  navigate(`/database/view-enviro-individual-details/${resolvedId}`)
+                }
+                className="inline-flex items-center justify-center rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-light)] p-2 text-[var(--theme-primary)] transition-colors hover:bg-[var(--theme-primary)] hover:text-white"
+              >
+                <TiEye size={16} />
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {profileRows.map((row) => (
@@ -613,6 +648,9 @@ const EnviroIndividualDetails = () => {
                       <TableHead className="whitespace-nowrap text-xs font-bold uppercase tracking-wider text-[var(--theme-text-secondary)]">
                         Planning Date
                       </TableHead>
+                                            <TableHead className="whitespace-nowrap text-xs font-bold uppercase tracking-wider text-[var(--theme-text-secondary)]">
+                        Meeting Time
+                      </TableHead>
                       <TableHead className="min-w-[180px] whitespace-nowrap text-xs font-bold uppercase tracking-wider text-[var(--theme-text-secondary)]">
                         Individual
                       </TableHead>
@@ -653,6 +691,9 @@ const EnviroIndividualDetails = () => {
                             </TableCell>
                             <TableCell className="whitespace-nowrap text-sm text-[var(--theme-text-primary)]">
                               {formatDate(planning?.createPlanningForDate)}
+                            </TableCell>
+                              <TableCell className="whitespace-nowrap text-sm text-[var(--theme-text-primary)]">
+                              {formatTime(planning?.createPlanningForDate)}
                             </TableCell>
                             <TableCell className="text-sm font-medium text-[var(--theme-text-primary)]">
                               {planning?.nameOfDoctor || "—"}
@@ -705,7 +746,7 @@ const EnviroIndividualDetails = () => {
                                     disabled={!canView}
                                     onClick={() =>
                                       navigate(
-                                        `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/${planning._id}/${routeDate}`,
+                                        `/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/${planning._id}`,
                                       )
                                     }
                                     className="inline-flex items-center justify-center rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-light)] p-2 text-[var(--theme-primary)] transition-colors hover:bg-[var(--theme-primary)] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-[var(--theme-bg-light)] disabled:hover:text-[var(--theme-primary)]"

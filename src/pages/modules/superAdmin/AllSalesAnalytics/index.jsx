@@ -269,19 +269,19 @@ const [targetPageSize, setTargetPageSize] = useState(10);
               await fetchSpecialityAnalytics();
               break;
            case 'doctors':
-             // Doctor analytics are not used for Enviro Solution
-             if (isEnviroSolution) {
-               await loadEnviroIndividuals(false);
-             } else {
-               await loadDoctorData(false);
-             }
-             break;
-           case 'individuals':
-             await loadEnviroIndividuals(false);
-             break;
-           case 'enviroOrganizations':
-             await loadEnviroOrganizations(false);
-             break;
+              // Doctor analytics are not used for Enviro Solution
+              if (isEnviroSolution) {
+                await loadEnviroIndividuals(false);
+              } else {
+                await loadDoctorData(false);
+              }
+              break;
+            case 'individuals':
+              await loadEnviroIndividuals(false);
+              break;
+            case 'enviroOrganizations':
+              await loadEnviroOrganizations(false);
+              break;
             case 'executives':
               if (isEnviroSolution) {
                 await loadEnviroEmployees(false);
@@ -294,40 +294,40 @@ const [targetPageSize, setTargetPageSize] = useState(10);
                 });
               }
               break;
-           case 'hospitals':
-             await fetchOrganizationAnalytics({
-               page: hospitalPage,
-               limit: hospitalLimit,
-             });
-             break;
-           case 'organizations':
-             await fetchOrganizationAnalytics({
-               page: hospitalPage,
-               limit: hospitalLimit,
-             });
-                await fetchOrganizationDashboardAnalytics();
-                 await fetchOrganizationProductAnalytics({
-     page: productPage,
-     pageSize: productPageSize,
-   });
-     await fetchOrganizationListAnalytics({
-     page: orgListPage,
-     pageSize: orgListPageSize,
-   });
-             break;
-           case 'targets':
-             // Target Sheet is its own tab - fetched only when that tab opens
-             await fetchTargetAnalytics();
-             break;
-           default:
-             break;
-         }
-       } catch (error) {
-         console.error('Error loading data:', error);
-       }
-     };
-     fetchTabData();
-   }, [selectedTab]); // ✅ Only trigger on tab change
+            case 'hospitals':
+              await fetchOrganizationAnalytics({
+                page: hospitalPage,
+                limit: hospitalLimit,
+              });
+              break;
+            case 'organizations':
+              await fetchOrganizationAnalytics({
+                page: hospitalPage,
+                limit: hospitalLimit,
+              });
+              await fetchOrganizationDashboardAnalytics();
+               await fetchOrganizationProductAnalytics({
+      page: productPage,
+      pageSize: productPageSize,
+    });
+    await fetchOrganizationListAnalytics({
+      page: orgListPage,
+      pageSize: orgListPageSize,
+    });
+              break;
+            case 'targets':
+              // Target Sheet is its own tab - fetched only when that tab opens
+              await fetchTargetAnalytics();
+              break;
+            default:
+              break;
+          }
+        } catch (error) {
+          console.error('Error loading data:', error);
+        }
+      };
+      fetchTabData();
+    }, [selectedTab, isEnviroSolution]); // ✅ Re-run when enviro flag changes
 
    // ✅ The tab-change effect above is intentionally tab-only, but
    //    isEnviroSolution is read from sessionStorage, so the enviro tabs can
@@ -359,15 +359,9 @@ const [targetPageSize, setTargetPageSize] = useState(10);
       }
     }, [isEnviroSolution, selectedTab]);
 
-    useEffect(() => {
+useEffect(() => {
       if (isEnviroSolution && selectedTab === 'enviroOrganizations') {
         loadEnviroOrganizationsRef.current(false);
-      }
-    }, [isEnviroSolution, selectedTab]);
-
-    useEffect(() => {
-      if (isEnviroSolution && selectedTab === 'executives') {
-        loadEnviroEmployeesRef.current(false);
       }
     }, [isEnviroSolution, selectedTab]);
 

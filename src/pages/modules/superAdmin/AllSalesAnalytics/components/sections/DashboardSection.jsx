@@ -1717,37 +1717,76 @@ export function DashboardSection({
               {/* 1. Section Overview (Agriculture vs. Waste Management) */}
               <ChartCard title="Section Overview (Agriculture vs. Waste Management)">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                  {/* Donut: organizations per section */}
+                  {/* Donuts: one separate chart per section
+                      (Agriculture, Waste Management, ...) */}
                   <div>
                     {sectionPieData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={200}>
-                        <PieChart>
-                          <Pie
-                            data={sectionPieData}
-                            dataKey="value"
-                            nameKey="name"
-                            innerRadius={52}
-                            outerRadius={80}
-                            paddingAngle={2}
-                            label={({ value }) => `${value} orgs`}
-                          >
-                            {sectionPieData.map((_, i) => (
-                              <Cell
-                                key={i}
-                                fill={SECTION_COLORS[i % SECTION_COLORS.length]}
-                              />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{
-                              borderRadius: 12,
-                              border: "1px solid var(--theme-bg-sidebar)",
-                              background: "#ffffff",
-                            }}
-                            formatter={(value, name) => [`${value} orgs`, name]}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
+                      <div
+                        className={`grid gap-3 items-start ${
+                          sectionPieData.length > 1 ? "grid-cols-2" : "grid-cols-1"
+                        }`}
+                      >
+                        {sectionPieData.map((section, idx) => {
+                          const color = SECTION_COLORS[idx % SECTION_COLORS.length];
+                          return (
+                            <div
+                              key={`${section.name}-${idx}`}
+                              className="flex flex-col items-center"
+                            >
+                              <span
+                                className="flex items-center gap-1.5 text-xs font-semibold text-[var(--theme-text-primary)] mb-1 max-w-full"
+                                title={section.name}
+                              >
+                                <span
+                                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                                  style={{ backgroundColor: color }}
+                                />
+                                <span className="truncate">{section.name}</span>
+                              </span>
+
+                              <div className="relative w-full">
+                                <ResponsiveContainer width="100%" height={150}>
+                                  <PieChart>
+                                    <Pie
+                                      data={[section]}
+                                      dataKey="value"
+                                      nameKey="name"
+                                      innerRadius={42}
+                                      outerRadius={64}
+                                      paddingAngle={2}
+                                      startAngle={90}
+                                      endAngle={-270}
+                                    >
+                                      <Cell fill={color} />
+                                    </Pie>
+                                    <Tooltip
+                                      contentStyle={{
+                                        borderRadius: 12,
+                                        border: "1px solid var(--theme-bg-sidebar)",
+                                        background: "#ffffff",
+                                      }}
+                                      formatter={(value, name) => [
+                                        `${value} orgs`,
+                                        name,
+                                      ]}
+                                    />
+                                  </PieChart>
+                                </ResponsiveContainer>
+
+                                {/* Centered total for this section */}
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none leading-none">
+                                  <span className="text-base font-bold text-[var(--theme-text-primary)]">
+                                    {section.value}
+                                  </span>
+                                  <span className="text-[9px] text-[var(--theme-text-secondary)] mt-0.5">
+                                    orgs
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     ) : (
                       <div className="flex items-center justify-center h-[200px] text-sm text-gray-400">
                         No section data available
@@ -1942,9 +1981,9 @@ export function DashboardSection({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Unique ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>District</TableHead>
+                        <TableHead>SR. NO</TableHead>
+                        <TableHead> Orgnization Name</TableHead>
+                        <TableHead>Orgnization Type</TableHead>
                         <TableHead className="text-right">Annual Turnover</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1955,17 +1994,17 @@ export function DashboardSection({
                             colSpan={4}
                             className="text-center py-6 text-sm text-gray-400"
                           >
-                            No organizations found
+                            No organizations turnover data found
                           </TableCell>
                         </TableRow>
                       ) : (
                         agriOrganizations.map((org, idx) => (
-                          <TableRow key={`${org.uniqueId}-${idx}`}>
+                          <TableRow key={`${org._id}-${idx}`}>
                             <TableCell className="text-xs whitespace-nowrap">
-                              {org.uniqueId}
+                             {idx + 1}
                             </TableCell>
-                            <TableCell className="text-xs font-medium">{org.name}</TableCell>
-                            <TableCell className="text-xs">{org.district}</TableCell>
+                            <TableCell className="text-xs font-medium">{org.organizationName}</TableCell>
+                            <TableCell className="text-xs">{org.OrganizationType}</TableCell>
                             <TableCell className="text-xs text-right whitespace-nowrap">
                               {Number(org.annualTurnover || 0).toLocaleString("en-IN")}
                             </TableCell>
