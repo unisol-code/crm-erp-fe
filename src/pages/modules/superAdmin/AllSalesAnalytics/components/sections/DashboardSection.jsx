@@ -1942,9 +1942,9 @@ export function DashboardSection({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Unique ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>District</TableHead>
+                        <TableHead>SR. NO</TableHead>
+                        <TableHead> Orgnization Name</TableHead>
+                        <TableHead>Orgnization Type</TableHead>
                         <TableHead className="text-right">Annual Turnover</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1955,17 +1955,17 @@ export function DashboardSection({
                             colSpan={4}
                             className="text-center py-6 text-sm text-gray-400"
                           >
-                            No organizations found
+                            No organizations turnover data found
                           </TableCell>
                         </TableRow>
                       ) : (
                         agriOrganizations.map((org, idx) => (
-                          <TableRow key={`${org.uniqueId}-${idx}`}>
+                          <TableRow key={`${org._id}-${idx}`}>
                             <TableCell className="text-xs whitespace-nowrap">
-                              {org.uniqueId}
+                             {idx + 1}
                             </TableCell>
-                            <TableCell className="text-xs font-medium">{org.name}</TableCell>
-                            <TableCell className="text-xs">{org.district}</TableCell>
+                            <TableCell className="text-xs font-medium">{org.organizationName}</TableCell>
+                            <TableCell className="text-xs">{org.OrganizationType}</TableCell>
                             <TableCell className="text-xs text-right whitespace-nowrap">
                               {Number(org.annualTurnover || 0).toLocaleString("en-IN")}
                             </TableCell>

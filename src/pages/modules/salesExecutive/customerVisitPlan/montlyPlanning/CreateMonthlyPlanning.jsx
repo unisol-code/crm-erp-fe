@@ -630,11 +630,20 @@ const CreateMonthlyPlanning = () => {
 
   const organizationOptions = isEnviroSolution
     ? [
-        ...(enviroOrganizationName?.map((item) => ({
-          label: item?.name || item?.organizationName || item,
-          value: item?.name || item?.organizationName || item,
-          uniqueCode: item?.uniqueCode || "",
-        })) || []),
+        ...(enviroOrganizationName?.map((item) => {
+          // ✅ Same guard as the individual dropdown: `name`/`organizationName`
+          //    can be null, so never fall back to the object itself.
+          const label =
+            item?.name ||
+            item?.organizationName ||
+            item?.uniqueCode ||
+            "Unnamed Organization";
+          return {
+            label,
+            value: label,
+            uniqueCode: item?.uniqueCode || "",
+          };
+        }) || []),
         { label: "Other", value: "Other" },
       ]
     : [
@@ -651,14 +660,27 @@ const CreateMonthlyPlanning = () => {
   // ];
   const doctorOptions = isEnviroSolution
     ? [
-        ...(enviroIndDropdown?.map((individual) => ({
-          label: individual?.name || individual?.fullName || individual,
-          value: individual?.name || individual?.fullName || individual,
-          uniqueCode: individual?.uniqueCode || "",
-          designation: individual?.designation || "",
-          speciality: individual?.speciality || "",
-          visitDetails: individual?.visitDetails || {},
-        })) || []),
+        ...(enviroIndDropdown?.map((individual) => {
+          // ✅ Some enviro individuals come back with `name: null` and no
+          //    `fullName`. Falling back to the whole object (`|| individual`)
+          //    hands React an object to render and crashes the select with
+          //    "Objects are not valid as a React child". Use the (unique)
+          //    uniqueCode - or a placeholder - so label/value are ALWAYS a
+          //    string, and the value is still unique per row.
+          const label =
+            individual?.name ||
+            individual?.fullName ||
+            individual?.uniqueCode ||
+            "Unnamed Individual";
+          return {
+            label,
+            value: label,
+            uniqueCode: individual?.uniqueCode || "",
+            designation: individual?.designation || "",
+            speciality: individual?.speciality || "",
+            visitDetails: individual?.visitDetails || {},
+          };
+        }) || []),
         { label: "Other", value: "Other" },
       ]
     : [
@@ -699,7 +721,12 @@ const CreateMonthlyPlanning = () => {
     const orgOption = organizationOptions.find(
       (opt) => opt.value === entryToEdit.selectOrganization,
     );
-    const docExists = (isEnviroSolution ? formatOptions(enviroIndDropdown) : formatOptions(doctorList)).some(
+    // ✅ For enviro, match against the SAME option set the select uses, so the
+    //    "already picked?" check stays in sync with how the individual
+    //    value string is built (including the uniqueCode fallback for unnamed
+    //    individuals) instead of rebuilding labels with a separate helper.
+    const docExistsOptions = isEnviroSolution ? doctorOptions : formatOptions(doctorList);
+    const docExists = docExistsOptions.some(
       (opt) => opt.value === entryToEdit.nameOfDoctor,
     );
 

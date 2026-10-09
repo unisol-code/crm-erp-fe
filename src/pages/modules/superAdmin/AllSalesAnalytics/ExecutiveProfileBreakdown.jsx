@@ -93,11 +93,6 @@ const toYearMap = (value) => {
   return map;
 };
 
-// ✅ The search touches fields that are missing or numeric on some rows, so
-//    stringify before matching - `undefined` / `5` must not throw.
-const includesTerm = (value, term) =>
-  String(value ?? "").toLowerCase().includes(term);
-
 // ✅ The enviro detail API pages its lists SERVER-side and wraps each one as
 //    { totalRecords, totalPages, currentPage, limit, data: [...] }.
 //    Anything else (a plain array / junk) carries no paging info -> null, so
@@ -204,28 +199,53 @@ const ExecutiveProfileBreakdown = () => {
   const [activeTab, setActiveTab] = useState('individuals');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // ✅ Individuals + organizations are paged on the SERVER with ONE shared
-  //    ?page=&limit= pair (both lists arrive in the same response). The
-  //    healthcare API has no paging params, so its tab simply never renders
-  //    the pagination bar (see individualsMeta / organizationsMeta below).
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  // ✅ true while a background page/limit refresh runs - no full page loader,
-  //    the current rows just dim until the new ones arrive.
+  // ✅ Enviro Solution pages the individuals and organizations lists
+  //    INDEPENDENTLY on the server:
+  //      ?indPage=&indLimit=  pages the individuals list
+  //      ?orgPage=&orgLimit=  pages the organizations list
+  //    The healthcare API has no paging params, so its tab never renders the
+  //    pagination bar (see individualsMeta / organizationsMeta below).
+  const [indPage, setIndPage] = useState(1);
+  const [indLimit, setIndLimit] = useState(10);
+  const [orgPage, setOrgPage] = useState(1);
+  const [orgLimit, setOrgLimit] = useState(10);
+  // ✅ true while a background page / limit / search refresh runs - no full page
+  //    loader, the current rows just dim until the new ones arrive.
   const [isPaging, setIsPaging] = useState(false);
   const initialLoadRef = useRef(true);
+
+  // ✅ Debounce the search box: the API applies `search` SERVER-SIDE, so we
+  //    wait a moment after the user stops typing before refetching.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  // ✅ Whenever the search term changes, drop back to page 1 of each list so we
+  //    never ask the server for page 3 of a result set that no longer exists.
+  useEffect(() => {
+    setIndPage(1);
+    setOrgPage(1);
+  }, [searchTerm]);
 
   // ✅ A different executive starts at page 1 again. This runs DURING RENDER
   //    (the documented React pattern for adjusting state when props change),
   //    so the fetch effect below never fires once with the previous
-  //    executive's page number.
+  //    executive's page number. Search is cleared too so the fresh profile does
+  //    not inherit the previous one's debounced search for its first request.
   const [prevProfileId, setPrevProfileId] = useState(id);
   if (prevProfileId !== id) {
     setPrevProfileId(id);
-    setPage(1);
-    setLimit(10);
+    setIndPage(1);
+    setIndLimit(10);
+    setOrgPage(1);
+    setOrgLimit(10);
+    setSearchTerm('');
+    setDebouncedSearch('');
     initialLoadRef.current = true;
   }
+
 
   // ✅ Monthly planning months are collapsed by default, so a long list of
   //    months stays scannable. Each month opens independently (multiple can
@@ -248,11 +268,11 @@ const ExecutiveProfileBreakdown = () => {
   // ✅ Pick the API matching the solution. `isEnviroSolution` is read from
   //    sessionStorage, so it can resolve AFTER the first render - that is why
   //    it is part of the dependency list.
-  //    Enviro also pages both lists on the SERVER, so page/limit changes
+  //    Enviro also pages both lists on the SERVER, so page/limit/search changes
   //    re-run the request:
   //      - first load (or another executive): clear old rows + full loader
-  //      - page / rows-per-change: SILENT refresh, the current rows stay on
-  //        screen (dimmed) until the new ones arrive - no flash of spinner.
+  //      - page / rows-per-page / search change: SILENT refresh, the current
+  //        rows stay on screen (dimmed) until the new ones arrive - no spinner.
   useEffect(() => {
     if (!id) return;
 
@@ -260,14 +280,25 @@ const ExecutiveProfileBreakdown = () => {
       const isFirstLoad = initialLoadRef.current;
       initialLoadRef.current = false;
 
+      // ✅ Forward the independent paging pairs + the server-side search term.
+      //    `year`/`month` are not managed by this page (no such filters yet),
+      //    so they fall back to the backend defaults when omitted.
+      const params = {
+        indPage,
+        indLimit,
+        orgPage,
+        orgLimit,
+        search: debouncedSearch,
+      };
+
       if (isFirstLoad) {
         resetEnviroSpecificSalesPersonData();
-        fetchSpecificEnviroSalesPersonData(id, { page, limit });
+        fetchSpecificEnviroSalesPersonData(id, params);
         return;
       }
 
       setIsPaging(true);
-      fetchSpecificEnviroSalesPersonData(id, { page, limit }, true).finally(() =>
+      fetchSpecificEnviroSalesPersonData(id, params, true).finally(() =>
         setIsPaging(false)
       );
       return;
@@ -277,8 +308,11 @@ const ExecutiveProfileBreakdown = () => {
   }, [
     id,
     isEnviroSolution,
-    page,
-    limit,
+    indPage,
+    indLimit,
+    orgPage,
+    orgLimit,
+    debouncedSearch,
     fetchSpecificSalesPersonData,
     fetchSpecificEnviroSalesPersonData,
     resetEnviroSpecificSalesPersonData,
@@ -301,8 +335,9 @@ const ExecutiveProfileBreakdown = () => {
   const organizations = toRows(data?.organizations);
 
   // ✅ Server paging metadata (enviro sends it per list, healthcare does not).
-  //    The same ?page=&limit= cut both lists, so ONE shared page state drives
-  //    the pagination bar of whichever tab is open.
+  //    Individuals and organizations are paged with their own ?indPage= and
+  //    ?orgPage= pairs, so the pagination bar of each tab is driven by its own
+  //    page state (indPage / orgPage).
   const individualsMeta = toPaginationMeta(data?.individuals);
   const organizationsMeta = toPaginationMeta(data?.organizations);
   const individualsTotal = individualsMeta?.totalRecords ?? individuals.length;
@@ -325,58 +360,35 @@ const ExecutiveProfileBreakdown = () => {
     { text: salesPerson?.fullName || salesPersonName || 'Executive Profile' },
   ];
 
-  const filteredIndividuals = individuals.filter((ind) => {
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) return true;
-    // ⚠ Every field is stringified first: `undefined` and numbers must not
-    //    throw `.toLowerCase()` the way a raw optional chain can.
-    return [
-      ind?.fullName,
-      ind?.typeOfDoctorProfile,
-      ind?.department,
-      // ✅ Enviro individual fields
-      ind?.segment,
-      ind?.uniqueId,
-      ind?.organizationName,
-      ind?.villageName,
-      ind?.city,
-      ind?.district,
-      ind?.state,
-    ].some((field) => includesTerm(field, term));
-  });
-
-  const filteredOrganizations = organizations.filter((org) => {
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) return true;
-    return [
-      org?.hospitalName,
-      org?.typeOfHospital,
-      // ✅ Enviro organization fields
-      org?.organizationName,
-      org?.sectionName,
-      org?.OrganizationType,
-      org?.uniqueId,
-      org?.cityTownVillage,
-      org?.district,
-      org?.state,
-    ].some((field) => includesTerm(field, term));
-  });
-
+  // ✅ Search is applied SERVER-SIDE: the term is forwarded to the API via the
+  //    `search` query param (see the fetch effect) and the server returns only
+  //    the matching rows for the current page. There is no client-side filter
+  //    here, otherwise the in-memory rows and the server pagination metadata
+  //    would drift out of sync.
   const planningMonths = Object.keys(monthlyPlanning);
   const targetYears = Object.keys(hospitalWiseTarget);
 
-  // ✅ Pagination bar callbacks. `Pagination` calls onItemsPerPageChange and
-  //    then onPageChange(1) itself when the rows-per-page select changes.
-  const handlePageChange = (nextPage) => {
-    if (nextPage === page) return;
-    setPage(nextPage);
+  // ✅ `Pagination` calls onItemsPerPageChange and then onPageChange(1) itself
+  //    when the rows-per-page select changes. Individuals and organizations
+  //    page independently, so each list gets its own pair of handlers.
+  const handleIndividualPageChange = (nextPage) => {
+    if (nextPage === indPage) return;
+    setIndPage(nextPage);
   };
 
-  const handleItemsPerPageChange = (nextLimit) => {
-    setLimit(nextLimit);
-    // The component already resets to page 1 right after this call; make sure
-    // the reset also happens when it does not (defensive).
-    setPage((current) => (current === 1 ? current : 1));
+  const handleIndividualItemsPerPageChange = (nextLimit) => {
+    setIndLimit(nextLimit);
+    setIndPage(1);
+  };
+
+  const handleOrganizationPageChange = (nextPage) => {
+    if (nextPage === orgPage) return;
+    setOrgPage(nextPage);
+  };
+
+  const handleOrganizationItemsPerPageChange = (nextLimit) => {
+    setOrgLimit(nextLimit);
+    setOrgPage(1);
   };
 
   if (isLoading) {
@@ -521,8 +533,8 @@ const ExecutiveProfileBreakdown = () => {
       {activeTab === 'individuals' && (
         <>
           <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 transition-opacity ${isPaging ? 'opacity-60 pointer-events-none' : ''}`}>
-          {filteredIndividuals.length > 0 ? (
-            filteredIndividuals.map((ind, index) => (
+          {individuals.length > 0 ? (
+            individuals.map((ind, index) => (
               <div key={index} className="bg-white rounded-xl border-2 border-gray-200 p-4 hover:border-indigo-300 hover:shadow-md transition-all">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="h-12 w-12 rounded-full bg-indigo-100 grid place-items-center text-indigo-700 font-bold text-lg">
@@ -630,12 +642,12 @@ const ExecutiveProfileBreakdown = () => {
           {individualsMeta && individualsMeta.totalRecords > 0 && (
             <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
               <Pagination
-                currentPage={Math.min(page, individualsMeta.totalPages)}
+                currentPage={Math.min(indPage, individualsMeta.totalPages)}
                 totalPages={individualsMeta.totalPages}
                 totalItems={individualsMeta.totalRecords}
-                itemsPerPage={individualsMeta.limit ?? limit}
-                onPageChange={handlePageChange}
-                onItemsPerPageChange={handleItemsPerPageChange}
+                itemsPerPage={individualsMeta.limit ?? indLimit}
+                onPageChange={handleIndividualPageChange}
+                onItemsPerPageChange={handleIndividualItemsPerPageChange}
                 showRowPerPage
               />
             </div>
@@ -647,8 +659,8 @@ const ExecutiveProfileBreakdown = () => {
       {activeTab === 'organizations' && (
         <>
         <div className={`space-y-4 transition-opacity ${isPaging ? 'opacity-60 pointer-events-none' : ''}`}>
-          {filteredOrganizations.length > 0 ? (
-            filteredOrganizations.map((org, index) => (
+          {organizations.length > 0 ? (
+            organizations.map((org, index) => (
               <div key={index} className="bg-white rounded-xl border-2 border-gray-200 p-5 hover:border-green-300 hover:shadow-md transition-all">
                 <div className="flex items-start gap-4">
                   <div className="h-14 w-14 rounded-xl bg-green-100 grid place-items-center text-green-700 font-bold text-xl flex-shrink-0">
@@ -771,12 +783,12 @@ const ExecutiveProfileBreakdown = () => {
         {organizationsMeta && organizationsMeta.totalRecords > 0 && (
           <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
             <Pagination
-              currentPage={Math.min(page, organizationsMeta.totalPages)}
+              currentPage={Math.min(orgPage, organizationsMeta.totalPages)}
               totalPages={organizationsMeta.totalPages}
               totalItems={organizationsMeta.totalRecords}
-              itemsPerPage={organizationsMeta.limit ?? limit}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleItemsPerPageChange}
+              itemsPerPage={organizationsMeta.limit ?? orgLimit}
+              onPageChange={handleOrganizationPageChange}
+              onItemsPerPageChange={handleOrganizationItemsPerPageChange}
               showRowPerPage
             />
           </div>

@@ -263,17 +263,22 @@ const EnviroIndividualDetails = () => {
     [monthGroups],
   );
 
-  // ✅ Year options: the years the API returned, the filtered year and the
-  //    current year, so the dropdown is never empty on a fresh individual.
+  // ✅ Year options: always offer the current year down to 10 years ago, plus
+  //    any year the API actually returned or that was filtered (in case the
+  //    planning spans outside the default 10-year window). The dropdown is
+  //    therefore never empty, even on a fresh individual with no data yet.
   const yearOptions = useMemo(() => {
     const years = new Set();
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear; y >= currentYear - 10; y--) {
+      years.add(y);
+    }
     monthGroups.forEach((group) => {
       if (group?.year) years.add(Number(group.year));
     });
     if (payload?.filteredYear) {
       years.add(Number(payload.filteredYear));
     }
-    years.add(new Date().getFullYear());
 
     return [...years]
       .sort((a, b) => b - a)
