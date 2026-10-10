@@ -204,7 +204,7 @@ const EnviroIndRequestAction = () => {
                         <InfoRow label="Crop Name" value={targetDetails?.cropName} icon={FiActivity} />
                         <InfoRow label="Crop Type" value={targetDetails?.cropType} />
                         <InfoRow label="Spraying Type" value={targetDetails?.sprayingType} />
-                        <InfoRow label="Spraying Duration" value={targetDetails?.sprayingDuration} />
+                        <InfoRow label="Crop Duration" value={targetDetails?.cropDuration} />
                     </div>
                 </InfoCard>
 

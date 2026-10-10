@@ -221,6 +221,12 @@ const FarmerForm = ({ formik }) => {
       {/* General Details */}
       <SectionHeading title="General Details" />
       <FormField
+        name="farmerId"
+        label="Farmer ID"
+        formik={formik}
+        placeholder="Enter farmer ID"
+      />
+      <FormField
         name="firstName"
         label="First Name"
         formik={formik}

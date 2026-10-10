@@ -56,6 +56,7 @@ const initialValues = {
   // Common / Farmer fields
   firstName: "",
   lastName: "",
+  farmerId: "",
   leadOwner: "",
   productName: "",
   totalLandOwned: "",
@@ -83,7 +84,7 @@ const initialValues = {
   tentativeBuyingDate: "",
   cropType: "",
   cropName: "",
-  sprayingDuration: "",
+  cropDuration: "",
   customerType: "",
   department: "",
   taluka: "",
@@ -302,11 +303,11 @@ const EnviroIndivualform = () => {
 
       // Define schema fields for sanitization
       const farmerFields = [
-        "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
+        "farmerId", "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
         "email", "contact", "villageName","region" ,"state", "district", "address",
         "pinCode", "leadGeneratedThrough", "lastMeeting", "nextMeeting",
         "status", "panNo", "sprayingType", "tentativeBuyingDate", "cropType",
-        "cropName", "sprayingDuration", "customerType", "department", "taluka", "commentBox",
+        "cropName", "cropDuration", "customerType", "department", "taluka", "commentBox",
         "purposeForBuying", "paymentMode", "existingLoan", "bankName", "salesId", "edit",
         // "Associated with Organization" - picked on the Farmer tab from the
         // organization list of the selected Fragment. Without it here the field

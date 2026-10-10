@@ -235,6 +235,12 @@ const FarmerForm = ({ formik }) => {
       {/* General Details */}
       <SectionHeading title="General Details" />
       <FormField
+        name="farmerId"
+        label="Farmer ID"
+        formik={formik}
+        placeholder="Enter farmer ID"
+      />
+      <FormField
         name="firstName"
         label="First Name"
         formik={formik}
@@ -265,12 +271,12 @@ const FarmerForm = ({ formik }) => {
         formik={formik}
         placeholder="Enter phone number"
       />
-      <FormField
+      {/* <FormField
         name="productName"
         label="Product Name"
         formik={formik}
         placeholder="Enter product name"
-      />
+      /> */}
       <FormField
         name="totalLandOwned"
         label="Total Land Owned"
@@ -489,8 +495,8 @@ const FarmerForm = ({ formik }) => {
         placeholder="Enter crop name"
       />
       <FormField
-        name="sprayingDuration"
-        label="Spraying Duration"
+        name="cropDuration"
+        label="Crop Duration"
         formik={formik}
         placeholder="Enter duration"
       />

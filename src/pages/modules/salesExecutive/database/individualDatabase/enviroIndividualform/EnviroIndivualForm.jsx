@@ -55,6 +55,7 @@ const validationSchema = Yup.object({
 const initialValues = {
   firstName: "",
   lastName: "",
+  farmerId: "",
   leadOwner: "",
   productName: "",
   totalLandOwned: "",
@@ -264,7 +265,7 @@ const EnviroIndivualform = () => {
       setSubmitting(true);
 
       const farmerFields = [
-        "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
+        "farmerId", "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
         "email", "contact", "villageName", "segment", "organizationName", "region", "state", "district", "address",
         "pinCode", "leadGeneratedThrough", "lastMeeting", "nextMeeting",
         "status", "panNo", "sprayingType", "tentativeBuyingDate", "cropType",

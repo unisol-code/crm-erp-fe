@@ -293,7 +293,7 @@ const ViewEnviroAdminIndForm = () => {
         cropName,
         cropType,
         sprayingType,
-        sprayingDuration,
+        cropDuration,
         existingLoan,
         bankName,
         paymentMode,
@@ -521,7 +521,7 @@ const ViewEnviroAdminIndForm = () => {
                                     <InfoRow label="Primary Crop" value={cropName} icon={FiActivity} highlight />
                                     <InfoRow label="Crop Type" value={cropType} />
                                     <InfoRow label="Spraying Type" value={sprayingType} />
-                                    <InfoRow label="Spraying Duration" value={sprayingDuration} />
+                                    <InfoRow label="Crop Duration" value={cropDuration} />
                                 </div>
                             </InfoCard>
                         </>
