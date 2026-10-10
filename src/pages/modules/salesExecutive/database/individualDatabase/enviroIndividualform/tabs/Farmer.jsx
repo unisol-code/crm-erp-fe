@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getIn } from "formik";
 import useDropdown from "../../../../../../../hooks/dropdown/useDropdown";
 import useEnviroIndividualDrop from "../../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroIndividualDrop";
@@ -174,13 +174,7 @@ const FarmerForm = ({ formik }) => {
     fetchAllStateName,
     fetchDistrictList,
     districtList,
-    fetchSegment,
-    segment,
   } = useDropdown();
-
-  const segmentOptions = Array.isArray(segment)
-    ? segment.map((seg) => ({ label: seg, value: seg }))
-    : [];
 
   const organizationNameOptions = Array.isArray(enviroOrganizationName)
     ? enviroOrganizationName.map((item) => {
@@ -192,15 +186,29 @@ const FarmerForm = ({ formik }) => {
   useEffect(() => {
     fetchAllRegion();
     fetchAllStateName();
-    fetchSegment();
-    fetchEnviroOrganizationName();
   }, []);
 
+  // The Segment is chosen once in the parent form's Segment dropdown, which
+  // writes straight into `formik.values.segment` - so it is not repeated here.
+  // This form only reacts to it: reload the organization list for that segment.
   useEffect(() => {
-    if (formik.values.segment) {
-      fetchEnviroOrganizationName(formik.values.segment);
-    } else {
-      fetchEnviroOrganizationName();
+    fetchEnviroOrganizationName(formik.values.segment || "");
+  }, [formik.values.segment]);
+
+  // Changing segment must invalidate the chosen organization. The first pass is
+  // skipped on purpose: in edit mode the record hydrates `segment` and
+  // `organizationName` together, so clearing there would wipe the saved value.
+  const previousSegmentRef = useRef(undefined);
+
+  useEffect(() => {
+    const currentSegment = formik.values.segment || "";
+    if (previousSegmentRef.current === undefined) {
+      previousSegmentRef.current = currentSegment;
+      return;
+    }
+    if (previousSegmentRef.current !== currentSegment) {
+      previousSegmentRef.current = currentSegment;
+      formik.setFieldValue("organizationName", "");
     }
   }, [formik.values.segment]);
 
@@ -265,19 +273,7 @@ const FarmerForm = ({ formik }) => {
         placeholder="Enter total land"
       />
 
-      {/* Segment & Organization Name */}
-      <Select
-        label="Segment"
-        name="segment"
-        formik={formik}
-        options={segmentOptions}
-        loading={locationLoading}
-        onChange={(val) => {
-          formik.setFieldValue("segment", val || "");
-          formik.setFieldValue("organizationName", "");
-          fetchEnviroOrganizationName(val || "");
-        }}
-      />
+      {/* Associated with Organization */}
       <Select
         label="Organization Name"
         name="organizationName"
