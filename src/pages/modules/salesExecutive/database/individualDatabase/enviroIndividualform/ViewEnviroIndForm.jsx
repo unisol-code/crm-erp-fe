@@ -55,17 +55,15 @@ const ViewEnviroIndForm = () => {
         enviroIndividualDetails?.typeOfProfile || routerProfileType || 'Farmer';
     const typeOfProfile = resolvedTypeOfProfile;
 
-    // Government rows are stored as "Government Officer" (Agriculture) or
-    // "Government" (Waste Management) - render both through the same branch.
-    const isGovernmentType =
-        typeOfProfile === 'Government Officer' || typeOfProfile === 'Government';
-    const isFarmerProfile = typeOfProfile === 'Farmer';
-    const isFpoProfile = typeOfProfile === 'FPO';
-    // Waste Management rows that aren't a Farmer / Government Officer / FPO
-    // get their own generic layout built from the fields the API returns.
     const isWasteProfile =
-        !isFarmerProfile && !isGovernmentType && !isFpoProfile &&
         enviroIndividualDetails?.segment === 'Waste Management';
+    // The segment determines the layout for Waste Management records, even when
+    // their typeOfProfile is "Government".
+    const isGovernmentType =
+        !isWasteProfile &&
+        (typeOfProfile === 'Government Officer' || typeOfProfile === 'Government');
+    const isFarmerProfile = !isWasteProfile && typeOfProfile === 'Farmer';
+    const isFpoProfile = !isWasteProfile && typeOfProfile === 'FPO';
 
     // ✅ Loads the individual the route points at. The same API is used for every
     //    profile type (Farmer / Government Officer / FPO) - the response carries
@@ -557,7 +555,7 @@ const ViewEnviroIndForm = () => {
                                             value={email}
                                             icon={FiMail}
                                         />
-                                        <div className="pt-2">
+                                        {/* <div className="pt-2">
                                             <p className="text-sm text-gray-500 mb-2">
                                                 Quick Actions
                                             </p>
@@ -569,7 +567,7 @@ const ViewEnviroIndForm = () => {
                                                     Email
                                                 </button>
                                             </div>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </InfoCard>
                             </div>
@@ -994,11 +992,13 @@ const ViewEnviroIndForm = () => {
                                             highlight
                                         />
                                         <InfoRow label="Email" value={email} icon={FiMail} />
-                                        <InfoRow
-                                            label="Associated Organization"
-                                            value={organizationName}
-                                            icon={FiBriefcase}
-                                        />
+                                        {organizationName && (
+                                            <InfoRow
+                                                label="Associated Organization"
+                                                value={organizationName}
+                                                icon={FiBriefcase}
+                                            />
+                                        )}
                                     </div>
                                 </InfoCard>
                             </div>
@@ -1017,7 +1017,7 @@ const ViewEnviroIndForm = () => {
                                             value={cityTownVillage}
                                             icon={FiHome}
                                         />
-                                        <InfoRow label="Taluka" value={taluka} icon={FiMap} />
+                                        {taluka && <InfoRow label="Taluka" value={taluka} icon={FiMap} />}
                                         <InfoRow label="District" value={district} icon={FiMap} />
                                         <InfoRow label="State" value={state} icon={FiMap} />
                                         <InfoRow label="PIN Code" value={pinCode} />
@@ -1041,26 +1041,34 @@ const ViewEnviroIndForm = () => {
                                             icon={FiTag}
                                             highlight
                                         />
-                                        <InfoRow label="Lead Owner" value={leadOwner} icon={FiUser} />
+                                        {leadOwner && <InfoRow label="Lead Owner" value={leadOwner} icon={FiUser} />}
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500 mb-2 font-medium">
-                                            Lead Generated Through
-                                        </p>
-                                        <ChipList items={leadGeneratedThrough} tone="blue" />
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <InfoRow
-                                            label="Last Meeting"
-                                            value={formatDate(lastMeeting)}
-                                            icon={FiClock}
-                                        />
-                                        <InfoRow
-                                            label="Next Meeting"
-                                            value={formatDate(toList(nextMeeting)[0])}
-                                            icon={FiCalendar}
-                                        />
-                                    </div>
+                                    {toList(leadGeneratedThrough).length > 0 && (
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-2 font-medium">
+                                                Lead Generated Through
+                                            </p>
+                                            <ChipList items={leadGeneratedThrough} tone="blue" />
+                                        </div>
+                                    )}
+                                    {(lastMeeting || toList(nextMeeting).length > 0) && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {lastMeeting && (
+                                                <InfoRow
+                                                    label="Last Meeting"
+                                                    value={formatDate(lastMeeting)}
+                                                    icon={FiClock}
+                                                />
+                                            )}
+                                            {toList(nextMeeting).length > 0 && (
+                                                <InfoRow
+                                                    label="Next Meeting"
+                                                    value={formatDate(toList(nextMeeting)[0])}
+                                                    icon={FiCalendar}
+                                                />
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </InfoCard>
                         </>
@@ -1181,9 +1189,11 @@ const ViewEnviroIndForm = () => {
                                 </div>
                             </InfoCard>
 
-                            <InfoCard title="Lead Source" icon={FiTarget}>
-                                <ChipList items={leadGeneratedThrough} tone="green" />
-                            </InfoCard>
+                            {toList(leadGeneratedThrough).length > 0 && (
+                                <InfoCard title="Lead Source" icon={FiTarget}>
+                                    <ChipList items={leadGeneratedThrough} tone="green" />
+                                </InfoCard>
+                            )}
 
                             <InfoCard title="Record Information" icon={FiClock}>
                                 <div className="space-y-4">

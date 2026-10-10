@@ -283,8 +283,13 @@ const ViewEnviroAdminIndForm = () => {
         // Farmer fields
         panNo,
         customerType,
+        farmerId,
         address,
         villageName,
+        // The API stores the city / town / village as `cityTownVillage`
+        // (the Farmer form field). `villageName` is kept as a fallback for
+        // older records that were saved with the old key.
+        cityTownVillage,
         taluka,
         district,
         state,
@@ -303,6 +308,7 @@ const ViewEnviroAdminIndForm = () => {
         leadGeneratedThrough,
         lastMeeting,
         nextMeeting,
+        commentBox,
         // Government Officer fields
         officeName,
         designation,
@@ -353,6 +359,7 @@ const ViewEnviroAdminIndForm = () => {
     const isFarmerProfile = typeOfProfile === 'Farmer';
     const isGovernmentProfile = typeOfProfile === 'Government Officer' || typeOfProfile === 'Government';
     const isFpoProfile = typeOfProfile === 'FPO';
+    const isConsultantProfile = typeOfProfile === 'Consultant';
     const isWasteProfile =
         segment === 'Waste Management' && !isFarmerProfile && !isGovernmentProfile && !isFpoProfile;
 
@@ -439,9 +446,15 @@ const ViewEnviroAdminIndForm = () => {
                             <div className="flex flex-col gap-3">
                                 {isFarmerProfile ? (
                                     <>
+                                        {leadOwner && (
+                                            <div className="text-right">
+                                                <p className="text-sm text-gray-500 mb-1">Lead Owner</p>
+                                                <p className="font-semibold text-gray-800">{leadOwner}</p>
+                                            </div>
+                                        )}
                                         <div className="text-right">
-                                            <p className="text-sm text-gray-500 mb-1">Lead Owner</p>
-                                            <p className="font-semibold text-gray-800">{leadOwner || 'N/A'}</p>
+                                            <p className="text-sm text-gray-500 mb-1">Added By</p>
+                                            <p className="font-semibold text-gray-800">{addedBy || 'System'}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm text-gray-500 mb-1">Sales Person</p>
@@ -482,6 +495,7 @@ const ViewEnviroAdminIndForm = () => {
                                     <div className="space-y-4">
                                         <InfoRow label="First Name" value={firstName} icon={FiUser} />
                                         <InfoRow label="Last Name" value={lastName} icon={FiUser} />
+                                        <InfoRow label="Farmer ID" value={farmerId} icon={FiHash} />
                                         <InfoRow label="PAN Number" value={panNo} icon={FiFileText} highlight />
                                         <InfoRow label="Customer Type" value={customerType} icon={FiUsers} />
                                     </div>
@@ -491,13 +505,14 @@ const ViewEnviroAdminIndForm = () => {
                                     <div className="space-y-4">
                                         <InfoRow label="Phone Number" value={contact} icon={FiPhone} highlight />
                                         <InfoRow label="Email Address" value={email} icon={FiMail} />
-                                        <div className="pt-2">
+                                        <InfoRow label="Associated Organization" value={organizationName} icon={FiBriefcase} />
+                                        {/* <div className="pt-2">
                                             <p className="text-sm text-gray-500 mb-2">Quick Actions</p>
                                             <div className="flex gap-2">
                                                 <button className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">Call</button>
                                                 <button className="px-3 py-1.5 text-xs bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors">Email</button>
                                             </div>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </InfoCard>
                             </div>
@@ -506,7 +521,8 @@ const ViewEnviroAdminIndForm = () => {
                                 <div className="space-y-4">
                                     <InfoRow label="Complete Address" value={address} icon={FiMapPin} />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <InfoRow label="Village/Town" value={villageName} icon={FiHome} />
+                                        <InfoRow label="Region" value={region} icon={FiGlobe} />
+                                        <InfoRow label="Village/Town" value={cityTownVillage || villageName} icon={FiHome} />
                                         <InfoRow label="Taluka" value={taluka} />
                                         <InfoRow label="District" value={district} />
                                         <InfoRow label="State" value={state} />
@@ -523,6 +539,10 @@ const ViewEnviroAdminIndForm = () => {
                                     <InfoRow label="Spraying Type" value={sprayingType} />
                                     <InfoRow label="Crop Duration" value={cropDuration} />
                                 </div>
+                            </InfoCard>
+
+                            <InfoCard title="Lead Source" icon={FiTarget}>
+                                <ChipList items={leadGeneratedThrough} tone="blue" />
                             </InfoCard>
                         </>
                     ) : isGovernmentProfile ? (
@@ -734,29 +754,31 @@ const ViewEnviroAdminIndForm = () => {
                                 </div>
                             </InfoCard>
 
-                            <InfoCard
-                                title={isWasteProfile ? 'Waste Management Details' : 'Segment & Lead Information'}
-                                icon={FiActivity}
-                            >
-                                <div className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <InfoRow label="Segment" value={segment} icon={FiTag} highlight />
-                                        <InfoRow label="Lead Owner" value={leadOwner} icon={FiUser} />
+                            {!isConsultantProfile && (
+                                <InfoCard
+                                    title={isWasteProfile ? 'Waste Management Details' : 'Segment & Lead Information'}
+                                    icon={FiActivity}
+                                >
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <InfoRow label="Segment" value={segment} icon={FiTag} highlight />
+                                            <InfoRow label="Lead Owner" value={leadOwner} icon={FiUser} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-2 font-medium">Lead Generated Through</p>
+                                            <ChipList items={leadGeneratedThrough} tone="blue" />
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <InfoRow label="Last Meeting" value={formatDate(lastMeeting)} icon={FiClock} />
+                                            <InfoRow
+                                                label="Next Meeting"
+                                                value={formatDate(toList(nextMeeting)[0])}
+                                                icon={FiCalendar}
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500 mb-2 font-medium">Lead Generated Through</p>
-                                        <ChipList items={leadGeneratedThrough} tone="blue" />
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <InfoRow label="Last Meeting" value={formatDate(lastMeeting)} icon={FiClock} />
-                                        <InfoRow
-                                            label="Next Meeting"
-                                            value={formatDate(toList(nextMeeting)[0])}
-                                            icon={FiCalendar}
-                                        />
-                                    </div>
-                                </div>
-                            </InfoCard>
+                                </InfoCard>
+                            )}
                         </>
                     )}
                 </div>
@@ -794,6 +816,20 @@ const ViewEnviroAdminIndForm = () => {
                                     </div>
                                 </div>
                             </InfoCard>
+
+                            {/* Free-text remarks captured on the Farmer form */}
+                            {commentBox && (
+                                <InfoCard title="Remarks" icon={FiFileText}>
+                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{commentBox}</p>
+                                </InfoCard>
+                            )}
+
+                            <InfoCard title="Record Information" icon={FiClock}>
+                                <div className="space-y-4">
+                                    <InfoRow label="Created On" value={formatDate(createdAt)} icon={FiCalendar} />
+                                    <InfoRow label="Last Updated" value={formatDate(updatedAt)} icon={FiClock} />
+                                </div>
+                            </InfoCard>
                         </>
                     ) : isFpoProfile ? (
                         <InfoCard title="Banking Details" icon={FiCreditCard}>
@@ -811,17 +847,21 @@ const ViewEnviroAdminIndForm = () => {
                         </InfoCard>
                     ) : (
                         <>
-                            <InfoCard title="Lead Information" icon={FiActivity}>
-                                <div className="space-y-4">
-                                    <InfoRow label="Unique ID" value={uniqueId} icon={FiHash} highlight />
-                                    <InfoRow label="Segment" value={segment} icon={FiTag} />
-                                    <InfoRow label="Region" value={region} icon={FiGlobe} />
-                                </div>
-                            </InfoCard>
+                            {!isConsultantProfile && (
+                                <>
+                                    <InfoCard title="Lead Information" icon={FiActivity}>
+                                        <div className="space-y-4">
+                                            <InfoRow label="Unique ID" value={uniqueId} icon={FiHash} highlight />
+                                            <InfoRow label="Segment" value={segment} icon={FiTag} />
+                                            <InfoRow label="Region" value={region} icon={FiGlobe} />
+                                        </div>
+                                    </InfoCard>
 
-                            <InfoCard title="Lead Source" icon={FiTarget}>
-                                <ChipList items={leadGeneratedThrough} tone="green" />
-                            </InfoCard>
+                                    <InfoCard title="Lead Source" icon={FiTarget}>
+                                        <ChipList items={leadGeneratedThrough} tone="green" />
+                                    </InfoCard>
+                                </>
+                            )}
 
                             <InfoCard title="Record Information" icon={FiClock}>
                                 <div className="space-y-4">
@@ -834,21 +874,27 @@ const ViewEnviroAdminIndForm = () => {
                         </>
                     )}
 
-                    {/* Engagement Section (Farmer Only) */}
-                    {isFarmerProfile && (
-                        <InfoCard title="Engagement Status" icon={FiClock}>
-                            <div className="space-y-4">
-                                <InfoRow
-                                    label="Status History"
-                                    value={
-                                        <div className="flex flex-wrap gap-1">
-                                            {Array.isArray(status) ? status.map((s, i) => (
-                                                <span key={i} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">{s}</span>
-                                            )) : <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">{status}</span>}
-                                        </div>
-                                    }
-                                    badge
-                                />
+                    {/* Engagement Section (Farmer Only) - rendered only when the
+                        record actually carries a status or meeting dates, so
+                        Farmer rows without engagement data don't show empty
+                        chips / "Not set" placeholders. */}
+                    {isFarmerProfile &&
+                        (toList(status).length > 0 || lastMeeting || toList(nextMeeting).length > 0) && (
+                            <InfoCard title="Engagement Status" icon={FiClock}>
+                                <div className="space-y-4">
+                                    {toList(status).length > 0 && (
+                                        <InfoRow
+                                            label="Status History"
+                                            value={
+                                                <div className="flex flex-wrap gap-1">
+                                                    {Array.isArray(status) ? status.map((s, i) => (
+                                                        <span key={i} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">{s}</span>
+                                                    )) : <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">{status}</span>}
+                                                </div>
+                                            }
+                                            badge
+                                        />
+                                    )}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-3 bg-blue-50 rounded-lg text-center">
                                         <p className="text-xs text-blue-600 mb-1">Last Meeting</p>
