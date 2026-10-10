@@ -397,7 +397,7 @@ const GovForm = ({ formik }) => {
           formik.setFieldValue("region", val || "");
           formik.setFieldValue("state", "");
           formik.setFieldValue("district", "");
-          formik.setFieldValue("city", "");
+          formik.setFieldValue("cityTownVillage", "");
           fetchAllStateName(val || "");
         }}
       />
@@ -422,7 +422,7 @@ const GovForm = ({ formik }) => {
           );
           setSelectedStateCode(selectedState?.code || selectedState?.stateCode || "");
           formik.setFieldValue("district", "");
-          formik.setFieldValue("city", "");
+          formik.setFieldValue("cityTownVillage", "");
           handleSelectDistrict(val || "");
         }}
       />
@@ -441,13 +441,13 @@ const GovForm = ({ formik }) => {
         loading={locationLoading}
         onChange={(val) => {
           formik.setFieldValue("district", val || "");
-          formik.setFieldValue("city", "");
+          formik.setFieldValue("cityTownVillage", "");
           handleSelectCity(val || "");
         }}
       />
       <Select
         label="City/Town/Village"
-        name="city"
+        name="cityTownVillage"
         formik={formik}
         options={
           Array.isArray(cities)

@@ -357,7 +357,7 @@ const FarmerForm = ({ formik }) => {
       />
       <Select
         label="Village/City/Town"
-        name="villageName"
+        name="cityTownVillage"
         formik={formik}
         options={
           Array.isArray(cities)
@@ -483,10 +483,10 @@ const FarmerForm = ({ formik }) => {
         placeholder="Enter crop name"
       />
       <FormField
-        name="sprayingDuration"
+        name="cropDuration"
         label="Crop Duration"
         formik={formik}
-        placeholder="Enter duration"
+        placeholder="Enter duration In Months"
       />
       <FormField
         name="purposeForBuying"

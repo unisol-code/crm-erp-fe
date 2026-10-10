@@ -249,7 +249,7 @@ const BasicCommonForm = ({ formik }) => {
           formik.setFieldValue("region", val || "");
           formik.setFieldValue("state", "");
           formik.setFieldValue("district", "");
-          formik.setFieldValue("villageName", "");
+          formik.setFieldValue("cityTownVillage", "");
           fetchAllStateName(val || "");
         }}
       />
@@ -274,7 +274,7 @@ const BasicCommonForm = ({ formik }) => {
           );
           setSelectedStateCode(selectedState?.code || selectedState?.stateCode || "");
           formik.setFieldValue("district", "");
-          formik.setFieldValue("villageName", "");
+          formik.setFieldValue("cityTownVillage", "");
           handleSelectDistrict(val || "");
         }}
       />
@@ -293,13 +293,13 @@ const BasicCommonForm = ({ formik }) => {
         loading={locationLoading}
         onChange={(val) => {
           formik.setFieldValue("district", val || "");
-          formik.setFieldValue("villageName", "");
+          formik.setFieldValue("cityTownVillage", "");
           handleSelectCity(val || "");
         }}
       />
       <Select
         label="City/Town/Village"
-        name="villageName"
+        name="cityTownVillage"
         formik={formik}
         options={
           Array.isArray(cities)

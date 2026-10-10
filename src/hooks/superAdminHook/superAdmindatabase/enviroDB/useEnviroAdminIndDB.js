@@ -82,10 +82,13 @@ const useEnviroAdminIndDB = () => {
             });
             if (res) {
                 toast.success(res?.message);
+                return true;
             }
+            return false;
         } catch (error) {
             console.error("Error creating Enviro Admin Individual:", error);
             toast.error(error?.response?.data?.message);
+            return false;
         } finally {
             setLoading(false);
         }

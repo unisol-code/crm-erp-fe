@@ -314,7 +314,7 @@ const ViewEnviroIndForm = () => {
         panNo,
         customerType,
         address,
-        villageName,
+        cityTownVillage,
         taluka,
         district,
         state,
@@ -323,7 +323,7 @@ const ViewEnviroIndForm = () => {
         cropName,
         cropType,
         sprayingType,
-        sprayingDuration,
+        cropDuration,
         existingLoan,
         bankName,
         paymentMode,
@@ -584,7 +584,7 @@ const ViewEnviroIndForm = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <InfoRow
                                             label="Village/Town"
-                                            value={villageName}
+                                            value={cityTownVillage}
                                             icon={FiHome}
                                         />
                                         <InfoRow label="Taluka" value={taluka} />
@@ -612,7 +612,7 @@ const ViewEnviroIndForm = () => {
                                     <InfoRow label="Spraying Type" value={sprayingType} />
                                     <InfoRow
                                         label="Spraying Duration"
-                                        value={sprayingDuration}
+                                        value={cropDuration}
                                     />
                                 </div>
                             </InfoCard>
@@ -1014,7 +1014,7 @@ const ViewEnviroIndForm = () => {
                                         <InfoRow label="Region" value={region} icon={FiGlobe} />
                                         <InfoRow
                                             label="Village/Town"
-                                            value={villageName}
+                                            value={cityTownVillage}
                                             icon={FiHome}
                                         />
                                         <InfoRow label="Taluka" value={taluka} icon={FiMap} />

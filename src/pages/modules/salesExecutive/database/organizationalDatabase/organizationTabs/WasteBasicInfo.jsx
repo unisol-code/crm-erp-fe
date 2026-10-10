@@ -144,7 +144,7 @@ const WasteBasicInfo = ({ formik, isReadOnly = false }) => {
         entry.cityName ||
         entry.town ||
         entry.village ||
-        entry.villageName ||
+        entry.cityTownVillage ||
         entry.label ||
         entry.title ||
         entry.value ||

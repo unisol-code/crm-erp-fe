@@ -319,7 +319,7 @@ const FarmerForm = ({ formik }) => {
           formik.setFieldValue("region", val || "");
           formik.setFieldValue("state", "");
           formik.setFieldValue("district", "");
-          formik.setFieldValue("villageName", "");
+          formik.setFieldValue("cityTownVillage", "");
           fetchAllStateName(val || "");
         }}
       />
@@ -344,7 +344,7 @@ const FarmerForm = ({ formik }) => {
           );
           setSelectedStateCode(selectedState?.code || selectedState?.stateCode || "");
           formik.setFieldValue("district", "");
-          formik.setFieldValue("villageName", "");
+          formik.setFieldValue("cityTownVillage", "");
           handleSelectDistrict(val || "");
         }}
       />
@@ -363,13 +363,13 @@ const FarmerForm = ({ formik }) => {
         loading={locationLoading}
         onChange={(val) => {
           formik.setFieldValue("district", val || "");
-          formik.setFieldValue("villageName", "");
+          formik.setFieldValue("cityTownVillage", "");
           handleSelectCity(val || "");
         }}
       />
       <Select
         label="Village/City/Town"
-        name="villageName"
+        name="cityTownVillage"
         formik={formik}
         options={
           Array.isArray(cities)
@@ -498,7 +498,7 @@ const FarmerForm = ({ formik }) => {
         name="cropDuration"
         label="Crop Duration"
         formik={formik}
-        placeholder="Enter duration"
+        placeholder="Enter duration IN Months"
       />
       <FormField
         name="purposeForBuying"
