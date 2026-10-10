@@ -56,12 +56,13 @@ const initialValues = {
   // Common / Farmer fields
   firstName: "",
   lastName: "",
+  farmerId: "",
   leadOwner: "",
   productName: "",
   totalLandOwned: "",
   email: "",
   contact: "",
-  villageName: "",
+  cityTownVillage: "",
   segment: "",
   // `organizationName` is the correct key - it is what the API returns and what the
   // view pages read. `orgnizationName` (misspelled) is the legacy key still used by
@@ -83,7 +84,7 @@ const initialValues = {
   tentativeBuyingDate: "",
   cropType: "",
   cropName: "",
-  sprayingDuration: "",
+  cropDuration: "",
   customerType: "",
   department: "",
   taluka: "",
@@ -302,11 +303,11 @@ const EnviroIndivualform = () => {
 
       // Define schema fields for sanitization
       const farmerFields = [
-        "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
-        "email", "contact", "villageName","region" ,"state", "district", "address",
+        "farmerId", "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
+        "email", "contact", "cityTownVillage","region" ,"state", "district", "address",
         "pinCode", "leadGeneratedThrough", "lastMeeting", "nextMeeting",
         "status", "panNo", "sprayingType", "tentativeBuyingDate", "cropType",
-        "cropName", "sprayingDuration", "customerType", "department", "taluka", "commentBox",
+        "cropName", "cropDuration", "customerType", "department", "taluka", "commentBox",
         "purposeForBuying", "paymentMode", "existingLoan", "bankName", "salesId", "edit",
         // "Associated with Organization" - picked on the Farmer tab from the
         // organization list of the selected Fragment. Without it here the field
@@ -316,7 +317,7 @@ const EnviroIndivualform = () => {
 
       const govOfficerFields = [
         "firstName", "lastName", "email", "contact", "birthday", "anniversary",
-        "hobbies", "goals", "officeName", "designation", "segment", "organizationName", "region", "state", "district","city" ,"pinCode","districtBlockRegion", "commentBox",
+        "hobbies", "goals", "officeName", "designation", "segment", "organizationName", "region", "state", "district","city", "cityTownVillage" ,"pinCode","districtBlockRegion", "commentBox",
         "yearsOfExperience", "frequentlyRequestedServices", "frequentlyRequestedServicesOthers",
         "schemeUnderstanding", "effectiveLanguage", "dataMaintainedDigitally",
         "dataManagementTools", "dataManagementToolsOthers",
@@ -335,7 +336,7 @@ const EnviroIndivualform = () => {
 
       const commonFields = [
         "firstName", "lastName", "email", "contact",
-        "segment", "orgnizationName", "region", "state", "district", "villageName", "address", "pinCode",
+        "segment", "orgnizationName", "region", "state", "district", "cityTownVillage", "address", "pinCode",
         // Sales Person dropdown (same salesId key as the Farmers tab)
         "salesId",
       ];

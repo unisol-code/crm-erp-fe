@@ -55,12 +55,13 @@ const validationSchema = Yup.object({
 const initialValues = {
   firstName: "",
   lastName: "",
+  farmerId: "",
   leadOwner: "",
   productName: "",
   totalLandOwned: "",
   email: "",
   contact: "",
-  villageName: "",
+  cityTownVillage: "",
   segment: "",
   organizationName: "",
   region: "",
@@ -78,7 +79,7 @@ const initialValues = {
   tentativeBuyingDate: "",
   cropType: "",
   cropName: "",
-  sprayingDuration: "",
+  cropDuration: "",
   department: "",
   taluka: "",
   purposeForBuying: "",
@@ -264,17 +265,17 @@ const EnviroIndivualform = () => {
       setSubmitting(true);
 
       const farmerFields = [
-        "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
-        "email", "contact", "villageName", "segment", "organizationName", "region", "state", "district", "address",
+        "farmerId", "firstName", "lastName", "leadOwner", "productName", "totalLandOwned",
+        "email", "contact", "cityTownVillage", "segment", "organizationName", "region", "state", "district", "address",
         "pinCode", "leadGeneratedThrough", "lastMeeting", "nextMeeting",
         "status", "panNo", "sprayingType", "tentativeBuyingDate", "cropType",
-        "cropName", "sprayingDuration", "customerType", "department", "taluka",
+        "cropName", "cropDuration", "customerType", "department", "taluka",
         "purposeForBuying", "paymentMode", "existingLoan", "bankName", "salesId", "edit"
       ];
 
       const govOfficerFields = [
         "firstName", "lastName", "email", "contact", "birthday", "anniversary",
-        "hobbies", "goals", "officeName", "designation", "segment", "organizationName", "region", "state", "district","city" ,"pinCode","officeAddress","districtBlockRegion",
+        "hobbies", "goals", "officeName", "designation", "segment", "organizationName", "region", "state", "district","city", "cityTownVillage" ,"pinCode","officeAddress","districtBlockRegion",
         "yearsOfExperience", "frequentlyRequestedServices", "frequentlyRequestedServicesOthers",
         "schemeUnderstanding", "effectiveLanguage", "dataMaintainedDigitally",
         "dataManagementTools", "dataManagementToolsOthers",
@@ -293,7 +294,7 @@ const EnviroIndivualform = () => {
 
       const commonFields = [
         "firstName", "lastName", "email", "contact",
-        "segment", "organizationName", "region", "state", "district", "villageName", "address", "pinCode",
+        "segment", "organizationName", "region", "state", "district", "cityTownVillage", "address", "pinCode",
       ];
 
       let filteredValues = {};
