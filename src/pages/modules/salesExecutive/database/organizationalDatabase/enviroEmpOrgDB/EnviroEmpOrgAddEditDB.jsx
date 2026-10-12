@@ -168,7 +168,7 @@ const validationSchema = yup.object({
     .required("Official Contact Number is required")
     .matches(/^[0-9+()\- ]+$/, "Enter a valid phone number"),
   // officialEmail: yup.string().email("Invalid email").required("Official Email is required"),
-  // departmentWebsite: yup
+  // websiteAppUrl: yup
   //   .string()
   //   .trim()
   //   .nullable()
@@ -347,7 +347,7 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
       officeAddress: "",
       officialContactNumber: "",
       officialEmail: "",
-      departmentWebsite: "",
+      websiteAppUrl: "",
       totalOfficers: "",
       activeSchemes: "",
       servicesOffered: {
@@ -476,7 +476,7 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
         officeAddress: d.officeAddress || "",
         officialContactNumber: d.officialContactNumber || "",
         officialEmail: d.officialEmailId || "",
-        departmentWebsite: d.departmentWebsite || "",
+        websiteAppUrl: d.websiteAppUrl || "",
         totalOfficers: d.totalOfficers || "",
         activeSchemes: d.activeSchemes || "",
         servicesOffered: arrayToCheckboxObj(d.servicesOffered, {
@@ -927,7 +927,7 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
               />
               <InputField
                 label="Department Website"
-                name="departmentWebsite"
+                name="websiteAppUrl"
                 formik={formik}
                 placeholder="Enter website URL"
                 type="url"

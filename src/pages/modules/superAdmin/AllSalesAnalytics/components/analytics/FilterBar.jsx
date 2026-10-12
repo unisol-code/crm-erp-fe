@@ -117,6 +117,7 @@ export function FilterBar({
   updateFilter,
   resetFilters,
   onFiltersChange,
+  filterKeyMap = {},
 }) {
   const isFetchingRef = useRef(false);
   const debounceTimerRef = useRef(null);
@@ -260,8 +261,9 @@ export function FilterBar({
   };
 
   const handleSelectChange = (key, selectedOption) => {
+    const apiKey = filterKeyMap[key] || key;
     const value = selectedOption ? selectedOption.value : "";
-    if (updateFilter) updateFilter(key, value);
+    if (updateFilter) updateFilter(apiKey, value);
 
     if (key === "region") {
       setSelectedStateCode("");
@@ -320,14 +322,13 @@ export function FilterBar({
     return item.options.find(opt => opt.value === item.value) || null;
   };
 
- const filterItems = [
+  const filterItems = [
  
     // { 
     //   key: "month", 
     //   label: "Month",
     //   options: MONTHS,
     //   placeholder: "Select month",
-    //   value: filters.month,
     //   isMulti: false,
     //   isSearchable: true
     // },
@@ -336,7 +337,6 @@ export function FilterBar({
     //   label: "Year",
     //   options: getYearOptions(),
     //   placeholder: "Select year",
-    //   value: filters.year,
     //   isMulti: false,
     //   isSearchable: true
     // },
@@ -345,7 +345,6 @@ export function FilterBar({
       label: "Region",
       options: regionSelectOptions,
       placeholder: "All regions",
-      value: filters.region,
       isMulti: false,
       isSearchable: true
     },
@@ -354,7 +353,6 @@ export function FilterBar({
       label: "State",
       options: stateSelectOptions,
       placeholder: "All states",
-      value: filters.state,
       isMulti: false,
       isSearchable: true
     },
@@ -363,7 +361,6 @@ export function FilterBar({
       label: "District",
       options: districtSelectOptions,
       placeholder: "All districts",
-      value: filters.district,
       isMulti: false,
       isSearchable: true
     },
@@ -372,7 +369,6 @@ export function FilterBar({
       label: "City",
       options: citySelectOptions,
       placeholder: "All cities",
-      value: filters.city,
       isMulti: false,
       isSearchable: true
     },
@@ -381,7 +377,6 @@ export function FilterBar({
       label: "Segment",
       options: segmentSelectOptions,
       placeholder: "All segments",
-      value: filters.segment,
       isMulti: false,
       isSearchable: true
     },
@@ -390,7 +385,6 @@ export function FilterBar({
       label: "Speciality",
       options: specialitySelectOptions,
       placeholder: "All specialities",
-      value: filters.speciality,
       isMulti: false,
       isSearchable: true
     },
@@ -399,7 +393,6 @@ export function FilterBar({
     //   label: "Doctor Profile",
     //   options: profileSelectOptions,
     //   placeholder: "All profiles",
-    //   value: filters.typeOfDoctorProfile,
     //   isMulti: false,
     //   isSearchable: true
     // },
@@ -408,7 +401,6 @@ export function FilterBar({
     //   label: "Sales Executive",
     //   options: salesPersonSelectOptions,
     //   placeholder: "All executives",
-    //   value: filters.salesPerson,
     //   isMulti: false,
     //   isSearchable: true
     // },
@@ -446,8 +438,12 @@ export function FilterBar({
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {visibleFilterItems.map((item) => {
-            const selectedOption = getSelectedOption(item);
-            const hasValue = item.value && item.value !== "";
+            const mapKey = Object.entries(filterKeyMap).find(([k]) => k === item.key);
+            const filterValue = mapKey
+              ? filters[mapKey[1]]
+              : filters[item.key];
+            const selectedOption = getSelectedOption({ ...item, value: filterValue });
+            const hasValue = filterValue && filterValue !== "";
             
             return (
               <div key={item.key} className="min-w-0">

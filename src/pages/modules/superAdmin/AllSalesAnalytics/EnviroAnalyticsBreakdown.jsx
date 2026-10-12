@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useMemo } from "react";
+﻿import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../../../hooks/theme/useTheme";
 import BreadCrumb from "../../../../components/uiComponents/breadcrumb/BreadCrumb";
@@ -14,7 +14,7 @@ import {
   TableCell,
   Badge,
 } from "../AllSalesAnalytics/components/common";
-import { ChartCard } from "../AllSalesAnalytics/components/analytics";
+import { ChartCard, FilterBar } from "../AllSalesAnalytics/components/analytics";
 import Pagination from "../../../../components/uiComponents/pagination/Pagination.jsx";
 
 // Base route of this page (see App.jsx) and the parent/child relationship
@@ -119,6 +119,9 @@ const EnviroAnalyticsBreakdown = () => {
     enviroOrganizationsLoading,
     fetchEnviroOrganizationsAnalytics,
     resetEnviroOrganizationsData,
+    filters,
+    updateFilter,
+    resetFilters,
   } = useAllSalesEnviroAnalytics();
 
   const [selectedBreakdown, setSelectedBreakdown] = useState(breakdownType || null);
@@ -155,6 +158,7 @@ const EnviroAnalyticsBreakdown = () => {
     if (breakdownId) {
       setSelectedDetailId(breakdownId);
       setViewMode('detail');
+      setDetailLoading(true);
     }
   }, [breakdownId]);
 
@@ -172,12 +176,13 @@ const EnviroAnalyticsBreakdown = () => {
   useEffect(() => {
     if (!selectedSubType || !selectedDetailId) return;
     if (isOrgDetailView) return;
+    setDetailLoading(true);
     fetchEnviroIndividualsAnalytics({
       segment: selectedDetailId,
       typeOfProfile: selectedSubType,
       page: detailPage,
       limit: detailLimit,
-    });
+    }).finally(() => setDetailLoading(false));
   }, [selectedSubType, selectedDetailId, detailPage, detailLimit, isOrgDetailView, fetchEnviroIndividualsAnalytics]);
 
   // ------------------------------------------------------------------
@@ -219,11 +224,12 @@ const EnviroAnalyticsBreakdown = () => {
   useEffect(() => {
     if (!isOrgDetailView) return;
     if (!orgDrilldownParams) return;
+    setDetailLoading(true);
     fetchEnviroOrganizationsAnalytics({
       ...orgDrilldownParams,
       page: detailPage,
       limit: detailLimit,
-    });
+    }).finally(() => setDetailLoading(false));
   }, [orgDrilldownParams, detailPage, detailLimit, isOrgDetailView, fetchEnviroOrganizationsAnalytics]);
 
   useEffect(() => {
@@ -376,6 +382,19 @@ const EnviroAnalyticsBreakdown = () => {
     }
   };
 
+  const handleFiltersChange = useCallback(() => {
+    fetchEnviroAnalytics({});
+  }, [fetchEnviroAnalytics]);
+
+  const handleApplyFilters = handleFiltersChange;
+
+  const handleResetFilters = () => {
+    resetFilters();
+    setTimeout(() => {
+      fetchEnviroAnalytics({});
+    }, 100);
+  };
+
   const handleBackToBreakdown = () => {
     if (viewMode === 'detail') {
       // Detail view -> one level up: the breakdown table itself (keeps its param)
@@ -416,6 +435,7 @@ const EnviroAnalyticsBreakdown = () => {
     setSelectedDetailId(null);
     closeIndividualsView();
     closeOrganizationsView();
+    setDetailLoading(false);
     setViewMode(selectedBreakdown === 'organizationBreakdown' ? 'orgSections' : 'main');
     if (selectedBreakdown) {
       navigate(`/sales-analyticsAll/enviro-analytics-breakdown/${selectedBreakdown}`, { replace: true });
@@ -501,6 +521,17 @@ const EnviroAnalyticsBreakdown = () => {
       </div>
 
       <div className="p-6 bg-white shadow-md rounded-b-[10px]">
+        {/* Filter Bar */}
+        <FilterBar
+          selectedTab={selectedBreakdown || "main"}
+          loading={loading}
+          filters={filters}
+          updateFilter={updateFilter}
+          resetFilters={handleResetFilters}
+          onFiltersChange={handleFiltersChange}
+          filterKeyMap={{ city: "cityTownVillage" }}
+        />
+
         {/* KPI Cards */}
         {/* {!selectedBreakdown && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">

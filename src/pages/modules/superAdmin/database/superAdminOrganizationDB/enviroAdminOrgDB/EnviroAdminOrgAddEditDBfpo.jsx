@@ -10,6 +10,7 @@ import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner";
 import ReactSelect from "react-select";
 import { getIn } from "formik";
+import useEnviroAdminOrgDB from "../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminOrgDB";
 
 const InputField = ({ label, name, formik, placeholder, type = "text", className }) => {
   const value = getIn(formik.values, name) || "";
@@ -177,15 +178,16 @@ const validationSchema = yup.object({
     .min(1, "At least one major crop/commodity is required"),
 });
 
-const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO", sectionName, organizationType, orgDetails = null }) => {
+const EnviroAdminOrgAddEditDBfpo = ({ mode = "add", orgType = "FPO", sectionName, OrganizationType, orgDetails = null }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const {
     createEnviroFPO,
     loading,
     enviroFPODetails,
-    updateEnviroFPO,
+    // updateEnviroFPO,
   } = useEnviroAdminIndDB();
+  const { updateEnviroAdminOrg  , createEnviroAdminOrg} = useEnviroAdminOrgDB();
   const { theme } = useTheme();
   const isEdit = mode === "edit";
   const isView = mode === "view";
@@ -251,7 +253,7 @@ useEffect(() => {
   const formik = useFormik({
     initialValues: {
       sectionName: sectionName || "",
-      organizationType: organizationType || "",
+      OrganizationType: OrganizationType || "",
       // `organizationName` is what the form renders and what the API returns for
       // an organization record. It MUST exist in initialValues - without it the
       // Organization Name input renders blank and yup's required check can never
@@ -271,7 +273,7 @@ useEffect(() => {
       district: "",
       state: "",
       pincode: "",
-      landmark: "",
+      // landmark: "",
       salesId: "",
       numberOfBoardMembers: "",
       numberOfStaffMembers: "",
@@ -293,9 +295,9 @@ useEffect(() => {
         console.log("FPO Form onSubmit called with values:", values);
         let success = false;
         if (isEditMode) {
-          success = await updateEnviroFPO(id, values);
+          success = await updateEnviroAdminOrg(id, values);
         } else {
-          success = await createEnviroFPO(values);
+          success = await createEnviroAdminOrg(values);
         }
         if (success) {
           navigate(-1);
@@ -308,15 +310,15 @@ useEffect(() => {
 
 useEffect(() => {
     formik.setFieldValue("sectionName", sectionName || "");
-    formik.setFieldValue("organizationType", organizationType || orgType || "");
-  }, [sectionName, organizationType, orgType]);
+    formik.setFieldValue("OrganizationType", OrganizationType || orgType || "");
+  }, [sectionName, OrganizationType, orgType]);
 
   useEffect(() => {
     if (!details) return;
     const d = details;
     formik.setValues({
       sectionName: d.sectionName || sectionName || "",
-      organizationType: d.OrganizationType || d.organizationType || organizationType || "",
+      OrganizationType: d.OrganizationType || d.organizationType || OrganizationType || "",
       // The org endpoint returns `organizationName`; older FPO records stored it
       // as `fpoName`. Read both so either storage shape opens populated.
       organizationName: d.organizationName || d.fpoName || "",
@@ -334,7 +336,7 @@ useEffect(() => {
       district: d.district || d.districtName || "",
       state: d.state || d.stateName || "",
       pincode: d.pincode || "",
-      landmark: d.landmark || "",
+      // landmark: d.landmark || "",
       salesId: d.salesId || "",
       numberOfBoardMembers: d.numberOfBoardMembers || "",
       numberOfStaffMembers: d.numberOfStaffMembers || "",
@@ -686,12 +688,12 @@ useEffect(() => {
                 formik={formik}
                 placeholder="Enter Pincode"
               />
-              <InputField
+              {/* <InputField
                 label="Landmark"
                 name="landmark"
                 formik={formik}
                 placeholder="Enter Landmark"
-              />
+              /> */}
               <InputField
                 label="6. Office Address"
                 name="officeAddress"
@@ -798,7 +800,7 @@ useEffect(() => {
                     Crop / Commodity
                   </span>
                   <span className="flex-1 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Duration
+                    Duration in Months
                   </span>
                   <span className="w-[46px] shrink-0" />
                 </div>
