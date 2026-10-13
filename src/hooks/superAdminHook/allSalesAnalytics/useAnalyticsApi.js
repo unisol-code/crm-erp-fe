@@ -29,7 +29,13 @@ const buildQueryString = (filters = {}, keys = []) => {
 
   keys.forEach((key) => {
     const value = filters[key];
-    if (value) params.append(key, String(value));
+    if (!value) return;
+    if (Array.isArray(value)) {
+      const joined = value.filter(v => v).map(String).join(",");
+      if (joined) params.append(key, `[${joined}]`);
+    } else {
+      params.append(key, String(value));
+    }
   });
 
   const query = params.toString();

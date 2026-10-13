@@ -1907,7 +1907,7 @@ export function DashboardSection({
                   )}
                 </div>
               </ChartCard>
-
+            <div className="xl:col-span-2 min-w-0">
               {/* 3. Agriculture Annual Turnover */}
               <ChartCard title={`${agricultureLabel} Annual Turnover`}>
                 <TotalStrip>
@@ -2015,9 +2015,9 @@ export function DashboardSection({
                   </Table>
                 </div>
               </ChartCard>
-
+            </div>
               {/* 4. Waste Management Annual Turnover */}
-              <ChartCard title={`${wasteTurnoverLabel} Annual Turnover`}>
+              {/* <ChartCard title={`${wasteTurnoverLabel} Annual Turnover`}>
                 <TotalStrip>
                   Total {wasteTurnoverLabel} Turnover:{" "}
                   <span className="font-bold">{formatINR(wasteTurnoverTotal)}</span>
@@ -2108,8 +2108,9 @@ export function DashboardSection({
                     </TableBody>
                   </Table>
                 </div>
-              </ChartCard>
-            </div>
+              </ChartCard> */}
+              </div>
+            
           )}
         </div>
       )}
@@ -2311,6 +2312,7 @@ export function DashboardSection({
 
 
       {/* Sales Executive Performance - Grouped Bar Chart */}
+      {!isEnviroSolution && (
       <ChartCard
         title="Sales Executive Performance"
         subtitle="Total Visits vs Success Visits"
@@ -2412,6 +2414,7 @@ export function DashboardSection({
           </Table>
         </div>
       </ChartCard>
+      )}
       {/* Row 5: Hospitals Table - Employee List Style */}
       {/* Table */}
       {/* <div className="shadow overflow-x-auto">
