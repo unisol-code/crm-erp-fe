@@ -10,6 +10,7 @@ import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import LoaderSpinner from "../../../../../../components/uiComponents/loader/LoaderSpinner";
 import ReactSelect from "react-select";
 import { getIn } from "formik";
+import  useEnviroAdminOrgDB from "../../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroAdminOrgDB";
 
 const InputField = ({ label, name, formik, placeholder, type = "text", className }) => {
   const value = getIn(formik.values, name) || "";
@@ -232,6 +233,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
     enviroFPODetails,
     updateEnviroFPO,
   } = useEnviroAdminIndDB();
+  const { updateEnviroAdminOrg, createEnviroAdminOrg } = useEnviroAdminOrgDB();
   const { theme } = useTheme();
   const isEdit = mode === "edit";
   const isView = mode === "view";
@@ -305,7 +307,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
       districtName: "",
       cityTownVillage: "",
       pincode: "",
-      landmark: "",
+      // landmark: "",
       officeAddress: "",
       officialContactNumber: "",
       officialEmailId: "",
@@ -367,7 +369,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
         console.log("FPO Form onSubmit called with values:", values);
         let success = false;
         if (isEditMode) {
-          success = await updateEnviroFPO(id, values);
+          success = await updateEnviroAdminOrg(id, values);
         } else {
           success = await createEnviroFPO(values);
         }
@@ -402,7 +404,7 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
         districtName: d.districtName || d.district || "",
         cityTownVillage: d.cityTownVillage || "",
         pincode: d.pincode || "",
-        landmark: d.landmark || "",
+        // landmark: d.landmark || "",
         officeAddress: d.officeAddress || "",
         officialContactNumber: d.officialContactNumber || "",
         officialEmailId: d.officialEmailId || "",
@@ -793,12 +795,12 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
                 formik={formik}
                 placeholder="Enter Pincode"
               />
-              <InputField
+              {/* <InputField
                 label="Landmark"
                 name="landmark"
                 formik={formik}
                 placeholder="Enter Landmark"
-              />
+              /> */}
               <InputField
                 label="6. Office Address"
                 name="officeAddress"
@@ -905,8 +907,8 @@ const EnviroEmpAddDBfpo = ({ mode = "add", orgType = "FPO", sectionName = "", or
                     Crop / Commodity
                   </span>
                   <span className="flex-1 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Duration
-                  </span>
+                    Duration in Months
+                  </span> 
                   <span className="w-[46px] shrink-0" />
                 </div>
 

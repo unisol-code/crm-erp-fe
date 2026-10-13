@@ -13,7 +13,7 @@
 //   &segment=..&typeOfProfile=..&page=1&limit=10
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import useAnalyticsApi from "./useAnalyticsApi";
 import {
   enviroAnalyticsFiltersStateAtom,
@@ -50,6 +50,7 @@ import {
   individualGrphicalErrorStateAtom,
   individualGrphicalDataStateAtom,
   individualGrphicalLoadingStateAtom,
+  analyticsFiltersStateAtom,
 } from "../../../state/allSalesAnalyticState/allSalesAnalyticsState";
 
 // Query parameters accepted by the enviro APIs
@@ -128,6 +129,39 @@ const EMPTY_ENVIRO_FILTERS = {
 };
 
 const useAllSalesEnviroAnalytics = () => {
+  // ---------- Sync filters from main analytics page ----------
+  const mainFilters = useRecoilValue(analyticsFiltersStateAtom);
+  const [, setEnviroFiltersState] = useRecoilState(enviroAnalyticsFiltersStateAtom);
+
+  useEffect(() => {
+    if (!mainFilters) return;
+
+    // Map main analytics filter keys to enviro API keys
+    const mappedFilters = {
+      state: mainFilters.state || "",
+      region: mainFilters.region || "",
+      cityTownVillage: mainFilters.city || "",
+      district: mainFilters.district || "",
+      salesPersonName: mainFilters.salesPerson || "",
+      segment: mainFilters.segment || "",
+      typeOfProfile: mainFilters.typeOfDoctorProfile || "",
+      sectionName: "",
+      OrganizationType: "",
+      individualName: "", 
+      organizationName: "",
+      page: 1,
+      limit: 10,
+    };
+
+    // Only sync if there are actual filter values to avoid overwriting on every render
+    const hasMainFilters = Object.values(mainFilters).some(v => v && v !== "");
+    const hasEnviroFilters = Object.values(mappedFilters).some(v => v && v !== "");
+
+    if (hasMainFilters || hasEnviroFilters) {
+      setEnviroFiltersState(mappedFilters);
+    }
+  }, [mainFilters, setEnviroFiltersState]);
+
   // ---------- 1. Main enviro analytics (KPI cards + breakdown numbers) ----------
   const [loading, setLoading] = useState(false);
   const [error, setError] = useRecoilState(enviroAnalyticsErrorStateAtom);

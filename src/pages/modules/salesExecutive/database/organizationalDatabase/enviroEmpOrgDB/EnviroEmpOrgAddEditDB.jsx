@@ -168,7 +168,7 @@ const validationSchema = yup.object({
     .required("Official Contact Number is required")
     .matches(/^[0-9+()\- ]+$/, "Enter a valid phone number"),
   // officialEmail: yup.string().email("Invalid email").required("Official Email is required"),
-  // departmentWebsite: yup
+  // websiteAppUrl: yup
   //   .string()
   //   .trim()
   //   .nullable()
@@ -347,7 +347,7 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
       officeAddress: "",
       officialContactNumber: "",
       officialEmail: "",
-      departmentWebsite: "",
+      websiteAppUrl: "",
       totalOfficers: "",
       activeSchemes: "",
       servicesOffered: {
@@ -476,7 +476,7 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
         officeAddress: d.officeAddress || "",
         officialContactNumber: d.officialContactNumber || "",
         officialEmail: d.officialEmailId || "",
-        departmentWebsite: d.departmentWebsite || "",
+        websiteAppUrl: d.websiteAppUrl || "",
         totalOfficers: d.totalOfficers || "",
         activeSchemes: d.activeSchemes || "",
         servicesOffered: arrayToCheckboxObj(d.servicesOffered, {
@@ -927,7 +927,7 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
               />
               <InputField
                 label="Department Website"
-                name="departmentWebsite"
+                name="websiteAppUrl"
                 formik={formik}
                 placeholder="Enter website URL"
                 type="url"
@@ -1036,32 +1036,32 @@ const EnviroEmpOrgAddEditDB = ({ mode = "add" }) => {
            ) : selectedOrgType?.value === "FPO" || selectedOrgType?.value === "FPC" || selectedOrgType?.value === "CMRC" || selectedOrgType?.value === "BACHAT GAT" || selectedOrgType?.value === "SELF HELP GROUP" ? (
             <EnviroEmpAddDBfpo orgType={selectedOrgType?.value} sectionName={selectedSector?.value} mode={isEdit ? "edit" : isView ? "view" : "add"} orgDetails={enviroAdminOrgDetails} />
           ) : selectedSector?.value === "Waste Management" && selectedOrgType && selectedWasteTypes.length > 0 ? (
-            (() => {
-              const dynamicTabs = selectedWasteTypes.map((t) => ({
-                id: t,
-                label: wasteTypeLabel[t] || t,
-              }));
-              const tabIds = ["basic", ...dynamicTabs.map((t) => t.id)];
-              const safeActive = tabIds.includes(activeTab) ? activeTab : "basic";
-              const currentIndex = tabIds.indexOf(safeActive);
-              const isLastTab = currentIndex === tabIds.length - 1;
-              return (
-                <form onSubmit={formik.handleSubmit} className="space-y-4" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); }}>
-                  <fieldset disabled={isView} className="space-y-4">
-                    <Tabs
-                      active={safeActive}
-                      onChange={setActiveTab}
-                      tabs={[{ id: "basic", label: "Basic Info" }, ...dynamicTabs]}
-                    />
+             (() => {
+               const dynamicTabs = selectedWasteTypes.map((t) => ({
+                 id: t,
+                 label: wasteTypeLabel[t] || t,
+               }));
+               const tabIds = ["basic", ...dynamicTabs.map((t) => t.id)];
+               const safeActive = tabIds.includes(activeTab) ? activeTab : "basic";
+               const currentIndex = tabIds.indexOf(safeActive);
+               const isLastTab = currentIndex === tabIds.length - 1;
+               return (
+                 <form onSubmit={formik.handleSubmit} className="space-y-4" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); }}>
+                   <Tabs
+                     active={safeActive}
+                     onChange={setActiveTab}
+                     tabs={[{ id: "basic", label: "Basic Info" }, ...dynamicTabs]}
+                   />
+                   <fieldset disabled={isView} className="space-y-4">
                      {safeActive === "basic" && (
                        <WasteBasicInfo formik={formik} isReadOnly={isView} />
                      )}
-                    {dynamicTabs.map((t) =>
-                      safeActive === t.id ? (
-                        <div key={t.id}>{tabComponentMap[t.id]?.(formik, isView)}</div>
-                      ) : null
-                    )}
-                  </fieldset>
+                     {dynamicTabs.map((t) =>
+                       safeActive === t.id ? (
+                         <div key={t.id}>{tabComponentMap[t.id]?.(formik, isView)}</div>
+                       ) : null
+                     )}
+                   </fieldset>
                   <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-wrap items-center gap-3">
                       <Button type="button" text={isView ? "Back" : "Cancel"} variant={3} onClick={() => navigate(-1)} />

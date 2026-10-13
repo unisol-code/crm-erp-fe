@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import { useParams, useNavigate } from "react-router-dom";
@@ -329,7 +329,7 @@ const EnviroAdminOrgAddEditDB = ({ mode = "add" }) => {
       districtName: "",
       cityTownVillage: "",
       pincode: "",
-      landmark: "",
+      // landmark: "",
       officeAddress: "",
       officialContactNumber: "",
       officialEmail: "",
@@ -461,7 +461,7 @@ const EnviroAdminOrgAddEditDB = ({ mode = "add" }) => {
         districtName: d.district || "",
         cityTownVillage: d.cityTownVillage || "",
         pincode: d.pincode || "",
-        landmark: d.landmark || "",
+        // landmark: d.landmark || "",
         officeAddress: d.officeAddress || "",
         officialContactNumber: d.officialContactNumber || "",
         officialEmail: d.officialEmailId || "",
@@ -511,6 +511,46 @@ const EnviroAdminOrgAddEditDB = ({ mode = "add" }) => {
       if (matchedOrgType) setSelectedOrgType(matchedOrgType);
     }
   }, [enviroAdminOrgDetails]);
+
+  const lastFetchedRegion = useRef("");
+
+  // Pre-fetch state list when a region is hydrated or changed, so the state
+  // dropdown can resolve the stored stateName on edit mode.
+  useEffect(() => {
+    if (!formik.values.region) return;
+    if (lastFetchedRegion.current === formik.values.region) return;
+    if (
+      allStateName?.find((s) => (s.name || s.stateName) === formik.values.stateName)
+    ) {
+      return;
+    }
+    fetchAllStateName(formik.values.region);
+    lastFetchedRegion.current = formik.values.region;
+  }, [allStateName, formik.values.region]);
+
+  // Once the states list is populated and contains the stored state, fetch the
+  // district list so the district dropdown can resolve the stored districtName.
+  useEffect(() => {
+    if (!formik.values.stateName) return;
+    if (
+      allStateName?.find((s) => (s.name || s.stateName) === formik.values.stateName)
+    ) {
+      fetchDistrictList(formik.values.stateName);
+    }
+  }, [allStateName, formik.values.stateName]);
+
+  // Once the districts list is populated and contains the stored district,
+  // fetch the cities so the city/town/village dropdown can resolve the stored
+  // cityTownVillage.
+  useEffect(() => {
+    if (!formik.values.districtName) return;
+    if (!districtList?.includes(formik.values.districtName)) return;
+    const stateItem = allStateName?.find(
+      (s) => (s.name || s.stateName) === formik.values.stateName
+    );
+    const stateCode = stateItem?.code || stateItem?.stateCode || selectedStateCode;
+    fetchAllCities(stateCode, formik.values.districtName);
+  }, [districtList, formik.values.districtName, formik.values.stateName]);
 
   useEffect(() => {
     if (formik.submitCount > 0 && !formik.isValid) {
@@ -887,12 +927,12 @@ const EnviroAdminOrgAddEditDB = ({ mode = "add" }) => {
                     formik={formik}
                     placeholder="Enter Pincode"
                   />
-                  <InputField
+                  {/* <InputField
                     label="Landmark"
                     name="landmark"
                     formik={formik}
                     placeholder="Enter Landmark"
-                  />
+                  /> */}
                   <InputField
                     label="Office Address"
                     name="officeAddress"
