@@ -1,5 +1,5 @@
 import { useRecoilState } from "recoil";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import useFetch from "../../useFetch";
 import conf from "../../../config/index";
 import { toast } from "react-toastify";
@@ -16,6 +16,8 @@ const useMonthlyPlanning = () => {
     const [monthWisePlanning, setMonthWisePlanning] = useRecoilState(monthWisePlanningStateAtom);
     const [monthlySummary, setMonthlySummary] = useRecoilState(monthlySummaryStateAtom);
     const [targetSheetYearlySummary, setTargetSheetYearlySummary] = useRecoilState(targetSheetYearlySummaryStateAtom);
+    // Guards against a stale in-flight yearly-summary response overwriting a newer one
+    const yearlySummaryReqIdRef = useRef(0);
     const fetchMonthlyPlanningList = async (page, limit, fromDate, toDate) => {
         setLoading(true);
         try {
@@ -84,6 +86,7 @@ const useMonthlyPlanning = () => {
 
 const fetchTargetSheetYearlySummary = async ({ organization, individualName, productName, year } = {}) => {
   setLoading(true);
+  const reqId = ++yearlySummaryReqIdRef.current;
   try {
     const params = new URLSearchParams();
     if (organization) params.append("organization", organization);
@@ -104,7 +107,10 @@ const fetchTargetSheetYearlySummary = async ({ organization, individualName, pro
       url: `${conf.apiBaseUrl}targets/target-sheet-yearly-summary-for-planning?${params.toString()}`
     });
     if (res) {
-      setTargetSheetYearlySummary(res);
+      // Ignore stale responses (a newer request/reset happened while this was in flight)
+      if (reqId === yearlySummaryReqIdRef.current) {
+        setTargetSheetYearlySummary(res);
+      }
       return res;
     }
   } catch (err) {
@@ -116,6 +122,7 @@ const fetchTargetSheetYearlySummary = async ({ organization, individualName, pro
 };
 
     const resetTargetSheetYearlySummary = () => {
+        yearlySummaryReqIdRef.current += 1; // invalidate any in-flight fetch
         setTargetSheetYearlySummary(null);
     };
 

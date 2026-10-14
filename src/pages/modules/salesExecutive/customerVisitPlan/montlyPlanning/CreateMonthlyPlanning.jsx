@@ -234,7 +234,7 @@ const CreateMonthlyPlanning = () => {
     loading,
     fetchMonthlyPlanningDetailsById,
     resetOneMonthPlanningList,
-    resetMonthlyPlanningDetails,
+    resetMonthlyPlanningDetails, fetchTargetSheetYearlySummary,targetSheetYearlySummary, resetTargetSheetYearlySummary
   } = useMonthlyPlanning();
 
   const {
@@ -517,6 +517,46 @@ const CreateMonthlyPlanning = () => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formik.values.selectOrganization]);
+
+  // Fetch target sheet yearly summary once organization, individual & products are selected
+  useEffect(() => {
+    const organization =
+      formik.values.selectOrganization === "Other"
+        ? (formik.values.customOrganization || "").trim()
+        : formik.values.selectOrganization;
+    const individualName =
+      formik.values.nameOfDoctor === "Other"
+        ? (formik.values.customDoctor || "").trim()
+        : formik.values.nameOfDoctor;
+    const productName = Array.isArray(formik.values.productToBePromoted)
+      ? formik.values.productToBePromoted.filter(Boolean)
+      : [];
+
+    // All three are required → clear stale summary if any selection is missing
+    if (!organization || !individualName || productName.length === 0) {
+      resetTargetSheetYearlySummary();
+      return;
+    }
+
+    // Debounce so rapid changes (esp. multi-select products) fire a single call
+    const timer = setTimeout(() => {
+      fetchTargetSheetYearlySummary({
+        organization,
+        individualName,
+        productName,
+        year: new Date().getFullYear(),
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    formik.values.selectOrganization,
+    formik.values.customOrganization,
+    formik.values.nameOfDoctor,
+    formik.values.customDoctor,
+    formik.values.productToBePromoted,
+  ]);
 
   // Update existing plans when data changes
   useEffect(() => {
