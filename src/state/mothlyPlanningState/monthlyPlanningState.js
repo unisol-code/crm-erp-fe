@@ -11,4 +11,6 @@ export const monthlyPlanningPreviewAtom = atom(createPersistedAtom("monthlyPlann
 
 export const monthWisePlanningStateAtom = atom(createPersistedAtom("monthWisePlanningState", []));
 
-export const  monthlySummaryStateAtom = atom(createPersistedAtom("monthlySummaryState", []));
+export const monthlySummaryStateAtom = atom(createPersistedAtom("monthlySummaryState", []));
+
+export const targetSheetYearlySummaryStateAtom = atom(createPersistedAtom("targetSheetYearlySummaryState", []));

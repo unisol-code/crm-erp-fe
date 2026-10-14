@@ -242,8 +242,8 @@ const CreateMonthlyPlanning = () => {
     organizationList,
     fetchProductsNames,
     productList,
-    fetchDoctorList,
-    doctorList,
+    fetchOrganizationWiseIndividuals,
+    organizationWiseIndividuals,
     fetchSegment,
     segment,
     enviroindiviualdropdown,
@@ -268,7 +268,6 @@ const CreateMonthlyPlanning = () => {
   useEffect(() => {
     fetchProductsNames();
     fetchOrganizationNames();
-    fetchDoctorList();
     fetchSegment();
     enviroindiviualdropdown();
     fetchEnviroIndDropdown();
@@ -506,6 +505,19 @@ const CreateMonthlyPlanning = () => {
     }
   }, [formik.values.segment, formik.values.profileType, isEnviroSolution]);
 
+  // Fetch organization-wise individuals when organization changes (non-enviro flow)
+  // Same hook as TargetSheetform: fetchOrganizationWiseIndividuals({ organization, city })
+  useEffect(() => {
+    if (isEnviroSolution) return;
+    const selectedOrg = formik.values.selectOrganization;
+    if (!selectedOrg || selectedOrg === "Other") return;
+    fetchOrganizationWiseIndividuals({
+      organization: selectedOrg,
+      city: "",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values.selectOrganization]);
+
   // Update existing plans when data changes
   useEffect(() => {
     if (formik.values.createPlanningForDate && oneMonthPlanningList?.data) {
@@ -654,10 +666,6 @@ const CreateMonthlyPlanning = () => {
         })) || []),
         { label: "Other", value: "Other" },
       ];
-  // const doctorOptions = [
-  //   ...formatOptions(doctorList),
-  //   { label: "Other", value: "Other" },
-  // ];
   const doctorOptions = isEnviroSolution
     ? [
         ...(enviroIndDropdown?.map((individual) => {
@@ -684,14 +692,30 @@ const CreateMonthlyPlanning = () => {
         { label: "Other", value: "Other" },
       ]
     : [
-        ...(doctorList?.map((doctor) => ({
-          label: doctor.fullName,
-          value: doctor.fullName,
-           uniqueCode: doctor.uniqueCode,
-          designation: doctor.designation,
-          speciality: doctor.speciality,
-          visitDetails: doctor.visitDetails,
-        })) || []),
+        ...((organizationWiseIndividuals || [])?.map((individual) => {
+          const label =
+            individual?.individualName?.trim() ||
+            individual?.fullName ||
+            individual?.name ||
+            individual?.uniqueCode ||
+            "Unnamed Individual";
+          return {
+            label,
+            value: label,
+            uniqueCode: individual?.uniqueCode || "",
+            designation: individual?.designation || "",
+            speciality: individual?.speciality || "",
+            visitDetails: {
+              // Map new API shape (visitStartTime/visitEndTime/visitDuration)
+              // to existing visitDetails shape used by the form
+              startTime: individual?.visitStartTime || "",
+              endTime: individual?.visitEndTime || "",
+              duration: individual?.visitDuration || "",
+            },
+            typeOfSurgeryPerformed:
+              individual?.typeOfSurgeryPerformed || [],
+          };
+        }) || []),
         { label: "Other", value: "Other" },
       ];
   const productOptions = formatOptions(productList);
@@ -725,7 +749,7 @@ const CreateMonthlyPlanning = () => {
     //    "already picked?" check stays in sync with how the individual
     //    value string is built (including the uniqueCode fallback for unnamed
     //    individuals) instead of rebuilding labels with a separate helper.
-    const docExistsOptions = isEnviroSolution ? doctorOptions : formatOptions(doctorList);
+    const docExistsOptions = doctorOptions;
     const docExists = docExistsOptions.some(
       (opt) => opt.value === entryToEdit.nameOfDoctor,
     );
