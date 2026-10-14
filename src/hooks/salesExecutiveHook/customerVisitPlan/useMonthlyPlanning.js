@@ -85,7 +85,6 @@ const useMonthlyPlanning = () => {
     };
 
 const fetchTargetSheetYearlySummary = async ({ organization, individualName, productName, year } = {}) => {
-  setLoading(true);
   const reqId = ++yearlySummaryReqIdRef.current;
   try {
     const params = new URLSearchParams();
@@ -116,8 +115,6 @@ const fetchTargetSheetYearlySummary = async ({ organization, individualName, pro
   } catch (err) {
     console.error("Error while fetching target sheet yearly summary:", err);
     toast.error("Failed to fetch target sheet yearly summary");
-  } finally {
-    setLoading(false);
   }
 };
 
