@@ -21,12 +21,18 @@ const ViewYearWiseProductTargetSheet = () => {
     hospitalWiseTargetLoading,
     fetchHospitalWiseTargetSheet,
     resetHospitalWiseTargetSheet,
+    allIndividualTargetSheet,
+    allIndividualTargetLoading,
+    fetchAllIndividualTargetSheet,
+    resetAllIndividualTargetSheet,
   } = useTargetSheet();
 
   const [productPage, setProductPage] = useState(1);
   const [productLimit, setProductLimit] = useState(10);
   const [hospitalPage, setHospitalPage] = useState(1);
   const [hospitalLimit, setHospitalLimit] = useState(10);
+  const [individualPage, setIndividualPage] = useState(1);
+  const [individualLimit, setIndividualLimit] = useState(10);
   const [activeTab, setActiveTab] = useState("productWise");
 
   useEffect(() => {
@@ -47,6 +53,15 @@ const ViewYearWiseProductTargetSheet = () => {
     };
   }, [activeTab, id, hospitalPage, hospitalLimit]);
 
+  useEffect(() => {
+    if (activeTab === "individualWise" && id) {
+      fetchAllIndividualTargetSheet({ year: id, page: individualPage, limit: individualLimit });
+    }
+    return () => {
+      resetAllIndividualTargetSheet();
+    };
+  }, [activeTab, id, individualPage, individualLimit]);
+
   const onProductPageChange = (data) => {
     setProductPage(data);
   };
@@ -63,10 +78,19 @@ const ViewYearWiseProductTargetSheet = () => {
     setHospitalLimit(data);
   };
 
+  const onIndividualPageChange = (data) => {
+    setIndividualPage(data);
+  };
+
+  const onIndividualItemsPerPageChange = (data) => {
+    setIndividualLimit(data);
+  };
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (tab === "hospitalWise") setHospitalPage(1);
     if (tab === "productWise") setProductPage(1);
+    if (tab === "individualWise") setIndividualPage(1);
   };
 
   const handleProductViewClick = (productId) => {
@@ -79,6 +103,7 @@ const ViewYearWiseProductTargetSheet = () => {
 
   const productData = yearWiseProductTargetSheet?.data?.[0]?.products || [];
   const hospitalData = hospitalWiseTargetSheet?.data || [];
+  const individualData = allIndividualTargetSheet?.data || [];
 
   return (
     <div className="w-full min-h-screen pb-10">
@@ -102,6 +127,8 @@ const ViewYearWiseProductTargetSheet = () => {
       ? "Product Wise Target Sheet"
       : activeTab === "hospitalWise"
       ? "Hospital Wise Target Sheet"
+      : activeTab === "individualWise"
+      ? "Individual Wise Target Sheet"
       : "Year Wise Target Sheet"}
   </h2>
         {/* Tabs */}
@@ -125,6 +152,16 @@ const ViewYearWiseProductTargetSheet = () => {
     }`}
   >
     Hospital Wise Target Sheet
+  </button>
+  <button
+    onClick={() => handleTabChange("individualWise")}
+    className={`px-6 py-2 text-base font-medium rounded-md transition-all ${
+      activeTab === "individualWise"
+        ? "bg-orange-500 text-white shadow-md"
+        : "bg-transparent text-gray-600 hover:bg-gray-200"
+    }`}
+  >
+    Individual Wise Target Sheet
   </button>
 </div>
         </div>
@@ -156,7 +193,7 @@ const ViewYearWiseProductTargetSheet = () => {
                       Price
                     </th>
                     <th className="p-4 text-base font-semibold text-center">
-                      Entered Quantity
+                      Total Quantity
                     </th>
                     <th className="p-4 text-base font-semibold text-center">
                       Overall Target Price
@@ -194,15 +231,15 @@ const ViewYearWiseProductTargetSheet = () => {
                           {product.price || "N/A"}
                         </td>
                         <td className="p-4 text-[17px] font-normal text-center text-[#252C58]">
-                          {product.enteredQuantity || "N/A"}
+                          {product.totalQuantity || "N/A"}
                         </td>
                         <td className="p-2 text-center text-[19px] font-normal text-[#252C58] align-middle">
-                          {product.overAllTargetPrice || "N/A"}
+                          {product.totalTargetPrice || "N/A"}
                         </td>
                         <td className="p-2 text-center text-[19px] font-normal text-[#252C58] align-middle">
                           <div className="flex justify-center">
                             <button
-                                onClick={() => handleProductViewClick(product._id)}
+                                onClick={() => handleProductViewClick(product.name)}
                               className="text-black hover:bg-blue-200 rounded-full w-8 h-8 flex items-center justify-center"
                               style={{ color: theme.primaryColor }}
                             >
@@ -313,7 +350,7 @@ const ViewYearWiseProductTargetSheet = () => {
                         <td className="p-2 text-center text-[19px] font-normal text-[#252C58] align-middle">
                           <div className="flex justify-center">
                             <button
-                                onClick={() => handleHospitalViewClick(item._id)}
+                                onClick={() => handleHospitalViewClick(item.organization)}
                               className="text-black hover:bg-blue-200 rounded-full w-8 h-8 flex items-center justify-center"
                               style={{ color: theme.primaryColor }}
                             >
@@ -343,6 +380,119 @@ const ViewYearWiseProductTargetSheet = () => {
                   totalPages={hospitalWiseTargetSheet?.pagination?.totalPages}
                   onPageChange={onHospitalPageChange}
                   onItemsPerPageChange={onHospitalItemsPerPageChange}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* IndividualWise Table */}
+        {activeTab === "individualWise" && (
+          <>
+            <div className="overflow-x-auto border border-gray-200 shadow rounded-t-2xl">
+              <table className="min-w-full text-sm text-left text-gray-700 table-auto">
+                <thead
+                  className="sticky top-0 z-10 text-xs uppercase bg-gray-100 border-b border-gray-300"
+                  style={{ backgroundColor: theme.secondaryColor }}
+                >
+                  <tr className="transition-all">
+                    <th className="p-4 text-base font-semibold text-center">Sr. No.</th>
+                    <th className="p-4 text-base font-semibold text-center">Individual Name</th>
+                    <th className="p-4 text-base font-semibold text-center">Speciality</th>
+                    <th className="p-4 text-base font-semibold text-center">Organization</th>
+                    <th className="p-4 text-base font-semibold text-center">City</th>
+                    <th className="p-4 text-base font-semibold text-center">Year</th>
+                    <th className="p-4 text-base font-semibold text-center">Product Count</th>
+                    <th className="p-4 text-base font-semibold text-center">Total Amount</th>
+                    <th className="p-4 text-base font-semibold text-center">
+                      Type of Surgery
+                    </th>
+                    <th className="p-4 text-base font-semibold text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {allIndividualTargetLoading ? (
+                    <tr>
+                      <td colSpan="10" className="p-8 text-center">
+                        <div className="flex justify-center items-center w-full">
+                          <LoaderSpinner />
+                        </div>
+                      </td>
+                    </tr>
+                  ) : individualData.length > 0 ? (
+                    individualData.map((item, index) => (
+                      <tr
+                        key={item._id || index}
+                        className="hover:bg-gray-50 transition-all"
+                      >
+                        <td className="p-4 text-center text-[17px] font-normal text-[#252C58]">
+                          {(individualPage - 1) * individualLimit + index + 1}
+                        </td>
+                        <td className="p-2 text-[17px] font-normal text-center text-[#252C58]">
+                          {item.individualName || "N/A"}
+                        </td>
+                        <td className="px-3 py-3 text-[17px] font-normal text-center text-[#252C58]">
+                          {item.speciality || "N/A"}
+                        </td>
+                        <td className="p-4 text-[17px] font-normal text-center text-[#252C58]">
+                          {item.organization || "N/A"}
+                        </td>
+                        <td className="p-4 text-[17px] font-normal text-center text-[#252C58]">
+                          {item.city || "N/A"}
+                        </td>
+                        <td className="p-4 text-[17px] font-normal text-center text-[#252C58]">
+                          {item.year || "N/A"}
+                        </td>
+                        <td className="p-4 text-[17px] font-normal text-center text-[#252C58]">
+                          {item.productCount || "N/A"}
+                        </td>
+                        <td className="p-2 text-center text-[19px] font-normal text-[#252C58] align-middle">
+                          {item.totalAmount || "N/A"}
+                        </td>
+                        <td className="p-2 text-center text-[17px] font-normal text-[#252C58] align-middle">
+                          {item.typeOfSurgeryPerformed?.map((s, i) => (
+                            <span key={i} className="block">
+                              {s.type} 
+                            </span>
+                          ))}
+                        </td>
+                        <td className="p-2 text-center text-[19px] font-normal text-[#252C58] align-middle">
+                          <div className="flex justify-center">
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/sales-executive/target-sheet/view-individual-id-wise/${item._id}`
+                                )
+                              }
+                              className="text-black hover:bg-blue-200 rounded-full w-8 h-8 flex items-center justify-center"
+                              style={{ color: theme.primaryColor }}
+                            >
+                              <TiEye size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="10" className="p-4 text-center text-gray-500">
+                        No individual target sheet found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {/* Pagination */}
+            <div className="overflow-hidden bg-white border border-gray-200 shadow-lg rounded-b-2xl">
+              <div className="bg-white">
+                <Pagination
+                  currentPage={allIndividualTargetSheet?.pagination?.currentPage}
+                  totalItems={allIndividualTargetSheet?.pagination?.totalRecords}
+                  itemsPerPage={individualLimit}
+                  totalPages={allIndividualTargetSheet?.pagination?.totalPages}
+                  onPageChange={onIndividualPageChange}
+                  onItemsPerPageChange={onIndividualItemsPerPageChange}
                 />
               </div>
             </div>

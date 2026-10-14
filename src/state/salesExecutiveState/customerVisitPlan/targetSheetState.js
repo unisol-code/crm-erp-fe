@@ -38,3 +38,15 @@ export const productIdWiseTargetSheetStateAtom = atom({
   default: null,
   effects_UNSTABLE: [persistAtom],
 });
+
+export const allIndividualTargetSheetStateAtom = atom({
+  key: "allIndividualTargetSheetState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});
+
+export const individualIdWiseTargetSheetStateAtom = atom({
+  key: "individualIdWiseTargetSheetState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});

@@ -5,3 +5,4 @@ export {default as EditTargetSheet} from "./EditTargetSheet.jsx";
 export {default as ViewYearWiseProductTargetSheet} from "./ViewYearWiseProductTargetSheet.jsx";
 export {default as ViewHospitalIdWiseTargetSheet} from "./ViewHospitalIdWiseTargetSheet.jsx";
 export {default as ViewProductIdWiseTargetSheet} from "./ViewProductIdWiseTargetSheet.jsx";
+export {default as ViewIndividualWiseTargetSheet} from "./ViewIndividualWiseTargetSheet.jsx";

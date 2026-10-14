@@ -218,6 +218,7 @@ const createEmptyProduct = () => {
 const validationSchema = Yup.object({
   organization: Yup.string().required("Organization is required"),
   city: Yup.string().required("City is required"),
+  individualName: Yup.string().required("Individual name is required"),
   year: Yup.string().required("Year is required"),
 
   products: Yup.array()
@@ -258,11 +259,13 @@ const TargetSheetForm = () => {
     fetchProductDetails,
     resetProductDetails,
     fetchProductTypes,
+    fetchOrganizationWiseIndividuals,
   } = dropdownHook;
 
   const productList = dropdownHook.productList;
   const productTypes = dropdownHook.productTypes;
   const productDetails = dropdownHook.productDetails;
+  const organizationWiseIndividuals = dropdownHook.organizationWiseIndividuals;
 
   const { createTargetSheet, loading } = useTargetSheet();
 
@@ -320,6 +323,7 @@ const TargetSheetForm = () => {
     initialValues: {
       organization: "",
       city: "",
+      individualName: "",
       year: new Date().getFullYear().toString(),
       products: [createEmptyProduct()],
     },
@@ -341,6 +345,13 @@ const TargetSheetForm = () => {
         const payload = {
           organization: values.organization,
           city: values.city,
+          individualName: values.individualName,
+          uniqueCodeOrganization: selectedOrganizationCode,
+          uniqueCodeIndividual: selectedIndividualCode,
+          speciality: selectedIndividualSpeciality,
+          typeOfSurgeryPerformed: selectedIndividualSurgeryTypes,
+          // individualUniqueCode: selectedIndividualCode,
+          // individualSpeciality: selectedIndividualSpeciality,
           year: String(values.year),
 
           products: filledProducts.map((product) => {
@@ -422,6 +433,43 @@ const TargetSheetForm = () => {
     [organizationRawData]
   );
 
+  /* =========================================================
+     SELECTED ORGANIZATION / INDIVIDUAL CODE (read-only fields)
+  ========================================================= */
+
+  const [selectedOrganizationCode, setSelectedOrganizationCode] = useState("");
+  const [selectedIndividualCode, setSelectedIndividualCode] = useState("");
+  const [selectedIndividualSpeciality, setSelectedIndividualSpeciality] = useState("");
+  const [selectedIndividualSurgeryTypes, setSelectedIndividualSurgeryTypes] = useState([]);
+
+  useEffect(() => {
+    const selectedOrg = organizationArray.find(
+      (org) =>
+        (org?.hospitalName ||
+          org?.organizationName ||
+          org?.name) === formik.values.organization
+    );
+    setSelectedOrganizationCode(
+      selectedOrg?.uniqueCode || selectedOrg?.unique_id || ""
+    );
+  }, [formik.values.organization, organizationArray]);
+
+  useEffect(() => {
+    const selectedDoc = organizationWiseIndividuals?.find(
+      (doc) => (doc?.individualName || doc?.fullName || doc?.name) === formik.values.individualName
+    );
+    setSelectedIndividualCode(
+      selectedDoc?.uniqueCode || selectedDoc?.unique_id || ""
+    );
+    setSelectedIndividualSpeciality(
+      selectedDoc?.speciality || ""
+    );
+    const types = selectedDoc?.typeOfSurgeryPerformed;
+    setSelectedIndividualSurgeryTypes(
+      Array.isArray(types) ? types : []
+    );
+  }, [formik.values.individualName, organizationWiseIndividuals]);
+
   const productTypeArray = useMemo(
     () => toArray(productTypes),
     [productTypes]
@@ -476,6 +524,25 @@ const TargetSheetForm = () => {
   }, [organizationArray, formik.values.city]);
 
   /* =========================================================
+     INDIVIDUAL OPTIONS
+  ========================================================= */
+
+  const individualOptions = useMemo(
+    () =>
+      (organizationWiseIndividuals || [])
+        .map((doc) => {
+          const name = doc?.individualName || doc?.fullName || doc?.name || "";
+          return {
+            label: name,
+            value: name,
+            uniqueCode: doc?.uniqueCode || "",
+          };
+        })
+        .filter((o) => o.value),
+    [organizationWiseIndividuals]
+  );
+
+  /* =========================================================
      PRODUCT OPTIONS
   ========================================================= */
 
@@ -515,6 +582,23 @@ const TargetSheetForm = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* =========================================================
+     FETCH INDIVIDUALS — depends on selected organization + city
+  ========================================================= */
+
+  useEffect(() => {
+    if (!formik.values.organization) return;
+    formik.setFieldValue("individualName", "", false);
+    setSelectedIndividualCode("");
+    setSelectedIndividualSpeciality("");
+    setSelectedIndividualSurgeryTypes([]);
+    fetchOrganizationWiseIndividuals({
+      organization: formik.values.organization,
+      city: formik.values.city || "",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values.organization, formik.values.city]);
 
   /* =========================================================
      PRODUCT PRICE FETCH
@@ -1268,6 +1352,101 @@ const TargetSheetForm = () => {
                     {formik.errors.organization}
                   </p>
                 )}
+              </div>
+
+              {/* ORGANIZATION UNIQUE CODE (read-only) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Organization Unique Code
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={selectedOrganizationCode || "-"}
+                  className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                  placeholder="Select an organization"
+                />
+              </div>
+
+              {/* INDIVIDUAL NAME */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Individual Name
+                </label>
+                <Select
+                  isLoading={dropDownLoading}
+                  isClearable
+                  options={individualOptions}
+                  value={
+                    individualOptions.find(
+                      (o) => o.value === formik.values.individualName
+                    ) || null
+                  }
+                  onChange={(option) => {
+                    formik.setFieldValue("individualName", option?.value || "");
+                  }}
+                  onBlur={() => formik.setFieldTouched("individualName", true)}
+                  placeholder="Select Individual"
+                  classNamePrefix="react-select"
+                  styles={selectStyles}
+                  menuPortalTarget={document.body}
+                  noOptionsMessage={() =>
+                    individualOptions.length === 0
+                      ? "Loading individuals..."
+                      : "No individuals found"
+                  }
+                />
+                {formik.touched.individualName && formik.errors.individualName && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {formik.errors.individualName}
+                  </p>
+                )}
+              </div>
+
+              {/* INDIVIDUAL UNIQUE CODE (read-only) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Individual Unique Code
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={selectedIndividualCode || "-"}
+                  className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                  placeholder="Select an individual"
+                />
+              </div>
+
+              {/* INDIVIDUAL SPECIALITY (read-only) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Individual Speciality
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={selectedIndividualSpeciality || "-"}
+                  className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                  placeholder="Select an individual"
+                />
+              </div>
+
+              {/* TYPE OF SURGERY PERFORMED (read-only) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Type Of Surgery Perform
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={
+                    selectedIndividualSurgeryTypes.length > 0
+                      ? selectedIndividualSurgeryTypes.join(", ")
+                      : "-"
+                  }
+                  className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                  placeholder="Select an individual"
+                />
               </div>
 
               {/* CITY */}

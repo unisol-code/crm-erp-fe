@@ -51,6 +51,7 @@ import {
   BMW4Atom,
   districtListAtom,
   salesExecutiveAtom,
+  organizationWiseIndividualsAtom,
 } from "../../state/dropdown/dropdownState";
 import useFetch from "../useFetch";
 import { useRecoilState } from "recoil";
@@ -141,6 +142,8 @@ const useDropdown = () => {
 
   const [cities, setCities] = useRecoilState(allCitiesAtom);
   const [salesExecutive, setSalesExecutive] = useRecoilState(salesExecutiveAtom);
+
+  const [organizationWiseIndividuals, setOrganizationWiseIndividuals] = useRecoilState(organizationWiseIndividualsAtom);
 
   const fetchLegalEntity = async () => {
     setLoading(true);
@@ -1138,6 +1141,28 @@ const enviroindiviualdropdown = async (sectionName) => {
     }
   }, [fetchData, setSalesExecutive]);
 
+  const fetchOrganizationWiseIndividuals = useCallback(async ({ organization, city } = {}) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (organization) params.append("organization", organization);
+      if (city) params.append("city", city);
+      const queryString = params.toString();
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}targets/organization-wise-individuals${queryString ? `?${queryString}` : ""}`,
+      });
+      if (res) {
+        console.log(res);
+        setOrganizationWiseIndividuals(res?.data || []);
+      }
+    } catch (error) {
+      console.error("Error while fetching organization-wise individuals:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchData, setOrganizationWiseIndividuals]);
+
   return {
     fetchLegalEntity,
     legalEntity,
@@ -1246,6 +1271,8 @@ const enviroindiviualdropdown = async (sectionName) => {
     BMW4,
     salesExecutive,
     fetchSalesExecutive,
+    organizationWiseIndividuals,
+    fetchOrganizationWiseIndividuals,
   };
 };
 
