@@ -328,6 +328,7 @@ const useTargetSheet = () => {
       });
       if (res) {
         toast.success(res?.message);
+        return res;
       } else {
         throw new Error(res?.message);
       }

@@ -7,6 +7,7 @@ import Button from "../../../../../components/uiComponents/button/Button.jsx";
 import useTargetSheet from "../../../../../hooks/salesExecutiveHook/customerVisitPlan/useTaregtSheet.js";
 import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
 import Pagination from "../../../../../components/uiComponents/pagination/Pagination.jsx";
+import { Edit } from "lucide-react";
 
 const ViewYearWiseProductTargetSheet = () => {
   const navigate = useNavigate();
@@ -468,6 +469,17 @@ const ViewYearWiseProductTargetSheet = () => {
                               style={{ color: theme.primaryColor }}
                             >
                               <TiEye size={18} />
+                            </button>
+                                                        <button
+                              onClick={() =>
+                                navigate(
+                                  `/sales-executive/target-sheet/target-sheet-form/${item._id}`
+                                )
+                              }
+                              className="text-black hover:bg-blue-200 rounded-full w-8 h-8 flex items-center justify-center"
+                              style={{ color: theme.primaryColor }}
+                            >
+                              <Edit size={18} />
                             </button>
                           </div>
                         </td>
