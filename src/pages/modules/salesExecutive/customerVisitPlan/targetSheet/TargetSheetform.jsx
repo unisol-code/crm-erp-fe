@@ -1734,7 +1734,12 @@ const TargetSheetForm = () => {
               type="button"
               text="Clear"
               onClick={() => {
-                formik.resetForm();
+                if (editId) {
+                  // Edit mode → reload the saved sheet instead of wiping the form
+                  fetchIndividualIdWiseTargetSheet({ id: editId });
+                } else {
+                  formik.resetForm();
+                }
                 setSelectedProductId(null);
                 setSelectedProductIndex(null);
                 resetProductDetails();
@@ -1742,7 +1747,15 @@ const TargetSheetForm = () => {
             />
             <Button
               type="submit"
-              text={loading ? "Submitting..." : "Submit"}
+              text={
+                loading
+                  ? editId
+                    ? "Updating..."
+                    : "Submitting..."
+                  : editId
+                    ? "Update Target Sheet"
+                    : "Submit"
+              }
             />
           </div>
         </form>

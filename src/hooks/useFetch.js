@@ -21,6 +21,9 @@ function useFetch() {
         headers: {
           Authorization: `Bearer ${token}`,
           ...(id && { companyId: id }),
+          // Bypass ngrok's free-plan browser-warning interstitial (ERR_NGROK_6024).
+          // Harmless when not using ngrok (ignored by the real server).
+          // "ngrok-skip-browser-warning": "true",
           //...(id ? { companyid: id } : {}),
         },
       };

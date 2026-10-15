@@ -595,62 +595,111 @@ const useDropdown = () => {
     }
   };
 
-  const fetchAllStateName = async (regionName = "") => {
-    setLoading(true);
-    try {
-      const query = regionName ? `?region=${encodeURIComponent(regionName)}` : "";
-      const res = await fetchData({
-        method: "GET",
-        url: `${conf.apiBaseUrl}drop-down/getAllStates${query}`,
-      });
-      if (res) {
-        setAllStateName(res?.data || []);
-      }
-    } catch (error) {
-      console.error("Error while fetching All State list:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchAllStateName = async (regionName = "") => {
+  setLoading(true);
 
-  const fetchDistrictList = async (stateName) => {
-    setLoading(true);
-    try {
-      const res = await fetchData({
-        method: "GET",
-        url: `${conf.apiBaseUrl}drop-down/districts/${stateName}`,
-      });
-      if (res) {
-        setDistrictList(res?.data);
-        setLoading(false);
-      }
-    } catch (error) {
-      console.error("Error fetching districts:", error);
-      setLoading(false);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const regions = Array.isArray(regionName)
+      ? regionName.join(",")
+      : regionName;
 
-  const fetchAllCities = async (stateCode, districtName) => {
-    setLoading(true);
-    try {
-      const res = await fetchData({
-        method: "GET",
-        url: `${conf.apiBaseUrl}drop-down/cities/${stateCode}/${districtName}`,
-      });
+    const query = regions
+      ? `?region=${encodeURIComponent(regions)}`
+      : "";
 
-      if (res) {
-        setCities(res?.data);
-        setLoading(false);
-      }
-    } catch (error) {
-      console.error("Error fetching cities:", error);
-      setLoading(false);
-    } finally {
-      setLoading(false);
+    console.log("Selected regions:", regions);
+
+    const res = await fetchData({
+      method: "GET",
+      url: `${conf.apiBaseUrl}drop-down/getAllStates${query}`,
+    });
+
+    if (res) {
+      setAllStateName(res?.data || []);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching states:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const fetchDistrictList = async (stateNames = []) => {
+  setLoading(true);
+
+  try {
+    const states = Array.isArray(stateNames)
+      ? stateNames.join(",")
+      : stateNames;
+
+    if (!states) {
+      setDistrictList([]);
+      return;
+    }
+
+    const res = await fetchData({
+      method: "GET",
+      url: `${conf.apiBaseUrl}drop-down/districts/${states
+        .split(",")
+        .map((state) => encodeURIComponent(state))
+        .join(",")}`,
+    });
+
+    if (res) {
+      setDistrictList(res?.data || []);
+    }
+  } catch (error) {
+    console.error("Error fetching districts:", error);
+    setDistrictList([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+const fetchAllCities = async (stateCodes = [], districtNames = []) => {
+  setLoading(true);
+
+  try {
+    const states = (Array.isArray(stateCodes) ? stateCodes : [stateCodes])
+      .filter(Boolean);
+
+    const districts = (Array.isArray(districtNames)
+      ? districtNames
+      : [districtNames]
+    ).filter(Boolean);
+
+    if (states.length === 0 || districts.length === 0) {
+      setCities([]);
+      return [];
+    }
+
+    const statePath = states
+      .map((code) => encodeURIComponent(code))
+      .join(",");
+
+    const districtPath = districts
+      .map((district) => encodeURIComponent(district))
+      .join(",");
+
+    const res = await fetchData({
+      method: "GET",
+      url: `${conf.apiBaseUrl}drop-down/cities/${statePath}/${districtPath}`,
+    });
+
+    const cityData = res?.data || [];
+    setCities(cityData);
+
+    return cityData;
+  } catch (error) {
+    console.error("Error fetching cities:", error);
+    setCities([]);
+    return [];
+  } finally {
+    setLoading(false);
+  }
+};
 
   const segmentState = async () => {
     setLoading(true);
