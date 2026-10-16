@@ -364,7 +364,7 @@ const useAllSalesAnalytics = () => {
 
     const res = await get({
       path: "dashboard/getAllOrganizations",
-      keys: ["typeOfOrgOrHospital", "speciality", "city", "district", "state", ...PAGE_KEYS],
+      keys: ["segment", "typeOfOrgOrHospital", "speciality", "city", "district", "state", ...PAGE_KEYS],
       filters: allFilters,
       label: "all organizations data",
       silent,

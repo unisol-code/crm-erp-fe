@@ -1,9 +1,87 @@
+
 import React, { useEffect, useState } from "react";
-import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 import ReactSelect from "react-select";
 import _ from "lodash";
+import useDropdown from "../../../../../../hooks/dropdown/useDropdown";
 
-// --- Input Component ---
+// Normalize options returned by different APIs.
+const normalizeOptions = (options = []) => {
+  if (!Array.isArray(options)) return [];
+
+  return options.map((item) => {
+    if (typeof item === "string" || typeof item === "number") {
+      return {
+        label: String(item),
+        value: String(item),
+      };
+    }
+
+    const label =
+      item?.label ??
+      item?.name ??
+      item?.stateName ??
+      item?.districtName ??
+      item?.cityName ??
+      item?.type ??
+      item?.organizationType ??
+      item?.title ??
+      item?.value ??
+      "";
+
+    const value =
+      item?.value ??
+      item?.name ??
+      item?.stateName ??
+      item?.districtName ??
+      item?.cityName ??
+      item?.type ??
+      item?.organizationType ??
+      item?.label ??
+      item?.title ??
+      "";
+
+    return {
+      ...item,
+      label: String(label),
+      value: String(value),
+    };
+  });
+};
+
+const normalizeText = (value) =>
+  String(value ?? "").trim().toLowerCase();
+
+const getStateName = (state) =>
+  typeof state === "string"
+    ? state
+    : state?.name ?? state?.stateName ?? state?.label ?? "";
+
+const getStateCode = (state) =>
+  state?.code ??
+  state?.stateCode ??
+  state?.state_code ??
+  state?.value ??
+  "";
+
+const getDistrictName = (district) =>
+  typeof district === "string"
+    ? district
+    : district?.districtName ??
+      district?.name ??
+      district?.label ??
+      district?.value ??
+      "";
+
+const getCityName = (city) =>
+  typeof city === "string"
+    ? city
+    : city?.cityName ??
+      city?.name ??
+      city?.label ??
+      city?.value ??
+      "";
+
+// Input component
 const Input = ({
   label,
   name,
@@ -17,77 +95,108 @@ const Input = ({
   const error = _.get(formik.errors, name, "");
 
   return (
-    <div className="flex flex-col w-full mb-4">
-      <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <div className="mb-4 flex w-full flex-col">
+      <label className="mb-1 text-sm font-medium text-gray-700">
+        {label}
+      </label>
+
       <input
         type={type}
         name={name}
-        value={value}
+        value={value ?? ""}
         onChange={formik.handleChange}
         onBlur={formik.handleBlur}
         placeholder={placeholder}
         disabled={isReadOnly}
-        className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300
-          ${touched && error ? "border-red-500" : "border-[#556581]"}
-          ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
+        className={`w-full rounded-md border px-4 py-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          touched && error ? "border-red-500" : "border-[#556581]"
+        } ${
+          isReadOnly
+            ? "cursor-not-allowed bg-gray-100"
+            : "bg-white"
+        }`}
       />
+
       {touched && error && (
-        <span className="text-red-500 text-xs mt-1">{error}</span>
+        <span className="mt-1 text-xs text-red-500">{error}</span>
       )}
     </div>
   );
 };
 
-// --- Select Component ---
+// Reusable Select component
 const Select = ({
   label,
   name,
   formik,
-  options,
-  loading,
+  options = [],
+  loading = false,
   placeholder,
   isReadOnly = false,
-  onChange, // Optional custom onChange
+  onChange,
 }) => {
   const value = _.get(formik.values, name, "");
   const touched = _.get(formik.touched, name, false);
   const error = _.get(formik.errors, name, "");
 
-  const selectOptions = options.map((opt) =>
-    typeof opt === "string" ? { label: opt, value: opt } : opt
+  const selectOptions = normalizeOptions(options);
+
+  // Match by option value or label, ignoring letter case.
+  const selectedOption = selectOptions.find(
+    (option) =>
+      normalizeText(option.value) === normalizeText(value) ||
+      normalizeText(option.label) === normalizeText(value)
   );
-  const selectedOption =
-    selectOptions.find((opt) => opt.value === value) || null;
+
+  // Preserve the saved value even while dropdown options are loading.
+  const displayedOption =
+    selectedOption ||
+    (value !== "" && value !== null && value !== undefined
+      ? {
+          label: String(value),
+          value: String(value),
+        }
+      : null);
 
   return (
-    <div className="flex flex-col w-full mb-4">
-      <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <div className="mb-4 flex w-full flex-col">
+      <label className="mb-1 text-sm font-medium text-gray-700">
+        {label}
+      </label>
+
       <ReactSelect
         options={selectOptions}
+        value={displayedOption}
         isLoading={loading}
+        isDisabled={isReadOnly}
+        isClearable={!isReadOnly}
         name={name}
-        value={selectedOption}
+        placeholder={placeholder || `Select ${label}`}
+        classNamePrefix="react-select"
         onChange={(selected) => {
-          formik.setFieldValue(name, selected?.value || "");
-          if (onChange) onChange(selected?.value || "");
+          const selectedValue = selected?.value ?? "";
+
+          formik.setFieldValue(name, selectedValue);
+
+          if (onChange) {
+            onChange(selectedValue);
+          }
         }}
         onBlur={() => formik.setFieldTouched(name, true)}
-        placeholder={`Select ${label}`}
-        classNamePrefix="react-select"
-        isDisabled={isReadOnly}
       />
+
       {touched && error && (
-        <span className="text-red-500 text-xs mt-1">{error}</span>
+        <span className="mt-1 text-xs text-red-500">{error}</span>
       )}
     </div>
   );
 };
+
 const BasicInfo = ({ formik, isReadOnly = false }) => {
-  const [isGovt, setIsGovt] = useState(false);
   const [selectedStateCode, setSelectedStateCode] = useState("");
+
   const {
     fetchSpeciality,
-    speciality,
     loading,
     fetchLegalEntity,
     legalEntity,
@@ -107,119 +216,205 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
     fetchAllCities,
   } = useDropdown();
 
+  const basic = formik.values?.Basic ?? {};
+
+  // Load dropdown data once.
   useEffect(() => {
     fetchSpeciality();
     fetchOrganizationTypes();
     fetchHospitalTypes();
     segmentState();
     fetchAllRegion();
-    fetchAllStateName();
   }, []);
 
-  // Fetch Legal Entity only when "Govt" is selected and data is not already loaded
+  // Load states for the saved region, including View/Edit mode.
   useEffect(() => {
-    const orgType = formik.values?.Basic?.typeOfOrgOrHospital;
-    if (orgType === "Govt") {
+    if (basic.region) {
+      fetchAllStateName(basic.region);
+    }
+  }, [basic.region]);
+
+  // Resolve the saved state and load its districts.
+  useEffect(() => {
+    if (!basic.state || !Array.isArray(allStateName)) {
+      return;
+    }
+
+    const matchedState = allStateName.find(
+      (state) =>
+        normalizeText(getStateName(state)) ===
+        normalizeText(basic.state)
+    );
+
+    if (!matchedState) {
+      return;
+    }
+
+    const stateCode = getStateCode(matchedState);
+
+    if (stateCode !== "") {
+      setSelectedStateCode(String(stateCode));
+      fetchDistrictList(stateCode);
+    }
+  }, [basic.state, allStateName]);
+
+  // Load cities after the saved district and district options are ready.
+  useEffect(() => {
+    if (
+      !basic.district ||
+      !selectedStateCode ||
+      !Array.isArray(districtList)
+    ) {
+      return;
+    }
+
+    const matchedDistrict = districtList.find(
+      (district) =>
+        normalizeText(getDistrictName(district)) ===
+        normalizeText(basic.district)
+    );
+
+    const districtName = matchedDistrict
+      ? getDistrictName(matchedDistrict)
+      : basic.district;
+
+    if (districtName) {
+      fetchAllCities(selectedStateCode, districtName);
+    }
+  }, [basic.district, selectedStateCode, districtList]);
+
+  // Load legal entity options only for Government organizations.
+  useEffect(() => {
+    if (
+      normalizeText(basic.typeOfOrgOrHospital) === "govt"
+    ) {
       fetchLegalEntity();
     }
-  }, [formik.values?.Basic?.typeOfOrgOrHospital]);
+  }, [basic.typeOfOrgOrHospital]);
 
-  const handleselectDistrict = (stateCode) => {
-    if (stateCode) {
+  // Region changes are user initiated: reset dependent fields.
+  const handleRegionChange = (value) => {
+    formik.setFieldValue("Basic.state", "");
+    formik.setFieldValue("Basic.district", "");
+    formik.setFieldValue("Basic.city", "");
+
+    setSelectedStateCode("");
+
+    if (value) {
+      fetchAllStateName(value);
+    }
+  };
+
+  // State changes reset district and city.
+  const handleStateChange = (value) => {
+    formik.setFieldValue("Basic.district", "");
+    formik.setFieldValue("Basic.city", "");
+
+    const matchedState = Array.isArray(allStateName)
+      ? allStateName.find(
+          (state) =>
+            normalizeText(getStateName(state)) ===
+            normalizeText(value)
+        )
+      : null;
+
+    const stateCode = matchedState
+      ? getStateCode(matchedState)
+      : "";
+
+    setSelectedStateCode(String(stateCode));
+
+    if (stateCode !== "") {
       fetchDistrictList(stateCode);
     }
   };
 
-  const handleSelectCity = (districtCode, stateCode) => {
-    const sCode = stateCode || selectedStateCode;
-    if (districtCode && sCode) {
-      fetchAllCities(sCode, districtCode);
-    }
+  // District changes reset city; the city-loading effect fetches options.
+  const handleDistrictChange = () => {
+    formik.setFieldValue("Basic.city", "");
   };
 
-  // ✅ Auto-fetch districts and cities when editing/viewing
-  useEffect(() => {
-    const stateName = formik.values?.Basic?.state;
-    if (stateName) {
-      const matchedState = allStateName?.find((s) => s.name === stateName || s.stateName === stateName);
-      if (matchedState) {
-        setSelectedStateCode(matchedState.code || matchedState.stateCode || "");
-        fetchDistrictList(matchedState.code || matchedState.stateCode || "");
-      }
-    }
-  }, [formik.values?.Basic?.state, allStateName]);
+  const stateOptions = (Array.isArray(allStateName)
+    ? allStateName
+    : []
+  ).map((state) => {
+    const name = getStateName(state);
 
-  useEffect(() => {
-    const stateName = formik.values?.Basic?.state;
-    const district = formik.values?.Basic?.district;
-    if (stateName && district && selectedStateCode) {
-      fetchAllCities(selectedStateCode, district);
+    return {
+      label: String(name),
+      value: String(name),
+    };
+  });
+
+  const districtOptions = (Array.isArray(districtList)
+    ? districtList
+    : []
+  ).map((district) => {
+    const name = getDistrictName(district);
+
+    return {
+      label: String(name),
+      value: String(name),
+    };
+  });
+
+  const cityOptions = (Array.isArray(cities) ? cities : []).map(
+    (city) => {
+      const name = getCityName(city);
+
+      return {
+        label: String(name),
+        value: String(name),
+      };
     }
-  }, [formik.values?.Basic?.state, formik.values?.Basic?.district, selectedStateCode]);
+  );
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-semibold mb-6">
+      <h1 className="mb-6 text-xl font-semibold">
         BASIC ORGANIZATIONAL INFORMATION
       </h1>
-      <div className="p-6 pt-0 bg-white rounded-md">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-11">
+
+      <div className="rounded-md bg-white p-6 pt-0">
+        <div className="grid grid-cols-1 gap-x-11 md:grid-cols-2">
           <Select
             label="Segment"
             name="Basic.segment"
             formik={formik}
             isReadOnly={isReadOnly}
-            options={
-              Array.isArray(segment)
-                ? segment.map((seg) => ({
-                  label: seg,
-                  value: seg,
-                }))
-                : []
-            }
+            options={segment || []}
           />
+
           <Input
             label="Organization Name"
             name="Basic.hospitalName"
             formik={formik}
-            placeholder="organization Name"
+            placeholder="Organization Name"
             isReadOnly={isReadOnly}
           />
+
           <Select
             label="Type of Hospital"
             name="Basic.typeOfHospital"
             formik={formik}
             isReadOnly={isReadOnly}
-            options={
-              Array.isArray(hospitalTypes)
-                ? hospitalTypes.map((type) => ({
-                  label: type,
-                  value: type,
-                }))
-                : []
-            }
+            options={hospitalTypes || []}
           />
+
           <Select
             label="Organization Type"
             name="Basic.typeOfOrgOrHospital"
-            isReadOnly={isReadOnly}
             formik={formik}
-            options={
-              Array.isArray(organizationTypes)
-                ? organizationTypes.map((type) => ({
-                  label: type,
-                  value: type,
-                }))
-                : []
-            }
+            isReadOnly={isReadOnly}
+            options={organizationTypes || []}
           />
 
-          {formik.values?.Basic?.typeOfOrgOrHospital === "Govt" && (
+          {normalizeText(basic.typeOfOrgOrHospital) === "govt" && (
             <Select
               label="If Govt (Legal Entity Type)"
               name="Basic.ifGovt"
-              isReadOnly={isReadOnly}
               formik={formik}
+              isReadOnly={isReadOnly}
               options={legalEntity || []}
               loading={loading}
             />
@@ -228,81 +423,38 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
           <Select
             label="Region"
             name="Basic.region"
-            isReadOnly={isReadOnly}
             formik={formik}
-            options={
-              Array.isArray(region)
-                ? region.map((reg) => ({
-                  label: reg,
-                  value: reg,
-                }))
-                : []
-            }
-            onChange={(val) => {
-              formik.setFieldValue("Basic.region", val || "");
-              formik.setFieldValue("Basic.state", "");
-              formik.setFieldValue("Basic.district", "");
-              formik.setFieldValue("Basic.city", "");
-              setSelectedStateCode("");
-              fetchAllStateName(val || "");
-            }}
+            isReadOnly={isReadOnly}
+            options={region || []}
+            onChange={handleRegionChange}
           />
 
           <Select
             label="State"
             name="Basic.state"
-            isReadOnly={isReadOnly}
             formik={formik}
-            options={
-              Array.isArray(allStateName)
-                ? allStateName.map((state) => ({
-                    label: state.name || state.stateName,
-                    value: state.name || state.stateName,
-                  }))
-                : []
-            }
-            onChange={(val) => {
-              formik.setFieldValue("Basic.state", val || "");
-              const matchedState = allStateName?.find(
-                (s) => (s.name || s.stateName) === val
-              );
-              setSelectedStateCode(matchedState?.code || matchedState?.stateCode || "");
-              handleselectDistrict(matchedState?.code || matchedState?.stateCode || "");
-            }}
+            isReadOnly={isReadOnly}
+            options={stateOptions}
+            onChange={handleStateChange}
           />
 
           <Select
             label="District"
             name="Basic.district"
-            isReadOnly={isReadOnly}
             formik={formik}
-            options={
-              Array.isArray(districtList)
-                ? districtList.map((district) => ({
-                  label: district,
-                  value: district,
-                }))
-                : []
-            }
-            onChange={(val) => {
-              handleSelectCity(val);
-            }}
+            isReadOnly={isReadOnly}
+            options={districtOptions}
+            onChange={handleDistrictChange}
           />
 
           <Select
             label="City"
             name="Basic.city"
-            isReadOnly={isReadOnly}
             formik={formik}
-            options={
-              Array.isArray(cities)
-                ? cities.map((city) => ({
-                  label: city,
-                  value: city,
-                }))
-                : []
-            }
+            isReadOnly={isReadOnly}
+            options={cityOptions}
           />
+
           <Input
             label="Email Address"
             name="Basic.emailAddress"
@@ -311,12 +463,21 @@ const BasicInfo = ({ formik, isReadOnly = false }) => {
             isReadOnly={isReadOnly}
             placeholder="example@hospital.com"
           />
+
           <Input
             label="Full Address"
             name="Basic.address"
             formik={formik}
             isReadOnly={isReadOnly}
             placeholder="123 Street Name, Area"
+          />
+
+          <Input
+            label="Pincode"
+            name="Basic.pincode"
+            formik={formik}
+            isReadOnly={isReadOnly}
+            placeholder="Enter pincode"
           />
         </div>
       </div>

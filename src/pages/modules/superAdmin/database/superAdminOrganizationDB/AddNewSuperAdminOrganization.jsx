@@ -20,6 +20,12 @@ import {
 } from "./SuperAdminOrganizationInitialValues";
 import HospitalData from "./superAdminOrganizationTabs/HospitalData";
 import AssignToEmployee from "./superAdminOrganizationTabs/AssignToEmployee";
+import Vendor, {
+  isVendorProfileType,
+  vendorInitialValues,
+} from "../../../salesExecutive/database/individualDatabase/tabs/Vendor";
+import useDropdown from "../../../../../hooks/dropdown/useDropdown";
+import * as Yup from "yup";
 
 const Select = ({
   label,
@@ -114,6 +120,119 @@ const Select = ({
   );
 };
 
+// ✅ Vendor Management segment -> extra "Vendor Type" dropdown (Supplier / Distributor)
+const VENDOR_SEGMENT_NAMES = ["vendor management"];
+const VENDOR_PROFILE_TYPES = ["Supplier", "Distributor"];
+const isVendorManagementSegment = (value) => {
+  const n = (value || "").toString().trim().toLowerCase();
+  return VENDOR_SEGMENT_NAMES.includes(n) || n.includes("vendor");
+};
+
+// Vendor validation - same rules as the individual vendor form
+// (vendorUniqueId is left out because its input is commented out inside Vendor.jsx)
+const vendorValidationSchema = Yup.object({
+  vendorType: Yup.string().required("Vendor Type is required"),
+  companyName: Yup.string().required("Company Name is required"),
+  contactNumber: Yup.string()
+    .required("Contact Number is required")
+    .matches(/^[0-9]{10}$/, "Contact Number must be 10 digits"),
+  emailAddress: Yup.string().required("Email is required").email("Invalid email"),
+  website: Yup.string().url("Invalid URL"),
+  organizationType: Yup.string().required("Organization Type is required"),
+  businessCategory: Yup.string().required("Business Category is required"),
+  region: Yup.string().required("Region is required"),
+  state: Yup.string().required("State is required"),
+  district: Yup.string().required("District is required"),
+  city: Yup.string().required("City is required"),
+  pincode: Yup.string()
+    .required("Pincode is required")
+    .matches(/^(?!0{6})[0-9]{6}$/, "Must be a valid 6-digit pincode"),
+  completeAddress: Yup.string().required("Complete Address is required"),
+  gstNumber: Yup.string().matches(
+    /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
+    "Invalid GST Number"
+  ),
+  panNumber: Yup.string().matches(
+    /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/,
+    "Invalid PAN (e.g. ABCDE1234F)"
+  ),
+  supplierType: Yup.string().when("vendorType", {
+    is: "Supplier",
+    then: (s) => s.required("Supplier Type is required"),
+    otherwise: (s) => s.notRequired(),
+  }),
+  distributorType: Yup.string().when("vendorType", {
+    is: "Distributor",
+    then: (s) => s.required("Distributor Type is required"),
+    otherwise: (s) => s.notRequired(),
+  }),
+});
+
+// ✅ Vendor form documents (file inputs) are File objects inside formik values, and
+// axios JSON-serializes a File to {} - that is why the uploads looked missing from the
+// payload. Same convention as the individual module: send the file name(s) instead
+// (a document that was not uploaded is sent as "").
+const VENDOR_FILE_FIELDS = [
+  "gstCertificate",
+  "panDocument",
+  "certificationDocument",
+  "pricingContract",
+  "licenseDocument",
+  "complianceDocuments",
+  "agreementDocument",
+  "otherDocuments",
+];
+
+const fileToName = (file) =>
+  !file ? "" : typeof file === "string" ? file : file.name || "";
+
+// payload sent to the API - files replaced by their names
+const withFileNames = (values) => {
+  const payload = { ...values };
+  VENDOR_FILE_FIELDS.forEach((field) => {
+    const value = payload[field];
+    if (value === undefined) return;
+    payload[field] = Array.isArray(value)
+      ? value.map(fileToName).filter(Boolean)
+      : fileToName(value);
+  });
+  return payload;
+};
+
+// ✅ The Vendor form (Vendor.jsx) uses flat field names - the same shape as the
+// individual module - but the organization API stores the vendor's basic details
+// under `Basic` (identical to the organization form). These two field sets carry
+// the same data, so map the flat vendor values onto `Basic` before submitting;
+// otherwise the API rejects the request with:
+//   Missing required fields: Basic.hospitalName, Basic.typeOfHospital,
+//   Basic.typeOfOrgOrHospital, Basic.address, Basic.city, Basic.district,
+//   Basic.state, Basic.region
+const VENDOR_TO_BASIC_FIELDS = {
+  hospitalName: "companyName",             // Basic.hospitalName       <- Company Name
+  typeOfHospital: "vendorType",            // Basic.typeOfHospital     <- Vendor Type
+  typeOfOrgOrHospital: "organizationType", // Basic.typeOfOrgOrHospital<- Organization Type
+  address: "completeAddress",              // Basic.address            <- Complete Address
+  district: "district",
+  state: "state",
+  region: "region",
+  city: "city",
+  emailAddress: "emailAddress",
+};
+
+// Copies the vendor values into `Basic`. A vendor value only overwrites `Basic`
+// when it is actually filled in - so values already written to `Basic` directly
+// (e.g. Basic.segment set from the Segment dropdown) are preserved.
+const withVendorBasicFields = (values) => {
+  const Basic = { ...(values.Basic || {}) };
+  Object.entries(VENDOR_TO_BASIC_FIELDS).forEach(([basicKey, vendorKey]) => {
+    const vendorValue = values[vendorKey];
+    if (vendorValue !== undefined && vendorValue !== null && vendorValue !== "") {
+      Basic[basicKey] = vendorValue;
+    }
+  });
+  return { ...values, Basic };
+};
+
 // ✅ CRITICAL FIX: Move WasteManagementTabs outside the main component
 const WasteManagementTabs = ({ formik, isReadOnly }) => {
   const wasteOptions = [
@@ -148,6 +267,85 @@ const WasteManagementTabs = ({ formik, isReadOnly }) => {
     </div>
   );
 };
+// ✅ Segment + vendor profile selectors. The parent owns both values (so it can decide
+//    whether the Vendor form has to be rendered); nothing is stored in formik here.
+const SegmentSelector = ({
+  isReadOnly = false,
+  selectedSegment = "",
+  onSegmentChange,
+  vendorProfileType = "",
+  onVendorProfileChange,
+}) => {
+  const { segmentState, segment, loading } = useDropdown();
+
+  useEffect(() => {
+    segmentState();
+  }, []);
+
+  const segmentOptions = Array.isArray(segment)
+    ? segment.map((seg) => ({ label: seg, value: seg }))
+    : [];
+  const vendorProfileOptions = VENDOR_PROFILE_TYPES.map((type) => ({
+    label: type,
+    value: type,
+  }));
+  // Segment = "Vendor Management" -> show the extra Vendor Type dropdown
+  const showVendorProfile = isVendorManagementSegment(selectedSegment);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+      <div className="flex flex-col w-full">
+        <label className="text-sm font-medium text-gray-700 mb-1">Segment</label>
+        <ReactSelect
+          options={segmentOptions}
+          isLoading={loading}
+          isDisabled={isReadOnly || loading}
+          value={
+            segmentOptions.find((opt) => opt.value === selectedSegment) || null
+          }
+          onChange={(selected) => {
+            // the parent resets the vendor profile when the segment changes
+            onSegmentChange?.(selected?.value || "");
+          }}
+          placeholder="Select Segment"
+          classNamePrefix="react-select"
+          isClearable
+        />
+      </div>
+
+      {showVendorProfile && (
+        <div className="flex flex-col w-full">
+          <label className="text-sm font-medium text-gray-700 mb-1">
+            Vendor Type
+          </label>
+          <ReactSelect
+            options={vendorProfileOptions}
+            isDisabled={isReadOnly}
+            value={
+              vendorProfileOptions.find(
+                (opt) => opt.value === vendorProfileType
+              ) || null
+            }
+            onChange={(selected) => onVendorProfileChange?.(selected?.value || "")}
+            placeholder="Select Type"
+            classNamePrefix="react-select"
+            isClearable
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ✅ small hint shown while the page waits for a selection (no tabs / no form yet)
+const HintBox = ({ children }) => (
+  <div className="p-4 m-2">
+    <div className="border border-dashed border-gray-300 rounded-md px-6 py-8 text-center text-sm text-gray-600">
+      {children}
+    </div>
+  </div>
+);
+
 const AddNewSuperAdminOrganization = ({ mode = "add" }) => {
   const { theme } = useTheme();
   const { id } = useParams();
@@ -164,19 +362,47 @@ const AddNewSuperAdminOrganization = ({ mode = "add" }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [touchedSteps, setTouchedSteps] = useState([]);
   const [wasteTab, setWasteTab] = useState("solid waste");
+  // Segment / vendor profile selection (drives the Vendor form below)
+  const [selectedSegment, setSelectedSegment] = useState("");
+  const [vendorProfileType, setVendorProfileType] = useState("");
 
   const isEdit = mode === "edit";
   const isView = mode === "view";
   const isReadOnly = isView;
 
+  // Add flow waits for a Segment -> no tabs / no form until it is picked.
+  // Edit / View keep showing the saved record (their tabs + form) as before.
+  const hasSegment = mode !== "add" || !!selectedSegment;
+  // the vendor flow only drives the add screen; edit / view keep the tabbed org form
+  const isVendorSegment =
+    mode === "add" && isVendorManagementSegment(selectedSegment);
+
+  // Segment = "Vendor Management" + any vendor profile (Supplier / Distributor) -> Vendor form
+  const showVendorForm =
+    isVendorSegment && isVendorProfileType(vendorProfileType);
+  // the tabbed organization form is only for non-vendor segments
+  const showOrgForm = hasSegment && !isVendorSegment;
+
   const formik = useFormik({
     initialValues: initialValues,
     enableReinitialize: true,
     validateOnMount: true,
-    validationSchema: validationSchema,
+    validationSchema: showVendorForm ? vendorValidationSchema : validationSchema,
     onSubmit: async (values) => {
       if (isView) return;
-      const apiData = transformFormDataToApi(values);
+
+      // Vendor form -> map the flat vendor fields onto `Basic` first so the
+      // organization API receives the required Basic.hospitalName /
+      // Basic.typeOfHospital / Basic.address / ... fields in the expected format.
+      const normalizedValues = showVendorForm
+        ? withVendorBasicFields(values)
+        : values;
+
+      // File objects (vendor documents) are replaced by their file names so the
+      // uploads are actually part of the JSON payload
+      const apiData = showVendorForm
+        ? withFileNames(normalizedValues)
+        : transformFormDataToApi(values);
       let success;
       if (isEdit) {
         success = await updateAdminOrganization(id, apiData);
@@ -203,8 +429,41 @@ const AddNewSuperAdminOrganization = ({ mode = "add" }) => {
     if (adminOrganizationalDBByID && (isEdit || isView)) {
       const formData = transformApiDataToForm(adminOrganizationalDBByID);
       formik.setValues(formData);
+      // reflect the saved segment (same field the Basic form uses: Basic.segment)
+      setSelectedSegment(formData?.Basic?.segment || "");
     }
   }, [adminOrganizationalDBByID, isEdit]);
+
+  // the vendor form has its own defaults - fill only the keys the
+  // organization initialValues do not define (never overwrite existing values)
+  useEffect(() => {
+    if (!showVendorForm) return;
+    const missing = {};
+    Object.entries(vendorInitialValues).forEach(([key, value]) => {
+      if (formik.values[key] === undefined) missing[key] = value;
+    });
+    if (Object.keys(missing).length) {
+      formik.setValues({ ...formik.values, ...missing }, false);
+    }
+  }, [showVendorForm]);
+
+  // The segment is stored in the same field the Basic form already uses
+  // (Basic.segment) - so it stays validated and saved exactly like before,
+  // for the organization form as well as for the vendor form.
+  const handleSegmentChange = (value) => {
+    formik.setFieldValue("Basic.segment", value || "");
+    formik.setFieldTouched("Basic.segment", true);
+    setSelectedSegment(value || "");
+    // segment changed -> reset the vendor profile (and hide the vendor form)
+    setVendorProfileType("");
+  };
+
+  // keep the selector in sync when the Segment field is changed directly inside
+  // the Basic Info tab (both write to the same field: Basic.segment)
+  useEffect(() => {
+    const segmentValue = formik.values?.Basic?.segment || "";
+    setSelectedSegment((prev) => (prev === segmentValue ? prev : segmentValue));
+  }, [formik.values?.Basic?.segment]);
 
   console.log("adminOrganizationalDBByID", adminOrganizationalDBByID)
 
@@ -227,6 +486,41 @@ const AddNewSuperAdminOrganization = ({ mode = "add" }) => {
 
   const renderSection = () => {
     const commonProps = { formik, isReadOnly };
+
+    // No segment selected -> show nothing (no tabs / no form)
+    if (!hasSegment) {
+      return (
+        <HintBox>
+          Please select a <b>Segment</b> to continue.
+        </HintBox>
+      );
+    }
+
+    // Vendor Management without Supplier / Distributor -> nothing to render yet
+    if (isVendorSegment && !showVendorForm) {
+      return (
+        <HintBox>
+          Please select <b>Vendor Type</b> (Supplier / Distributor) to continue.
+        </HintBox>
+      );
+    }
+
+    // Segment = "Vendor Management" + Supplier / Distributor -> Vendor form
+    // (same behaviour as the individual form: the vendor form replaces the tab content)
+    if (showVendorForm) {
+      return (
+        <div className="px-6 pt-6 pb-6">
+          <Vendor
+            {...commonProps}
+            selectedSector={{ label: selectedSegment, value: selectedSegment }}
+            selectedDoctor={{
+              label: vendorProfileType,
+              value: vendorProfileType,
+            }}
+          />
+        </div>
+      );
+    }
 
     switch (activeTab) {
       case "Basic Info":
@@ -360,28 +654,45 @@ const AddNewSuperAdminOrganization = ({ mode = "add" }) => {
           </h2>
         </div>
 
-        <div className="border-b border-gray-300">
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-2 sm:justify-between">
-            {tabs.map((tab, index) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => {
-                  setTouchedSteps((prev) => [...new Set([...prev, index])]);
-                  setActiveTab(tab);
-                  setCurrentStep(index);
-                }}
-                className={`whitespace-nowrap px-4 py-2 text-sm sm:text-md font-semibold border-b-2 transition-all duration-300
+        {/* Segment (+ Vendor Type) selection - separated from the form below */}
+        <div className="px-6 pt-6 pb-6">
+          <div className="w-full md:w-2/3">
+            <SegmentSelector
+              isReadOnly={isReadOnly}
+              selectedSegment={selectedSegment}
+              onSegmentChange={handleSegmentChange}
+              vendorProfileType={vendorProfileType}
+              onVendorProfileChange={setVendorProfileType}
+            />
+          </div>
+        </div>
+        <div className="border-b border-gray-200" />
+
+        {/* no segment selected -> no tabs */}
+        {showOrgForm && (
+          <div className="border-b border-gray-300">
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide px-2 sm:justify-between">
+              {tabs.map((tab, index) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => {
+                    setTouchedSteps((prev) => [...new Set([...prev, index])]);
+                    setActiveTab(tab);
+                    setCurrentStep(index);
+                  }}
+                  className={`whitespace-nowrap px-4 py-2 text-sm sm:text-md font-semibold border-b-2 transition-all duration-300
                       ${activeTab === tab
                     ? "border-[#355DC4] text-[#355DC4]"
                     : "border-transparent text-gray-500 hover:text-[#355DC4]"
                   }`}
-              >
-                {tab}
-              </button>
-            ))}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <form onSubmit={formik.handleSubmit}>
           {renderSection()}

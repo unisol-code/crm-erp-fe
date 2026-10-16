@@ -682,7 +682,7 @@ function ViewMonthlyPlanningDetails() {
                       </div>
 
                       {/* Concern */}
-                      <div className="flex flex-col md:flex-row md:items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                      {/* <div className="flex flex-col md:flex-row md:items-start gap-3 p-3 bg-gray-50 rounded-lg">
                         <div className="md:w-56">
                           <label className="text-sm font-medium text-gray-700">Any Concern Raised?</label>
                         </div>
@@ -711,7 +711,54 @@ function ViewMonthlyPlanningDetails() {
                             // disabled={!canEditMeetingDetails}
                           />
                         </div>
-                      </div>
+                      </div> */}
+
+{/* Concern */}
+<div className="flex flex-col md:flex-row md:items-start gap-3 p-3 bg-gray-50 rounded-lg">
+  <div className="md:w-56">
+    <label className="text-sm font-medium text-gray-700">
+      Any Concern Raised?
+    </label>
+  </div>
+
+  <div className="flex gap-4">
+    {["yes", "no"].map((opt) => (
+      <label
+        key={opt}
+        className="flex items-center gap-2 cursor-pointer"
+      >
+        <input
+          type="radio"
+          name="concernStatus"
+          value={opt}
+          checked={formik.values.concernStatus === opt}
+          onChange={(e) => {
+            formik.setFieldValue("concernStatus", e.target.value);
+
+            if (e.target.value === "no") {
+              formik.setFieldValue("concernText", "");
+            }
+          }}
+          className="h-4 w-4 cursor-pointer accent-blue-600"
+        />
+
+        <span className="text-sm capitalize">{opt}</span>
+      </label>
+    ))}
+  </div>
+
+  <div className="flex-1">
+    <TextInput
+      name="concernText"
+      value={formik.values.concernText}
+      onChange={(val) =>
+        formik.setFieldValue("concernText", val)
+      }
+      placeholder="Enter concern details..."
+    />
+  </div>
+</div>
+
 
                       {/* Want to Buy */}
                       <RadioGroup
