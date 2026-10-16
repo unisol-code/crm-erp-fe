@@ -16,6 +16,7 @@ import {
 } from "../AllSalesAnalytics/components/common";
 import { ChartCard, AchBadge } from "../AllSalesAnalytics/components/analytics";
 import Pagination from "../../../../components/uiComponents/pagination/Pagination.jsx";
+import ScrollableX from "../../../../components/uiComponents/scrollableTable/ScrollableX.jsx";
 import { TiEye } from "react-icons/ti";
 
 const colorMap = {
@@ -136,6 +137,15 @@ const DoctorProfileBreakdown = () => {
     { text: pageTitle },
   ];
 
+  const totalPlans = useMemo(
+    () =>
+      Object.values(specificIndividualData?.data?.monthlyPlanning || {}).reduce(
+        (acc, plans) => acc + (Array.isArray(plans) ? plans.length : 0),
+        0
+      ),
+    [specificIndividualData?.data?.monthlyPlanning]
+  );
+
   return (
     <div className="min-h-screen">
       <BreadCrumb linkText={breadcrumbItems} />
@@ -187,7 +197,7 @@ const DoctorProfileBreakdown = () => {
               onClick={handleBackToBreakdown}
               className="text-sm text-[var(--theme-primary)] font-medium hover:underline"
             >
-              ← Back to Doctor Profile Breakdown
+              â† Back to Doctor Profile Breakdown
             </button>
           </div>
         )}
@@ -203,7 +213,7 @@ const DoctorProfileBreakdown = () => {
           return (
             <div className="mt-4">
               <ChartCard title={`${selectedProfileType} - Doctor List`} subtitle="Click view for doctor details">
-                <div className="shadow overflow-x-auto rounded-t-2xl border border-gray-200">
+                <ScrollableX className="rounded-t-2xl border border-gray-200">
                   <Table>
                     <TableHeader className="sticky top-0 bg-white z-10">
                       <TableRow className="bg-[var(--theme-bg-light)]">
@@ -285,7 +295,7 @@ const DoctorProfileBreakdown = () => {
                       )}
                     </TableBody>
                   </Table>
-                </div>
+                </ScrollableX>
 
                 {!individualLoading && dataList.length > 0 && (
                   <div className="rounded-b-2xl bg-white shadow-lg border border-gray-200 overflow-hidden">
@@ -330,93 +340,159 @@ const DoctorProfileBreakdown = () => {
               <div className="space-y-4">
                 <div className="rounded-xl border border-[var(--theme-border)] bg-white p-4">
                   <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider mb-1">
+                    Basic Information
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider mb-1">
-                        Basic Information
+                      <p className="text-[10px] text-gray-500 font-medium">Full Name</p>
+                      <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                        {specificIndividualData.data.individual?.fullName || "-"}
                       </p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-[10px] text-gray-500 font-medium">Full Name</p>
-                          <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
-                            {specificIndividualData.data.individual?.fullName || "-"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 font-medium">Profile Type</p>
-                          <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
-                            {specificIndividualData.data.individual?.typeOfDoctorProfile || "-"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 font-medium">Designation</p>
-                          <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
-                            {specificIndividualData.data.individual?.designation || "-"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 font-medium">Hospital</p>
-                          <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
-                            {specificIndividualData.data.individual?.hospitalName || "-"}
-                          </p>
-                        </div>
-                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500 font-medium">Profile Type</p>
+                      <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                        {specificIndividualData.data.individual?.typeOfDoctorProfile || "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500 font-medium">Designation</p>
+                      <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                        {specificIndividualData.data.individual?.designation || "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500 font-medium">Hospital</p>
+                      <p className="text-sm font-semibold text-[var(--theme-text-primary)]">
+                        {specificIndividualData.data.individual?.hospitalName || "-"}
+                      </p>
                     </div>
                   </div>
+                </div>
+                <div className="ml-4">
+                  <button
+                    onClick={() => {
+                      navigate(`/database/view-newindividual/${specificIndividualData.data.individual?._id}`);
+                    }}
+                    className="text-[var(--theme-primary)] hover:bg-[var(--theme-primary)]/10 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                    aria-label="View individual details"
+                  >
+                    <TiEye size={18} />
+                  </button>
+                </div>
+              </div>
                 </div>
 
                 {/* Monthly Planning */}
                 {specificIndividualData.data.monthlyPlanning && Object.keys(specificIndividualData.data.monthlyPlanning).length > 0 ? (
-                  <div className="rounded-xl border border-[var(--theme-border)] bg-white p-4">
-                    <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider mb-3">
-                      Monthly Planning
-                    </p>
-                    <div className="space-y-3">
+                  <div className="rounded-xl border border-[var(--theme-border)] bg-white p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-lg bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] grid place-items-center">
+                          <LucideIcons.Calendar size={16} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
+                            Monthly Planning
+                          </p>
+                          <p className="text-[10px] text-gray-500 leading-none">
+                            {totalPlans} Total Plan{totalPlans !== 1 ? "s" : ""} ·{" "}
+                            {Object.keys(specificIndividualData.data.monthlyPlanning).length} Month{Object.keys(specificIndividualData.data.monthlyPlanning).length !== 1 ? "s" : ""}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
                       {Object.entries(specificIndividualData.data.monthlyPlanning).map(([month, plans]) => (
-                        <div key={month} className="border border-[var(--theme-border)] rounded-lg overflow-hidden">
-                          <div className="bg-gray-50 px-3 py-2 border-b border-[var(--theme-border)]">
-                            <p className="text-xs font-semibold text-[var(--theme-text-primary)]">{month}</p>
-                          </div>
-                          <div className="p-3">
-                            {Array.isArray(plans) && plans.length > 0 ? (
-                              <div className="space-y-2">
-                                {plans.map((plan, idx) => (
-                                  <div key={idx} className="flex flex-wrap items-center gap-2 text-xs">
-                                    <span className="font-medium text-[var(--theme-text-primary)]">
-                                      {plan.nameOfDoctor}
-                                    </span>
-                                    <span className="text-gray-400">|</span>
-                                    <span className="text-gray-600">{plan.selectOrganization}</span>
-                                    <span className="text-gray-400">|</span>
-                                    <span className="text-gray-500">
-                                      {plan.createPlanningForDate ? new Date(plan.createPlanningForDate).toLocaleDateString() : "-"}
-                                    </span>
-                                    {plan.productToBePromoted && Array.isArray(plan.productToBePromoted) && plan.productToBePromoted.length > 0 ? (
-                                      <>
-                                        <span className="text-gray-400">|</span>
-                                        <div className="flex flex-wrap gap-1">
-                                          {plan.productToBePromoted.map((product, pIdx) => (
-                                            <span
-                                              key={pIdx}
-                                              className="px-2 py-0.5 rounded-full bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] text-[10px] font-medium"
-                                            >
-                                              {product}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      </>
-                                    ) : plan.productToBePromoted && typeof plan.productToBePromoted === 'string' ? (
-                                      <>
-                                        <span className="text-gray-400">|</span>
-                                        <span className="px-2 py-0.5 rounded-full bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] text-[10px] font-medium">
-                                          {plan.productToBePromoted}
-                                        </span>
-                                      </>
-                                    ) : null}
-                                  </div>
-                                ))}
+                        <div
+                          key={month}
+                          className="overflow-hidden rounded-lg border border-[var(--theme-border)] bg-white transition-all duration-200 hover:border-[var(--theme-primary)]/50"
+                        >
+                          {/* Month Header */}
+                          <div className="px-4 py-3 bg-gray-50 border-b border-[var(--theme-border)]">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-[var(--theme-text-primary)] uppercase tracking-wider">
+                                  {month}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] text-[10px] font-medium border border-[var(--theme-primary)]/20">
+                                  {Array.isArray(plans) ? plans.length : 0} Plan{Array.isArray(plans) && plans.length !== 1 ? "s" : ""}
+                                </span>
                               </div>
+                            </div>
+                          </div>
+
+                          {/* Plans */}
+                          <div className="p-3 space-y-2">
+                            {Array.isArray(plans) && plans.length > 0 ? (
+                              plans.map((plan, idx) => (
+                                <div
+                                  key={plan._id || idx}
+                                  className="group flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-transparent bg-white hover:bg-gray-50 hover:border-[var(--theme-border)] transition-all duration-200"
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="font-medium text-[var(--theme-text-primary)] text-xs truncate">
+                                        {plan.nameOfDoctor}
+                                      </span>
+                                      {plan.selectOrganization && (
+                                        <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-medium border border-gray-200">
+                                          {plan.selectOrganization}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                      <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                                        <LucideIcons.Clock size={10} />
+                                        {plan.createPlanningForDate
+                                          ? new Date(plan.createPlanningForDate).toLocaleDateString(undefined, {
+                                              month: "short",
+                                              day: "numeric",
+                                              year: "numeric",
+                                          })
+                                          : "-"}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    {plan.productToBePromoted && Array.isArray(plan.productToBePromoted) && plan.productToBePromoted.length > 0 ? (
+                                      <div className="flex flex-wrap gap-1 max-w-xs">
+                                        {plan.productToBePromoted.map((product) => (
+                                          <span
+                                            key={product}
+                                            className="px-2 py-0.5 rounded-full border border-[var(--theme-primary)]/20 bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] text-[10px] font-medium"
+                                          >
+                                            {product}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    ) : plan.productToBePromoted && typeof plan.productToBePromoted === "string" ? (
+                                      <span className="px-2 py-0.5 rounded-full border border-[var(--theme-primary)]/20 bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] text-[10px] font-medium">
+                                        {plan.productToBePromoted}
+                                      </span>
+                                    ) : null}
+
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/${plan._id}`);
+                                      }}
+                                      className="text-[var(--theme-primary)] hover:bg-[var(--theme-primary)]/10 rounded-lg p-1.5 transition-colors group-hover:bg-[var(--theme-primary)]/20"
+                                      aria-label="View planning details"
+                                    >
+                                      <TiEye size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
                             ) : (
-                              <p className="text-xs text-gray-500">No plans for this month</p>
+                              <div className="px-3 py-3 text-center">
+                                <p className="text-xs text-gray-500">No plans for this month</p>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -424,8 +500,14 @@ const DoctorProfileBreakdown = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-[var(--theme-border)] bg-white p-4 text-center">
-                    <p className="text-xs text-gray-500">No monthly planning data available</p>
+                  <div className="rounded-xl border border-[var(--theme-border)] bg-white p-8 text-center">
+                    <div className="h-12 w-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
+                      <LucideIcons.Calendar size={20} />
+                    </div>
+                    <p className="text-sm text-[var(--theme-text-secondary)] font-medium">No monthly planning data</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Planning details will appear here once available.
+                    </p>
                   </div>
                 )}
 

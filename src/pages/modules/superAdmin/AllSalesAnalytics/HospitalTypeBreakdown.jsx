@@ -16,6 +16,7 @@ import {
 } from "../AllSalesAnalytics/components/common";
 import { ChartCard } from "../AllSalesAnalytics/components/analytics";
 import Pagination from "../../../../components/uiComponents/pagination/Pagination.jsx";
+import ScrollableX from "../../../../components/uiComponents/scrollableTable/ScrollableX.jsx";
 import { TiEye } from "react-icons/ti";
 
 const iconMap = {
@@ -208,7 +209,7 @@ const HospitalTypeBreakdown = () => {
           return (
             <div className="mt-4">
               <ChartCard title={`${labelMap[selectedHospitalType] || selectedHospitalType} - Organizations List`} subtitle="Click view for organization details">
-                <div className="shadow overflow-x-auto rounded-t-2xl border border-gray-200">
+                <ScrollableX className="shadow rounded-t-2xl border border-gray-200">
                   <Table>
                     <TableHeader className="sticky top-0 bg-white z-10">
                       <TableRow className="bg-[var(--theme-bg-light)]">
@@ -294,8 +295,8 @@ const HospitalTypeBreakdown = () => {
                       )}
                     </TableBody>
                   </Table>
-                </div>
-                
+                </ScrollableX>
+
                 {!orgLoading && orgDataList.length > 0 && (
                   <div className="rounded-b-2xl bg-white shadow-lg border border-gray-200 overflow-hidden">
                     <Pagination

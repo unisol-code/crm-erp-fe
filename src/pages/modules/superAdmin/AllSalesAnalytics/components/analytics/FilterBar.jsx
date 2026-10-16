@@ -145,7 +145,7 @@ export function FilterBar({
     if (!filters.region) return [];
     if (!Array.isArray(allStateName) || allStateName.length === 0) return [];
     return allStateName.map(state => ({
-      value: state.code || state,
+      value: state.name || state,
       label: state.name || state,
       stateCode: state.code,
     }));
