@@ -60,7 +60,7 @@ function Sidebar({ collapsed, setCollapsed }) {
           path: "/admin/sales-executive/employee-list",
         },
         { id: 32, name: "Target Sheet",
-          //  path: "/sales-executive/target-sheet"
+           path: "/admin/sales-executive/target-sheet"
            },
         // {
         //   id: 33,
