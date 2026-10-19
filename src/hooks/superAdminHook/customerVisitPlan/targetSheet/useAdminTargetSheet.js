@@ -8,6 +8,9 @@ import {
   allEmployeeDetailsAtom,
   teamWiseTargetSheetListAtom,
   universalTargetSheetAtom,
+  idWiseTargetSheetAtom,
+  employeewiseTargetSheetAtom,
+  myApprovalQueueAtom,
 } from "../../../../state/targetsheetAdmin/adminTargetSheetState";
 
 const useAdminTargetSheet = () => {
@@ -22,6 +25,12 @@ const useAdminTargetSheet = () => {
     useRecoilState(teamWiseTargetSheetListAtom);
   const [universalTargetSheet, setUniversalTargetSheet] =
     useRecoilState(universalTargetSheetAtom);
+  const [idWiseTargetSheet, setIdWiseTargetSheet] =
+    useRecoilState(idWiseTargetSheetAtom);
+  const [employeewiseTargetSheet, setEmployeewiseTargetSheet] =
+    useRecoilState(employeewiseTargetSheetAtom);
+  const [myApprovalQueue, setMyApprovalQueue] =
+    useRecoilState(myApprovalQueueAtom);
 
   // GET /api/adminTargetSheet/get-allemployee
   // Response shape: { success: true, data: [{ employeeId, fullName }] }
@@ -78,6 +87,100 @@ const useAdminTargetSheet = () => {
 
   const resetUniversalTargetSheet = () => {
     setUniversalTargetSheet(null);
+  };
+
+  // GET /api/adminTargetSheet/showEmployeewiseTargetSheet/:id
+  const fetchEmployeewiseTargetSheet = async (id) => {
+    if (!id) {
+      toast.error("Employee id is required to fetch employee-wise target sheet");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}adminTargetSheet/showEmployeewiseTargetSheet/${id}`,
+      });
+      if (res) {
+        setEmployeewiseTargetSheet(res);
+      }
+    } catch (err) {
+      console.error("Error fetching employee-wise target sheet:", err);
+      setError(err);
+      toast.error("Failed to fetch employee-wise target sheet");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetEmployeewiseTargetSheet = () => {
+    setEmployeewiseTargetSheet(null);
+  };
+
+  // GET /api/adminTargetSheet/my-approval-queue?employeeId=...
+  const fetchMyApprovalQueue = async ({ employeeId } = {}) => {
+    if (!employeeId) {
+      toast.error("Employee id is required to fetch my approval queue");
+      return;
+    }
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (employeeId) params.append("employeeId", employeeId);
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}adminTargetSheet/my-approval-queue?${params.toString()}`,
+      });
+      if (res) {
+        setMyApprovalQueue(res);
+        return res;
+      }
+    } catch (err) {
+      console.error("Error fetching my approval queue:", err);
+      setError(err);
+      toast.error("Failed to fetch my approval queue");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetMyApprovalQueue = () => {
+    setMyApprovalQueue(null);
+  };
+
+
+  // GET /api/adminTargetSheet/get-showIdwiseTargetSheet/:id
+  const fetchIdWiseTargetSheet = async (id, salesId) => {
+    if (!id) {
+      toast.error("Id is required to fetch id-wise target sheet");
+      return;
+    }
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (salesId) {
+        params.append("salesId", salesId);
+      }
+      const query = params.toString();
+
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}adminTargetSheet/get-showIdwiseTargetSheet/${id}${query ? `?${query}` : ""}`,
+      });
+      if (res) {
+        setIdWiseTargetSheet(res);
+      }
+    } catch (err) {
+      console.error("Error fetching id-wise target sheet:", err);
+      setError(err);
+      toast.error("Failed to fetch id-wise target sheet");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetIdWiseTargetSheet = () => {
+    setIdWiseTargetSheet(null);
   };
 
   // POST /api/adminTargetSheet/review-target-sheet/:id
@@ -154,6 +257,15 @@ const useAdminTargetSheet = () => {
     universalTargetSheet,
     fetchUniversalTargetSheet,
     resetUniversalTargetSheet,
+    idWiseTargetSheet,
+    fetchIdWiseTargetSheet,
+    resetIdWiseTargetSheet,
+    employeewiseTargetSheet,
+    fetchEmployeewiseTargetSheet,
+    resetEmployeewiseTargetSheet,
+    myApprovalQueue,
+    fetchMyApprovalQueue,
+    resetMyApprovalQueue,
     reviewTargetSheet,
   };
 };

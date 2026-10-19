@@ -3,6 +3,7 @@ import { TiEye } from "react-icons/ti";
 import { useTheme } from "../../../hooks/theme/useTheme.js";
 import LoaderSpinner from "../loader/LoaderSpinner.jsx";
 import Pagination from "../pagination/Pagination.jsx";
+import ScrollableX from "../../uiComponents/scrollableTable/ScrollableX.jsx";
 
 /**
  * Reusable data table.
@@ -61,7 +62,7 @@ const DataTable = ({
         style={{ backgroundColor: theme.secondaryColor }}
       />
 
-      <div className="shadow overflow-x-auto rounded-t-2xl border border-gray-200">
+      <ScrollableX className="shadow rounded-t-2xl">
         <table className="min-w-full text-sm text-left text-gray-700 table-auto">
           <thead
             className="sticky top-0 z-10 uppercase bg-gray-100 border-b border-gray-300"
@@ -143,7 +144,7 @@ const DataTable = ({
             )}
           </tbody>
         </table>
-      </div>
+      </ScrollableX>
 
       {pagination && (
         <div className="rounded-b-2xl bg-white shadow-lg border border-gray-200 overflow-hidden">
@@ -158,6 +159,7 @@ const DataTable = ({
         </div>
       )}
     </div>
+    
   );
 };
 

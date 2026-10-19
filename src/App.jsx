@@ -116,6 +116,9 @@ import EnviroOrganizationDetails from "./pages/modules/superAdmin/AllSalesAnalyt
 import EnviroIndividualDetails from "./pages/modules/superAdmin/AllSalesAnalytics/EnviroIndividualDetails";
 import AdminTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminTargetSheet";
 import AdminUniversalTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminUniversalTargetSheet";
+import AdminIndividualWiseTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminIndividualWiseTargetSheet";
+import AdminEmployeeWiseTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEmployeeWiseTargetSheet";
+import AdminApprovalPendingEMpSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminApprovalPendingEMpSheet";
 function App() {
   const [activeTab, setActiveTab] = useState("/crm-dashboard");
 
@@ -725,7 +728,39 @@ function App() {
             </SuperAdminLayout>
           }
         />
-
+        <Route
+          path="/admin/sales-executive/target-sheet/individual-wise-target-sheet/:id"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <AdminIndividualWiseTargetSheet />
+            </SuperAdminLayout>
+          }
+        />
+        <Route
+          path="/admin/sales-executive/target-sheet/employee-wise-target-sheet/:id"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <AdminEmployeeWiseTargetSheet />
+            </SuperAdminLayout>
+          }
+        />
+        <Route
+          path="/admin/sales-executive/target-sheet/my-approval-queue"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <AdminApprovalPendingEMpSheet />
+            </SuperAdminLayout>
+          }
+        />
         {/* <Route
           path="/organization-details/:id"
           element={<DatabaseCustomerDetails />}

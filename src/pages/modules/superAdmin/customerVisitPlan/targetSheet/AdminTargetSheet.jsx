@@ -47,7 +47,7 @@ const AdminTargetSheet = () => {
   }, [teamDrillId]);
 
   useEffect(() => {
-    if (activeTab === "employeeList" && allEmployeeList?.length === 0) {
+    if (activeTab === "employeeList" ) {
       fetchAllEmployeeList();
     }
   }, [activeTab]);
@@ -127,8 +127,12 @@ const AdminTargetSheet = () => {
           "-"
         ),
     },
-    { key: "fullName", header: "Name", align: "center" },
     { key: "employeeId", header: "EmpID", align: "left" },
+     { key: "fullName", header: "Name", align: "center" },
+     { key: "designation", header: "Designation", align: "center" },
+      { key: "reportingManagerName", header: "Reporting Manager", align: "center" },
+       { key: "totalSheetCount", header: "Total Sheets", align: "center" },
+        { key: "pendingSheetCount", header: "Pending Sheets", align: "center" },
   ];
 
   return (
@@ -235,6 +239,12 @@ const AdminTargetSheet = () => {
           <DataTable
             columns={empColumns}
             rows={empPaginatedRows}
+            showAction
+            viewKey="_id"
+            onRowView={(id) => {
+              navigate(`/admin/sales-executive/target-sheet/employee-wise-target-sheet/${id}`);
+            }}
+            actionLabel="View Target Sheet"
             loading={loading}
             emptyMessage="No employee data available."
             srNoStartIndex={(empPage - 1) * empLimit}

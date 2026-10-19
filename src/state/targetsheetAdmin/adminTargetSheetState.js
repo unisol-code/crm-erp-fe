@@ -21,3 +21,18 @@ export const universalTargetSheetAtom = atom({
   key: "universalTargetSheetAtom",
   default: null,
 });
+
+export const employeewiseTargetSheetAtom = atom({
+  key: "employeewiseTargetSheetAtom",
+  default: null,
+});
+
+export const idWiseTargetSheetAtom = atom({
+  key: "idWiseTargetSheetAtom",
+  default: null,
+});
+
+export const myApprovalQueueAtom = atom({
+  key: "myApprovalQueueAtom",
+  default: null,
+});
