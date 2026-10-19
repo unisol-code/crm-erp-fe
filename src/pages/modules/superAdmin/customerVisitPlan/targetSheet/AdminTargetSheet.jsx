@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import BreadCrumb from "../../../../../components/uiComponents/breadcrumb/BreadCrumb.jsx";
 import DataTable from "../../../../../components/uiComponents/dataTable/DataTable.jsx";
 import { useTheme } from "../../../../../hooks/theme/useTheme.js";
@@ -16,6 +17,7 @@ const Stat = ({ label, value }) => (
 
 const AdminTargetSheet = () => {
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const {
     loading,
     allEmployeeList,
@@ -56,9 +58,16 @@ const AdminTargetSheet = () => {
     if (tab === "employeeList") setEmpPage(1);
   };
 
-  // Eye icon in Action column: drill into this member's sub-team
-  const handleTeamView = (id) => {
+  // Eye icon in Action column (teamWise tab).
+  // Route to the Universal Target Sheet page ONLY when the current viewing
+  // context has its own target (viewing.hasOwnTarget) AND the clicked row also
+  // has its own target (row.hasOwnTarget). Otherwise drill into that row's team.
+  const handleTeamView = (id, row) => {
     if (!id) return;
+    if (viewing?.hasOwnTarget && row?.hasOwnTarget) {
+      navigate(`/admin/sales-executive/target-sheet/universal-target-sheet/${id}`);
+      return;
+    }
     setTeamDrillId(id);
     setPage(1);
   };

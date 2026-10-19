@@ -80,6 +80,39 @@ const useAdminTargetSheet = () => {
     setUniversalTargetSheet(null);
   };
 
+  // POST /api/adminTargetSheet/review-target-sheet/:id
+  // Body: { action, remarks }  — e.g. action: "approve" | "reject"
+  const reviewTargetSheet = async (id, { action, remarks } = {}) => {
+    if (!id) {
+      toast.error("Target sheet id is required to review");
+      return false;
+    }
+    if (!action) {
+      toast.error("Review action is required");
+      return false;
+    }
+    setLoading(true);
+    try {
+      const res = await fetchData({
+        method: "POST",
+        url: `${conf.apiBaseUrl}adminTargetSheet/review-target-sheet/${id}`,
+        data: { action, remarks },
+      });
+      if (res) {
+        toast.success(res?.message || "Target sheet reviewed successfully");
+        return res;
+      }
+      return false;
+    } catch (err) {
+      console.error("Error reviewing target sheet:", err);
+      setError(err);
+      toast.error(err?.response?.data?.message || "Failed to review target sheet");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // GET /api/adminTargetSheet/get-adminshowTeamWiseTargetSheet
   // Optional page/limit are appended only when provided.
   const fetchTeamWiseTargetSheetList = async (page, limit,_id) => {
@@ -121,6 +154,7 @@ const useAdminTargetSheet = () => {
     universalTargetSheet,
     fetchUniversalTargetSheet,
     resetUniversalTargetSheet,
+    reviewTargetSheet,
   };
 };
 

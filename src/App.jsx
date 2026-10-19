@@ -115,6 +115,7 @@ import EnviroEmployeeBreakdown from "./pages/modules/superAdmin/AllSalesAnalytic
 import EnviroOrganizationDetails from "./pages/modules/superAdmin/AllSalesAnalytics/EnviroOrganizationDetails";
 import EnviroIndividualDetails from "./pages/modules/superAdmin/AllSalesAnalytics/EnviroIndividualDetails";
 import AdminTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminTargetSheet";
+import AdminUniversalTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminUniversalTargetSheet";
 function App() {
   const [activeTab, setActiveTab] = useState("/crm-dashboard");
 
@@ -710,6 +711,17 @@ function App() {
               setActiveTab={setActiveTab}
             >
               <AdminTargetSheet />
+            </SuperAdminLayout>
+          }
+        />
+        <Route
+          path="/admin/sales-executive/target-sheet/universal-target-sheet/:id"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <AdminUniversalTargetSheet />
             </SuperAdminLayout>
           }
         />
