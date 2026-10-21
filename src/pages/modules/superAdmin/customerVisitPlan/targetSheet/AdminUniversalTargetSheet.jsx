@@ -16,6 +16,23 @@ const currency = (val) =>
       }).format(val)
     : "₹ 0";
 
+// Only this status allows the admin to Approve / Reject the target sheet
+const PENDING_CEO_APPROVAL = "pending_CEO_approval";
+
+// Same colour convention used across the sibling target sheet pages
+// ("pending" is checked first so pending_CEO_approval is not treated as approved)
+const statusColor = (status = "") => {
+  const s = status.toLowerCase();
+  if (s.includes("reject")) return "bg-red-100 text-red-700";
+  if (s.includes("pending")) return "bg-yellow-100 text-yellow-700";
+  if (s.includes("approv")) return "bg-green-100 text-green-700";
+  return "bg-gray-100 text-gray-600";
+};
+
+// "CEO_rejected" -> "CEO Rejected"
+const formatStatus = (status) =>
+  status ? String(status).replace(/_/g, " ") : "N/A";
+
 const Stat = ({ label, value }) => (
   <div className="relative overflow-hidden rounded-xl bg-white border border-gray-200 shadow-sm p-4 flex-1 min-w-[135px]">
     <span className="absolute left-0 top-0 h-full w-1.5 bg-orange-500" />
@@ -269,32 +286,46 @@ const AdminUniversalTargetSheet = () => {
                         >
                           <FiEye size={18} />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openReview(
-                              org?.sheetId,
-                              "approve",
-                              org?.organization || "N/A"
-                            )
-                          }
-                          className="px-3 py-1 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-all"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openReview(
-                              org?.sheetId,
-                              "reject",
-                              org?.organization || "N/A"
-                            )
-                          }
-                          className="px-3 py-1 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-all"
-                        >
-                          Reject
-                        </button>
+                        {org?.status === PENDING_CEO_APPROVAL ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openReview(
+                                  org?.sheetId,
+                                  "approve",
+                                  org?.organization || "N/A"
+                                )
+                              }
+                              className="px-3 py-1 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-all"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openReview(
+                                  org?.sheetId,
+                                  "reject",
+                                  org?.organization || "N/A"
+                                )
+                              }
+                              className="px-3 py-1 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-all"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        ) : (
+                          /* Already reviewed / not pending -> show status as remark */
+                          <span
+                            title={`Status: ${formatStatus(org?.status)}`}
+                            className={`inline-block px-3 py-1 text-sm font-semibold rounded-md ${statusColor(
+                              org?.status
+                            )}`}
+                          >
+                            {formatStatus(org?.status)}
+                          </span>
+                        )}
                         <button
                           type="button"
                           onClick={() => toggleOrg(idx)}

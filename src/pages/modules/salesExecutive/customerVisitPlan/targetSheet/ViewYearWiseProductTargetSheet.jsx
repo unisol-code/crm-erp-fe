@@ -34,7 +34,7 @@ const ViewYearWiseProductTargetSheet = () => {
   const [hospitalLimit, setHospitalLimit] = useState(10);
   const [individualPage, setIndividualPage] = useState(1);
   const [individualLimit, setIndividualLimit] = useState(10);
-  const [activeTab, setActiveTab] = useState("productWise");
+  const [activeTab, setActiveTab] = useState("individualWise");
 
   useEffect(() => {
     if (id) {
@@ -408,6 +408,7 @@ const ViewYearWiseProductTargetSheet = () => {
                     <th className="p-4 text-base font-semibold text-center">
                       Type of Surgery
                     </th>
+                    <th className="p-4 text-base font-semibold text-center">Status</th>
                     <th className="p-4 text-base font-semibold text-center">Action</th>
                   </tr>
                 </thead>
@@ -456,6 +457,9 @@ const ViewYearWiseProductTargetSheet = () => {
                               {s.type} 
                             </span>
                           ))}
+                        </td>
+                         <td className="p-2 text-center text-[17px] font-normal text-[#252C58] align-middle">
+                          {item.status || "N/A"}
                         </td>
                         <td className="p-2 text-center text-[19px] font-normal text-[#252C58] align-middle">
                           <div className="flex justify-center">
