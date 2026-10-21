@@ -4,6 +4,7 @@ import { useTheme } from "../../../../../hooks/theme/useTheme";
 import { useParams } from "react-router-dom";
 import useMonthlyPlanning from "../../../../../hooks/salesExecutiveHook/customerVisitPlan/useMonthlyPlanning";
 import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderSpinner";
+import MonthlyProductTargetPlanningTable from "./MonthlyProductTargetPlanningTable";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import Button from "../../../../../components/uiComponents/button/Button";
@@ -194,7 +195,7 @@ const TextArea = ({ name, value, onChange, placeholder, rows = 2, disabled = fal
 function ViewMonthlyPlanningDetails() {
   const { theme } = useTheme();
   const { month, year, id } = useParams();
-  const { fetchMonthlyPlanningDetailsById, monthlyPlanningDetails, loading, updateMonthlyPlanning } = useMonthlyPlanning();
+  const { fetchMonthlyPlanningDetailsById, monthlyPlanningDetails, loading, updateMonthlyPlanning, fetchTargetSheetYearlySummary, targetSheetYearlySummary, resetTargetSheetYearlySummary } = useMonthlyPlanning();
 
   useEffect(() => {
     if (id) {
@@ -204,6 +205,56 @@ function ViewMonthlyPlanningDetails() {
 
   const data = monthlyPlanningDetails?.data || {};
   console.log("Monthly Planning Details:", monthlyPlanningDetails);
+
+  // ===== Monthly Product Target Planning (yearly target summary) =====
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const yearlySummaryData = targetSheetYearlySummary?.summary || null;
+  const yearlySummaryFilters = targetSheetYearlySummary?.filters || {};
+  // API message shown when no target sheet exists (success: false)
+  const yearlySummaryMessage =
+    targetSheetYearlySummary?.success === false
+      ? targetSheetYearlySummary?.message || ""
+      : "";
+
+  // Fetch yearly target summary using this planning's organization / individual / products
+  useEffect(() => {
+    const organization = data?.selectOrganization;
+    const individualName = data?.nameOfDoctor;
+    const productName = Array.isArray(data?.productToBePromoted)
+      ? data.productToBePromoted.filter(Boolean)
+      : [];
+
+    // Incomplete data → clear any stale summary (e.g. left over from another page)
+    if (!organization || !individualName || productName.length === 0) {
+      resetTargetSheetYearlySummary();
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      setSummaryLoading(true);
+      try {
+        await fetchTargetSheetYearlySummary({
+          organization,
+          individualName,
+          productName,
+          // Prefer the planning's stored year, else derive from planning date, else current year
+          year:
+            monthlyPlanningDetails?.year ||
+            (data.createPlanningForDate
+              ? String(new Date(data.createPlanningForDate).getFullYear())
+              : String(new Date().getFullYear())),
+        });
+      } finally {
+        if (!cancelled) setSummaryLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthlyPlanningDetails?.data]);
 
   // Get validation flags using useMemo for performance
   const validation = useMemo(
@@ -497,6 +548,16 @@ function ViewMonthlyPlanningDetails() {
               <Item label="Product to Promote" value={data.productToBePromoted} />
               <Item label="Call Objective" value={data.callObjective} />
             </div>
+          </div>
+
+          {/* Monthly Product Target Planning (yearly target summary) */}
+          <div className="px-6 pb-6">
+            <MonthlyProductTargetPlanningTable
+              data={yearlySummaryData}
+              filters={yearlySummaryFilters}
+              loading={summaryLoading}
+              message={yearlySummaryMessage}
+            />
           </div>
 
           {/* Meeting Form Section */}

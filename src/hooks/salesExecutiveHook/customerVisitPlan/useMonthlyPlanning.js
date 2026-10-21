@@ -1,9 +1,9 @@
 import { useRecoilState } from "recoil";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import useFetch from "../../useFetch";
 import conf from "../../../config/index";
 import { toast } from "react-toastify";
-import { monthlyPlanningDetailsStateAtom, monthlyPlanningListStateAtom, monthWisePlanningStateAtom, oneMonthPlanningStateAtom ,monthlySummaryStateAtom} from "../../../state/mothlyPlanningState/monthlyPlanningState";
+import { monthlyPlanningDetailsStateAtom, monthlyPlanningListStateAtom, monthWisePlanningStateAtom, oneMonthPlanningStateAtom ,monthlySummaryStateAtom, targetSheetYearlySummaryStateAtom} from "../../../state/mothlyPlanningState/monthlyPlanningState";
 import Swal from "sweetalert2";
 import { confirmAlert } from "../../../utils/alertToast";
 
@@ -14,7 +14,10 @@ const useMonthlyPlanning = () => {
     const [oneMonthPlanningList, setOneMonthPlanningList] = useRecoilState(oneMonthPlanningStateAtom);
     const [monthlyPlanningDetails, setMonthlyPlanningDetails] = useRecoilState(monthlyPlanningDetailsStateAtom)
     const [monthWisePlanning, setMonthWisePlanning] = useRecoilState(monthWisePlanningStateAtom);
-   const [monthlySummary, setMonthlySummary] = useRecoilState(monthlySummaryStateAtom);
+    const [monthlySummary, setMonthlySummary] = useRecoilState(monthlySummaryStateAtom);
+    const [targetSheetYearlySummary, setTargetSheetYearlySummary] = useRecoilState(targetSheetYearlySummaryStateAtom);
+    // Guards against a stale in-flight yearly-summary response overwriting a newer one
+    const yearlySummaryReqIdRef = useRef(0);
     const fetchMonthlyPlanningList = async (page, limit, fromDate, toDate) => {
         setLoading(true);
         try {
@@ -79,6 +82,45 @@ const useMonthlyPlanning = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+const fetchTargetSheetYearlySummary = async ({ organization, individualName, productName, year } = {}) => {
+  const reqId = ++yearlySummaryReqIdRef.current;
+  try {
+    const params = new URLSearchParams();
+    if (organization) params.append("organization", organization);
+    if (individualName) params.append("individualName", individualName);
+    // Handle productName - can be string or array
+    if (productName) {
+      if (Array.isArray(productName)) {
+        productName.forEach((product) => {
+          if (product) params.append("productName", product);
+        });
+      } else {
+        params.append("productName", productName);
+      }
+    }
+    if (year) params.append("year", year);
+    const res = await fetchData({
+      method: "GET",
+      url: `${conf.apiBaseUrl}targets/target-sheet-yearly-summary-for-planning?${params.toString()}`
+    });
+    if (res) {
+      // Ignore stale responses (a newer request/reset happened while this was in flight)
+      if (reqId === yearlySummaryReqIdRef.current) {
+        setTargetSheetYearlySummary(res);
+      }
+      return res;
+    }
+  } catch (err) {
+    console.error("Error while fetching target sheet yearly summary:", err);
+    toast.error("Failed to fetch target sheet yearly summary");
+  }
+};
+
+    const resetTargetSheetYearlySummary = () => {
+        yearlySummaryReqIdRef.current += 1; // invalidate any in-flight fetch
+        setTargetSheetYearlySummary(null);
     };
 
 
@@ -225,7 +267,10 @@ const useMonthlyPlanning = () => {
         deleteMonthlyPlanning,
         updateMonthlyPlanning,
         fetchMonthWisePlanning,
-        monthWisePlanning,fetchMonthlySummary,monthlySummary
+        monthWisePlanning,fetchMonthlySummary,monthlySummary,
+        fetchTargetSheetYearlySummary,
+        targetSheetYearlySummary,
+        resetTargetSheetYearlySummary
     };
 };
 

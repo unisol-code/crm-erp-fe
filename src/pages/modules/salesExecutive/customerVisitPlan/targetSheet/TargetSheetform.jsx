@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Select from "react-select";
 
 import BreadCrumb from "../../../../../components/uiComponents/breadcrumb/BreadCrumb";
+import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderSpinner";
 import Button from "../../../../../components/uiComponents/button/Button";
 import { useTheme } from "../../../../../hooks/theme/useTheme";
 import useDropdown from "../../../../../hooks/dropdown/useDropdown";
@@ -218,6 +219,7 @@ const createEmptyProduct = () => {
 const validationSchema = Yup.object({
   organization: Yup.string().required("Organization is required"),
   city: Yup.string().required("City is required"),
+  individualName: Yup.string().required("Individual name is required"),
   year: Yup.string().required("Year is required"),
 
   products: Yup.array()
@@ -248,6 +250,8 @@ const validationSchema = Yup.object({
 const TargetSheetForm = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
+  // Route param — present when navigating here with an id (edit mode)
+  const { id: editId } = useParams();
 
   const dropdownHook = useDropdown();
 
@@ -258,13 +262,23 @@ const TargetSheetForm = () => {
     fetchProductDetails,
     resetProductDetails,
     fetchProductTypes,
+    fetchOrganizationWiseIndividuals,
   } = dropdownHook;
 
   const productList = dropdownHook.productList;
   const productTypes = dropdownHook.productTypes;
   const productDetails = dropdownHook.productDetails;
+  const organizationWiseIndividuals = dropdownHook.organizationWiseIndividuals;
 
-  const { createTargetSheet, loading } = useTargetSheet();
+  const {
+    createTargetSheet,
+    updateTargetSheet,
+    loading,
+    fetchIndividualIdWiseTargetSheet,
+    individualIdWiseTargetSheet,
+    individualIdWiseTargetLoading,
+    resetIndividualIdWiseTargetSheet,
+  } = useTargetSheet();
 
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [selectedProductIndex, setSelectedProductIndex] = useState(null);
@@ -320,6 +334,7 @@ const TargetSheetForm = () => {
     initialValues: {
       organization: "",
       city: "",
+      individualName: "",
       year: new Date().getFullYear().toString(),
       products: [createEmptyProduct()],
     },
@@ -341,6 +356,13 @@ const TargetSheetForm = () => {
         const payload = {
           organization: values.organization,
           city: values.city,
+          individualName: values.individualName,
+          uniqueCodeOrganization: selectedOrganizationCode,
+          uniqueCodeIndividual: selectedIndividualCode,
+          speciality: selectedIndividualSpeciality,
+          typeOfSurgeryPerformed: selectedIndividualSurgeryTypes,
+          // individualUniqueCode: selectedIndividualCode,
+          // individualSpeciality: selectedIndividualSpeciality,
           year: String(values.year),
 
           products: filledProducts.map((product) => {
@@ -398,7 +420,9 @@ const TargetSheetForm = () => {
           JSON.stringify(payload, null, 2)
         );
 
-        const res = await createTargetSheet(payload);
+        const res = editId
+          ? await updateTargetSheet(editId, payload)
+          : await createTargetSheet(payload);
 
         if (res?.success) {
           resetForm();
@@ -406,7 +430,12 @@ const TargetSheetForm = () => {
         }
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error("Error while creating target sheet:", error);
+        console.error(
+          editId
+            ? "Error while updating target sheet:"
+            : "Error while creating target sheet:",
+          error
+        );
       } finally {
         setSubmitting(false);
       }
@@ -421,6 +450,128 @@ const TargetSheetForm = () => {
     () => toArray(organizationRawData),
     [organizationRawData]
   );
+
+  /* =========================================================
+     SELECTED ORGANIZATION / INDIVIDUAL CODE (read-only fields)
+  ========================================================= */
+
+  const [selectedOrganizationCode, setSelectedOrganizationCode] = useState("");
+  const [selectedIndividualCode, setSelectedIndividualCode] = useState("");
+  const [selectedIndividualSpeciality, setSelectedIndividualSpeciality] = useState("");
+  const [selectedIndividualSurgeryTypes, setSelectedIndividualSurgeryTypes] = useState([]);
+
+  // Ref to avoid the org-change effect wiping the individual prefilled from an existing sheet
+  const isPrefillingSheetRef = useRef(false);
+
+  /* =========================================================
+     FETCH TARGET SHEET BY ID (edit mode — :id in route)
+  ========================================================= */
+
+  useEffect(() => {
+    if (editId) {
+      fetchIndividualIdWiseTargetSheet({ id: editId });
+    } else {
+      resetIndividualIdWiseTargetSheet();
+    }
+    return () => {
+      resetIndividualIdWiseTargetSheet();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId]);
+
+  /* =========================================================
+     PREFILL FORM — when id-wise target sheet data arrives
+  ========================================================= */
+
+  useEffect(() => {
+    const sheet = individualIdWiseTargetSheet?.data;
+    if (!sheet) return;
+
+    const products = (Array.isArray(sheet.products) ? sheet.products : []).map(
+      (product) => {
+        const empty = createEmptyProduct();
+        return {
+          ...empty,
+          productType: product?.productType || "",
+          name: product?.name || "",
+          price: product?.price ?? "",
+          enteredQuantity: product?.enteredQuantity ?? "",
+          overAllTargetPrice: numberValue(product?.overAllTargetPrice),
+          achievement: product?.achievement || empty.achievement,
+        };
+      }
+    );
+
+    isPrefillingSheetRef.current = true;
+    formik.setValues(
+      {
+        organization: sheet.organization || "",
+        city: sheet.city || "",
+        individualName: sheet.individualName || "",
+        year: String(sheet.year || new Date().getFullYear().toString()),
+        products: products.length ? products : [createEmptyProduct()],
+      },
+      false
+    );
+    setSelectedOrganizationCode(sheet.uniqueCodeOrganization || "");
+    setSelectedIndividualCode(sheet.uniqueCodeIndividual || "");
+    setSelectedIndividualSpeciality(sheet.speciality || "");
+    const sheetTypes = sheet.typeOfSurgeryPerformed;
+    setSelectedIndividualSurgeryTypes(
+      Array.isArray(sheetTypes)
+        ? sheetTypes
+        : sheetTypes
+          ? [sheetTypes]
+          : []
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [individualIdWiseTargetSheet]);
+
+  useEffect(() => {
+    if (!formik.values.organization) {
+      setSelectedOrganizationCode("");
+      return;
+    }
+    const selectedOrg = organizationArray.find(
+      (org) =>
+        (org?.hospitalName ||
+          org?.organizationName ||
+          org?.name) === formik.values.organization
+    );
+    // When the org isn't in the list yet, keep the existing value
+    // (e.g. prefilled from an existing target sheet)
+    if (selectedOrg) {
+      setSelectedOrganizationCode(
+        selectedOrg?.uniqueCode || selectedOrg?.unique_id || ""
+      );
+    }
+  }, [formik.values.organization, organizationArray]);
+
+  useEffect(() => {
+    if (!formik.values.individualName) {
+      setSelectedIndividualCode("");
+      setSelectedIndividualSpeciality("");
+      setSelectedIndividualSurgeryTypes([]);
+      return;
+    }
+    const selectedDoc = organizationWiseIndividuals?.find(
+      (doc) => (doc?.individualName || doc?.fullName || doc?.name) === formik.values.individualName
+    );
+    // When the individual isn't in the list yet, keep the existing values
+    // (e.g. prefilled from an existing target sheet)
+    if (selectedDoc) {
+      setSelectedIndividualCode(
+        selectedDoc?.uniqueCode || selectedDoc?.unique_id || ""
+      );
+      setSelectedIndividualSpeciality(
+        selectedDoc?.speciality || ""
+      );
+      const types = selectedDoc?.typeOfSurgeryPerformed;
+      setSelectedIndividualSurgeryTypes(
+        Array.isArray(types) ? types : []
+      );
+    }
+  }, [formik.values.individualName, organizationWiseIndividuals]);
 
   const productTypeArray = useMemo(
     () => toArray(productTypes),
@@ -441,17 +592,20 @@ const TargetSheetForm = () => {
       if (cityName) citySet.add(cityName);
     });
 
+    // Keep the prefilled city visible even if it's not in the list yet
+    if (formik.values.city) citySet.add(formik.values.city);
+
     return Array.from(citySet)
       .sort((a, b) => a.localeCompare(b))
       .map((c) => ({ label: c, value: c }));
-  }, [organizationArray]);
+  }, [organizationArray, formik.values.city]);
 
   /* =========================================================
      ORGANIZATION OPTIONS
   ========================================================= */
 
   const organizationOptions = useMemo(() => {
-    return organizationArray
+    const options = organizationArray
       .filter((org) => {
         if (!formik.values.city) return true;
         const orgCity =
@@ -473,33 +627,94 @@ const TargetSheetForm = () => {
         return { label: name, value: name, city: orgCity };
       })
       .filter((o) => o.value);
-  }, [organizationArray, formik.values.city]);
+
+    // Keep the prefilled organization visible even if it's not in the list yet
+    if (
+      formik.values.organization &&
+      !options.some((o) => o.value === formik.values.organization)
+    ) {
+      options.push({
+        label: formik.values.organization,
+        value: formik.values.organization,
+        city: formik.values.city || "",
+      });
+    }
+    return options;
+  }, [organizationArray, formik.values.city, formik.values.organization]);
+
+  /* =========================================================
+     INDIVIDUAL OPTIONS
+  ========================================================= */
+
+  const individualOptions = useMemo(() => {
+    const options = (organizationWiseIndividuals || [])
+      .map((doc) => {
+        const name = doc?.individualName || doc?.fullName || doc?.name || "";
+        return {
+          label: name,
+          value: name,
+          uniqueCode: doc?.uniqueCode || "",
+        };
+      })
+      .filter((o) => o.value);
+
+    // Keep the prefilled individual visible even if it's not in the list yet
+    if (
+      formik.values.individualName &&
+      !options.some((o) => o.value === formik.values.individualName)
+    ) {
+      options.push({
+        label: formik.values.individualName,
+        value: formik.values.individualName,
+        uniqueCode: selectedIndividualCode,
+      });
+    }
+    return options;
+  }, [
+    organizationWiseIndividuals,
+    formik.values.individualName,
+    selectedIndividualCode,
+  ]);
 
   /* =========================================================
      PRODUCT OPTIONS
   ========================================================= */
 
-  const productTypeOptions = useMemo(
-    () =>
-      productTypeArray
-        .map((item) => {
-          const type = getProductType(item);
-          return { label: type, value: type };
-        })
-        .filter((o) => o.value),
-    [productTypeArray]
-  );
+  const productTypeOptions = useMemo(() => {
+    const options = productTypeArray
+      .map((item) => {
+        const type = getProductType(item);
+        return { label: type, value: type };
+      })
+      .filter((o) => o.value);
 
-  const productOptions = useMemo(
-    () =>
-      productArray
-        .map((product) => {
-          const name = getProductName(product);
-          return { label: name, value: name, product };
-        })
-        .filter((o) => o.value),
-    [productArray]
-  );
+    // Keep prefilled product types visible even if they're not in the list yet
+    (formik.values.products || []).forEach((row) => {
+      const type = row?.productType;
+      if (type && !options.some((o) => o.value === type)) {
+        options.push({ label: type, value: type });
+      }
+    });
+    return options;
+  }, [productTypeArray, formik.values.products]);
+
+  const productOptions = useMemo(() => {
+    const options = productArray
+      .map((product) => {
+        const name = getProductName(product);
+        return { label: name, value: name, product };
+      })
+      .filter((o) => o.value);
+
+    // Keep prefilled product names visible even if they're not in the list yet
+    (formik.values.products || []).forEach((row) => {
+      const name = row?.name;
+      if (name && !options.some((o) => o.value === name)) {
+        options.push({ label: name, value: name, product: row });
+      }
+    });
+    return options;
+  }, [productArray, formik.values.products]);
 
   /* =========================================================
      INITIAL API CALLS
@@ -515,6 +730,33 @@ const TargetSheetForm = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* =========================================================
+     FETCH INDIVIDUALS — depends on selected organization + city
+  ========================================================= */
+
+  useEffect(() => {
+    if (!formik.values.organization) {
+      isPrefillingSheetRef.current = false;
+      return;
+    }
+
+    if (isPrefillingSheetRef.current) {
+      // Keep the individual prefilled from an existing target sheet
+      isPrefillingSheetRef.current = false;
+    } else {
+      formik.setFieldValue("individualName", "", false);
+      setSelectedIndividualCode("");
+      setSelectedIndividualSpeciality("");
+      setSelectedIndividualSurgeryTypes([]);
+    }
+
+    fetchOrganizationWiseIndividuals({
+      organization: formik.values.organization,
+      city: formik.values.city || "",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values.organization, formik.values.city]);
 
   /* =========================================================
      PRODUCT PRICE FETCH
@@ -847,11 +1089,22 @@ const TargetSheetForm = () => {
 
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
-    return Array.from({ length: 6 }, (_, index) => {
+    const options = Array.from({ length: 6 }, (_, index) => {
       const year = currentYear + index;
       return { label: String(year), value: String(year) };
     });
-  }, []);
+    // Keep the prefilled year visible even if it's outside the default range
+    if (
+      formik.values.year &&
+      !options.some((o) => o.value === String(formik.values.year))
+    ) {
+      options.push({
+        label: String(formik.values.year),
+        value: String(formik.values.year),
+      });
+    }
+    return options;
+  }, [formik.values.year]);
 
   const selectStyles = {
     menu: (provided) => ({ ...provided, zIndex: 9999 }),
@@ -1194,13 +1447,21 @@ const TargetSheetForm = () => {
      RENDER
   ========================================================= */
 
+  if (individualIdWiseTargetLoading) {
+    return (
+      <div className="flex min-h-[60vh] w-full items-center justify-center">
+        <LoaderSpinner />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full min-h-screen">
       <BreadCrumb
         linkText={[
           { text: "Customer Visit Plan" },
           { text: "Target Sheet", href: "/sales-executive/target-Sheet" },
-          { text: "Create Target Sheet" },
+          { text: editId ? "Edit Target Sheet" : "Create Target Sheet" },
         ]}
       />
 
@@ -1210,12 +1471,14 @@ const TargetSheetForm = () => {
             className="flex p-6 mb-2 items-center justify-center font-semibold text-xl text-black rounded-t-md"
             style={{ backgroundColor: theme.secondaryColor }}
           >
-            Create Target Sheet
+            {editId ? "Edit Target Sheet" : "Create Target Sheet"}
           </h2>
         </div>
 
         <p className="text-black font-bold text-center mb-5 px-6">
-          PLEASE FILL OUT THE FOLLOWING DETAILS TO CREATE A TARGET SHEET
+          {editId
+            ? "PLEASE UPDATE THE FOLLOWING DETAILS FOR THE TARGET SHEET"
+            : "PLEASE FILL OUT THE FOLLOWING DETAILS TO CREATE A TARGET SHEET"}
         </p>
 
         <form onSubmit={formik.handleSubmit} className="px-6 py-4">
@@ -1268,6 +1531,101 @@ const TargetSheetForm = () => {
                     {formik.errors.organization}
                   </p>
                 )}
+              </div>
+
+              {/* ORGANIZATION UNIQUE CODE (read-only) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Organization Unique Code
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={selectedOrganizationCode || "-"}
+                  className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                  placeholder="Select an organization"
+                />
+              </div>
+
+              {/* INDIVIDUAL NAME */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Individual Name
+                </label>
+                <Select
+                  isLoading={dropDownLoading}
+                  isClearable
+                  options={individualOptions}
+                  value={
+                    individualOptions.find(
+                      (o) => o.value === formik.values.individualName
+                    ) || null
+                  }
+                  onChange={(option) => {
+                    formik.setFieldValue("individualName", option?.value || "");
+                  }}
+                  onBlur={() => formik.setFieldTouched("individualName", true)}
+                  placeholder="Select Individual"
+                  classNamePrefix="react-select"
+                  styles={selectStyles}
+                  menuPortalTarget={document.body}
+                  noOptionsMessage={() =>
+                    individualOptions.length === 0
+                      ? "Loading individuals..."
+                      : "No individuals found"
+                  }
+                />
+                {formik.touched.individualName && formik.errors.individualName && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {formik.errors.individualName}
+                  </p>
+                )}
+              </div>
+
+              {/* INDIVIDUAL UNIQUE CODE (read-only) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Individual Unique Code
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={selectedIndividualCode || "-"}
+                  className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                  placeholder="Select an individual"
+                />
+              </div>
+
+              {/* INDIVIDUAL SPECIALITY (read-only) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Individual Speciality
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={selectedIndividualSpeciality || "-"}
+                  className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                  placeholder="Select an individual"
+                />
+              </div>
+
+              {/* TYPE OF SURGERY PERFORMED (read-only) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Type Of Surgery Perform
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={
+                    selectedIndividualSurgeryTypes.length > 0
+                      ? selectedIndividualSurgeryTypes.join(", ")
+                      : "-"
+                  }
+                  className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                  placeholder="Select an individual"
+                />
               </div>
 
               {/* CITY */}
@@ -1376,7 +1734,12 @@ const TargetSheetForm = () => {
               type="button"
               text="Clear"
               onClick={() => {
-                formik.resetForm();
+                if (editId) {
+                  // Edit mode → reload the saved sheet instead of wiping the form
+                  fetchIndividualIdWiseTargetSheet({ id: editId });
+                } else {
+                  formik.resetForm();
+                }
                 setSelectedProductId(null);
                 setSelectedProductIndex(null);
                 resetProductDetails();
@@ -1384,7 +1747,15 @@ const TargetSheetForm = () => {
             />
             <Button
               type="submit"
-              text={loading ? "Submitting..." : "Submit"}
+              text={
+                loading
+                  ? editId
+                    ? "Updating..."
+                    : "Submitting..."
+                  : editId
+                    ? "Update Target Sheet"
+                    : "Submit"
+              }
             />
           </div>
         </form>

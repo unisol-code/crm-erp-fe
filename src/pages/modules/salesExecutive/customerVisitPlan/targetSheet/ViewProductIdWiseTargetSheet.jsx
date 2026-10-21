@@ -26,9 +26,7 @@ const ViewProductIdWiseTargetSheet = () => {
     };
   }, [id]);
 
-  const products = productIdWiseTargetSheet?.data || [];
-
-  console.log("products year", products?.year);
+  const product = productIdWiseTargetSheet?.data;
 
   return (
     <div className="w-full min-h-screen pb-10">
@@ -40,7 +38,7 @@ const ViewProductIdWiseTargetSheet = () => {
             text: "Target Sheet",
             href: "/sales-executive/target-sheet",
           },
-          { text: "View Year Wise Target Sheet" , href: `/sales-executive/target-sheet/view-year-wise-product/${products?.year}` },
+          { text: "View Year Wise Target Sheet", href: `/sales-executive/target-sheet/view-year-wise-product/${product?.year}` },
           { text: "View Product Wise Target Sheet" },
         ]}
       />
@@ -57,62 +55,56 @@ const ViewProductIdWiseTargetSheet = () => {
           style={{ backgroundColor: theme.secondaryColor }}
         />
 
-        {/* Loading */}
+{/* Loading */}
         {productIdWiseTargetLoading ? (
           <div className="flex justify-center items-center py-12">
             <LoaderSpinner />
           </div>
-        ) : products.length === 0 ? (
+        ) : !product ? (
           <p className="text-center text-gray-500 py-8">
             No product target sheet data found.
           </p>
         ) : (
           <>
-            {/* Hospital Info Card (from first product) */}
+            {/* Product Info Card */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 border border-gray-200 rounded-xl bg-gray-200">
               <div>
                 <span className="text-sm font-medium text-gray-600">
-                  Organization
+                  Product Name
                 </span>
                 <p className="text-lg font-semibold text-[#252C58]">
-                  {products[0]?.organization || "N/A"}
+                  {product?.name || "N/A"}
                 </p>
               </div>
               <div>
-                <span className="text-sm font-medium text-gray-600">City</span>
+                <span className="text-sm font-medium text-gray-600">
+                  Product Type
+                </span>
                 <p className="text-lg font-semibold text-[#252C58]">
-                  {products[0]?.city || "N/A"}
+                  {product?.productType || "N/A"}
                 </p>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-600">Year</span>
                 <p className="text-lg font-semibold text-[#252C58]">
-                  {products[0]?.year || "N/A"}
+                  {product?.year || "N/A"}
                 </p>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-600">
-                  Product Count
+                  Total Entries
                 </span>
                 <p className="text-lg font-semibold text-[#252C58]">
-                  {products.length}
+                  {product?.totalEntries || "N/A"}
                 </p>
               </div>
             </div>
 
-            {/* Products Section */}
-            {/* <h3 className="text-lg font-semibold text-[#252C58] mb-4">
-              Product Target Details
-            </h3> */}
+            {/* Product Details Section */}
             <div className="space-y-6">
-              {products.map((product, index) => {
-                const achievement = product.achievement || {};
-
-                return (
-                  <div
-                    key={product._id || index}
-                    className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm"
-                  >
+              <div
+                className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm"
+              >
 
  {/* Product Details Table */}
 <div className="overflow-x-auto">
@@ -132,23 +124,23 @@ const ViewProductIdWiseTargetSheet = () => {
           Price
         </th>
         <th className="p-4 text-base font-semibold text-center">
-          Entered Quantity
+          Total Quantity
         </th>
         <th className="p-4 text-base font-semibold text-center">
-          Overall Target Price
+          Total Target Price
         </th>
       </tr>
     </thead>
     <tbody className="divide-y divide-gray-200">
       <tr className="hover:bg-gray-50 transition-all">
         <td className="px-3 py-3 text-[17px] font-normal text-center text-[#252C58]">
-          {product.productType || "N/A"}
+          {product?.productType || "N/A"}
         </td>
         <td className="px-3 py-3 text-[17px] font-normal text-center text-[#252C58]">
-          {product.name || "N/A"}
+          {product?.name || "N/A"}
         </td>
         <td className="p-4 text-[17px] font-normal text-center text-[#252C58]">
-          {product.price
+          {product?.price
             ? new Intl.NumberFormat("en-IN", {
                 style: "currency",
                 currency: "INR",
@@ -157,15 +149,15 @@ const ViewProductIdWiseTargetSheet = () => {
             : "0"}
         </td>
         <td className="p-4 text-[17px] font-normal text-center text-[#252C58]">
-          {product.enteredQuantity || "0"}
+          {product?.totalQuantity || "0"}
         </td>
         <td className="p-2 text-center text-[19px] font-normal text-[#252C58] align-middle">
-          {product.overAllTargetPrice
+          {product?.totalTargetPrice
             ? new Intl.NumberFormat("en-IN", {
                 style: "currency",
                 currency: "INR",
                 maximumFractionDigits: 0,
-              }).format(product.overAllTargetPrice)
+              }).format(product.totalTargetPrice)
             : "0"}
         </td>
       </tr>
@@ -207,16 +199,14 @@ const ViewProductIdWiseTargetSheet = () => {
                           </thead>
                           <tbody className="divide-y divide-gray-200">
                             {QUARTERS.map((q, qIdx) => {
-                              const qData = achievement[q];
+                              const qData = product?.achievement?.[q];
                               if (!qData) return null;
                               const monthKeys = Object.keys(qData).filter(
                                 (k) => !k.startsWith("Quarter")
                               );
                               const hasMonths = monthKeys.length > 0;
                               return (
-                                <React.Fragment
-                                  key={`${product._id || index}-${q}`}
-                                >
+                                <React.Fragment key={q}>
                                   {hasMonths ? (
                                     monthKeys.map((month, mIdx) => {
                                       const mData = qData[month];
@@ -280,7 +270,7 @@ const ViewProductIdWiseTargetSheet = () => {
                                   {/* Quarter Summary Row */}
                                   <tr
                                     className="bg-gray-300 font-semibold"
-                                    key={`${product._id || index}-${q}-summary`}
+                                    key={`${q}-summary`}
                                   >
                                     <td
                                       className="p-4 text-center text-[17px] font-semibold text-[#252C58] align-middle"
@@ -309,8 +299,6 @@ const ViewProductIdWiseTargetSheet = () => {
                       </div>
                     </div>
                   </div>
-                );
-              })}
             </div>
           </>
         )}

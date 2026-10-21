@@ -10,6 +10,8 @@ import {
   hospitalWiseTargetSheetStateAtom,
   hospitalIdWiseTargetSheetStateAtom,
   productIdWiseTargetSheetStateAtom,
+  allIndividualTargetSheetStateAtom,
+  individualIdWiseTargetSheetStateAtom,
 } from "../../../state/salesExecutiveState/customerVisitPlan/targetSheetState";
 
 const useTargetSheet = () => {
@@ -27,6 +29,10 @@ const useTargetSheet = () => {
     useRecoilState(hospitalIdWiseTargetSheetStateAtom);
   const [productIdWiseTargetSheet, setProductIdWiseTargetSheet] =
     useRecoilState(productIdWiseTargetSheetStateAtom);
+  const [allIndividualTargetSheet, setAllIndividualTargetSheet] =
+    useRecoilState(allIndividualTargetSheetStateAtom);
+  const [individualIdWiseTargetSheet, setIndividualIdWiseTargetSheet] =
+    useRecoilState(individualIdWiseTargetSheetStateAtom);
   const [fetchData] = useFetch();
   const [loading, setLoading] = useState(false);
   const [yearWiseProductTargetLoading, setYearWiseProductTargetLoading] =
@@ -36,6 +42,10 @@ const useTargetSheet = () => {
   const [hospitalIdWiseTargetLoading, setHospitalIdWiseTargetLoading] =
     useState(false);
   const [productIdWiseTargetLoading, setProductIdWiseTargetLoading] =
+    useState(false);
+  const [allIndividualTargetLoading, setAllIndividualTargetLoading] =
+    useState(false);
+  const [individualIdWiseTargetLoading, setIndividualIdWiseTargetLoading] =
     useState(false);
   const fetchTargetSheetYearList = async () => {
     // console.log(filters);
@@ -76,8 +86,12 @@ const useTargetSheet = () => {
         url: `${conf.apiBaseUrl}targets/showYearWiseProductTargetSheet?${params.toString()}`,
       });
       if (res) {
-        setYearWiseProductTargetSheet(res);
-        return res;
+        const transformed = {
+          data: [{ products: res.data || [] }],
+          pagination: res.pagination,
+        };
+        setYearWiseProductTargetSheet(transformed);
+        return transformed;
       }
     } catch (err) {
       console.error("Error while fetching year wise product target sheet:", err);
@@ -196,6 +210,59 @@ const useTargetSheet = () => {
     setProductIdWiseTargetSheet(null);
   };
 
+  const fetchAllIndividualTargetSheet = async ({ year, page = 1, limit = 10 } = {}) => {
+    setAllIndividualTargetLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (year) params.append("year", year);
+      params.append("page", page);
+      params.append("limit", limit);
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}targets/get-all-individual-targetsheet?${params.toString()}`,
+      });
+      if (res) {
+        setAllIndividualTargetSheet(res);
+        return res;
+      }
+    } catch (err) {
+      console.error("Error while fetching all individual target sheet:", err);
+      toast.error("Failed to fetch all individual target sheet");
+    } finally {
+      setAllIndividualTargetLoading(false);
+    }
+  };
+
+  const resetAllIndividualTargetSheet = () => {
+    setAllIndividualTargetSheet(null);
+  };
+
+  const fetchIndividualIdWiseTargetSheet = async ({ id, page = 1, limit = 10 } = {}) => {
+    setIndividualIdWiseTargetLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.append("page", page);
+      params.append("limit", limit);
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}targets/show-individual-id-wise-target-sheet/${id}?${params.toString()}`,
+      });
+      if (res) {
+        setIndividualIdWiseTargetSheet(res);
+        return res;
+      }
+    } catch (err) {
+      console.error("Error while fetching individual target sheet:", err);
+      toast.error("Failed to fetch individual target sheet");
+    } finally {
+      setIndividualIdWiseTargetLoading(false);
+    }
+  };
+
+  const resetIndividualIdWiseTargetSheet = () => {
+    setIndividualIdWiseTargetSheet(null);
+  };
+
   const fetchOrganizationNames = async () => {
     setLoading(true);
     try {
@@ -261,6 +328,7 @@ const useTargetSheet = () => {
       });
       if (res) {
         toast.success(res?.message);
+        return res;
       } else {
         throw new Error(res?.message);
       }
@@ -302,6 +370,14 @@ const useTargetSheet = () => {
     productIdWiseTargetLoading,
     fetchProductIdWiseTargetSheet,
     resetProductIdWiseTargetSheet,
+    allIndividualTargetSheet,
+    allIndividualTargetLoading,
+    fetchAllIndividualTargetSheet,
+    resetAllIndividualTargetSheet,
+    individualIdWiseTargetSheet,
+    individualIdWiseTargetLoading,
+    fetchIndividualIdWiseTargetSheet,
+    resetIndividualIdWiseTargetSheet,
   };
 };
 

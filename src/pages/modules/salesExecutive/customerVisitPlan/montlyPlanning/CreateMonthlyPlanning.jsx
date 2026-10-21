@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
@@ -33,6 +33,9 @@ import useDropdown from "../../../../../hooks/dropdown/useDropdown";
 import useEnviroIndividualDrop from "../../../../../hooks/superAdminHook/superAdmindatabase/enviroDB/useEnviroIndividualDrop";
 import Button from "../../../../../components/uiComponents/button/Button";
 import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderSpinner";
+import MonthlyProductTargetPlanningTable from "./MonthlyProductTargetPlanningTable";
+
+
 
 // Helper function to convert UTC date to local datetime-local input value
 const convertUTCToLocalDateTime = (utcDateStr) => {
@@ -234,7 +237,7 @@ const CreateMonthlyPlanning = () => {
     loading,
     fetchMonthlyPlanningDetailsById,
     resetOneMonthPlanningList,
-    resetMonthlyPlanningDetails,
+    resetMonthlyPlanningDetails, fetchTargetSheetYearlySummary,targetSheetYearlySummary, resetTargetSheetYearlySummary
   } = useMonthlyPlanning();
 
   const {
@@ -242,8 +245,8 @@ const CreateMonthlyPlanning = () => {
     organizationList,
     fetchProductsNames,
     productList,
-    fetchDoctorList,
-    doctorList,
+    fetchOrganizationWiseIndividuals,
+    organizationWiseIndividuals,
     fetchSegment,
     segment,
     enviroindiviualdropdown,
@@ -264,11 +267,14 @@ const CreateMonthlyPlanning = () => {
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [existingPlans, setExistingPlans] = useState([]);
   const [currentSelectedDate, setCurrentSelectedDate] = useState("");
+  // Local loading flag for the yearly summary (the hook's `loading` is shared across fetches)
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  // Sequence guard so an older in-flight summary call can't clear a newer call's loading state
+  const summaryReqSeqRef = useRef(0);
 
   useEffect(() => {
     fetchProductsNames();
     fetchOrganizationNames();
-    fetchDoctorList();
     fetchSegment();
     enviroindiviualdropdown();
     fetchEnviroIndDropdown();
@@ -506,6 +512,67 @@ const CreateMonthlyPlanning = () => {
     }
   }, [formik.values.segment, formik.values.profileType, isEnviroSolution]);
 
+  // Fetch organization-wise individuals when organization changes (non-enviro flow)
+  // Same hook as TargetSheetform: fetchOrganizationWiseIndividuals({ organization, city })
+  useEffect(() => {
+    if (isEnviroSolution) return;
+    const selectedOrg = formik.values.selectOrganization;
+    if (!selectedOrg || selectedOrg === "Other") return;
+    fetchOrganizationWiseIndividuals({
+      organization: selectedOrg,
+      city: "",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values.selectOrganization]);
+
+  // Fetch target sheet yearly summary once organization, individual & products are selected
+  useEffect(() => {
+    const organization =
+      formik.values.selectOrganization === "Other"
+        ? (formik.values.customOrganization || "").trim()
+        : formik.values.selectOrganization;
+    const individualName =
+      formik.values.nameOfDoctor === "Other"
+        ? (formik.values.customDoctor || "").trim()
+        : formik.values.nameOfDoctor;
+    const productName = Array.isArray(formik.values.productToBePromoted)
+      ? formik.values.productToBePromoted.filter(Boolean)
+      : [];
+
+    // All three are required → clear stale summary if any selection is missing
+    if (!organization || !individualName || productName.length === 0) {
+      summaryReqSeqRef.current += 1;
+      setSummaryLoading(false);
+      resetTargetSheetYearlySummary();
+      return;
+    }
+
+    // Debounce so rapid changes (esp. multi-select products) fire a single call
+    const timer = setTimeout(async () => {
+      const seq = ++summaryReqSeqRef.current;
+      setSummaryLoading(true);
+      try {
+        await fetchTargetSheetYearlySummary({
+          organization,
+          individualName,
+          productName,
+          year: new Date().getFullYear(),
+        });
+      } finally {
+        if (seq === summaryReqSeqRef.current) setSummaryLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    formik.values.selectOrganization,
+    formik.values.customOrganization,
+    formik.values.nameOfDoctor,
+    formik.values.customDoctor,
+    formik.values.productToBePromoted,
+  ]);
+
   // Update existing plans when data changes
   useEffect(() => {
     if (formik.values.createPlanningForDate && oneMonthPlanningList?.data) {
@@ -654,10 +721,6 @@ const CreateMonthlyPlanning = () => {
         })) || []),
         { label: "Other", value: "Other" },
       ];
-  // const doctorOptions = [
-  //   ...formatOptions(doctorList),
-  //   { label: "Other", value: "Other" },
-  // ];
   const doctorOptions = isEnviroSolution
     ? [
         ...(enviroIndDropdown?.map((individual) => {
@@ -684,14 +747,30 @@ const CreateMonthlyPlanning = () => {
         { label: "Other", value: "Other" },
       ]
     : [
-        ...(doctorList?.map((doctor) => ({
-          label: doctor.fullName,
-          value: doctor.fullName,
-           uniqueCode: doctor.uniqueCode,
-          designation: doctor.designation,
-          speciality: doctor.speciality,
-          visitDetails: doctor.visitDetails,
-        })) || []),
+        ...((organizationWiseIndividuals || [])?.map((individual) => {
+          const label =
+            individual?.individualName?.trim() ||
+            individual?.fullName ||
+            individual?.name ||
+            individual?.uniqueCode ||
+            "Unnamed Individual";
+          return {
+            label,
+            value: label,
+            uniqueCode: individual?.uniqueCode || "",
+            designation: individual?.designation || "",
+            speciality: individual?.speciality || "",
+            visitDetails: {
+              // Map new API shape (visitStartTime/visitEndTime/visitDuration)
+              // to existing visitDetails shape used by the form
+              startTime: individual?.visitStartTime || "",
+              endTime: individual?.visitEndTime || "",
+              duration: individual?.visitDuration || "",
+            },
+            typeOfSurgeryPerformed:
+              individual?.typeOfSurgeryPerformed || [],
+          };
+        }) || []),
         { label: "Other", value: "Other" },
       ];
   const productOptions = formatOptions(productList);
@@ -725,7 +804,7 @@ const CreateMonthlyPlanning = () => {
     //    "already picked?" check stays in sync with how the individual
     //    value string is built (including the uniqueCode fallback for unnamed
     //    individuals) instead of rebuilding labels with a separate helper.
-    const docExistsOptions = isEnviroSolution ? doctorOptions : formatOptions(doctorList);
+    const docExistsOptions = doctorOptions;
     const docExists = docExistsOptions.some(
       (opt) => opt.value === entryToEdit.nameOfDoctor,
     );
@@ -752,6 +831,15 @@ const CreateMonthlyPlanning = () => {
       callObjective: entryToEdit.callObjective || "",
     });
   };
+
+  // Yearly summary data → response shape: { filters, summary: { Jan: { targetQuantity, targetAchievementQuantity }, ... } }
+  const yearlySummaryData = targetSheetYearlySummary?.summary || null;
+  const yearlySummaryFilters = targetSheetYearlySummary?.filters || {};
+  // API message shown when no target sheet exists (success: false)
+  const yearlySummaryMessage =
+    targetSheetYearlySummary?.success === false
+      ? targetSheetYearlySummary?.message || ""
+      : "";
 
   const customSelectStyles = {
     control: (base, state) => ({
@@ -1240,13 +1328,13 @@ const CreateMonthlyPlanning = () => {
   </div>
                 </>
               )}
-<div className="md:col-span-2">
+{/* <div className="md:col-span-2">
   <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
     <p className="text-sm font-medium text-amber-800">
       💡 Have you considered your Travel Time, Breakfast, Lunch, dinner or Tea schedule before planning your visits?
     </p>
   </div>
-</div>
+</div> */}
             <div className="flex flex-col">
               <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 <Package
@@ -1341,6 +1429,36 @@ const CreateMonthlyPlanning = () => {
               )}
             </div>
           </div>
+          
+{/* Visit Planning Reminder */}
+
+
+    {/* Scrolling Message */}
+    <div className="min-w-0 flex-1 overflow-hidden mt-5">
+      <marquee
+        direction="left"
+        scrollAmount="4"
+        onMouseEnter={(e) => e.currentTarget.stop()}
+        onMouseLeave={(e) => e.currentTarget.start()}
+        className="text-sm font-medium text-red-600"
+      >
+        Have you considered your travel time and breakfast, lunch,
+        dinner, or tea breaks before planning your visits?
+        &nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp;
+        Plan your visits efficiently and make time for breaks.
+        &nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp;
+      </marquee>
+    </div>
+
+
+
+          {/* Monthly Product Target Planning (shared component) */}
+          <MonthlyProductTargetPlanningTable
+            data={yearlySummaryData}
+            filters={yearlySummaryFilters}
+            loading={summaryLoading}
+            message={yearlySummaryMessage}
+          />
 
           <div className="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-6">
             <Button

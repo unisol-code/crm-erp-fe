@@ -145,7 +145,7 @@ export function FilterBar({
     if (!filters.region) return [];
     if (!Array.isArray(allStateName) || allStateName.length === 0) return [];
     return allStateName.map(state => ({
-      value: state.name || state,
+      value: state.code || state,
       label: state.name || state,
       stateCode: state.code,
     }));
@@ -225,19 +225,35 @@ export function FilterBar({
     fetchAllRegion();
   }, []);
 
-  useEffect(() => {
-    if (filters.state && Array.isArray(filters.state) && filters.state.length > 0) {
-      filters.state.forEach(s => fetchDistrictList(s));
-    }
-  }, [filters.state]);
 
-  useEffect(() => {
-    if (filters.state && filters.district && Array.isArray(filters.state) && Array.isArray(filters.district) &&
-        filters.state.length > 0 && filters.district.length > 0) {
-      const stateForCities = selectedStateCode || filters.state[0];
-      fetchAllCities(stateForCities, filters.district[0]);
-    }
-  }, [filters.state, filters.district]);
+useEffect(() => {
+  if (Array.isArray(filters.state) && filters.state.length > 0) {
+    fetchDistrictList(filters.state);
+  } else {
+    fetchDistrictList([]);
+  }
+}, [filters.state]);
+
+
+
+useEffect(() => {
+  const selectedStates = Array.isArray(filters.state)
+    ? filters.state
+    : filters.state
+      ? [filters.state]
+      : [];
+
+  const selectedDistricts = Array.isArray(filters.district)
+    ? filters.district
+    : filters.district
+      ? [filters.district]
+      : [];
+
+  if (selectedStates.length > 0 && selectedDistricts.length > 0) {
+    fetchAllCities(selectedStates, selectedDistricts);
+  }
+}, [filters.state, filters.district]);
+
 
   useEffect(() => {
     if (filters.segment) {
@@ -262,36 +278,80 @@ export function FilterBar({
     }, 300);
   };
 
-  const handleSelectChange = (key, selectedOptions, isMulti) => {
-    const apiKey = filterKeyMap[key] || key;
-    const value = isMulti
-      ? (selectedOptions || []).map(o => o.value)
-      : selectedOptions ? selectedOptions.value : "";
-    if (updateFilter) updateFilter(apiKey, value);
+  // const handleSelectChange = (key, selectedOptions, isMulti) => {
+  //   const apiKey = filterKeyMap[key] || key;
+  //   const value = isMulti
+  //     ? (selectedOptions || []).map(o => o.value)
+  //     : selectedOptions ? selectedOptions.value : "";
+  //   if (updateFilter) updateFilter(apiKey, value);
 
-    if (key === "region") {
-      setSelectedStateCode("");
-      if (updateFilter) {
-        updateFilter("state", []);
-        updateFilter("district", []);
-        updateFilter("city", []);
-      }
-      if (isMulti && selectedOptions) {
-        selectedOptions.forEach(opt => fetchAllStateName(opt.value));
-      }
-    }
-    if (key === "state") {
-      if (updateFilter) {
-        updateFilter("district", []);
-        updateFilter("city", []);
-      }
-    }
-    if (key === "district") {
-      if (updateFilter) updateFilter("city", []);
-    }
+  //   if (key === "region") {
+  //     setSelectedStateCode("");
+  //     if (updateFilter) {
+  //       updateFilter("state", []);
+  //       updateFilter("district", []);
+  //       updateFilter("city", []);
+  //     }
+  //     if (isMulti && selectedOptions) {
+  //       selectedOptions.forEach(opt => fetchAllStateName(opt.value));
+  //     }
+  //   }
+  //   if (key === "state") {
+  //     if (updateFilter) {
+  //       updateFilter("district", []);
+  //       updateFilter("city", []);
+  //     }
+  //   }
+  //   if (key === "district") {
+  //     if (updateFilter) updateFilter("city", []);
+  //   }
     
-    triggerFetch();
-  };
+  //   triggerFetch();
+  // };
+
+  
+const handleSelectChange = (key, selectedOptions, isMulti) => {
+  const apiKey = filterKeyMap[key] || key;
+
+  const value = isMulti
+    ? (selectedOptions || []).map((option) => option.value)
+    : selectedOptions
+      ? selectedOptions.value
+      : "";
+
+  if (updateFilter) {
+    updateFilter(apiKey, value);
+  }
+
+  if (key === "region") {
+    setSelectedStateCode("");
+
+    // Clear dependent filters
+    if (updateFilter) {
+      updateFilter("state", []);
+      updateFilter("district", []);
+      updateFilter("city", []);
+    }
+
+    // Fetch states for ALL currently selected regions
+    fetchAllStateName(value);
+  }
+
+  if (key === "state") {
+    if (updateFilter) {
+      updateFilter("district", []);
+      updateFilter("city", []);
+    }
+  }
+
+  if (key === "district") {
+    if (updateFilter) {
+      updateFilter("city", []);
+    }
+  }
+
+  triggerFetch();
+};
 
   const handleApplyFilters = () => {
     if (debounceTimerRef.current) {
