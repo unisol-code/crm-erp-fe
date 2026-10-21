@@ -1,12 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { FiChevronDown, FiChevronUp, FiCheckCircle, FiClock, FiXCircle, FiShield } from "react-icons/fi";
 import BreadCrumb from "../../../../../components/uiComponents/breadcrumb/BreadCrumb.jsx";
 import { useTheme } from "../../../../../hooks/theme/useTheme.js";
 import useTargetSheet from "../../../../../hooks/salesExecutiveHook/customerVisitPlan/useTaregtSheet.js";
 import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
 
 const QUARTERS = ["Quarter1", "Quarter2", "Quarter3", "Quarter4"];
+
+const APPROVAL_ROLES = [
+  "Sales Manager",
+  "Regional Sales Manager",
+  "Sales Director",
+  "Vice President",
+  "CEO",
+];
+
+const getApprovalStatus = (status) => {
+  const normalized = String(status || "pending").toLowerCase();
+  if (normalized.includes("approve")) return "approved";
+  if (normalized.includes("reject")) return "rejected";
+  return "pending";
+};
 
 const ViewIndividualWiseTargetSheet = () => {
   const { theme } = useTheme();
@@ -34,6 +49,32 @@ const ViewIndividualWiseTargetSheet = () => {
   };
 
   const data = individualIdWiseTargetSheet?.data;
+
+  // Build approval stages from the API response, preserving the required order.
+  const approvals = data?.approvals || {};
+  const approvalStages = APPROVAL_ROLES.map((role) => ({
+    role,
+    status: getApprovalStatus(approvals?.[role]?.status),
+  }));
+  const approvedCount = approvalStages.filter(
+    (stage) => stage.status === "approved"
+  ).length;
+  const approvalProgress = Math.round(
+    (approvedCount / APPROVAL_ROLES.length) * 100
+  );
+  const rejectedStage = approvalStages.find(
+    (stage) => stage.status === "rejected"
+  );
+  const pendingStage = approvalStages.find(
+    (stage) => stage.status === "pending"
+  );
+  const approvalSummary = rejectedStage
+    ? `Rejected by ${rejectedStage.role}`
+    : approvedCount === APPROVAL_ROLES.length
+    ? "All approval levels completed"
+    : pendingStage
+    ? `Awaiting ${pendingStage.role} approval`
+    : "Approval in progress";
 
   const currency = (val) =>
     val != null
@@ -132,6 +173,69 @@ const ViewIndividualWiseTargetSheet = () => {
                 </p>
               </div>
             </div>
+
+            {/* Approval Progress - compact timeline matching the existing UI */}
+            <section className="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <div className="flex flex-col gap-3 border-b border-gray-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+                    <h3 className="text-lg font-bold text-[#252C58]">Approval Workflow</h3>
+                  </div>
+                  <p className="mt-1 pl-[18px] text-sm text-gray-500">{approvalSummary}</p>
+                </div>
+                <div className="flex items-center gap-3 sm:min-w-[220px]">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${rejectedStage ? "bg-red-500" : "bg-orange-500"}`}
+                      style={{ width: `${approvalProgress}%` }}
+                    />
+                  </div>
+                  <span className="whitespace-nowrap text-sm font-bold text-[#252C58]">
+                    {approvedCount}/{APPROVAL_ROLES.length} approved
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 divide-y divide-gray-100 sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-5 lg:divide-x lg:divide-gray-100">
+                {approvalStages.map((stage, index) => {
+                  const isApproved = stage.status === "approved";
+                  const isRejected = stage.status === "rejected";
+                  const stageColor = isApproved
+                    ? "text-emerald-700"
+                    : isRejected
+                    ? "text-red-700"
+                    : "text-orange-600";
+                  const stageIconBg = isApproved
+                    ? "bg-emerald-50 border-emerald-200"
+                    : isRejected
+                    ? "bg-red-50 border-red-200"
+                    : "bg-orange-50 border-orange-200";
+                  const StatusIcon = isApproved
+                    ? FiCheckCircle
+                    : isRejected
+                    ? FiXCircle
+                    : FiClock;
+
+                  return (
+                    <div key={stage.role} className="flex items-center gap-3 px-4 py-3 lg:flex-col lg:items-start lg:gap-2 lg:px-3">
+                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${stageIconBg} ${stageColor}`}>
+                        <StatusIcon size={18} />
+                      </div>
+                      <div className="min-w-0 flex-1 lg:w-full">
+                        <p className="text-sm font-semibold leading-5 text-[#252C58]">{stage.role}</p>
+                        <div className="mt-1.5 flex items-center justify-between gap-2 lg:justify-start">
+                          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold capitalize ${isApproved ? "bg-emerald-50 text-emerald-700" : isRejected ? "bg-red-50 text-red-700" : "bg-orange-50 text-orange-700"}`}>
+                            {stage.status}
+                          </span>
+                          <span className="text-xs text-gray-400">Step {index + 1} of {APPROVAL_ROLES.length}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
 
             {/* Totals Summary */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 p-4 border border-gray-200 rounded-xl">

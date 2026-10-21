@@ -114,7 +114,11 @@ import EnviroAnalyticsBreakdown from "./pages/modules/superAdmin/AllSalesAnalyti
 import EnviroEmployeeBreakdown from "./pages/modules/superAdmin/AllSalesAnalytics/EnviroEmployeeBreakdown";
 import EnviroOrganizationDetails from "./pages/modules/superAdmin/AllSalesAnalytics/EnviroOrganizationDetails";
 import EnviroIndividualDetails from "./pages/modules/superAdmin/AllSalesAnalytics/EnviroIndividualDetails";
-
+import AdminTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminTargetSheet";
+import AdminUniversalTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminUniversalTargetSheet";
+import AdminIndividualWiseTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminIndividualWiseTargetSheet";
+import AdminEmployeeWiseTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEmployeeWiseTargetSheet";
+import AdminApprovalPendingEMpSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminApprovalPendingEMpSheet";
 function App() {
   const [activeTab, setActiveTab] = useState("/crm-dashboard");
 
@@ -490,14 +494,14 @@ function App() {
             }
           />
 
-              <Route
+          <Route
             path="/sales-analyticsAll"
             element={
               <SuperAdminLayout
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
               >
-                <AllSalesAnalytics/>
+                <AllSalesAnalytics />
               </SuperAdminLayout>
             }
           />
@@ -567,7 +571,7 @@ function App() {
               </SuperAdminLayout>
             }
           />
-                    <Route
+          <Route
             path="/sales-analyticsAll/Executive-type-breakdown/:id"
             element={
               <SuperAdminLayout
@@ -645,18 +649,18 @@ function App() {
             }
           />
           {/* ADMIN SALES EXECUTIVE */}
-                   <Route
+          <Route
             path="/admin/sales-executive/employee-list"
             element={
               <SuperAdminLayout
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
               >
-               <EmployeeList />
+                <EmployeeList />
               </SuperAdminLayout>
             }
           />
-        
+
           <Route
             path="/admin/sales-executive/monthly-planning/:id"
             element={
@@ -664,7 +668,7 @@ function App() {
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
               >
-               <EmployeeMonthlyPlanning />
+                <EmployeeMonthlyPlanning />
               </SuperAdminLayout>
             }
           />
@@ -680,29 +684,83 @@ function App() {
             }
           />
         </Route>
-                 <Route
-            path="/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/:id/:date"
-            element={
-              <SuperAdminLayout
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-              >
-                <EmployeeViewMonthlyPlanning />
-              </SuperAdminLayout>
-            }
-          />
-                 <Route
-            path="/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/:id"
-            element={
-              <SuperAdminLayout
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-              >
-                <EmployeeViewMonthlyPlanningDetails />
-              </SuperAdminLayout>
-            }
-          />
-
+        <Route
+          path="/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/:id/:date"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <EmployeeViewMonthlyPlanning />
+            </SuperAdminLayout>
+          }
+        />
+        <Route
+          path="/admin/sales-executive/monthly-planning/view-month-wise/view-day-wise-planning/view-monthly-planning-details/:id"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <EmployeeViewMonthlyPlanningDetails />
+            </SuperAdminLayout>
+          }
+        />
+             <Route
+          path="/admin/sales-executive/target-sheet"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <AdminTargetSheet />
+            </SuperAdminLayout>
+          }
+        />
+        <Route
+          path="/admin/sales-executive/target-sheet/universal-target-sheet/:id"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <AdminUniversalTargetSheet />
+            </SuperAdminLayout>
+          }
+        />
+        <Route
+          path="/admin/sales-executive/target-sheet/individual-wise-target-sheet/:id"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <AdminIndividualWiseTargetSheet />
+            </SuperAdminLayout>
+          }
+        />
+        <Route
+          path="/admin/sales-executive/target-sheet/employee-wise-target-sheet/:id"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <AdminEmployeeWiseTargetSheet />
+            </SuperAdminLayout>
+          }
+        />
+        <Route
+          path="/admin/sales-executive/target-sheet/my-approval-queue"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <AdminApprovalPendingEMpSheet />
+            </SuperAdminLayout>
+          }
+        />
         {/* <Route
           path="/organization-details/:id"
           element={<DatabaseCustomerDetails />}
@@ -942,7 +1000,7 @@ function App() {
             }
           />
 
-            <Route
+          <Route
             path="/sales-executive/target-sheet/view-hospital-id-wise/:id"
             element={
               <SalesExecutiveLayout
@@ -964,8 +1022,8 @@ function App() {
                 <ViewProductIdWiseTargetSheet />
               </SalesExecutiveLayout>
             }
-          /> 
-                    <Route
+          />
+          <Route
             path="/sales-executive/target-sheet/view-individual-id-wise/:id"
             element={
               <SalesExecutiveLayout

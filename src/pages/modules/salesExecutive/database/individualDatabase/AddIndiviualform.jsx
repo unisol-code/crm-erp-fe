@@ -726,7 +726,8 @@ const AddNewIndividual = () => {
                   const payload = {
                     ...values,
                     segment: selectedSector?.value,
-                    type: selectedType?.value,
+                    //hey currently working in Surisole .. but check where it not working 
+                    // type: selectedType?.value,
                     officialEmail: values.officialEmail,
                     personalEmail: values.personalEmail,
                     designation: values.otherDesignation

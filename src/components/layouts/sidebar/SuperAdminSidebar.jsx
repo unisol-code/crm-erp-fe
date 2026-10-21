@@ -59,9 +59,9 @@ function Sidebar({ collapsed, setCollapsed }) {
           name: "Monthly Planning",
           path: "/admin/sales-executive/employee-list",
         },
-        // { id: 32, name: "Target Sheet",
-        //   //  path: "/sales-executive/target-sheet"
-        //    },
+        { id: 32, name: "Target Sheet",
+           path: "/admin/sales-executive/target-sheet"
+           },
         // {
         //   id: 33,
         //   name: "Territory Snapshot",
