@@ -50,3 +50,9 @@ export const individualIdWiseTargetSheetStateAtom = atom({
   default: null,
   effects_UNSTABLE: [persistAtom],
 });
+
+export const enviroTargetSheetDetailsAtom = atom({
+  key: "enviroTargetSheetDetailsState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});

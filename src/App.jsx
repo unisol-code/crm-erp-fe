@@ -64,6 +64,10 @@ import {
   ViewHospitalIdWiseTargetSheet,
   ViewProductIdWiseTargetSheet,
   ViewIndividualWiseTargetSheet,
+  EnviroSolutionTargetSheetHome,
+  EnviroProductTargetSheetForm,
+  EnviroProjectTargetSheetForm,
+  EnviroServiceTargetSheetForm,
 } from "./pages/modules/salesExecutive/customerVisitPlan/targetSheet/index";
 import TerritorySnapshot from "./pages/modules/salesExecutive/customerVisitPlan/territorySnapshot/TerritorySnapshot";
 
@@ -963,6 +967,54 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <TargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+
+          {/* ------------- ENVIRO SOLUTION TARGET SHEETS -------------
+              Frontend-only screens. They are guarded internally with
+              `isEnviroSolution` so no other company can use them. */}
+          <Route
+            path="/sales-executive/enviro-target-sheet"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroSolutionTargetSheetHome />
+              </SalesExecutiveLayout>
+            }
+          />
+          <Route
+            path="/sales-executive/enviro-target-sheet/product"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroProductTargetSheetForm />
+              </SalesExecutiveLayout>
+            }
+          />
+          <Route
+            path="/sales-executive/enviro-target-sheet/project"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroProjectTargetSheetForm />
+              </SalesExecutiveLayout>
+            }
+          />
+          <Route
+            path="/sales-executive/enviro-target-sheet/service"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroServiceTargetSheetForm />
               </SalesExecutiveLayout>
             }
           />

@@ -7,16 +7,21 @@ import { useState, useEffect } from "react";
 const useCompany = () => {
   const [companyName, setCompanyName] = useState("");
   const [isEnviroSolution, setIsEnviroSolution] = useState(false);
+  const [isCompanyLoaded, setIsCompanyLoaded] = useState(false);
 
   useEffect(() => {
     const rawName = sessionStorage.getItem("companyName");
     setCompanyName(rawName || "");
-    
+
     const normalized = rawName?.toLowerCase().replace(/\s+/g, "") || "";
     setIsEnviroSolution(normalized === "envirosolution");
+
+    /* Flag the read as done so screens can wait for the real company name
+       instead of briefly flashing "Access Restricted" / rendering nothing. */
+    setIsCompanyLoaded(true);
   }, []);
 
-  return { companyName, isEnviroSolution };
+  return { companyName, isEnviroSolution, isCompanyLoaded };
 };
 
 export default useCompany;
