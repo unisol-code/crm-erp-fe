@@ -11,7 +11,7 @@ import { useTheme } from "../../../../../../hooks/theme/useTheme";
 
 import useEnviroOnly from "./hooks/useEnviroOnly";
 import useEnviroTargetSheetDropdowns from "./hooks/useEnviroTargetSheetDropdowns";
-import useEnviroTargetSheetExecutive from "../../../../../../hooks/superAdminHook/customerVisitPlan/targetSheet/useEnviroTargetSheetExecutive";
+import useEnviroTargetSheetExecutive from "../../../../../../hooks/salesExecutiveHook/customerVisitPlan/useEnviroTargetSheetExecutive";
 import {
   FormSection,
   FormField,
@@ -242,7 +242,7 @@ const EnviroProductTargetSheetForm = () => {
       overallAchievementPrice += quarterAchievementPrice;
     });
 
-    row.achievement = {
+    const achievement = {
       ...quarters,
       overall: {
         totalQuantity: overallAchievementQuantity,
@@ -250,7 +250,15 @@ const EnviroProductTargetSheetForm = () => {
       },
     };
 
+    row.achievement = achievement;
     row.overAllTargetPrice = roundTo(qty * unitPrice, 2);
+
+    formik.setFieldValue(`products[${index}].achievement`, achievement, false);
+    formik.setFieldValue(
+      `products[${index}].overAllTargetPrice`,
+      roundTo(qty * unitPrice, 2),
+      false
+    );
   };
 
   /* ---------------------------------------------------------

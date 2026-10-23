@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
 import Select from "react-select";
+import { toast } from "react-toastify";
 
 import BreadCrumb from "../../../../../../components/uiComponents/breadcrumb/BreadCrumb";
 import Button from "../../../../../../components/uiComponents/button/Button";
@@ -10,7 +11,7 @@ import { useTheme } from "../../../../../../hooks/theme/useTheme";
 
 import useEnviroOnly from "./hooks/useEnviroOnly";
 import useEnviroTargetSheetDropdowns from "./hooks/useEnviroTargetSheetDropdowns";
-import useEnviroTargetSheetExecutive from "../../../../../../hooks/superAdminHook/customerVisitPlan/targetSheet/useEnviroTargetSheetExecutive";
+import useEnviroTargetSheetExecutive from "../../../../../../hooks/salesExecutiveHook/customerVisitPlan/useEnviroTargetSheetExecutive";
 import {
   FormSection,
   FormField,
@@ -23,118 +24,81 @@ import {
   roundTo,
   formatCurrency,
   buildTargetDistribution,
+  getProductPrice,
+  getProductId,
 } from "./components/EnviroFormUI";
 
 /* =========================================================
    ENVIRO SOLUTION — SERVICE BASED TARGET SHEET
    ------------------------------------------------------------
-   Renting  : Overall Target Price = Monthly Rent × Total Rental Months
-              (CONFIRMED business rule)
+   Multi-service rows. Each service carries:
+     serviceName, servicePrice, months, acres
+   Total Price = servicePrice × months × acres
 
-   Spraying : The target calculation rule has NOT been confirmed by
-              the business yet. It is therefore NOT computed here.
-              The user enters the overall target quantity and the
-              unit price manually and the CONFIRMED service
-              distribution (Q1 0% | Q2 50% | Q3 50% | Q4 0%) is applied
-              to it. A clear "pending" notice is shown on screen.
+   The total is distributed evenly across the four quarters
+   (25% each) and then evenly across the three months of every
+   quarter.
+   ========================================================= */
 
-   The service rules are owned by this form and are NOT
-   shared with the product / project forms.
-========================================================= */
-
-/* ------------------------------------------------------------
-   SERVICE-BASED TARGET SHEET — DISTRIBUTION RULES
-   Service based targets (renting / spraying) only run for half
-   of the year:
-     Quarter 1 (Jan–Mar) : 0%
-     Quarter 2 (Apr–Jun) : 50%
-     Quarter 3 (Jul–Sep) : 50%
-     Quarter 4 (Oct–Dec) : 0%
-   Total                 : 100%
-
-   Every month inside a quarter receives an equal share of the
-   quarter target (1/3 each), allocated with cumulative rounding
-   so the monthly totals always equal the quarterly target.
-
-   NOTE: the service specific calculation (rental total, spraying
-   rule, ...) is applied BEFORE this distribution runs.
------------------------------------------------------------- */
-const SERVICE_TARGET_DISTRIBUTION = {
-  quarterly: [0, 0.5, 0.5, 0],
-  monthly: [1 / 3, 1 / 3, 1 / 3],
-};
-
-const SERVICE_QUARTER_PERCENT_LABELS = [
-  { quarter: "Q1 (Jan–Mar)", percent: 0 },
-  { quarter: "Q2 (Apr–Jun)", percent: 50 },
-  { quarter: "Q3 (Jul–Sep)", percent: 50 },
-  { quarter: "Q4 (Oct–Dec)", percent: 0 },
-];
-
-/* Service types supported by the service based target sheet */
 const SERVICE_TYPES = [
   { label: "Renting", value: "Renting" },
   { label: "Spraying", value: "Spraying" },
 ];
 
-/**
- * Renting rule (confirmed by the business):
- *   Total Target Price = Rent per Month × Total Rental Months
- */
-const calculateRentingTargetPrice = (rentPerMonth, totalRentalMonths) => {
-  const rent = Number(rentPerMonth);
-  const months = Number(totalRentalMonths);
+let __serviceRowCounter = 0;
 
-  if (Number.isNaN(rent) || Number.isNaN(months)) return 0;
-
-  return Math.round(rent * months * 100) / 100;
+const createEmptyServiceRow = () => {
+  __serviceRowCounter += 1;
+  return {
+    _tempId: `enviro-service-${Date.now()}-${__serviceRowCounter}`,
+    serviceName: "",
+    productType: "",
+    productName: "",
+    servicePrice: "",
+    months: "",
+    acres: "",
+    totalPrice: 0,
+    achievement: {},
+  };
 };
-
-const SERVICE_TYPE_RENTING = "Renting";
-const SERVICE_TYPE_SPRAYING = "Spraying";
 
 const validationSchema = Yup.object({
   organization: Yup.string().required("Organization is required"),
   city: Yup.string().required("City is required"),
   individualName: Yup.string().required("Individual name is required"),
   year: Yup.string().required("Year is required"),
-  serviceType: Yup.string().required("Service type is required"),
-  /* Renting */
-  monthlyRent: Yup.number()
-    .typeError("Monthly rent must be a number")
-    .min(0, "Monthly rent cannot be negative")
-    .when("serviceType", {
-      is: SERVICE_TYPE_RENTING,
-      then: (schema) => schema.required("Monthly rent is required"),
-      otherwise: (schema) => schema.nullable(),
-    }),
-  totalRentalMonths: Yup.number()
-    .typeError("Total rental months must be a number")
-    .min(0, "Rental months cannot be negative")
-    .when("serviceType", {
-      is: SERVICE_TYPE_RENTING,
-      then: (schema) => schema.required("Total rental months is required"),
-      otherwise: (schema) => schema.nullable(),
-    }),
-  /* Spraying (manual entry — calculation rule still pending) */
-  overallTargetQuantity: Yup.number()
-    .typeError("Overall target quantity must be a number")
-    .min(0, "Quantity cannot be negative")
-    .when("serviceType", {
-      is: SERVICE_TYPE_SPRAYING,
-      then: (schema) => schema.required("Overall target quantity is required"),
-      otherwise: (schema) => schema.nullable(),
-    }),
-  unitPrice: Yup.number()
-    .typeError("Unit price must be a number")
-    .min(0, "Unit price cannot be negative")
-    .when("serviceType", {
-      is: SERVICE_TYPE_SPRAYING,
-      then: (schema) => schema.required("Unit price is required"),
-      otherwise: (schema) => schema.nullable(),
-    }),
+  services: Yup.array()
+    .of(
+      Yup.object({
+        serviceName: Yup.string().required("Service name is required"),
+        productType: Yup.string().required("Product type is required"),
+        productName: Yup.string().required("Product name is required"),
+        servicePrice: Yup.number()
+          .typeError("Service price must be a number")
+          .min(0, "Service price cannot be negative")
+          .required("Service price is required"),
+        months: Yup.number()
+          .typeError("Months must be a number")
+          .min(0, "Months cannot be negative")
+          .required("Months is required"),
+        acres: Yup.number()
+          .typeError("Acres must be a number")
+          .min(0, "Acres cannot be negative")
+          .when("serviceName", {
+            is: "Renting",
+            then: (schema) => schema.nullable(),
+            otherwise: (schema) => schema.required("Acres is required"),
+          }),
+      })
+    )
+    .min(1, "At least one service is required")
+    .required("At least one service is required"),
 });
 
+const SERVICE_TARGET_DISTRIBUTION = {
+  quarterly: [0.25, 0.25, 0.25, 0.25],
+  monthly: [1 / 3, 1 / 3, 1 / 3],
+};
 
 const EnviroServiceTargetSheetForm = () => {
   const navigate = useNavigate();
@@ -142,6 +106,9 @@ const EnviroServiceTargetSheetForm = () => {
   const { isEnviroSolution, isCompanyLoaded } = useEnviroOnly();
 
   const [previewData, setPreviewData] = useState(null);
+
+  const [selectedServiceId, setSelectedServiceId] = useState(null);
+  const [selectedServiceIndex, setSelectedServiceIndex] = useState(null);
 
   const { createEnviroTargetSheet, loading: submitLoading } =
     useEnviroTargetSheetExecutive();
@@ -151,58 +118,38 @@ const EnviroServiceTargetSheetForm = () => {
       segment: "",
       profileType: "",
       organization: "",
-      uniqueCode: "",
+      uniqueCodeOrganization: "",
+      district: "",
       city: "",
       individualName: "",
       individualUniqueCode: "",
       year: new Date().getFullYear().toString(),
-      serviceType: "",
-      monthlyRent: "",
-      totalRentalMonths: "",
-      overallTargetQuantity: "",
-      unitPrice: "",
-      overAllTargetPrice: 0,
-      achievement: {},
+      services: [createEmptyServiceRow()],
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       try {
         const payload = {
-          typeOfTargetSheet: "service",
+          sheetType: "Service",
           segment: values.segment,
-          profileType: values.profileType,
-          organization: values.organization,
-          uniqueCodeOrganization: values.uniqueCode,
-          city: values.city,
-          individualName: values.individualName,
           uniqueCodeIndividual: values.individualUniqueCode,
+          individualName: values.individualName,
+          uniqueCodeOrganization: values.uniqueCodeOrganization,
+          organizationName: values.organization,
+          district: values.district || "",
+          cityTownVillage: values.city || "",
           year: String(values.year),
-          serviceType: values.serviceType,
-          monthlyRent:
-            values.serviceType === SERVICE_TYPE_RENTING
-              ? numberValue(values.monthlyRent)
-              : null,
-          totalRentalMonths:
-            values.serviceType === SERVICE_TYPE_RENTING
-              ? numberValue(values.totalRentalMonths)
-              : null,
-          overallTargetQuantity:
-            values.serviceType === SERVICE_TYPE_SPRAYING
-              ? numberValue(values.overallTargetQuantity)
-              : null,
-          unitPrice:
-            values.serviceType === SERVICE_TYPE_SPRAYING
-              ? numberValue(values.unitPrice)
-              : null,
-          overAllTargetPrice: numberValue(values.overAllTargetPrice),
-          achievement: values.achievement,
+          services: (values.services || []).map((row) => ({
+            serviceName: row.serviceName,
+            productType: row.productType,
+            productName: row.productName,
+            servicePrice: numberValue(row.servicePrice),
+            months: numberValue(row.months),
+            acres: numberValue(row.acres),
+            totalPrice: numberValue(row.totalPrice),
+            achievement: row.achievement,
+          })),
         };
-
-        // eslint-disable-next-line no-console
-        console.log(
-          "ENVIRO SERVICE TARGET SHEET PAYLOAD:",
-          JSON.stringify(payload, null, 2)
-        );
 
         const res = await createEnviroTargetSheet(payload);
 
@@ -211,6 +158,7 @@ const EnviroServiceTargetSheetForm = () => {
           resetForm();
         }
       } catch (error) {
+        toast.error("Failed to submit service target sheet");
         console.error("EnviroServiceTargetSheetForm submission error:", error);
       } finally {
         setSubmitting(false);
@@ -218,50 +166,114 @@ const EnviroServiceTargetSheetForm = () => {
     },
   });
 
-  const isRenting = formik.values.serviceType === SERVICE_TYPE_RENTING;
-  const isSpraying = formik.values.serviceType === SERVICE_TYPE_SPRAYING;
+  const { values } = formik;
+
+  const {
+    loading: dropdownLoading,
+    segmentOptions,
+    profileTypeOptions,
+    organizationOptions,
+    individualOptions,
+    productOptions,
+    productTypeOptions,
+    cityOptions,
+    yearOptions,
+    fetchProductDetails,
+    productDetails,
+    resetProductDetails,
+  } = useEnviroTargetSheetDropdowns({
+    organization: values.organization,
+    city: values.city,
+    segment: values.segment,
+    profileType: values.profileType,
+  });
 
   /* ---------------------------------------------------------
-     RECALCULATE THE OVERALL TARGET AND ITS DISTRIBUTION
+     RECALCULATE THE DISTRIBUTION OF A SINGLE SERVICE ROW
   --------------------------------------------------------- */
-  const applyDistribution = (overallQuantity, unitPrice) => {
+  const recalculateRow = (index, { servicePrice, months, acres }) => {
+    const row = formik.values.services?.[index];
+    if (!row) return;
+
+    const unitPrice = numberValue(servicePrice);
+    const m = numberValue(months);
+    const a = numberValue(acres);
+
+    /* Renting: total = rent per month × rented months (no acres)
+       Spraying: total = service price × months × acres */
+    const isRenting = row.serviceName === SERVICE_TYPES[0].value;
+    const qty = isRenting ? m : m * a;
+
     const quarters = buildTargetDistribution({
-      overallQuantity,
+      overallQuantity: qty,
       unitPrice,
       quarterlyRatios: SERVICE_TARGET_DISTRIBUTION.quarterly,
       monthlyRatios: SERVICE_TARGET_DISTRIBUTION.monthly,
     });
 
-    formik.setFieldValue("achievement", quarters, false);
-  };
+    Object.keys(MONTHS).forEach((quarter) => {
+      const oldQuarter = row.achievement?.[quarter];
+      if (!oldQuarter) return;
 
-  const recalculateRenting = (monthlyRent, totalRentalMonths) => {
-    const targetPrice = calculateRentingTargetPrice(
-      monthlyRent,
-      totalRentalMonths
-    );
+      MONTHS[quarter].forEach((month) => {
+        const oldMonth = oldQuarter[month];
+        if (!oldMonth) return;
 
-    formik.setFieldValue("overAllTargetPrice", targetPrice, false);
+        const entered = oldMonth.targetAchievementQuantity;
+        if (entered === undefined || entered === null || entered === "") return;
 
-    /* For renting the "quantity" carried into the distribution is the
-       number of rental months, the unit price is the monthly rent. */
-    applyDistribution(
-      numberValue(totalRentalMonths),
-      numberValue(monthlyRent)
-    );
-  };
+        quarters[quarter][month].targetAchievementQuantity =
+          numberValue(entered) || 0;
+      });
+    });
 
-  const recalculateSpraying = (overallTargetQuantity, unitPrice) => {
-    const quantity = numberValue(overallTargetQuantity);
-    const price = numberValue(unitPrice);
+    let overallAchievementQuantity = 0;
+    let overallAchievementPrice = 0;
 
+    Object.keys(MONTHS).forEach((quarter) => {
+      const quarterData = quarters[quarter];
+      let quarterAchievementQuantity = 0;
+      let quarterAchievementPrice = 0;
+
+      MONTHS[quarter].forEach((month) => {
+        const monthData = quarterData[month];
+
+        monthData.targetAchievementPrice = roundTo(
+          numberValue(monthData.targetAchievementQuantity) * unitPrice,
+          2
+        );
+
+        quarterAchievementQuantity += numberValue(
+          monthData.targetAchievementQuantity
+        );
+        quarterAchievementPrice += numberValue(monthData.targetAchievementPrice);
+      });
+
+      quarterData.QuarterAchievementQuantity = roundTo(
+        quarterAchievementQuantity,
+        0
+      );
+      quarterData.QuarterAchievementPrice = roundTo(quarterAchievementPrice, 2);
+
+      overallAchievementQuantity += quarterAchievementQuantity;
+      overallAchievementPrice += quarterAchievementPrice;
+    });
+
+    row.achievement = {
+      ...quarters,
+      overall: {
+        totalQuantity: overallAchievementQuantity,
+        totalPrice: overallAchievementPrice,
+      },
+    };
+    row.totalPrice = roundTo(qty * unitPrice, 2);
+
+    formik.setFieldValue(`services[${index}].achievement`, row.achievement, false);
     formik.setFieldValue(
-      "overAllTargetPrice",
-      roundTo(quantity * price, 2),
+      `services[${index}].totalPrice`,
+      roundTo(qty * unitPrice, 2),
       false
     );
-
-    applyDistribution(quantity, price);
   };
 
   /* ---------------------------------------------------------
@@ -271,7 +283,7 @@ const EnviroServiceTargetSheetForm = () => {
     formik.setFieldValue("segment", option?.value || "");
     formik.setFieldValue("profileType", "");
     formik.setFieldValue("organization", "");
-    formik.setFieldValue("uniqueCode", "");
+    formik.setFieldValue("uniqueCodeOrganization", "");
     formik.setFieldValue("city", "");
     formik.setFieldValue("individualName", "");
     formik.setFieldValue("individualUniqueCode", "");
@@ -285,7 +297,7 @@ const EnviroServiceTargetSheetForm = () => {
 
   const handleOrganizationChange = (option) => {
     formik.setFieldValue("organization", option?.value || "");
-    formik.setFieldValue("uniqueCode", option?.uniqueCode || "");
+    formik.setFieldValue("uniqueCodeOrganization", option?.uniqueCode || "");
     formik.setFieldValue("city", option?.city || "");
     formik.setFieldValue("individualName", "");
     formik.setFieldValue("individualUniqueCode", "");
@@ -299,110 +311,143 @@ const EnviroServiceTargetSheetForm = () => {
     }
   };
 
-  const handleServiceTypeChange = (option) => {
-    const serviceType = option?.value || "";
-
-    formik.setFieldValue("serviceType", serviceType);
-
-    /* Reset the fields that do not belong to the selected type */
-    formik.setFieldValue("monthlyRent", "");
-    formik.setFieldValue("totalRentalMonths", "");
-    formik.setFieldValue("overallTargetQuantity", "");
-    formik.setFieldValue("unitPrice", "");
-    formik.setFieldValue("overAllTargetPrice", 0);
-    formik.setFieldValue("achievement", {}, false);
+  const handleServiceNameChange = (index, value) => {
+    formik.setFieldValue(`services[${index}].serviceName`, value, false);
+    formik.setFieldValue(`services[${index}].servicePrice`, "", false);
+    formik.setFieldValue(`services[${index}].months`, "", false);
+    formik.setFieldValue(`services[${index}].acres`, "", false);
+    formik.setFieldValue(`services[${index}].totalPrice`, 0, false);
+    formik.setFieldValue(`services[${index}].achievement`, {}, false);
   };
 
-  const handleMonthlyRentChange = (value) => {
-    formik.setFieldValue("monthlyRent", value, false);
-    recalculateRenting(value, formik.values.totalRentalMonths);
+  const handleServicePriceChange = (index, value) => {
+    formik.setFieldValue(`services[${index}].servicePrice`, value, false);
+    const row = formik.values.services?.[index];
+    recalculateRow(index, {
+      servicePrice: value,
+      months: row?.months,
+      acres: row?.acres,
+    });
   };
 
-  const handleTotalRentalMonthsChange = (value) => {
-    formik.setFieldValue("totalRentalMonths", value, false);
-    recalculateRenting(formik.values.monthlyRent, value);
+  const handleMonthsChange = (index, value) => {
+    formik.setFieldValue(`services[${index}].months`, value, false);
+    const row = formik.values.services?.[index];
+    recalculateRow(index, {
+      servicePrice: row?.servicePrice,
+      months: value,
+      acres: row?.acres,
+    });
   };
 
-  const handleOverallTargetQuantityChange = (value) => {
-    formik.setFieldValue("overallTargetQuantity", value, false);
-    recalculateSpraying(value, formik.values.unitPrice);
+  const handleAcresChange = (index, value) => {
+    formik.setFieldValue(`services[${index}].acres`, value, false);
+    const row = formik.values.services?.[index];
+    recalculateRow(index, {
+      servicePrice: row?.servicePrice,
+      months: row?.months,
+      acres: value,
+    });
   };
 
-  const handleUnitPriceChange = (value) => {
-    formik.setFieldValue("unitPrice", value, false);
-    recalculateSpraying(formik.values.overallTargetQuantity, value);
-  };
+  const handleAchievementChange = (index, quarter, month, field, value) => {
+    const row = formik.values.services?.[index];
+    if (!row) return;
 
-  const handleAchievementChange = (quarter, month, field, value) => {
-    const achievements = JSON.parse(
-      JSON.stringify(formik.values.achievement || {})
-    );
-    const monthData = achievements[quarter]?.[month] || {};
+    const achievements = JSON.parse(JSON.stringify(row.achievement || {}));
+    const quarterData = achievements[quarter] || {};
+    const monthData = quarterData[month] || {};
 
     monthData[field] = value;
-
-    /* For renting the unit price is the monthly rent, for spraying it is
-       the entered unit price. */
-    const unitPrice = isRenting
-      ? numberValue(formik.values.monthlyRent)
-      : numberValue(formik.values.unitPrice);
-
     monthData.targetAchievementPrice = roundTo(
-      numberValue(value) * unitPrice,
+      numberValue(value) * numberValue(row.servicePrice),
       2
     );
 
-    achievements[quarter] = {
-      ...achievements[quarter],
-      [month]: monthData,
-    };
+    quarterData[month] = monthData;
 
     let quarterAchievementQuantity = 0;
     let quarterAchievementPrice = 0;
 
     MONTHS[quarter].forEach((monthName) => {
-      const data = achievements[quarter]?.[monthName] || {};
+      const data = quarterData[monthName] || {};
       quarterAchievementQuantity += numberValue(data.targetAchievementQuantity);
       quarterAchievementPrice += numberValue(data.targetAchievementPrice);
     });
 
-    achievements[quarter].QuarterAchievementQuantity = roundTo(
+    quarterData.QuarterAchievementQuantity = roundTo(
       quarterAchievementQuantity,
       0
     );
-    achievements[quarter].QuarterAchievementPrice = roundTo(
-      quarterAchievementPrice,
-      2
-    );
+    quarterData.QuarterAchievementPrice = roundTo(quarterAchievementPrice, 2);
 
-    formik.setFieldValue("achievement", achievements, false);
+    achievements[quarter] = quarterData;
+
+    formik.setFieldValue(`services[${index}].achievement`, achievements, false);
+  };
+
+  const addServiceRow = (clickedIndex) => {
+    const services = [...(formik.values.services || [])];
+    services.splice(clickedIndex + 1, 0, createEmptyServiceRow());
+    formik.setFieldValue("services", services);
+  };
+
+  const removeServiceRow = (index) => {
+    if ((formik.values.services || []).length <= 1) return;
+    const services = formik.values.services.filter((_, i) => i !== index);
+    formik.setFieldValue("services", services);
   };
 
   const handleReset = () => {
     formik.resetForm();
     setPreviewData(null);
+    setSelectedServiceId(null);
+    setSelectedServiceIndex(null);
   };
 
   /* ---------------------------------------------------------
-     DROPDOWN OPTIONS (live APIs)
+     FETCH PRODUCT DETAILS (price) — depends on selected service
   --------------------------------------------------------- */
-  const {
-    loading: dropdownLoading,
-    segmentOptions,
-    profileTypeOptions,
-    organizationOptions,
-    individualOptions,
-    cityOptions,
-    yearOptions,
-  } = useEnviroTargetSheetDropdowns({
-    organization: formik.values.organization,
-    city: formik.values.city,
-    segment: formik.values.segment,
-    profileType: formik.values.profileType,
-  });
+  useEffect(() => {
+    if (selectedServiceId === null || selectedServiceIndex === null) return;
+    fetchProductDetails(selectedServiceId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedServiceId, selectedServiceIndex]);
 
-  /* Wait until the company name has been read from sessionStorage,
-     otherwise a valid Enviro user briefly sees "Access Restricted". */
+  useEffect(() => {
+    if (selectedServiceIndex === null || !productDetails) return;
+
+    const price = getProductPrice(productDetails);
+    if (price === "" || price === null || price === undefined) return;
+
+    const index = selectedServiceIndex;
+    const service = formik.values.services?.[index];
+    if (!service) return;
+
+    const numericPrice = numberValue(price);
+    const months = numberValue(service.months);
+    const acres = numberValue(service.acres);
+
+    formik.setFieldValue(`services[${index}].servicePrice`, numericPrice, false);
+    recalculateRow(index, { servicePrice: numericPrice, months, acres });
+
+    setSelectedServiceId(null);
+    setSelectedServiceIndex(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productDetails]);
+
+  /* ---------------------------------------------------------
+     SUMMARY TOTALS
+  --------------------------------------------------------- */
+  const summary = (formik.values.services || []).reduce(
+    (acc, row) => ({
+      totalServices: acc.totalServices + 1,
+      totalPrice: acc.totalPrice + numberValue(row.totalPrice),
+    }),
+    { totalServices: 0, totalPrice: 0 }
+  );
+
+  /* Wait until the company name has been read from sessionStorage */
   if (!isCompanyLoaded) return null;
 
   if (!isEnviroSolution) {
@@ -455,7 +500,7 @@ const EnviroServiceTargetSheetForm = () => {
           {/* ---------------- BASIC DETAILS ---------------- */}
           <FormSection
             title="Basic Details"
-            description="Select the organization, city, individual and year for this target sheet."
+            description="Select the section, profile type, organization, individual and year for this target sheet."
           >
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               <FormField label="Section" required>
@@ -503,7 +548,9 @@ const EnviroServiceTargetSheetForm = () => {
               <FormField
                 label="Organization"
                 required
-                error={formik.touched.organization && formik.errors.organization}
+                error={
+                  formik.touched.organization && formik.errors.organization
+                }
               >
                 <Select
                   isLoading={dropdownLoading}
@@ -524,6 +571,19 @@ const EnviroServiceTargetSheetForm = () => {
                   styles={selectStyles}
                 />
               </FormField>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Organization Unique Code
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={formik.values.uniqueCodeOrganization || "-"}
+                  className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                  placeholder="Select an organization"
+                />
+              </div>
 
               <FormField
                 label="City"
@@ -579,6 +639,19 @@ const EnviroServiceTargetSheetForm = () => {
                 />
               </FormField>
 
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Individual Unique Code
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={formik.values.individualUniqueCode || "-"}
+                  className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                  placeholder="Select an individual"
+                />
+              </div>
+
               <FormField
                 label="Year"
                 required
@@ -607,242 +680,386 @@ const EnviroServiceTargetSheetForm = () => {
           {/* ---------------- SERVICE DETAILS ---------------- */}
           <FormSection
             title="Service Details"
-            description="Choose the service type. The service target is distributed over Q2 and Q3 (50% each)."
+            description="Add one row per service. The service price, months and acres build the total target, which is distributed across the quarters and months."
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              <FormField
-                label="Service Type"
-                required
-                error={formik.touched.serviceType && formik.errors.serviceType}
+            {formik.values.services.map((row, index) => (
+              <div
+                key={row._tempId}
+                className="border rounded-xl p-4 mb-4 bg-gray-50"
               >
-                <Select
-                  options={SERVICE_TYPES}
-                  value={
-                    SERVICE_TYPES.find(
-                      (option) => option.value === formik.values.serviceType
-                    ) || null
-                  }
-                  onChange={(option) => {
-                    handleServiceTypeChange(option);
-                    formik.setFieldTouched("serviceType", true);
-                  }}
-                  onBlur={() => formik.setFieldTouched("serviceType", true)}
-                  placeholder="Select service type"
-                  styles={selectStyles}
-                />
-              </FormField>
-
-              {/* ---------- RENTING FIELDS ---------- */}
-              {isRenting ? (
-                <>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                   <FormField
-                    label="Monthly Rent (₹)"
+                    label="Service Name"
                     required
                     error={
-                      formik.touched.monthlyRent && formik.errors.monthlyRent
+                      formik.touched.services?.[index]?.serviceName &&
+                      formik.errors.services?.[index]?.serviceName
                     }
                   >
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formik.values.monthlyRent ?? ""}
-                      onChange={(event) => {
-                        handleMonthlyRentChange(event.target.value);
-                        formik.setFieldTouched("monthlyRent", true);
-                      }}
-                      onBlur={() => formik.setFieldTouched("monthlyRent", true)}
-                      onWheel={(event) => event.target.blur()}
-                      className={inputBaseClass}
-                      placeholder="Enter monthly rent"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Total Rental Months"
-                    required
-                    error={
-                      formik.touched.totalRentalMonths &&
-                      formik.errors.totalRentalMonths
-                    }
-                  >
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={formik.values.totalRentalMonths ?? ""}
-                      onChange={(event) => {
-                        handleTotalRentalMonthsChange(event.target.value);
-                        formik.setFieldTouched("totalRentalMonths", true);
+                    <Select
+                      options={SERVICE_TYPES}
+                      value={
+                        SERVICE_TYPES.find(
+                          (option) => option.value === row.serviceName
+                        ) || null
+                      }
+                      onChange={(option) => {
+                        handleServiceNameChange(index, option?.value || "");
+                        formik.setFieldTouched(
+                          `services[${index}].serviceName`,
+                          true
+                        );
                       }}
                       onBlur={() =>
-                        formik.setFieldTouched("totalRentalMonths", true)
+                        formik.setFieldTouched(
+                          `services[${index}].serviceName`,
+                          true
+                        )
                       }
-                      onWheel={(event) => event.target.blur()}
-                      className={inputBaseClass}
-                      placeholder="Enter rental months"
+                      placeholder="Select service"
+                      styles={selectStyles}
                     />
                   </FormField>
-                </>
-              ) : null}
 
-              {/* ---------- SPRAYING FIELDS ---------- */}
-              {isSpraying ? (
-                <>
                   <FormField
-                    label="Overall Target Quantity"
+                    label="Product Type"
                     required
                     error={
-                      formik.touched.overallTargetQuantity &&
-                      formik.errors.overallTargetQuantity
+                      formik.touched.services?.[index]?.productType &&
+                      formik.errors.services?.[index]?.productType
                     }
                   >
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={formik.values.overallTargetQuantity ?? ""}
-                      onChange={(event) => {
-                        handleOverallTargetQuantityChange(event.target.value);
-                        formik.setFieldTouched("overallTargetQuantity", true);
-                      }}
-                      onBlur={() =>
-                        formik.setFieldTouched("overallTargetQuantity", true)
+                    <Select
+                      isLoading={dropdownLoading}
+                      options={productTypeOptions}
+                      value={
+                        productTypeOptions.find(
+                          (option) => option.value === row.productType
+                        ) || null
                       }
-                      onWheel={(event) => event.target.blur()}
-                      className={inputBaseClass}
-                      placeholder="Enter target quantity"
+                      onChange={(option) => {
+                        formik.setFieldValue(
+                          `services[${index}].productType`,
+                          option?.value || ""
+                        );
+                        formik.setFieldValue(
+                          `services[${index}].productName`,
+                          ""
+                        );
+                        formik.setFieldTouched(
+                          `services[${index}].productType`,
+                          true
+                        );
+                      }}
+                      isSearchable
+                      isClearable
+                      placeholder="Select product type"
+                      styles={selectStyles}
                     />
                   </FormField>
 
                   <FormField
-                    label="Unit Price (₹)"
+                    label="Product Name"
                     required
-                    error={formik.touched.unitPrice && formik.errors.unitPrice}
+                    error={
+                      formik.touched.services?.[index]?.productName &&
+                      formik.errors.services?.[index]?.productName
+                    }
                   >
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formik.values.unitPrice ?? ""}
-                      onChange={(event) => {
-                        handleUnitPriceChange(event.target.value);
-                        formik.setFieldTouched("unitPrice", true);
+                    <Select
+                      isLoading={dropdownLoading}
+                      options={productOptions}
+                      value={
+                        productOptions.find(
+                          (option) => option.value === row.productName
+                        ) || null
+                      }
+                      onChange={(option) => {
+                        const name = option?.value || "";
+                        const selectedProduct = option?.product;
+
+                        formik.setFieldValue(
+                          `services[${index}].productName`,
+                          name
+                        );
+
+                        const directPrice = getProductPrice(selectedProduct);
+
+                        if (
+                          directPrice !== "" &&
+                          directPrice !== null &&
+                          directPrice !== undefined
+                        ) {
+                          const numericPrice = numberValue(directPrice);
+                          const months = numberValue(
+                            formik.values.services?.[index]?.months
+                          );
+                          const acres = numberValue(
+                            formik.values.services?.[index]?.acres
+                          );
+
+                          formik.setFieldValue(
+                            `services[${index}].servicePrice`,
+                            numericPrice,
+                            false
+                          );
+                          recalculateRow(index, {
+                            servicePrice: numericPrice,
+                            months,
+                            acres,
+                          });
+
+                          setSelectedServiceId(null);
+                          setSelectedServiceIndex(null);
+                          return;
+                        }
+
+                        const productId = getProductId(selectedProduct);
+                        if (productId) {
+                          resetProductDetails();
+                          setSelectedServiceIndex(index);
+                          setSelectedServiceId(productId);
+                        } else {
+                          formik.setFieldValue(
+                            `services[${index}].servicePrice`,
+                            "",
+                            false
+                          );
+                        }
+                        formik.setFieldTouched(
+                          `services[${index}].productName`,
+                          true
+                        );
                       }}
-                      onBlur={() => formik.setFieldTouched("unitPrice", true)}
-                      onWheel={(event) => event.target.blur()}
-                      className={inputBaseClass}
-                      placeholder="Enter unit price"
+                      isSearchable
+                      isClearable
+                      placeholder="Select product"
+                      styles={selectStyles}
                     />
                   </FormField>
-                </>
-              ) : null}
-            </div>
 
-            {/* ---------- RENTING RULE HINT ---------- */}
-            {isRenting ? (
-              <div className="mt-4 p-3 rounded-lg bg-green-50 border border-green-300 text-green-800 text-sm">
-                <strong>Renting rule:</strong> Overall Target Price = Monthly Rent
-                × Total Rental Months.
+                  {row.serviceName === "Renting" ? (
+                    <FormField
+                      label="Rent Per Month (₹)"
+                      required
+                      error={
+                        formik.touched.services?.[index]?.servicePrice &&
+                        formik.errors.services?.[index]?.servicePrice
+                      }
+                    >
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={row.servicePrice ?? ""}
+                        onChange={(event) =>
+                          handleServicePriceChange(index, event.target.value)
+                        }
+                        onBlur={() =>
+                          formik.setFieldTouched(
+                            `services[${index}].servicePrice`,
+                            true
+                          )
+                        }
+                        onWheel={(event) => event.target.blur()}
+                        className={inputBaseClass}
+                        placeholder="Enter rent per month"
+                      />
+                    </FormField>
+                  ) : (
+                    <FormField
+                      label="Service Price (₹)"
+                      required
+                      error={
+                        formik.touched.services?.[index]?.servicePrice &&
+                        formik.errors.services?.[index]?.servicePrice
+                      }
+                    >
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={row.servicePrice ?? ""}
+                        onChange={(event) =>
+                          handleServicePriceChange(index, event.target.value)
+                        }
+                        onBlur={() =>
+                          formik.setFieldTouched(
+                            `services[${index}].servicePrice`,
+                            true
+                          )
+                        }
+                        onWheel={(event) => event.target.blur()}
+                        className={inputBaseClass}
+                        placeholder="Enter service price"
+                      />
+                    </FormField>
+                  )}
+
+                  {row.serviceName === "Renting" ? (
+                    <FormField
+                      label="Rented Months"
+                      required
+                      error={
+                        formik.touched.services?.[index]?.months &&
+                        formik.errors.services?.[index]?.months
+                      }
+                    >
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={row.months ?? ""}
+                        onChange={(event) =>
+                          handleMonthsChange(index, event.target.value)
+                        }
+                        onBlur={() =>
+                          formik.setFieldTouched(
+                            `services[${index}].months`,
+                            true
+                          )
+                        }
+                        onWheel={(event) => event.target.blur()}
+                        className={inputBaseClass}
+                        placeholder="Enter rented months"
+                      />
+                    </FormField>
+                  ) : (
+                    <FormField
+                      label="Months"
+                      required
+                      error={
+                        formik.touched.services?.[index]?.months &&
+                        formik.errors.services?.[index]?.months
+                      }
+                    >
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={row.months ?? ""}
+                        onChange={(event) =>
+                          handleMonthsChange(index, event.target.value)
+                        }
+                        onBlur={() =>
+                          formik.setFieldTouched(
+                            `services[${index}].months`,
+                            true
+                          )
+                        }
+                        onWheel={(event) => event.target.blur()}
+                        className={inputBaseClass}
+                        placeholder="Enter months"
+                      />
+                    </FormField>
+                  )}
+
+                  {row.serviceName !== "Renting" ? (
+                    <FormField
+                      label="Acres (Land In Acres)"
+                      required
+                      error={
+                        formik.touched.services?.[index]?.acres &&
+                        formik.errors.services?.[index]?.acres
+                      }
+                    >
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={row.acres ?? ""}
+                        onChange={(event) =>
+                          handleAcresChange(index, event.target.value)
+                        }
+                        onBlur={() =>
+                          formik.setFieldTouched(
+                            `services[${index}].acres`,
+                            true
+                          )
+                        }
+                        onWheel={(event) => event.target.blur()}
+                        className={inputBaseClass}
+                        placeholder="Enter acres"
+                      />
+                    </FormField>
+                  ) : null}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <ReadOnlyField
+                    label="Total Price"
+                    value={`₹ ${formatCurrency(row.totalPrice)}`}
+                    hint={
+                      row.serviceName === "Renting"
+                        ? "Rent Per Month × Rented Months"
+                        : "Service Price × Months × Acres"
+                    }
+                  />
+                  <ReadOnlyField
+                    label="Quantity"
+                    value={
+                      row.serviceName === "Renting"
+                        ? numberValue(row.months)
+                        : numberValue(row.months) * numberValue(row.acres)
+                    }
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <Button
+                    type="button"
+                    text="Add Row"
+                    onClick={() => addServiceRow(index)}
+                  />
+                  <Button
+                    type="button"
+                    text="Remove Row"
+                    onClick={() => removeServiceRow(index)}
+                    variant={2}
+                  />
+                </div>
+
+                {/* ---------- QUARTER / MONTH DISTRIBUTION ---------- */}
+                {row.serviceName === "Renting"
+                  ? numberValue(row.months) > 0
+                  : numberValue(row.months) * numberValue(row.acres) > 0 ? (
+                  <div className="mt-5">
+                    <DistributionTable
+                      distribution={{
+                        quarters: row.achievement || {},
+                        quarterlyRatios: SERVICE_TARGET_DISTRIBUTION.quarterly,
+                        monthlyRatios: SERVICE_TARGET_DISTRIBUTION.monthly,
+                      }}
+                      onAchievementChange={(quarter, month, field, value) =>
+                        handleAchievementChange(
+                          index,
+                          quarter,
+                          month,
+                          field,
+                          value
+                        )
+                      }
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic mt-4">
+                    Enter the months and acres to see the quarter and month wise
+                    distribution.
+                  </p>
+                )}
               </div>
-            ) : null}
+            ))}
 
-            {/* ---------- SPRAYING PENDING NOTICE ---------- */}
-            {isSpraying ? (
-              <div className="mt-4 p-3 rounded-lg bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm">
-                <strong>Pending confirmation:</strong> the business rule for
-                calculating a spraying target has not been confirmed yet. The
-                overall target is therefore taken directly from the quantity
-                and unit price entered above, and only the confirmed quarter /
-                month distribution (Q1 0% | Q2 50% | Q3 50% | Q4 0%) is applied
-                to it.
-              </div>
-            ) : null}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
               <ReadOnlyField
-                label="Overall Target Quantity"
-                value={
-                  isRenting
-                    ? formik.values.totalRentalMonths ?? 0
-                    : formik.values.overallTargetQuantity ?? 0
-                }
-                hint={
-                  isRenting
-                    ? "Number of rental months"
-                    : "Entered target quantity"
-                }
+                label="Total Services"
+                value={summary.totalServices}
               />
               <ReadOnlyField
-                label="Overall Target Price"
-                value={`₹ ${formatCurrency(formik.values.overAllTargetPrice)}`}
-                hint={
-                  isRenting
-                    ? "Monthly Rent × Total Rental Months"
-                    : "Overall Target Quantity × Unit Price"
-                }
+                label="Total Overall Target Price"
+                value={`₹ ${formatCurrency(summary.totalPrice)}`}
               />
             </div>
-          </FormSection>
-
-          {/* ---------------- QUARTER / MONTH DISTRIBUTION ---------------- */}
-          <FormSection
-            title="Quarter & Month Distribution"
-            description="The overall target is distributed Q2 50% and Q3 50% (Q1 and Q4 are 0%) and then evenly across the three months of each quarter."
-          >
-            <div className="flex flex-wrap gap-2 text-xs mb-4">
-              {SERVICE_QUARTER_PERCENT_LABELS.map((label) => (
-                <span
-                  key={label.quarter}
-                  className="px-2 py-1 rounded bg-blue-100 text-blue-800"
-                >
-                  {label.quarter}: {label.percent}%
-                </span>
-              ))}
-            </div>
-
-            {isRenting && formik.values.totalRentalMonths ? (
-              <DistributionTable
-                distribution={{
-                  quarters: formik.values.achievement || {},
-                  quarterlyRatios: SERVICE_TARGET_DISTRIBUTION.quarterly,
-                  monthlyRatios: SERVICE_TARGET_DISTRIBUTION.monthly,
-                }}
-                onAchievementChange={handleAchievementChange}
-              />
-            ) : null}
-
-            {isSpraying && formik.values.overallTargetQuantity ? (
-              <DistributionTable
-                distribution={{
-                  quarters: formik.values.achievement || {},
-                  quarterlyRatios: SERVICE_TARGET_DISTRIBUTION.quarterly,
-                  monthlyRatios: SERVICE_TARGET_DISTRIBUTION.monthly,
-                }}
-                onAchievementChange={handleAchievementChange}
-              />
-            ) : null}
-
-            {!isRenting && !isSpraying ? (
-              <p className="text-sm text-gray-500 italic">
-                Select a service type and enter the target details to see the
-                quarter and month wise distribution.
-              </p>
-            ) : null}
-
-            {isRenting && !formik.values.totalRentalMonths ? (
-              <p className="text-sm text-gray-500 italic">
-                Enter the total rental months to see the quarter and month wise
-                distribution.
-              </p>
-            ) : null}
-
-            {isSpraying && !formik.values.overallTargetQuantity ? (
-              <p className="text-sm text-gray-500 italic">
-                Enter the overall target quantity to see the quarter and month
-                wise distribution.
-              </p>
-            ) : null}
           </FormSection>
 
           {/* ---------------- ACTIONS ---------------- */}
@@ -864,7 +1081,6 @@ const EnviroServiceTargetSheetForm = () => {
           </div>
         </div>
       </form>
-
 
       {/* ---------------- PREVIEW MODAL ---------------- */}
       {previewData ? (
@@ -895,10 +1111,11 @@ const EnviroServiceTargetSheetForm = () => {
                 </p>
                 <p>
                   <span className="font-semibold">Organization:</span>{" "}
-                  {previewData.organization}
+                  {previewData.organizationName}
                 </p>
                 <p>
-                  <span className="font-semibold">City:</span> {previewData.city}
+                  <span className="font-semibold">City:</span>{" "}
+                  {previewData.cityTownVillage}
                 </p>
                 <p>
                   <span className="font-semibold">Individual:</span>{" "}
@@ -907,45 +1124,23 @@ const EnviroServiceTargetSheetForm = () => {
                 <p>
                   <span className="font-semibold">Year:</span> {previewData.year}
                 </p>
-                <p>
-                  <span className="font-semibold">Service Type:</span>{" "}
-                  {previewData.serviceType}
-                </p>
-                {previewData.serviceType === SERVICE_TYPE_RENTING ? (
-                  <>
-                    <p>
-                      <span className="font-semibold">Monthly Rent:</span> ₹{" "}
-                      {formatCurrency(previewData.monthlyRent)}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Total Rental Months:</span>{" "}
-                      {previewData.totalRentalMonths}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p>
-                      <span className="font-semibold">
-                        Overall Target Quantity:
-                      </span>{" "}
-                      {previewData.overallTargetQuantity}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Unit Price:</span> ₹{" "}
-                      {formatCurrency(previewData.unitPrice)}
-                    </p>
-                  </>
-                )}
-                <p>
-                  <span className="font-semibold">Overall Target Price:</span> ₹{" "}
-                  {formatCurrency(previewData.overAllTargetPrice)}
-                </p>
               </div>
 
-              <p className="text-xs text-gray-500">
-                This is a local preview only — no data has been sent to or
-                saved in the backend.
-              </p>
+              <div className="space-y-3">
+                {previewData.services.map((row, index) => (
+                  <div
+                    key={index}
+                    className="border rounded-lg p-3 text-sm space-y-1"
+                  >
+                    <p className="font-semibold">{row.serviceName}</p>
+                    <p>
+                      Service Price: ₹ {formatCurrency(row.servicePrice)} |
+                      Months: {row.months} | Acres: {row.acres} | Total: ₹{" "}
+                      {formatCurrency(row.totalPrice)}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="px-6 py-4 border-t flex justify-end">

@@ -10,7 +10,7 @@ import { useTheme } from "../../../../../../hooks/theme/useTheme";
 
 import useEnviroOnly from "./hooks/useEnviroOnly";
 import useEnviroTargetSheetDropdowns from "./hooks/useEnviroTargetSheetDropdowns";
-import useEnviroTargetSheetExecutive from "../../../../../../hooks/superAdminHook/customerVisitPlan/targetSheet/useEnviroTargetSheetExecutive";
+import useEnviroTargetSheetExecutive from "../../../../../../hooks/salesExecutiveHook/customerVisitPlan/useEnviroTargetSheetExecutive";
 import {
   FormSection,
   FormField,
@@ -119,21 +119,20 @@ const EnviroProjectTargetSheetForm = () => {
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       try {
         const payload = {
-          typeOfTargetSheet: "project",
-          segment: values.segment,
-          profileType: values.profileType,
-          organization: values.organization,
-          uniqueCodeOrganization: values.uniqueCode,
-          city: values.city,
-          individualName: values.individualName,
-          uniqueCodeIndividual: values.individualUniqueCode,
-          year: String(values.year),
-          projectType: values.projectType,
-          projectName: values.projectName,
-          plantCapacity: numberValue(values.plantCapacity),
-          projectedPrice: numberValue(values.projectedPrice),
-          overAllTargetPrice: numberValue(values.overAllTargetPrice),
-          achievement: values.achievement,
+          sheetType: "Project",
+           segment: values.segment,
+           profileType: values.profileType,
+           organizationName: values.organization,
+           uniqueCodeOrganization: values.uniqueCode,
+           cityTownVillage: values.city,
+           individualName: values.individualName,
+           uniqueCodeIndividual: values.individualUniqueCode,
+           year: String(values.year),
+           projectType: values.projectType,
+           projectName: values.projectName,
+           plantCapacity: numberValue(values.plantCapacity),
+           projectPrice: numberValue(values.projectedPrice),
+           achievement: values.achievement,
         };
 
         // eslint-disable-next-line no-console
@@ -412,9 +411,22 @@ const EnviroProjectTargetSheetForm = () => {
                   placeholder="Select organization"
                   styles={selectStyles}
                 />
-              </FormField>
+               </FormField>
 
-              <FormField
+               <div>
+                 <label className="block text-sm font-medium mb-1">
+                   Organization Unique Code
+                 </label>
+                 <input
+                   type="text"
+                   readOnly
+                   value={formik.values.uniqueCode || "-"}
+                   className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                   placeholder="Select an organization"
+                 />
+               </div>
+
+               <FormField
                 label="City"
                 required
                 error={formik.touched.city && formik.errors.city}
@@ -466,9 +478,22 @@ const EnviroProjectTargetSheetForm = () => {
                   placeholder="Select individual"
                   styles={selectStyles}
                 />
-              </FormField>
+               </FormField>
 
-              <FormField
+               <div>
+                 <label className="block text-sm font-medium mb-1">
+                   Individual Unique Code
+                 </label>
+                 <input
+                   type="text"
+                   readOnly
+                   value={formik.values.individualUniqueCode || "-"}
+                   className="w-full border rounded-md p-2 bg-gray-100 text-gray-600"
+                   placeholder="Select an individual"
+                 />
+               </div>
+
+               <FormField
                 label="Year"
                 required
                 error={formik.touched.year && formik.errors.year}
