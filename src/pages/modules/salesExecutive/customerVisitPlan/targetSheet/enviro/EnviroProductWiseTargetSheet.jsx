@@ -23,9 +23,17 @@ const EnviroProductWiseTargetSheet = () => {
     productWiseTargetSheetDetails,
     fetchEnviroProductWiseTargetSheet,
     resetProductWiseTargetSheetDetails,
+    serviceIndividualOrganizationTargetSheetDetails,
+    fetchServiceIndividualOrganizationTargetSheet,
+    resetServiceIndividualOrganizationTargetSheetDetails,
+    projectIndividualOrganizationTargetSheetDetails,
+    fetchProjectIndividualOrganizationTargetSheet,
+    resetProjectIndividualOrganizationTargetSheetDetails,
   } = useEnviroTargetSheetExecutive();
 
   const navigate = useNavigate();
+
+  const [activeTab, setActiveTab] = useState("product");
 
   const [showFilter, setShowFilter] = useState(false);
   const [page, setPage] = useState(1);
@@ -63,29 +71,38 @@ const EnviroProductWiseTargetSheet = () => {
     } else {
       year = selectedYear;
     }
-    setYear(year !== undefined && year !== null ? String(year) : "");
+    const yearStr = year !== undefined && year !== null ? String(year) : "";
+    setYear(yearStr);
     setPage(1); // reset to first page when year changes
-    fetchEnviroProductWiseTargetSheet(year, 1, limit);
-  };
-
-  const handleViewClick = (id, row) => {
-    const sheetType = row?.sheetType;
-
-    const routeMap = {
-      Product: "/sales-executive/enviro-target-sheet/product",
-      Project: "/sales-executive/enviro-target-sheet/project",
-      Service: "/sales-executive/enviro-target-sheet/service",
-    };
-
-    const path = routeMap[sheetType];
-
-    if (path) {
-      // Pass the target sheet id as a query param so the destination form can load the existing record
-      navigate(`${path}?${id}`);
-    } else {
-      toast.error(`Unknown sheet type: ${sheetType}`);
+    if (activeTab === "product") {
+      fetchEnviroProductWiseTargetSheet(year, 1, limit);
+    } else if (activeTab === "service") {
+      fetchServiceIndividualOrganizationTargetSheet(year, 1, limit);
+    } else if (activeTab === "project") {
+      fetchProjectIndividualOrganizationTargetSheet(year, 1, limit);
     }
   };
+
+const handleViewClick = (id, row) => {
+  const routeMap = {
+    Product: "/sales-executive/enviro-target-sheet/product",
+    Project: "/sales-executive/enviro-target-sheet/project",
+    Service: "/sales-executive/enviro-target-sheet/service",
+  };
+
+  const sheetType =
+    row?.sheetType ||
+    (activeTab === "service" ? "Service" : activeTab === "project" ? "Project" : "Product");
+  const path = routeMap[sheetType];
+
+  if (path && id) {
+    navigate(`${path}?id=${encodeURIComponent(id)}`);
+  } else {
+    toast.error(
+      !id ? "Target sheet ID is missing" : `Unknown sheet type: ${sheetType}`
+    );
+  }
+};
 
   const onPageChange = (data) => {
     setPage(data);
@@ -96,10 +113,22 @@ const EnviroProductWiseTargetSheet = () => {
   };
 
   useEffect(() => {
-    // Initial fetch: no year filter (default). When year is selected, fetchEnviroProductWiseTargetSheet
-    // is called from handleYearChange already; here we just ensure initial load.
-    fetchEnviroProductWiseTargetSheet(undefined, page, limit);
-  }, [page, limit]);
+    if (activeTab === "product") {
+      fetchEnviroProductWiseTargetSheet(undefined, page, limit);
+    } else if (activeTab === "service") {
+      fetchServiceIndividualOrganizationTargetSheet(undefined, page, limit);
+    } else if (activeTab === "project") {
+      fetchProjectIndividualOrganizationTargetSheet(undefined, page, limit);
+    }
+  }, [page, limit, activeTab]);
+
+  useEffect(() => {
+    return () => {
+      resetProductWiseTargetSheetDetails();
+      resetServiceIndividualOrganizationTargetSheetDetails();
+      resetProjectIndividualOrganizationTargetSheetDetails();
+    };
+  }, []);
 
   useEffect(() => {
     // Optional: re-fetch when year changes externally, but handleYearChange already handles it.
@@ -123,29 +152,71 @@ const EnviroProductWiseTargetSheet = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-3xl font-bold text-gray-800 font">
-            Enviro Product Wise Target Sheet
+            Enviro Target Sheet
           </h2>
-<div className="flex items-center gap-2">
-              <Button
-                onClick={() =>
-                  navigate("/sales-executive/enviro-target-sheet/create-target-sheet")
-                }
-                variant={1}
-                text="Create Target Sheet"
-              />
-              &nbsp;
-              <Select
-                placeholder="Select Year"
-                options={yearOptions.map((y) => ({ label: y.toString(), value: y }))}
-                onChange={handleYearChange}
-                isClearable
-              />
-            </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() =>
+                navigate("/sales-executive/enviro-target-sheet/create-target-sheet")
+              }
+              variant={1}
+              text="Create Target Sheet"
+            />
+            &nbsp;
+            <Select
+              placeholder="Select Year"
+              options={yearOptions.map((y) => ({ label: y.toString(), value: y }))}
+              onChange={handleYearChange}
+              isClearable
+            />
+          </div>
         </div>
-        <hr
-          className="h-1 border-0"
-          style={{ backgroundColor: theme.secondaryColor }}
-        />
+
+        {/* Tabs */}
+        <div className="flex items-center gap-1 border-b mb-4">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("product");
+              setPage(1);
+            }}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === "product"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Product Wise Target Sheet
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("service");
+              setPage(1);
+            }}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === "service"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Service Wise Target Sheet
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("project");
+              setPage(1);
+            }}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === "project"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Project Wise Target Sheet
+          </button>
+        </div>
 
         {/* Filter Panel */}
         {showFilter && (
@@ -157,40 +228,64 @@ const EnviroProductWiseTargetSheet = () => {
         )}
 
         {/* Table */}
-        <DataTable
-          // title="Enviro Product Wise Target Sheet"
-          columns={[
-            { key: "individualName", header: "Individual Name" },
-            { key: "cityTownVillage", header: "City" },
-            { key: "status", header: "Status" },
-            {
-              key: "totalProductCount",
-              header: "Product Count",
-              align: "center",
+        {(() => {
+          const tabConfig = {
+            product: {
+              columns: [
+                { key: "individualName", header: "Individual Name" },
+                { key: "cityTownVillage", header: "City" },
+                { key: "status", header: "Status" },
+                { key: "totalProductCount", header: "Product Count", align: "center" },
+                { key: "overallProductPrice", header: "Overall Price", align: "right" },
+              ],
+              data: productWiseTargetSheetDetails,
             },
-            {
-              key: "overallProductPrice",
-              header: "Overall Price",
-              align: "right",
+            service: {
+              columns: [
+                { key: "individualName", header: "Individual Name" },
+                { key: "organizationName", header: "Organization Name" },
+                { key: "cityTownVillage", header: "City" },
+                { key: "totalServiceCount", header: "Service Count", align: "center" },
+                { key: "overallServicePrice", header: "Overall Price", align: "right" },
+              ],
+              data: serviceIndividualOrganizationTargetSheetDetails,
             },
-          ]}
-          rows={productWiseTargetSheetDetails?.data ?? []}
-          loading={loading}
-          emptyMessage="No target sheet list found."
-          showSrNo
-          srNoStartIndex={(page - 1) * limit}
-          showAction
-          onRowView={handleViewClick}
-          viewKey="_id"
-          pagination={{
-            currentPage: productWiseTargetSheetDetails?.page,
-            totalItems: productWiseTargetSheetDetails?.totalRecords,
-            itemsPerPage: limit,
-            totalPages: productWiseTargetSheetDetails?.totalPages,
-            onPageChange: onPageChange,
-            onItemsPerPageChange: onItemsPerPageChange,
-          }}
-        />
+            project: {
+              columns: [
+                { key: "individualName", header: "Individual Name" },
+                { key: "organizationName", header: "Organization Name" },
+                { key: "cityTownVillage", header: "City" },
+                { key: "totalProjectCount", header: "Project Count", align: "center" },
+                { key: "overallProjectPrice", header: "Overall Price", align: "right" },
+              ],
+              data: projectIndividualOrganizationTargetSheetDetails,
+            },
+          };
+
+          const current = tabConfig[activeTab] || tabConfig.product;
+
+          return (
+            <DataTable
+              columns={current.columns}
+              rows={current.data?.data ?? []}
+              loading={loading}
+              emptyMessage="No target sheet list found."
+              showSrNo
+              srNoStartIndex={(page - 1) * limit}
+              showAction
+              onRowView={handleViewClick}
+              viewKey="_id"
+              pagination={{
+                currentPage: current.data?.page,
+                totalItems: current.data?.totalRecords,
+                itemsPerPage: limit,
+                totalPages: current.data?.totalPages,
+                onPageChange: onPageChange,
+                onItemsPerPageChange: onItemsPerPageChange,
+              }}
+            />
+          );
+        })()}
       </div>
     </div>
   );

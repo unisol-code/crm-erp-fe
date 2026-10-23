@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useSearchParams,useParams} from "react-router-dom";
 import Select from "react-select";
 import { toast } from "react-toastify";
 
@@ -54,6 +54,58 @@ const createEmptyProductRow = () => {
   };
 };
 
+/**
+ * Normalise the achievement block returned by the backend so it
+ * matches the shape the form expects (months carry
+ * targetAchievementQuantity + targetAchievementPrice, quarters
+ * carry QuarterTargetQuantity / QuarterTargetPrice).
+ */
+const normalizeAchievementFromBackend = (achievement) => {
+  const source = achievement || {};
+  const normalized = {};
+
+  Object.keys(MONTHS).forEach((quarter) => {
+    const quarterSource = source[quarter] || {};
+    const quarterData = {};
+
+    MONTHS[quarter].forEach((month) => {
+      const monthSource = quarterSource[month] || {};
+      quarterData[month] = {
+        targetQuantity: numberValue(monthSource.targetQuantity),
+        targetPrice: numberValue(monthSource.targetPrice),
+        targetAchievementQuantity: numberValue(
+          monthSource.targetAchievementQuantity
+        ),
+        targetAchievementPrice: numberValue(
+          monthSource.targetAchievementPrice
+        ),
+      };
+    });
+
+    quarterData.QuarterTargetQuantity = numberValue(
+      quarterSource.QuarterTargetQuantity
+    );
+    quarterData.QuarterTargetPrice = numberValue(
+      quarterSource.QuarterTargetPrice
+    );
+    quarterData.QuarterAchievementQuantity = numberValue(
+      quarterSource.QuarterAchievementQuantity
+    );
+    quarterData.QuarterAchievementPrice = numberValue(
+      quarterSource.QuarterAchievementPrice
+    );
+
+    normalized[quarter] = quarterData;
+  });
+
+  normalized.overall = {
+    totalQuantity: numberValue(source.overall?.totalQuantity),
+    totalPrice: numberValue(source.overall?.totalPrice),
+  };
+
+  return normalized;
+};
+
 const validationSchema = Yup.object({
   organization: Yup.string().required("Organization is required"),
   city: Yup.string().required("City is required"),
@@ -87,16 +139,10 @@ const validationSchema = Yup.object({
    Every month inside a quarter receives an equal share (1/3).
 ------------------------------------------------------------ */
 const PRODUCT_TARGET_DISTRIBUTION = {
-  quarterly: [0.25, 0.25, 0.25, 0.25],
+  quarterly: [0, 0.24, 0.36, 0.4],
   monthly: [1 / 3, 1 / 3, 1 / 3],
 };
 
-/* ------------------------------------------------------------
-   NORMALISE THE ACHIEVEMENT BLOCK BEFORE SENDING.
-   Guarantees every quarter / month carries a numeric
-   `targetAchievementQuantity` (default 0) + its price, and
-   ensures the `overall` totals are always present.
------------------------------------------------------------- */
 const buildAchievementPayload = (achievement) => {
   const source = achievement || {};
   const normalized = {};
@@ -119,6 +165,12 @@ const buildAchievementPayload = (achievement) => {
       };
     });
 
+    quarterData.QuarterTargetQuantity = numberValue(
+      quarterSource.QuarterTargetQuantity
+    );
+    quarterData.QuarterTargetPrice = numberValue(
+      quarterSource.QuarterTargetPrice
+    );
     quarterData.QuarterAchievementQuantity = numberValue(
       quarterSource.QuarterAchievementQuantity
     );
@@ -137,17 +189,21 @@ const buildAchievementPayload = (achievement) => {
   return normalized;
 };
 
+
 const EnviroProductTargetSheetForm = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { isEnviroSolution, isCompanyLoaded } = useEnviroOnly();
+const [searchParams] = useSearchParams();
+const id = searchParams.get("id");
 
+console.log("Target Sheet ID:", id);
   const [previewData, setPreviewData] = useState(null);
 
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [selectedProductIndex, setSelectedProductIndex] = useState(null);
 
-  const { createEnviroTargetSheet, loading: submitLoading } =
+  const { createEnviroTargetSheet, loading: submitLoading ,fetchEnviroProductWiseTargetSheetById, loading: fetchLoading,productWiseTargetSheetDetails} =
     useEnviroTargetSheetExecutive();
 
   const formik = useFormik({
@@ -169,6 +225,8 @@ const EnviroProductTargetSheetForm = () => {
         const payload = {
           sheetType: "Product",
           segment: values.segment,
+          organizationName: values.organization,
+          uniqueCodeOrganization: values.uniqueCodeOrganization,
           uniqueCodeIndividual: values.individualUniqueCode,
           individualName: values.individualName,
           district: values.district || "",
@@ -211,7 +269,7 @@ const EnviroProductTargetSheetForm = () => {
     productTypeOptions,
     cityOptions,
     yearOptions,
-    fetchProductDetails,
+    fetchProductDetails, 
     productDetails,
     resetProductDetails,
   } = useEnviroTargetSheetDropdowns({
@@ -219,7 +277,42 @@ const EnviroProductTargetSheetForm = () => {
     city: values.city,
     segment: values.segment,
     profileType: values.profileType,
-  });
+  }); 
+
+  useEffect(() => {
+    if (id) {
+      fetchEnviroProductWiseTargetSheetById(id);
+    }
+  }, [id]);
+
+  /* Populate the form when an existing sheet is loaded for editing. */
+  useEffect(() => {
+    const data = productWiseTargetSheetDetails;
+    if (!data || typeof data !== "object") return;
+
+    const products = (data.products || []).map((p) => ({
+      productType: p?.productType || "",
+      name: p?.name || "",
+      price: p?.price ?? "",
+      enteredQuantity: p?.enteredQuantity ?? "",
+      overAllTargetPrice: numberValue(p?.overAllTargetPrice),
+      achievement: normalizeAchievementFromBackend(p?.achievement),
+    }));
+
+    formik.setValues({
+      segment: data.segment || "",
+      profileType: "",
+      organization: data.organizationName || "",
+      uniqueCodeOrganization: data.uniqueCodeOrganization || "",
+      district: data.district || "",
+      city: data.cityTownVillage || "",
+      individualName: data.individualName || "",
+      individualUniqueCode: data.uniqueCodeIndividual || "",
+      year: data.financialYear || new Date().getFullYear().toString(),
+      products: products.length > 0 ? products : [createEmptyProductRow()],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productWiseTargetSheetDetails]);
 
   /* ---------------------------------------------------------
      RECALCULATE THE DISTRIBUTION OF A SINGLE PRODUCT ROW
@@ -514,6 +607,8 @@ const EnviroProductTargetSheetForm = () => {
 
   /* Wait until the company name has been read from sessionStorage,
      otherwise a valid Enviro user briefly sees "Access Restricted". */
+  const isReadOnly = Boolean(id);
+
   if (!isCompanyLoaded) return null;
 
   if (!isEnviroSolution) {
@@ -550,9 +645,25 @@ const EnviroProductTargetSheetForm = () => {
       />
 
       <form
-        onSubmit={formik.handleSubmit}
-        className="border rounded-2xl shadow-md bg-white overflow-hidden"
+        onSubmit={isReadOnly ? (e) => e.preventDefault() : formik.handleSubmit}
+        className={`border rounded-2xl shadow-md bg-white overflow-hidden ${
+          isReadOnly ? "enviro-read-only-form" : ""
+        }`}
       >
+        {isReadOnly ? (
+          <style>{`
+            .enviro-read-only-form input,
+            .enviro-read-only-form select,
+            .enviro-read-only-form textarea,
+            .enviro-read-only-form [class*="react-select"],
+            .enviro-read-only-form .react-select__control {
+              pointer-events: none;
+              user-select: none;
+              background-color: #f9fafb;
+              cursor: not-allowed;
+            }
+          `}</style>
+        ) : null}
         <div className="text-center">
           <h2
             className="flex p-6 mb-2 items-center justify-center font-semibold text-xl text-black rounded-t-md"
@@ -885,17 +996,21 @@ const EnviroProductTargetSheetForm = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mt-4">
-                  <Button
-                    type="button"
-                    text="Add Row"
-                    onClick={() => addProductRow(index)}
-                  />
-                  <Button
-                    type="button"
-                    text="Remove Row"
-                    onClick={() => removeProductRow(index)}
-                    variant={2}
-                  />
+                  {!isReadOnly ? (
+                    <Button
+                      type="button"
+                      text="Add Row"
+                      onClick={() => addProductRow(index)}
+                    />
+                  ) : null}
+                  {!isReadOnly ? (
+                    <Button
+                      type="button"
+                      text="Remove Row"
+                      onClick={() => removeProductRow(index)}
+                      variant={2}
+                    />
+                  ) : null}
                 </div>
 
                 {/* ---------- QUARTER / MONTH DISTRIBUTION ---------- */}
@@ -948,19 +1063,23 @@ const EnviroProductTargetSheetForm = () => {
               onClick={() => navigate("/sales-executive/enviro-target-sheet")}
               variant={2}
             />
-            <Button
-              type="button"
-              text="Reset"
-              onClick={handleReset}
-              variant={2}
-            />
-            <Button
-              type="submit"
-              text={formik.isSubmitting ? "Submitting..." : "Submit"}
-              disabled={
-                formik.isSubmitting || formik.isValidating || submitLoading
-              }
-            />
+            {!isReadOnly ? (
+              <Button
+                type="button"
+                text="Reset"
+                onClick={handleReset}
+                variant={2}
+              />
+            ) : null}
+            {!isReadOnly ? (
+              <Button
+                type="submit"
+                text={formik.isSubmitting ? "Submitting..." : "Submit"}
+                disabled={
+                  formik.isSubmitting || formik.isValidating || submitLoading
+                }
+              />
+            ) : null}
           </div>
         </div>
       </form>

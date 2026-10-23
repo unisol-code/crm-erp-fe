@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Select from "react-select";
 import { toast } from "react-toastify";
 
@@ -107,7 +107,7 @@ const validationSchema = Yup.object({
 );
 
 const SERVICE_TARGET_DISTRIBUTION = {
-  quarterly: [0.25, 0.25, 0.25, 0.25],
+  quarterly: [0, 0.5, 0.5, 0],
   monthly: [1 / 3, 1 / 3, 1 / 3],
 };
 
@@ -145,6 +145,62 @@ const buildAchievementPayload = (achievement) => {
     quarterData.QuarterAchievementPrice = numberValue(
       quarterSource.QuarterAchievementPrice
     );
+    quarterData.QuarterTargetQuantity = numberValue(
+      quarterSource.QuarterTargetQuantity
+    );
+    quarterData.QuarterTargetPrice = numberValue(
+      quarterSource.QuarterTargetPrice
+    );
+
+    normalized[quarter] = quarterData;
+  });
+
+  normalized.overall = {
+    totalQuantity: numberValue(source.overall?.totalQuantity),
+    totalPrice: numberValue(source.overall?.totalPrice),
+  };
+
+  return normalized;
+};
+
+/**
+ * Normalise the achievement block returned by the backend for a
+ * service target sheet so it matches the shape the form expects.
+ */
+const normalizeServiceAchievementFromBackend = (achievement) => {
+  const source = achievement || {};
+  const normalized = {};
+
+  Object.keys(MONTHS).forEach((quarter) => {
+    const quarterSource = source[quarter] || {};
+    const quarterData = {};
+
+    MONTHS[quarter].forEach((month) => {
+      const monthSource = quarterSource[month] || {};
+      quarterData[month] = {
+        targetQuantity: numberValue(monthSource.targetQuantity),
+        targetPrice: numberValue(monthSource.targetPrice),
+        targetAchievementQuantity: numberValue(
+          monthSource.targetAchievementQuantity
+        ),
+        targetAchievementPrice: numberValue(
+          monthSource.targetAchievementPrice
+        ),
+      };
+    });
+
+    quarterData.QuarterTargetQuantity = numberValue(
+      quarterSource.QuarterTargetQuantity
+    );
+    quarterData.QuarterTargetPrice = numberValue(
+      quarterSource.QuarterTargetPrice
+    );
+    quarterData.QuarterAchievementQuantity = numberValue(
+      quarterSource.QuarterAchievementQuantity
+    );
+    quarterData.QuarterAchievementPrice = numberValue(
+      quarterSource.QuarterAchievementPrice
+    );
 
     normalized[quarter] = quarterData;
   });
@@ -159,6 +215,8 @@ const buildAchievementPayload = (achievement) => {
 
 const EnviroServiceTargetSheetForm = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
   const { theme } = useTheme();
   const { isEnviroSolution, isCompanyLoaded } = useEnviroOnly();
 
@@ -167,8 +225,12 @@ const EnviroServiceTargetSheetForm = () => {
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [selectedServiceIndex, setSelectedServiceIndex] = useState(null);
 
-  const { createEnviroTargetSheet, loading: submitLoading } =
-    useEnviroTargetSheetExecutive();
+  const {
+    createEnviroTargetSheet,
+    loading: submitLoading,
+    fetchServiceIndividualOrganizationTargetSheetById,
+    serviceIndividualOrganizationTargetSheetDetails,
+  } = useEnviroTargetSheetExecutive();
 
   const formik = useFormik({
     initialValues: {
@@ -509,6 +571,43 @@ const EnviroServiceTargetSheetForm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productDetails]);
 
+  useEffect(() => {
+    if (id) {
+      fetchServiceIndividualOrganizationTargetSheetById(id);
+    }
+  }, [id]);
+
+  /* Populate the form when an existing service sheet is loaded for editing. */
+  useEffect(() => {
+    const data = serviceIndividualOrganizationTargetSheetDetails;
+    if (!data || typeof data !== "object") return;
+
+    const services = (data.services || []).map((s) => ({
+      serviceName: s?.serviceName || "",
+      productType: s?.productType || "",
+      productName: s?.productName || "",
+      servicePrice: s?.servicePrice ?? "",
+      months: s?.months ?? "",
+      acres: s?.acres ?? "",
+      totalPrice: numberValue(s?.totalPrice),
+      achievement: normalizeServiceAchievementFromBackend(s?.achievement),
+    }));
+
+    formik.setValues({
+      segment: data.segment || "",
+      profileType: "",
+      organization: data.organizationName || "",
+      uniqueCodeOrganization: data.uniqueCodeOrganization || "",
+      district: data.district || "",
+      city: data.cityTownVillage || "",
+      individualName: data.individualName || "",
+      individualUniqueCode: data.uniqueCodeIndividual || "",
+      year: data.financialYear || new Date().getFullYear().toString(),
+      services: services.length > 0 ? services : [createEmptyServiceRow()],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceIndividualOrganizationTargetSheetDetails]);
+
   /* ---------------------------------------------------------
      SUMMARY TOTALS
   --------------------------------------------------------- */
@@ -519,6 +618,8 @@ const EnviroServiceTargetSheetForm = () => {
     }),
     { totalServices: 0, totalPrice: 0 }
   );
+
+  const isReadOnly = Boolean(id);
 
   /* Wait until the company name has been read from sessionStorage */
   if (!isCompanyLoaded) return null;
@@ -557,9 +658,25 @@ const EnviroServiceTargetSheetForm = () => {
       />
 
       <form
-        onSubmit={formik.handleSubmit}
-        className="border rounded-2xl shadow-md bg-white overflow-hidden"
+        onSubmit={isReadOnly ? (e) => e.preventDefault() : formik.handleSubmit}
+        className={`border rounded-2xl shadow-md bg-white overflow-hidden ${
+          isReadOnly ? "enviro-read-only-form" : ""
+        }`}
       >
+        {isReadOnly ? (
+          <style>{`
+            .enviro-read-only-form input,
+            .enviro-read-only-form select,
+            .enviro-read-only-form textarea,
+            .enviro-read-only-form [class*="react-select"],
+            .enviro-read-only-form .react-select__control {
+              pointer-events: none;
+              user-select: none;
+              background-color: #f9fafb;
+              cursor: not-allowed;
+            }
+          `}</style>
+        ) : null}
         <div className="text-center">
           <h2
             className="flex p-6 mb-2 items-center justify-center font-semibold text-xl text-black rounded-t-md"
@@ -1090,47 +1207,58 @@ const EnviroServiceTargetSheetForm = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mt-4">
-                  <Button
-                    type="button"
-                    text="Add Row"
-                    onClick={() => addServiceRow(index)}
-                  />
-                  <Button
-                    type="button"
-                    text="Remove Row"
-                    onClick={() => removeServiceRow(index)}
-                    variant={2}
-                  />
+                  {!isReadOnly ? (
+                    <Button
+                      type="button"
+                      text="Add Row"
+                      onClick={() => addServiceRow(index)}
+                    />
+                  ) : null}
+                  {!isReadOnly ? (
+                    <Button
+                      type="button"
+                      text="Remove Row"
+                      onClick={() => removeServiceRow(index)}
+                      variant={2}
+                    />
+                  ) : null}
                 </div>
 
                 {/* ---------- QUARTER / MONTH DISTRIBUTION ---------- */}
-                {row.serviceName === "Renting"
-                  ? numberValue(row.months) > 0
-                  : numberValue(row.months) * numberValue(row.acres) > 0 ? (
-                  <div className="mt-5">
-                    <DistributionTable
-                      distribution={{
-                        quarters: row.achievement || {},
-                        quarterlyRatios: SERVICE_TARGET_DISTRIBUTION.quarterly,
-                        monthlyRatios: SERVICE_TARGET_DISTRIBUTION.monthly,
-                      }}
-                      onAchievementChange={(quarter, month, field, value) =>
-                        handleAchievementChange(
-                          index,
-                          quarter,
-                          month,
-                          field,
-                          value
-                        )
-                      }
-                    />
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 italic mt-4">
-                    Enter the months and acres to see the quarter and month wise
-                    distribution.
-                  </p>
-                )}
+                {(() => {
+                  const isRentingRow = row.serviceName === "Renting";
+                  const showDistribution = isRentingRow
+                    ? numberValue(row.months) > 0
+                    : numberValue(row.months) * numberValue(row.acres) > 0;
+
+                  return showDistribution ? (
+                    <div className="mt-5">
+                      <DistributionTable
+                        distribution={{
+                          quarters: row.achievement || {},
+                          quarterlyRatios:
+                            SERVICE_TARGET_DISTRIBUTION.quarterly,
+                          monthlyRatios: SERVICE_TARGET_DISTRIBUTION.monthly,
+                        }}
+                        onAchievementChange={(quarter, month, field, value) =>
+                          handleAchievementChange(
+                            index,
+                            quarter,
+                            month,
+                            field,
+                            value
+                          )
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic mt-4">
+                      {isRentingRow
+                        ? "Enter the rented months to see the quarter and month wise distribution."
+                        : "Enter the months and acres to see the quarter and month wise distribution."}
+                    </p>
+                  );
+                })()}
               </div>
             ))}
 
@@ -1154,14 +1282,23 @@ const EnviroServiceTargetSheetForm = () => {
               onClick={() => navigate("/sales-executive/enviro-target-sheet")}
               variant={2}
             />
-            <Button type="button" text="Reset" onClick={handleReset} variant={2} />
-            <Button
-              type="submit"
-              text={formik.isSubmitting ? "Submitting..." : "Submit"}
-              disabled={
-                formik.isSubmitting || formik.isValidating || submitLoading
-              }
-            />
+            {!isReadOnly ? (
+              <Button
+                type="button"
+                text="Reset"
+                onClick={handleReset}
+                variant={2}
+              />
+            ) : null}
+            {!isReadOnly ? (
+              <Button
+                type="submit"
+                text={formik.isSubmitting ? "Submitting..." : "Submit"}
+                disabled={
+                  formik.isSubmitting || formik.isValidating || submitLoading
+                }
+              />
+            ) : null}
           </div>
         </div>
       </form>

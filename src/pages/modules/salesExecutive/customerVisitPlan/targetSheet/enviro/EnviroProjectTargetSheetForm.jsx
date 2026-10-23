@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Select from "react-select";
 
 import BreadCrumb from "../../../../../../components/uiComponents/breadcrumb/BreadCrumb";
@@ -97,6 +97,62 @@ const buildAchievementPayload = (achievement) => {
     quarterData.QuarterAchievementPrice = numberValue(
       quarterSource.QuarterAchievementPrice
     );
+    quarterData.QuarterTargetQuantity = numberValue(
+      quarterSource.QuarterTargetQuantity
+    );
+    quarterData.QuarterTargetPrice = numberValue(
+      quarterSource.QuarterTargetPrice
+    );
+
+    normalized[quarter] = quarterData;
+  });
+
+  normalized.overall = {
+    totalQuantity: numberValue(source.overall?.totalQuantity),
+    totalPrice: numberValue(source.overall?.totalPrice),
+  };
+
+  return normalized;
+};
+
+/**
+ * Normalise the achievement block returned by the backend for a
+ * project target sheet so it matches the shape the form expects.
+ */
+const normalizeProjectAchievementFromBackend = (achievement) => {
+  const source = achievement || {};
+  const normalized = {};
+
+  Object.keys(MONTHS).forEach((quarter) => {
+    const quarterSource = source[quarter] || {};
+    const quarterData = {};
+
+    MONTHS[quarter].forEach((month) => {
+      const monthSource = quarterSource[month] || {};
+      quarterData[month] = {
+        targetQuantity: numberValue(monthSource.targetQuantity),
+        targetPrice: numberValue(monthSource.targetPrice),
+        targetAchievementQuantity: numberValue(
+          monthSource.targetAchievementQuantity
+        ),
+        targetAchievementPrice: numberValue(
+          monthSource.targetAchievementPrice
+        ),
+      };
+    });
+
+    quarterData.QuarterTargetQuantity = numberValue(
+      quarterSource.QuarterTargetQuantity
+    );
+    quarterData.QuarterTargetPrice = numberValue(
+      quarterSource.QuarterTargetPrice
+    );
+    quarterData.QuarterAchievementQuantity = numberValue(
+      quarterSource.QuarterAchievementQuantity
+    );
+    quarterData.QuarterAchievementPrice = numberValue(
+      quarterSource.QuarterAchievementPrice
+    );
 
     normalized[quarter] = quarterData;
   });
@@ -143,13 +199,19 @@ const validationSchema = Yup.object({
 
 const EnviroProjectTargetSheetForm = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
   const { theme } = useTheme();
   const { isEnviroSolution, isCompanyLoaded } = useEnviroOnly();
 
   const [previewData, setPreviewData] = useState(null);
 
-  const { createEnviroTargetSheet, loading: submitLoading } =
-    useEnviroTargetSheetExecutive();
+  const {
+    createEnviroTargetSheet,
+    loading: submitLoading,
+    fetchProjectIndividualOrganizationTargetSheetById,
+    projectIndividualOrganizationTargetSheetDetails,
+  } = useEnviroTargetSheetExecutive();
 
   const formik = useFormik({
     initialValues: {
@@ -231,11 +293,41 @@ const EnviroProjectTargetSheetForm = () => {
 
     formik.setFieldValue(
       "overAllTargetPrice",
-      roundTo(capacity * price, 2),
+      roundTo(price, 2),
       false
     );
     formik.setFieldValue("achievement", quarters, false);
   };
+
+  useEffect(() => {
+    if (id) {
+      fetchProjectIndividualOrganizationTargetSheetById(id);
+    }
+  }, [id]);
+
+  /* Populate the form when an existing project sheet is loaded for editing. */
+  useEffect(() => {
+    const data = projectIndividualOrganizationTargetSheetDetails;
+    if (!data || typeof data !== "object") return;
+
+    formik.setValues({
+      segment: data.segment || "",
+      profileType: "",
+      organization: data.organizationName || "",
+      uniqueCode: data.uniqueCodeOrganization || "",
+      city: data.cityTownVillage || "",
+      individualName: data.individualName || "",
+      individualUniqueCode: data.uniqueCodeIndividual || "",
+      year: data.financialYear || new Date().getFullYear().toString(),
+      projectType: data.projectType || "",
+      projectName: data.projectName || "",
+      plantCapacity: data.plantCapacity ?? "",
+      projectedPrice: data.projectPrice ?? "",
+      overAllTargetPrice: numberValue(data.overAllTargetPrice),
+      achievement: normalizeProjectAchievementFromBackend(data.achievement),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectIndividualOrganizationTargetSheetDetails]);
 
   /* ---------------------------------------------------------
      HANDLERS
@@ -353,6 +445,8 @@ const EnviroProjectTargetSheetForm = () => {
      otherwise a valid Enviro user briefly sees "Access Restricted". */
   if (!isCompanyLoaded) return null;
 
+  const isReadOnly = Boolean(id);
+
   if (!isEnviroSolution) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center">
@@ -387,9 +481,25 @@ const EnviroProjectTargetSheetForm = () => {
       />
 
       <form
-        onSubmit={formik.handleSubmit}
-        className="border rounded-2xl shadow-md bg-white overflow-hidden"
+        onSubmit={isReadOnly ? (e) => e.preventDefault() : formik.handleSubmit}
+        className={`border rounded-2xl shadow-md bg-white overflow-hidden ${
+          isReadOnly ? "enviro-read-only-form" : ""
+        }`}
       >
+        {isReadOnly ? (
+          <style>{`
+            .enviro-read-only-form input,
+            .enviro-read-only-form select,
+            .enviro-read-only-form textarea,
+            .enviro-read-only-form [class*="react-select"],
+            .enviro-read-only-form .react-select__control {
+              pointer-events: none;
+              user-select: none;
+              background-color: #f9fafb;
+              cursor: not-allowed;
+            }
+          `}</style>
+        ) : null}
         <div className="text-center">
           <h2
             className="flex p-6 mb-2 items-center justify-center font-semibold text-xl text-black rounded-t-md"
@@ -732,14 +842,23 @@ const EnviroProjectTargetSheetForm = () => {
               onClick={() => navigate("/sales-executive/enviro-target-sheet")}
               variant={2}
             />
-            <Button type="button" text="Reset" onClick={handleReset} variant={2} />
-            <Button
-              type="submit"
-              text={formik.isSubmitting ? "Submitting..." : "Submit"}
-              disabled={
-                formik.isSubmitting || formik.isValidating || submitLoading
-              }
-            />
+            {!isReadOnly ? (
+              <Button
+                type="button"
+                text="Reset"
+                onClick={handleReset}
+                variant={2}
+              />
+            ) : null}
+            {!isReadOnly ? (
+              <Button
+                type="submit"
+                text={formik.isSubmitting ? "Submitting..." : "Submit"}
+                disabled={
+                  formik.isSubmitting || formik.isValidating || submitLoading
+                }
+              />
+            ) : null}
           </div>
         </div>
       </form>
