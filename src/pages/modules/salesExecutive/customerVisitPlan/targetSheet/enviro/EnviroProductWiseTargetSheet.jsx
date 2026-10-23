@@ -68,8 +68,23 @@ const EnviroProductWiseTargetSheet = () => {
     fetchEnviroProductWiseTargetSheet(year, 1, limit);
   };
 
-  const handleViewClick = (id) => {
-    navigate(`/sales-executive/target-sheet/view-year-wise-product/${id}`);
+  const handleViewClick = (id, row) => {
+    const sheetType = row?.sheetType;
+
+    const routeMap = {
+      Product: "/sales-executive/enviro-target-sheet/product",
+      Project: "/sales-executive/enviro-target-sheet/project",
+      Service: "/sales-executive/enviro-target-sheet/service",
+    };
+
+    const path = routeMap[sheetType];
+
+    if (path) {
+      // Pass the target sheet id as a query param so the destination form can load the existing record
+      navigate(`${path}?${id}`);
+    } else {
+      toast.error(`Unknown sheet type: ${sheetType}`);
+    }
   };
 
   const onPageChange = (data) => {
