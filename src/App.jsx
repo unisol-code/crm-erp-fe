@@ -67,7 +67,7 @@ import {
   EnviroSolutionTargetSheetHome,
   EnviroProductTargetSheetForm,
   EnviroProjectTargetSheetForm,
-  EnviroServiceTargetSheetForm,
+  EnviroServiceTargetSheetForm,EnviroProductWiseTargetSheet
 } from "./pages/modules/salesExecutive/customerVisitPlan/targetSheet/index";
 import TerritorySnapshot from "./pages/modules/salesExecutive/customerVisitPlan/territorySnapshot/TerritorySnapshot";
 
@@ -976,6 +976,17 @@ function App() {
               `isEnviroSolution` so no other company can use them. */}
           <Route
             path="/sales-executive/enviro-target-sheet"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroProductWiseTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+                    <Route
+            path="/sales-executive/enviro-target-sheet/create-target-sheet"
             element={
               <SalesExecutiveLayout
                 activeTab={activeTab}

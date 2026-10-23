@@ -91,6 +91,52 @@ const PRODUCT_TARGET_DISTRIBUTION = {
   monthly: [1 / 3, 1 / 3, 1 / 3],
 };
 
+/* ------------------------------------------------------------
+   NORMALISE THE ACHIEVEMENT BLOCK BEFORE SENDING.
+   Guarantees every quarter / month carries a numeric
+   `targetAchievementQuantity` (default 0) + its price, and
+   ensures the `overall` totals are always present.
+------------------------------------------------------------ */
+const buildAchievementPayload = (achievement) => {
+  const source = achievement || {};
+  const normalized = {};
+
+  Object.keys(MONTHS).forEach((quarter) => {
+    const quarterSource = source[quarter] || {};
+    const quarterData = {};
+
+    MONTHS[quarter].forEach((month) => {
+      const monthSource = quarterSource[month] || {};
+
+      quarterData[month] = {
+        ...monthSource,
+        targetAchievementQuantity: numberValue(
+          monthSource.targetAchievementQuantity
+        ), // defaults to 0
+        targetAchievementPrice: numberValue(
+          monthSource.targetAchievementPrice
+        ),
+      };
+    });
+
+    quarterData.QuarterAchievementQuantity = numberValue(
+      quarterSource.QuarterAchievementQuantity
+    );
+    quarterData.QuarterAchievementPrice = numberValue(
+      quarterSource.QuarterAchievementPrice
+    );
+
+    normalized[quarter] = quarterData;
+  });
+
+  normalized.overall = {
+    totalQuantity: numberValue(source.overall?.totalQuantity),
+    totalPrice: numberValue(source.overall?.totalPrice),
+  };
+
+  return normalized;
+};
+
 const EnviroProductTargetSheetForm = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -127,13 +173,14 @@ const EnviroProductTargetSheetForm = () => {
           individualName: values.individualName,
           district: values.district || "",
           cityTownVillage: values.city || "",
+          financialYear: String(values.year),
           products: (values.products || []).map((row) => ({
             productType: row.productType,
             name: row.name,
             price: numberValue(row.price),
             enteredQuantity: numberValue(row.enteredQuantity),
             overAllTargetPrice: numberValue(row.overAllTargetPrice),
-            achievement: row.achievement,
+            achievement: buildAchievementPayload(row.achievement),
           })),
         };
 

@@ -64,6 +64,52 @@ const PROJECT_QUARTER_PERCENT_LABELS = [
 ];
 
 /* ------------------------------------------------------------
+   NORMALISE THE ACHIEVEMENT BLOCK BEFORE SENDING.
+   Guarantees every quarter / month carries a numeric
+   `targetAchievementQuantity` (default 0) + its price, and
+   ensures the `overall` totals are always present.
+------------------------------------------------------------ */
+const buildAchievementPayload = (achievement) => {
+  const source = achievement || {};
+  const normalized = {};
+
+  Object.keys(MONTHS).forEach((quarter) => {
+    const quarterSource = source[quarter] || {};
+    const quarterData = {};
+
+    MONTHS[quarter].forEach((month) => {
+      const monthSource = quarterSource[month] || {};
+
+      quarterData[month] = {
+        ...monthSource,
+        targetAchievementQuantity: numberValue(
+          monthSource.targetAchievementQuantity
+        ), // defaults to 0
+        targetAchievementPrice: numberValue(
+          monthSource.targetAchievementPrice
+        ),
+      };
+    });
+
+    quarterData.QuarterAchievementQuantity = numberValue(
+      quarterSource.QuarterAchievementQuantity
+    );
+    quarterData.QuarterAchievementPrice = numberValue(
+      quarterSource.QuarterAchievementPrice
+    );
+
+    normalized[quarter] = quarterData;
+  });
+
+  normalized.overall = {
+    totalQuantity: numberValue(source.overall?.totalQuantity),
+    totalPrice: numberValue(source.overall?.totalPrice),
+  };
+
+  return normalized;
+};
+
+/* ------------------------------------------------------------
    Project type / project name are served by the live catalog
    dropdowns (product types + product names). They are the only
    catalogue APIs available for the EnviroSolution company today
@@ -71,9 +117,9 @@ const PROJECT_QUARTER_PERCENT_LABELS = [
 ------------------------------------------------------------ */
 
 const validationSchema = Yup.object({
-  organization: Yup.string().required("Organization is required"),
+  organization: Yup.string().nullable(),
   city: Yup.string().required("City is required"),
-  individualName: Yup.string().required("Individual name is required"),
+  individualName: Yup.string().nullable(),
   year: Yup.string().required("Year is required"),
   projectType: Yup.string().required("Project type is required"),
   projectName: Yup.string().required("Project name is required"),
@@ -85,7 +131,14 @@ const validationSchema = Yup.object({
     .typeError("Projected price must be a number")
     .min(0, "Projected price cannot be negative")
     .required("Projected price is required"),
-});
+})
+.test(
+  "organization-or-individual",
+  "Organization or Individual name is required",
+  function (value) {
+    return !!(value?.organization || value?.individualName);
+  }
+);
 
 
 const EnviroProjectTargetSheetForm = () => {
@@ -120,19 +173,26 @@ const EnviroProjectTargetSheetForm = () => {
       try {
         const payload = {
           sheetType: "Project",
-           segment: values.segment,
-           profileType: values.profileType,
-           organizationName: values.organization,
-           uniqueCodeOrganization: values.uniqueCode,
-           cityTownVillage: values.city,
-           individualName: values.individualName,
-           uniqueCodeIndividual: values.individualUniqueCode,
-           year: String(values.year),
-           projectType: values.projectType,
-           projectName: values.projectName,
-           plantCapacity: numberValue(values.plantCapacity),
-           projectPrice: numberValue(values.projectedPrice),
-           achievement: values.achievement,
+          segment: values.segment,
+          profileType: values.profileType,
+          cityTownVillage: values.city || "",
+          financialYear: String(values.year),
+          ...(values.individualUniqueCode
+            ? { uniqueCodeIndividual: values.individualUniqueCode }
+            : {}),
+          ...(values.individualName
+            ? { individualName: values.individualName }
+            : {}),
+          ...(values.uniqueCode
+            ? { uniqueCodeOrganization: values.uniqueCode }
+            : {}),
+          ...(values.organization ? { organizationName: values.organization } : {}),
+          projectType: values.projectType,
+          projectName: values.projectName,
+          plantCapacity: numberValue(values.plantCapacity),
+          projectPrice: numberValue(values.projectedPrice),
+          // 👇 normalise so every month always ships targetAchievementQuantity: 0
+          achievement: buildAchievementPayload(values.achievement),
         };
 
         // eslint-disable-next-line no-console

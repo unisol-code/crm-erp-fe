@@ -49,18 +49,21 @@ const DataTable = ({
   return (
     <div className="w-full">
       {(title || headerRight) && (
+        <>
         <div className="flex justify-between gap-4 flex-wrap items-center mb-4">
           {title && (
             <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
           )}
           {headerRight}
         </div>
-      )}
-
+        
       <hr
         className="h-1 border-0 mb-3"
         style={{ backgroundColor: theme.secondaryColor }}
       />
+
+        </>
+      )}
 
       <ScrollableX className="shadow rounded-t-2xl">
         <table className="min-w-full text-sm text-left text-gray-700 table-auto">
@@ -77,7 +80,7 @@ const DataTable = ({
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`p-4 text-base font-semibold ${alignClass[column.align] || "text-left"}`}
+                  className={`p-4 text-base font-semibold ${alignClass[column.align] || "text-center"}`}
                 >
                   {column.header}
                 </th>

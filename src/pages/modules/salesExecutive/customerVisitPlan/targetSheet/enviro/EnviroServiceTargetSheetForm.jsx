@@ -63,9 +63,9 @@ const createEmptyServiceRow = () => {
 };
 
 const validationSchema = Yup.object({
-  organization: Yup.string().required("Organization is required"),
+  organization: Yup.string().nullable(),
   city: Yup.string().required("City is required"),
-  individualName: Yup.string().required("Individual name is required"),
+  individualName: Yup.string().nullable(),
   year: Yup.string().required("Year is required"),
   services: Yup.array()
     .of(
@@ -77,10 +77,14 @@ const validationSchema = Yup.object({
           .typeError("Service price must be a number")
           .min(0, "Service price cannot be negative")
           .required("Service price is required"),
-        months: Yup.number()
-          .typeError("Months must be a number")
-          .min(0, "Months cannot be negative")
-          .required("Months is required"),
+         months: Yup.number()
+           .typeError("Months must be a number")
+           .min(0, "Months cannot be negative")
+           .when("serviceName", {
+             is: "Renting",
+             then: (schema) => schema.required("Months is required"),
+             otherwise: (schema) => schema.nullable(),
+           }),
         acres: Yup.number()
           .typeError("Acres must be a number")
           .min(0, "Acres cannot be negative")
@@ -93,11 +97,64 @@ const validationSchema = Yup.object({
     )
     .min(1, "At least one service is required")
     .required("At least one service is required"),
-});
+})
+.test(
+  "organization-or-individual",
+  "Organization or Individual name is required",
+  function (value) {
+    return !!(value?.organization || value?.individualName);
+  }
+);
 
 const SERVICE_TARGET_DISTRIBUTION = {
   quarterly: [0.25, 0.25, 0.25, 0.25],
   monthly: [1 / 3, 1 / 3, 1 / 3],
+};
+
+/* ------------------------------------------------------------
+   NORMALISE THE ACHIEVEMENT BLOCK BEFORE SENDING.
+   Guarantees every quarter / month carries a numeric
+   `targetAchievementQuantity` (default 0) + its price, and
+   ensures the `overall` totals are always present.
+------------------------------------------------------------ */
+const buildAchievementPayload = (achievement) => {
+  const source = achievement || {};
+  const normalized = {};
+
+  Object.keys(MONTHS).forEach((quarter) => {
+    const quarterSource = source[quarter] || {};
+    const quarterData = {};
+
+    MONTHS[quarter].forEach((month) => {
+      const monthSource = quarterSource[month] || {};
+
+      quarterData[month] = {
+        ...monthSource,
+        targetAchievementQuantity: numberValue(
+          monthSource.targetAchievementQuantity
+        ), // defaults to 0
+        targetAchievementPrice: numberValue(
+          monthSource.targetAchievementPrice
+        ),
+      };
+    });
+
+    quarterData.QuarterAchievementQuantity = numberValue(
+      quarterSource.QuarterAchievementQuantity
+    );
+    quarterData.QuarterAchievementPrice = numberValue(
+      quarterSource.QuarterAchievementPrice
+    );
+
+    normalized[quarter] = quarterData;
+  });
+
+  normalized.overall = {
+    totalQuantity: numberValue(source.overall?.totalQuantity),
+    totalPrice: numberValue(source.overall?.totalPrice),
+  };
+
+  return normalized;
 };
 
 const EnviroServiceTargetSheetForm = () => {
@@ -132,22 +189,31 @@ const EnviroServiceTargetSheetForm = () => {
         const payload = {
           sheetType: "Service",
           segment: values.segment,
-          uniqueCodeIndividual: values.individualUniqueCode,
-          individualName: values.individualName,
-          uniqueCodeOrganization: values.uniqueCodeOrganization,
-          organizationName: values.organization,
-          district: values.district || "",
           cityTownVillage: values.city || "",
-          year: String(values.year),
+          financialYear: String(values.year),
+          ...(values.individualUniqueCode
+            ? { uniqueCodeIndividual: values.individualUniqueCode }
+            : {}),
+          ...(values.individualName
+            ? { individualName: values.individualName }
+            : {}),
+          ...(values.uniqueCodeOrganization
+            ? { uniqueCodeOrganization: values.uniqueCodeOrganization }
+            : {}),
+          ...(values.organization ? { organizationName: values.organization } : {}),
+          district: values.district || "",
           services: (values.services || []).map((row) => ({
             serviceName: row.serviceName,
             productType: row.productType,
             productName: row.productName,
             servicePrice: numberValue(row.servicePrice),
-            months: numberValue(row.months),
+            ...(row.serviceName !== "Spraying" && {
+              months: numberValue(row.months),
+            }),
             acres: numberValue(row.acres),
             totalPrice: numberValue(row.totalPrice),
-            achievement: row.achievement,
+            // 👇 normalise so every month always ships targetAchievementQuantity: 0
+            achievement: buildAchievementPayload(row.achievement),
           })),
         };
 
@@ -202,7 +268,8 @@ const EnviroServiceTargetSheetForm = () => {
     /* Renting: total = rent per month × rented months (no acres)
        Spraying: total = service price × months × acres */
     const isRenting = row.serviceName === SERVICE_TYPES[0].value;
-    const qty = isRenting ? m : m * a;
+    const effectiveMonths = isRenting ? m : m || 1;
+    const qty = isRenting ? m : effectiveMonths * a;
 
     const quarters = buildTargetDistribution({
       overallQuantity: qty,
@@ -423,6 +490,12 @@ const EnviroServiceTargetSheetForm = () => {
     const index = selectedServiceIndex;
     const service = formik.values.services?.[index];
     if (!service) return;
+
+    if (service.serviceName === "Spraying") {
+      setSelectedServiceId(null);
+      setSelectedServiceIndex(null);
+      return;
+    }
 
     const numericPrice = numberValue(price);
     const months = numberValue(service.months);
@@ -783,6 +856,17 @@ const EnviroServiceTargetSheetForm = () => {
                           name
                         );
 
+                        if (
+                          formik.values.services?.[index]?.serviceName ===
+                          "Spraying"
+                        ) {
+                          formik.setFieldTouched(
+                            `services[${index}].productName`,
+                            true
+                          );
+                          return;
+                        }
+
                         const directPrice = getProductPrice(selectedProduct);
 
                         if (
@@ -923,10 +1007,10 @@ const EnviroServiceTargetSheetForm = () => {
                         className={inputBaseClass}
                         placeholder="Enter rented months"
                       />
-                    </FormField>
-                  ) : (
-                    <FormField
-                      label="Months"
+                     </FormField>
+                   ) : row.serviceName === "Spraying" ? null : (
+                     <FormField
+                       label="Months"
                       required
                       error={
                         formik.touched.services?.[index]?.months &&
@@ -952,7 +1036,7 @@ const EnviroServiceTargetSheetForm = () => {
                         placeholder="Enter months"
                       />
                     </FormField>
-                  )}
+                   )}
 
                   {row.serviceName !== "Renting" ? (
                     <FormField

@@ -58,8 +58,8 @@ export const enviroTargetSheetDetailsAtom = atom({
   effects_UNSTABLE: [persistAtom],
 }); 
 
-export const individualOrganizationTargetSheetStateAtom = atom({
-  key: "individualOrganizationTargetSheetState",
+export const productWiseTargetSheetStateAtom = atom({
+  key: "productWiseTargetSheetState",
   default: null,
   effects_UNSTABLE: [persistAtom],
 });
