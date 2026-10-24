@@ -4,6 +4,8 @@ import BreadCrumb from "../../../../../components/uiComponents/breadcrumb/BreadC
 import DataTable from "../../../../../components/uiComponents/dataTable/DataTable.jsx";
 import { useTheme } from "../../../../../hooks/theme/useTheme.js";
 import useAdminTargetSheet from "../../../../../hooks/superAdminHook/customerVisitPlan/targetSheet/useAdminTargetSheet.js";
+import useEnviroAdminTargetSheet from "../../../../../hooks/superAdminHook/customerVisitPlan/targetSheet/useEnviroAdminTargetSheet.js";
+import useCompany from "../../../../../hooks/common/useCompany.js";
 
 const formatCurrency = (v) =>
   v === null || v === undefined ? "-" : `₹ ${Number(v).toLocaleString("en-IN")}`;
@@ -18,6 +20,7 @@ const Stat = ({ label, value }) => (
 const AdminTargetSheet = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const { isEnviroSolution, isCompanyLoaded } = useCompany();
   const {
     loading,
     allEmployeeList,
@@ -26,6 +29,12 @@ const AdminTargetSheet = () => {
     fetchTeamWiseTargetSheetList,
     resetTeamWiseTargetSheet,
   } = useAdminTargetSheet();
+
+  const {
+    loading: enviroLoading,
+    enviroTargetSheetsEmployee,
+    fetchEnviroTargetSheetsEmployee,
+  } = useEnviroAdminTargetSheet();
 
   const [activeTab, setActiveTab] = useState("teamWise");
   const [page, setPage] = useState(1);
@@ -47,10 +56,14 @@ const AdminTargetSheet = () => {
   }, [teamDrillId]);
 
   useEffect(() => {
-    if (activeTab === "employeeList" ) {
-      fetchAllEmployeeList();
+    if (activeTab === "employeeList") {
+      if (isEnviroSolution) {
+        fetchEnviroTargetSheetsEmployee();
+      } else {
+        fetchAllEmployeeList();
+      }
     }
-  }, [activeTab]);
+  }, [activeTab, isEnviroSolution]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -86,9 +99,14 @@ const AdminTargetSheet = () => {
   }, [rows, page, limit]);
 
   const empPaginatedRows = useMemo(() => {
+    if (isEnviroSolution) {
+      const start = (empPage - 1) * empLimit;
+      const list = enviroTargetSheetsEmployee?.data ?? enviroTargetSheetsEmployee ?? [];
+      return Array.isArray(list) ? list.slice(start, start + empLimit) : [];
+    }
     const start = (empPage - 1) * empLimit;
     return (allEmployeeList ?? []).slice(start, start + empLimit);
-  }, [allEmployeeList, empPage, empLimit]);
+  }, [allEmployeeList, empPage, empLimit, enviroTargetSheetsEmployee, isEnviroSolution]);
 
   const teamColumns = [
     { key: "type", header: "Type", align: "left" },
@@ -128,11 +146,21 @@ const AdminTargetSheet = () => {
         ),
     },
     { key: "employeeId", header: "EmpID", align: "left" },
-     { key: "fullName", header: "Name", align: "center" },
-     { key: "designation", header: "Designation", align: "center" },
-      { key: "reportingManagerName", header: "Reporting Manager", align: "center" },
-       { key: "totalSheetCount", header: "Total Sheets", align: "center" },
-        { key: "pendingSheetCount", header: "Pending Sheets", align: "center" },
+    { key: "fullName", header: "Name", align: "center" },
+    { key: "designation", header: "Designation", align: "center" },
+    { key: "reportingManagerName", header: "Reporting Manager", align: "center" },
+    { key: "totalSheetCount", header: "Total Sheets", align: "center" },
+    { key: "pendingSheetCount", header: "Pending Sheets", align: "center" },
+  ];
+
+  const enviroEmpColumns = [
+    { key: "name", header: "Name", align: "left" },
+    { key: "productSheetCount", header: "Product Sheets", align: "center" },
+    { key: "pendingProductSheetCount", header: "Pending Product Sheets", align: "center" },
+    { key: "serviceSheetCount", header: "Service Sheets", align: "center" },
+    { key: "pendingServiceSheetCount", header: "Pending Service Sheets", align: "center" },
+    { key: "projectSheetCount", header: "Project Sheets", align: "center" },
+    { key: "pendingProjectSheetCount", header: "Pending Project Sheets", align: "center" },
   ];
 
   return (
@@ -237,23 +265,41 @@ const AdminTargetSheet = () => {
         {/* Employee List Tab */}
         {activeTab === "employeeList" && (
           <DataTable
-            columns={empColumns}
+            columns={isEnviroSolution ? enviroEmpColumns : empColumns}
             rows={empPaginatedRows}
             showAction
-            viewKey="_id"
-            onRowView={(id) => {
-              navigate(`/admin/sales-executive/target-sheet/employee-wise-target-sheet/${id}`);
+            viewKey={isEnviroSolution ? "_id" : "_id"}
+            onRowView={(id, row) => {
+              if (isEnviroSolution) {
+                navigate(`/admin/sales-executive/target-sheet/enviro-employee-wise-target-sheet/${id}`);
+              } else {
+                navigate(`/admin/sales-executive/target-sheet/employee-wise-target-sheet/${id}`);
+              }
             }}
             actionLabel="View Target Sheet"
-            loading={loading}
+            loading={loading || enviroLoading}
             emptyMessage="No employee data available."
             srNoStartIndex={(empPage - 1) * empLimit}
             pagination={{
               currentPage: empPage,
-              totalItems: allEmployeeList?.length ?? 0,
+              totalItems: isEnviroSolution
+                ? (Array.isArray(enviroTargetSheetsEmployee?.data)
+                    ? enviroTargetSheetsEmployee.data.length
+                    : Array.isArray(enviroTargetSheetsEmployee)
+                    ? enviroTargetSheetsEmployee.length
+                    : 0)
+                : (allEmployeeList?.length ?? 0),
               itemsPerPage: empLimit,
               totalPages: Math.max(
-                Math.ceil((allEmployeeList?.length ?? 0) / empLimit),
+                Math.ceil(
+                  (isEnviroSolution
+                    ? (Array.isArray(enviroTargetSheetsEmployee?.data)
+                        ? enviroTargetSheetsEmployee.data.length
+                        : Array.isArray(enviroTargetSheetsEmployee)
+                        ? enviroTargetSheetsEmployee.length
+                        : 0)
+                    : (allEmployeeList?.length ?? 0)) / empLimit
+                ),
                 1
               ),
             }}

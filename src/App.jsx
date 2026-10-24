@@ -121,7 +121,10 @@ import EnviroIndividualDetails from "./pages/modules/superAdmin/AllSalesAnalytic
 import AdminTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminTargetSheet";
 import AdminUniversalTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminUniversalTargetSheet";
 import AdminIndividualWiseTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminIndividualWiseTargetSheet";
-import AdminEmployeeWiseTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEmployeeWiseTargetSheet";
+import AdminEmployeeWiseTargetSheet from 
+"./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEmployeeWiseTargetSheet";
+import AdminEnviroEmployeeWiseTargetSheet from
+  "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEnviroEmployeeWiseTargetSheet";
 import AdminApprovalPendingEMpSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminApprovalPendingEMpSheet";
 function App() {
   const [activeTab, setActiveTab] = useState("/crm-dashboard");
@@ -743,17 +746,28 @@ function App() {
             </SuperAdminLayout>
           }
         />
-        <Route
-          path="/admin/sales-executive/target-sheet/employee-wise-target-sheet/:id"
-          element={
-            <SuperAdminLayout
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-            >
-              <AdminEmployeeWiseTargetSheet />
-            </SuperAdminLayout>
-          }
-        />
+          <Route
+            path="/admin/sales-executive/target-sheet/employee-wise-target-sheet/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <AdminEmployeeWiseTargetSheet />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/admin/sales-executive/target-sheet/enviro-employee-wise-target-sheet/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <AdminEnviroEmployeeWiseTargetSheet />
+              </SuperAdminLayout>
+            }
+          />
         <Route
           path="/admin/sales-executive/target-sheet/my-approval-queue"
           element={
