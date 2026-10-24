@@ -1,5 +1,6 @@
 import React from "react";
 import { TiEye } from "react-icons/ti";
+import { FiEdit } from "react-icons/fi";
 import { useTheme } from "../../../hooks/theme/useTheme.js";
 import LoaderSpinner from "../loader/LoaderSpinner.jsx";
 import Pagination from "../pagination/Pagination.jsx";
@@ -24,6 +25,9 @@ const DataTable = ({
   viewKey = "_id",
   showAction = false,
   actionLabel = "View details",
+  onRowEdit,
+  editKey = "_id",
+  editLabel = "Edit",
   pagination = null,
   onPageChange,
   onItemsPerPageChange,
@@ -44,7 +48,7 @@ const DataTable = ({
   };
 
   const colSpan =
-    columns.length + (showSrNo ? 1 : 0) + (showAction || onRowView ? 1 : 0);
+    columns.length + (showSrNo ? 1 : 0) + (showAction || onRowView || onRowEdit ? 1 : 0);
 
   return (
     <div className="w-full">
@@ -85,7 +89,7 @@ const DataTable = ({
                   {column.header}
                 </th>
               ))}
-              {(showAction || onRowView) && (
+              {(showAction || onRowView || onRowEdit) && (
                 <th className="p-4 text-base font-semibold text-left">
                   Action
                 </th>
@@ -120,17 +124,32 @@ const DataTable = ({
                       {cellContent(column, row, index)}
                     </td>
                   ))}
-                  {(showAction || onRowView) && (
+                  {(showAction || onRowView || onRowEdit) && (
                     <td className="px-4 py-3 text-[15px] whitespace-nowrap">
-                      <button
-                        onClick={() =>
-                          onRowView?.(row?.[viewKey] ?? row, row)
-                        }
-                        className="text-black hover:bg-blue-200 rounded-full w-8 h-8 flex items-center justify-center"
-                        aria-label={actionLabel}
-                      >
-                        <TiEye size={18} color={theme.primaryColor} />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {onRowView && (
+                          <button
+                            onClick={() =>
+                              onRowView?.(row?.[viewKey] ?? row, row)
+                            }
+                            className="text-black hover:bg-blue-200 rounded-full w-8 h-8 flex items-center justify-center"
+                            aria-label={actionLabel}
+                          >
+                            <TiEye size={18} color={theme.primaryColor} />
+                          </button>
+                        )}
+                        {onRowEdit && (
+                          <button
+                            onClick={() =>
+                              onRowEdit?.(row?.[editKey] ?? row, row)
+                            }
+                            className="text-black hover:bg-blue-200 rounded-full w-8 h-8 flex items-center justify-center"
+                            aria-label={editLabel}
+                          >
+                            <FiEdit size={18} color={theme.primaryColor} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>

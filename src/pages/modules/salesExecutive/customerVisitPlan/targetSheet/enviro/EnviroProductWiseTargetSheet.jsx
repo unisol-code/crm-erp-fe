@@ -83,6 +83,27 @@ const EnviroProductWiseTargetSheet = () => {
     }
   };
 
+const handleEditClick = (id, row) => {
+  const routeMap = {
+    Product: "/sales-executive/enviro-target-sheet/product",
+    Project: "/sales-executive/enviro-target-sheet/project",
+    Service: "/sales-executive/enviro-target-sheet/service",
+  };
+
+  const sheetType =
+    row?.sheetType ||
+    (activeTab === "service" ? "Service" : activeTab === "project" ? "Project" : "Product");
+  const path = routeMap[sheetType];
+
+  if (path && id) {
+    navigate(`${path}?id=${encodeURIComponent(id)}&mode=edit`);
+  } else {
+    toast.error(
+      !id ? "Target sheet ID is missing" : `Unknown sheet type: ${sheetType}`
+    );
+  }
+};
+
 const handleViewClick = (id, row) => {
   const routeMap = {
     Product: "/sales-executive/enviro-target-sheet/product",
@@ -274,6 +295,7 @@ const handleViewClick = (id, row) => {
               srNoStartIndex={(page - 1) * limit}
               showAction
               onRowView={handleViewClick}
+              onRowEdit={handleEditClick}
               viewKey="_id"
               pagination={{
                 currentPage: current.data?.page,

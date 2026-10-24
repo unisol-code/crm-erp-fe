@@ -145,7 +145,50 @@ const useEnviroTargetSheetExecutive = () => {
 
 
 
-const resetEnviroTargetSheetDetails = () => {
+  // PUT /api/enviroTargetSheet/update-targetsheet/:id
+  const updateEnviroTargetSheet = async (id, data) => {
+    if (!id) {
+      toast.error("Target sheet ID is required");
+      return null;
+    }
+
+    if (!data) {
+      toast.error("Target sheet data is required");
+      return null;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetchData({
+        method: "PUT",
+        url: `${conf.apiBaseUrl}enviroTargetSheet/update-targetsheet/${id}`,
+        data: data,
+      });
+
+      if (res) {
+        toast.success(res?.message || "Enviro target sheet updated successfully");
+        return res;
+      }
+
+      throw new Error(res?.message || "Failed to update enviro target sheet");
+    } catch (err) {
+      console.error("Error updating enviro target sheet:", err);
+      setError(err);
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Error while updating enviro target sheet"
+      );
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const resetEnviroTargetSheetDetails = () => {
     setEnviroTargetSheetDetails(null);
   };
 
@@ -319,6 +362,7 @@ return {
     loading,
     error,
     createEnviroTargetSheet,
+    updateEnviroTargetSheet,
     enviroTargetSheetDetails,productWiseTargetSheetDetails,
     fetchEnviroProductWiseTargetSheet,
     fetchEnviroProductWiseTargetSheetById,

@@ -196,6 +196,7 @@ const EnviroProductTargetSheetForm = () => {
   const { isEnviroSolution, isCompanyLoaded } = useEnviroOnly();
 const [searchParams] = useSearchParams();
 const id = searchParams.get("id");
+const mode = searchParams.get("mode");
 
 console.log("Target Sheet ID:", id);
   const [previewData, setPreviewData] = useState(null);
@@ -203,7 +204,7 @@ console.log("Target Sheet ID:", id);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [selectedProductIndex, setSelectedProductIndex] = useState(null);
 
-  const { createEnviroTargetSheet, loading: submitLoading ,fetchEnviroProductWiseTargetSheetById, loading: fetchLoading,productWiseTargetSheetDetails} =
+  const { createEnviroTargetSheet, loading: submitLoading ,fetchEnviroProductWiseTargetSheetById, loading: fetchLoading,productWiseTargetSheetDetails, updateEnviroTargetSheet} =
     useEnviroTargetSheetExecutive();
 
   const formik = useFormik({
@@ -242,14 +243,27 @@ console.log("Target Sheet ID:", id);
           })),
         };
 
-        const res = await createEnviroTargetSheet(payload);
+        if (isReadOnly && id && mode === "edit") {
+          // should not happen
+        }
+
+        let res;
+        if (mode === "edit" && id) {
+          res = await updateEnviroTargetSheet(id, payload);
+        } else {
+          res = await createEnviroTargetSheet(payload);
+        }
 
         if (res) {
-          setPreviewData(payload);
-          resetForm();
+          if (!(mode === "edit" && id)) {
+            setPreviewData(payload);
+            resetForm();
+          } else {
+            navigate("/sales-executive/enviro-target-sheet");
+          }
         }
       } catch (error) {
-        toast.error("Failed to submit product target sheet");
+        toast.error(mode === "edit" ? "Failed to update product target sheet" : "Failed to submit product target sheet");
         console.error("EnviroProductTargetSheetForm submission error:", error);
       } finally {
         setSubmitting(false);
@@ -502,9 +516,10 @@ console.log("Target Sheet ID:", id);
     recalculateRow(index, { price, quantity: value });
   };
 
-  const handleAchievementChange = (index, quarter, month, field, value) => {
-    const row = formik.values.products?.[index];
-    if (!row) return;
+const handleAchievementChange = (index, quarter, month, field, value) => {
+  if (isReadOnly) return;
+  const row = formik.values.products?.[index];
+  if (!row) return;
 
     const achievements = JSON.parse(JSON.stringify(row.achievement || {}));
     const quarterData = achievements[quarter] || {};
@@ -607,7 +622,7 @@ console.log("Target Sheet ID:", id);
 
   /* Wait until the company name has been read from sessionStorage,
      otherwise a valid Enviro user briefly sees "Access Restricted". */
-  const isReadOnly = Boolean(id);
+  const isReadOnly = Boolean(id) && mode !== "edit";
 
   if (!isCompanyLoaded) return null;
 
@@ -690,12 +705,14 @@ console.log("Target Sheet ID:", id);
                     ) || null
                   }
                   onChange={(option) => {
+                    if (isReadOnly) return;
                     handleSegmentChange(option);
                     formik.setFieldTouched("segment", true);
                   }}
                   onBlur={() => formik.setFieldTouched("segment", true)}
-                  isSearchable
-                  isClearable
+                  isSearchable={!isReadOnly}
+                  isClearable={!isReadOnly}
+                  isDisabled={isReadOnly}
                   placeholder="Select section"
                   styles={selectStyles}
                 />
@@ -711,12 +728,14 @@ console.log("Target Sheet ID:", id);
                     ) || null
                   }
                   onChange={(option) => {
+                    if (isReadOnly) return;
                     handleProfileTypeChange(option);
                     formik.setFieldTouched("profileType", true);
                   }}
                   onBlur={() => formik.setFieldTouched("profileType", true)}
-                  isSearchable
-                  isClearable
+                  isSearchable={!isReadOnly}
+                  isClearable={!isReadOnly}
+                  isDisabled={isReadOnly}
                   placeholder="Select profile type"
                   styles={selectStyles}
                 />
@@ -738,12 +757,14 @@ console.log("Target Sheet ID:", id);
                       ) || null
                     }
                     onChange={(option) => {
+                      if (isReadOnly) return;
                       handleOrganizationChange(option);
                       formik.setFieldTouched("organization", true);
                     }}
                     onBlur={() => formik.setFieldTouched("organization", true)}
-                    isSearchable
-                    isClearable
+                    isSearchable={!isReadOnly}
+                    isClearable={!isReadOnly}
+                    isDisabled={isReadOnly}
                     placeholder="Select organization"
                     styles={selectStyles}
                   />
@@ -776,12 +797,14 @@ console.log("Target Sheet ID:", id);
                     ) || null
                   }
                   onChange={(option) => {
+                    if (isReadOnly) return;
                     formik.setFieldValue("city", option?.value || "");
                     formik.setFieldTouched("city", true);
                   }}
                   onBlur={() => formik.setFieldTouched("city", true)}
-                  isSearchable
-                  isClearable
+                  isSearchable={!isReadOnly}
+                  isClearable={!isReadOnly}
+                  isDisabled={isReadOnly}
                   placeholder="Select city"
                   styles={selectStyles}
                 />
@@ -804,14 +827,16 @@ console.log("Target Sheet ID:", id);
                       ) || null
                     }
                     onChange={(option) => {
+                      if (isReadOnly) return;
                       handleIndividualChange(option);
                       formik.setFieldTouched("individualName", true);
                     }}
                     onBlur={() =>
                       formik.setFieldTouched("individualName", true)
                     }
-                    isSearchable
-                    isClearable
+                    isSearchable={!isReadOnly}
+                    isClearable={!isReadOnly}
+                    isDisabled={isReadOnly}
                     placeholder="Select individual"
                     styles={selectStyles}
                   />
@@ -843,11 +868,13 @@ console.log("Target Sheet ID:", id);
                     ) || null
                   }
                   onChange={(option) => {
+                    if (isReadOnly) return;
                     formik.setFieldValue("year", option?.value || "");
                     formik.setFieldTouched("year", true);
                   }}
                   onBlur={() => formik.setFieldTouched("year", true)}
-                  isSearchable
+                  isSearchable={!isReadOnly}
+                  isDisabled={isReadOnly}
                   placeholder="Select year"
                   styles={selectStyles}
                 />
@@ -883,14 +910,16 @@ console.log("Target Sheet ID:", id);
                         ) || null
                       }
                       onChange={(option) => {
+                        if (isReadOnly) return;
                         handleProductTypeChange(index, option);
                         formik.setFieldTouched(
                           `products[${index}].productType`,
                           true
                         );
                       }}
-                      isSearchable
-                      isClearable
+                      isSearchable={!isReadOnly}
+                      isClearable={!isReadOnly}
+                      isDisabled={isReadOnly}
                       placeholder="Select product type"
                       styles={selectStyles}
                     />
@@ -913,14 +942,16 @@ console.log("Target Sheet ID:", id);
                         ) || null
                       }
                       onChange={(option) => {
+                        if (isReadOnly) return;
                         handleProductNameChange(index, option);
                         formik.setFieldTouched(
                           `products[${index}].name`,
                           true
                         );
                       }}
-                      isSearchable
-                      isClearable
+                      isSearchable={!isReadOnly}
+                      isClearable={!isReadOnly}
+                      isDisabled={isReadOnly}
                       placeholder="Select product"
                       styles={selectStyles}
                     />
@@ -940,7 +971,7 @@ console.log("Target Sheet ID:", id);
                       step="0.01"
                       value={row.price ?? ""}
                       onChange={(event) =>
-                        handlePriceChange(index, event.target.value)
+                        isReadOnly ? null : handlePriceChange(index, event.target.value)
                       }
                       onBlur={() =>
                         formik.setFieldTouched(
@@ -949,8 +980,9 @@ console.log("Target Sheet ID:", id);
                         )
                       }
                       onWheel={(event) => event.target.blur()}
-                      className={inputBaseClass}
+                      className={`${inputBaseClass} ${isReadOnly ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''}`}
                       placeholder="Enter price"
+                      readOnly={isReadOnly}
                     />
                   </FormField>
 
@@ -968,7 +1000,7 @@ console.log("Target Sheet ID:", id);
                       step="1"
                       value={row.enteredQuantity ?? ""}
                       onChange={(event) =>
-                        handleQuantityChange(index, event.target.value)
+                        isReadOnly ? null : handleQuantityChange(index, event.target.value)
                       }
                       onBlur={() =>
                         formik.setFieldTouched(
@@ -977,8 +1009,9 @@ console.log("Target Sheet ID:", id);
                         )
                       }
                       onWheel={(event) => event.target.blur()}
-                      className={inputBaseClass}
+                      className={`${inputBaseClass} ${isReadOnly ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''}`}
                       placeholder="Enter quantity"
+                      readOnly={isReadOnly}
                     />
                   </FormField>
                 </div>
@@ -1063,7 +1096,7 @@ console.log("Target Sheet ID:", id);
               onClick={() => navigate("/sales-executive/enviro-target-sheet")}
               variant={2}
             />
-            {!isReadOnly ? (
+          {!(mode === "edit" && id) && !isReadOnly ? (
               <Button
                 type="button"
                 text="Reset"
@@ -1071,10 +1104,18 @@ console.log("Target Sheet ID:", id);
                 variant={2}
               />
             ) : null}
-            {!isReadOnly ? (
+            {!isReadOnly || (mode === "edit" && id) ? (
               <Button
                 type="submit"
-                text={formik.isSubmitting ? "Submitting..." : "Submit"}
+                text={
+                  formik.isSubmitting
+                    ? mode === "edit" && id
+                      ? "Updating..."
+                      : "Submitting..."
+                    : mode === "edit" && id
+                    ? "Update"
+                    : "Submit"
+                }
                 disabled={
                   formik.isSubmitting || formik.isValidating || submitLoading
                 }
