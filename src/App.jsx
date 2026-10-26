@@ -126,6 +126,7 @@ import AdminEmployeeWiseTargetSheet from
 import AdminEnviroEmployeeWiseTargetSheet from
   "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEnviroEmployeeWiseTargetSheet";
 import AdminApprovalPendingEMpSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminApprovalPendingEMpSheet";
+import AdminEnviroTargetSheetView from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEnviroTargetSheetView";
 function App() {
   const [activeTab, setActiveTab] = useState("/crm-dashboard");
 
@@ -778,6 +779,16 @@ function App() {
               <AdminApprovalPendingEMpSheet />
             </SuperAdminLayout>
           }
+        />
+        <Route path="/admin/sales-executive/target-sheet/enviro-target-sheet-view"    
+        element={
+          <SuperAdminLayout
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          >
+            <AdminEnviroTargetSheetView />
+          </SuperAdminLayout>
+        }
         />
         {/* <Route
           path="/organization-details/:id"

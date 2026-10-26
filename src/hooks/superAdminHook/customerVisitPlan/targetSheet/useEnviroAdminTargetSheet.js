@@ -49,15 +49,22 @@ const useEnviroAdminTargetSheet = () => {
   const [enviroTargetSheetsEmployee, setEnviroTargetSheetsEmployee] =
     useRecoilState(enviroTargetSheetsEmployeeAtom);
 
-  // POST /api/AdminenviroTargetSheet/enviro-show-team-wise-targetsheet
-  const fetchEnviroTeamWiseTargetSheet = async (payload) => {
+  // GET /api/AdminenviroTargetSheet/enviro-show-team-wise-targetsheet
+  const fetchEnviroTeamWiseTargetSheet = async (sheetType,year,page, limit, _id) => {
     setLoading(true);
     setError(null);
     try {
+        const params = new URLSearchParams();
+      if (sheetType) params.append("sheetType", sheetType);
+      if (year) params.append("year", year);
+      if (page) params.append("page", page);
+      if (limit) params.append("limit", limit);
+      if (_id) params.append("_id", _id);
+      const query = params.toString();
       const res = await fetchData({
-        method: "POST",
-        url: `${conf.apiBaseUrl}AdminenviroTargetSheet/enviro-show-team-wise-targetsheet`,
-        data: payload || {},
+        method: "GET",
+        url: `${conf.apiBaseUrl}AdminenviroTargetSheet/enviro-show-team-wise-targetsheet${query ? `?${query}` : ""}`,
+        // data: payload || {},
       });
       if (res) {
         setEnviroTeamWiseTargetSheet(res);

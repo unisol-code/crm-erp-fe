@@ -61,16 +61,16 @@ const AdminEnviroEmployeeWiseTargetSheet = () => {
 
   const handleViewClick = (sheetId, row) => {
     const routeMap = {
-      Product: "/admin/sales-executive/enviro-target-sheet/product",
-      Project: "/admin/sales-executive/enviro-target-sheet/project",
-      Service: "/admin/sales-executive/enviro-target-sheet/service",
+      Product: "/admin/sales-executive/target-sheet/enviro-target-sheet-view",
+      Project: "/admin/sales-executive/target-sheet/enviro-target-sheet-view",
+      Service: "/admin/sales-executive/target-sheet/enviro-target-sheet-view",
     };
     const sheetType =
       row?.sheetType ||
       (activeTab === "service" ? "Service" : activeTab === "project" ? "Project" : "Product");
     const path = routeMap[sheetType];
     if (path && sheetId) {
-      navigate(`${path}?id=${encodeURIComponent(sheetId)}`);
+      navigate(`${path}?id=${encodeURIComponent(sheetId)}&type=${encodeURIComponent(sheetType.toLowerCase())}`);
     }
   };
 

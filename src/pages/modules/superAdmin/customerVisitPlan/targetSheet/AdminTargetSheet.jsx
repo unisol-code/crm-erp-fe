@@ -33,6 +33,9 @@ const AdminTargetSheet = () => {
   const {
     loading: enviroLoading,
     enviroTargetSheetsEmployee,
+    enviroTeamWiseTargetSheet,
+    fetchEnviroTeamWiseTargetSheet,
+    resetEnviroTeamWiseTargetSheet,
     fetchEnviroTargetSheetsEmployee,
   } = useEnviroAdminTargetSheet();
 
@@ -43,7 +46,10 @@ const AdminTargetSheet = () => {
   const [empLimit, setEmpLimit] = useState(10);
   // null = top-level (logged-in user's) team; otherwise drill into that member
   const [teamDrillId, setTeamDrillId] = useState(null);
-
+  const [enviroSheetType, setEnviroSheetType] = useState("Product");
+  const [enviroYear, setEnviroYear] = useState("2026");
+  const currentYear = new Date().getFullYear();
+const enviroYearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i); // 2021..2031
   useEffect(() => {
     fetchTeamWiseTargetSheetList(
       undefined,
@@ -55,8 +61,7 @@ const AdminTargetSheet = () => {
     };
   }, [teamDrillId]);
 
-  useEffect(() => {
-    if (activeTab === "employeeList") {
+  useEffect(() => {  if (activeTab === "employeeList") {
       if (isEnviroSolution) {
         fetchEnviroTargetSheetsEmployee();
       } else {
@@ -64,6 +69,21 @@ const AdminTargetSheet = () => {
       }
     }
   }, [activeTab, isEnviroSolution]);
+
+  useEffect(() => {
+    if (isEnviroSolution && activeTab === "teamWise") {
+      fetchEnviroTeamWiseTargetSheet(
+        enviroSheetType,
+        enviroYear,
+        page,
+        limit,
+        teamDrillId ?? undefined
+      );
+      return () => {
+        resetEnviroTeamWiseTargetSheet();
+      };
+    }
+  }, [activeTab, enviroSheetType, enviroYear, page, limit, teamDrillId, isEnviroSolution]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -93,10 +113,25 @@ const AdminTargetSheet = () => {
   const { year, viewing, hasOwnTarget, rows, teamTotal } =
     teamWiseTargetSheetList ?? {};
 
+  const {
+    viewing: enviroViewing,
+    tables,
+    sheetTypes,
+  } = enviroTeamWiseTargetSheet ?? {};
+
+  const enviroCurrentTable = tables?.[enviroSheetType] || {};
+  const enviroRows = enviroCurrentTable.rows ?? [];
+  const enviroTeamTotal = enviroCurrentTable.total || {};
+
   const teamPaginatedRows = useMemo(() => {
     const start = (page - 1) * limit;
     return (rows ?? []).slice(start, start + limit);
   }, [rows, page, limit]);
+
+  const enviroPaginatedRows = useMemo(() => {
+    const start = (page - 1) * limit;
+    return enviroRows.slice(start, start + limit);
+  }, [enviroRows, page, limit]);
 
   const empPaginatedRows = useMemo(() => {
     if (isEnviroSolution) {
@@ -112,8 +147,9 @@ const AdminTargetSheet = () => {
     { key: "type", header: "Type", align: "left" },
     { key: "employeeName", header: "Employee Name", align: "left" },
     { key: "designation", header: "Designation", align: "left" },
-    { key: "hospitalCount", header: "Hospitals", align: "center" },
-    { key: "annualProductCount", header: "Products", align: "center" },
+    { key: "individualCount", header: "Individuals", align: "center" },
+    { key: "organizationCount", header: "Organizations", align: "center" },
+    { key: "annualProductCount", header: `${enviroSheetType} Count`, align: "center" },
     { key: "annualTargetQuantity", header: "Target Qty", align: "center" },
     { key: "annualAchievedQuantity", header: "Achieved Qty", align: "center" },
     {
@@ -129,6 +165,8 @@ const AdminTargetSheet = () => {
       render: (r) => formatCurrency(r.annualAchievedPrice),
     },
   ];
+
+  const enviroTeamColumns = teamColumns;
 
   const empColumns = [
     {
@@ -208,8 +246,56 @@ const AdminTargetSheet = () => {
         {/* Team Wise Tab */}
         {activeTab === "teamWise" && (
           <>
+            {isEnviroSolution && (
+              <div className="flex items-center gap-4 mb-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Sheet Type</label>
+                  <select
+                    value={enviroSheetType}
+                    onChange={(e) => {
+                      setEnviroSheetType(e.target.value);
+                      setPage(1);
+                    }}
+                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                  >
+                    {["Product", "Service", "Project"].map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+               
+                 <div className="flex items-center gap-2">
+  <label className="text-sm font-medium text-gray-700">Year</label>
+  <select
+    value={enviroYear}
+    onChange={(e) => {
+      setEnviroYear(e.target.value);
+      setPage(1);
+    }}
+    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+  >
+    {enviroYearOptions.map((y) => (
+      <option key={y} value={String(y)}>{y}</option>
+    ))}
+  </select>
+</div>  
+             
+              </div>
+            )}
 
-            {teamTotal && (
+            {isEnviroSolution && enviroTeamTotal && (
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                <Stat label="Individuals" value={enviroTeamTotal.individualCount ?? 0} />
+                <Stat label="Organizations" value={enviroTeamTotal.organizationCount ?? 0} />
+                <Stat label={`${enviroSheetType} Count`} value={enviroTeamTotal.annualProductCount ?? 0} />
+                <Stat label="Target Qty" value={enviroTeamTotal.annualTargetQuantity ?? 0} />
+                <Stat label="Achieved Qty" value={enviroTeamTotal.annualAchievedQuantity ?? 0} />
+                <Stat label="Target Price" value={formatCurrency(enviroTeamTotal.annualTargetPrice)} />
+                <Stat label="Achieved Price" value={formatCurrency(enviroTeamTotal.annualAchievedPrice)} />
+              </div>
+            )}
+
+            {!isEnviroSolution && teamTotal && (
               <div className="flex flex-wrap items-center gap-4 mb-4">
                 <Stat label="Hospitals" value={teamTotal.hospitalCount ?? 0} />
                 <Stat label="Products" value={teamTotal.annualProductCount ?? 0} />
@@ -226,9 +312,15 @@ const AdminTargetSheet = () => {
                 <span className="text-[15px] text-gray-600">
                   Viewing team of{" "}
                   <span className="font-semibold text-[#252C58]">
-                    {viewing?.employeeName ?? "selected member"}
+                    {isEnviroSolution
+                      ? enviroViewing?.employeeName ?? "selected member"
+                      : viewing?.employeeName ?? "selected member"}
                   </span>
-                  {viewing?.designation ? ` (${viewing.designation})` : ""}
+                  {enviroViewing?.designation
+                    ? ` (${enviroViewing.designation})`
+                    : viewing?.designation
+                    ? ` (${viewing.designation})`
+                    : ""}
                 </span>
                 <button
                   onClick={handleTeamBack}
@@ -240,18 +332,29 @@ const AdminTargetSheet = () => {
             )}
 
             <DataTable
-              columns={teamColumns}
-              rows={teamPaginatedRows}
-              loading={loading}
-              emptyMessage="No team target sheet data available."
+              columns={isEnviroSolution ? enviroTeamColumns : teamColumns}
+              rows={isEnviroSolution ? enviroPaginatedRows : teamPaginatedRows}
+              loading={isEnviroSolution ? enviroLoading : loading}
+              emptyMessage={
+                isEnviroSolution
+                  ? `No ${enviroSheetType} team target sheet data available.`
+                  : "No team target sheet data available."
+              }
               srNoStartIndex={(page - 1) * limit}
               onRowView={handleTeamView}
               actionLabel="View team"
               pagination={{
                 currentPage: page,
-                totalItems: rows?.length ?? 0,
+                totalItems: isEnviroSolution
+                  ? enviroRows.length
+                  : rows?.length ?? 0,
                 itemsPerPage: limit,
-                totalPages: Math.max(Math.ceil((rows?.length ?? 0) / limit), 1),
+                totalPages: Math.max(
+                  Math.ceil(
+                    (isEnviroSolution ? enviroRows.length : rows?.length ?? 0) / limit
+                  ),
+                  1
+                ),
               }}
               onPageChange={setPage}
               onItemsPerPageChange={(value) => {
