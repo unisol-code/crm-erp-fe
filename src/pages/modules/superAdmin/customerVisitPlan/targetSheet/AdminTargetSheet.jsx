@@ -65,7 +65,8 @@ const enviroYearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 +
       if (isEnviroSolution) {
         fetchEnviroTargetSheetsEmployee();
       } else {
-        fetchAllEmployeeList();
+        // fetchAllEmployeeList();
+        fetchTeamWiseTargetSheetList(undefined, undefined, teamDrillId ?? undefined);
       }
     }
   }, [activeTab, isEnviroSolution]);
@@ -85,6 +86,16 @@ const enviroYearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 +
     }
   }, [activeTab, enviroSheetType, enviroYear, page, limit, teamDrillId, isEnviroSolution]);
 
+  useEffect(() => {
+    if (activeTab === "employeeList") {
+      if (isEnviroSolution) {
+        fetchEnviroTargetSheetsEmployee();
+      } else {
+        fetchAllEmployeeList();
+      }
+    }
+  }, [activeTab, isEnviroSolution]);
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (tab === "teamWise") setPage(1);
@@ -97,6 +108,15 @@ const enviroYearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 +
   // has its own target (row.hasOwnTarget). Otherwise drill into that row's team.
   const handleTeamView = (id, row) => {
     if (!id) return;
+    if (isEnviroSolution) {
+      if ((enviroViewing?.HasOwned || enviroViewing?.hasOwnTarget) && (row?.hasOwned || row?.hasOwnTarget)) {
+        navigate(`/admin/sales-executive/target-sheet/enviro-universal-target-sheet/${id}?sheetType=${enviroSheetType}`);
+        return;
+      }
+      setTeamDrillId(id);
+      setPage(1);
+      return;
+    }
     if (viewing?.hasOwnTarget && row?.hasOwnTarget) {
       navigate(`/admin/sales-executive/target-sheet/universal-target-sheet/${id}`);
       return;
