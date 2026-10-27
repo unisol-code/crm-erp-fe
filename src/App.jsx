@@ -128,6 +128,7 @@ import AdminEnviroEmployeeWiseTargetSheet from
   "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEnviroEmployeeWiseTargetSheet";
 import AdminApprovalPendingEMpSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminApprovalPendingEMpSheet";
 import AdminEnviroTargetSheetView from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEnviroTargetSheetView";
+import AdminEnviroEmployeePendingTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEnviroEmployeePendingTargetSheet";
 function App() {
   const [activeTab, setActiveTab] = useState("/crm-dashboard");
 
@@ -781,6 +782,19 @@ function App() {
               </SuperAdminLayout>
             }
           />
+
+             <Route
+            path="/admin/sales-executive/target-sheet/enviro-employee-wise-target-sheet/pending-approval/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <AdminEnviroEmployeePendingTargetSheet />
+              </SuperAdminLayout>
+            }
+          />
+
         <Route
           path="/admin/sales-executive/target-sheet/my-approval-queue"
           element={

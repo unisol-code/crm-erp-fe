@@ -96,6 +96,21 @@ const AdminEnviroEmployeeWiseTargetSheet = () => {
       <div className="p-4 bg-white rounded-2xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-3xl font-bold text-gray-800 font">Enviro Target Sheet</h2>
+        <button
+  type="button"
+  onClick={() =>
+    navigate(
+      `/admin/sales-executive/target-sheet/enviro-employee-wise-target-sheet/pending-approval/${id}`
+    )
+  }
+  className="inline-flex items-center gap-2 rounded-md bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-orange-600 hover:shadow active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1"
+>
+  <span className="relative flex h-2 w-2">
+    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+    <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+  </span>
+  Pending Approval Sheets
+</button>
           <div className="flex items-center gap-2">
             <Select
               placeholder="Select Year"
