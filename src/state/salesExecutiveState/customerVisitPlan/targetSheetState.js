@@ -50,3 +50,28 @@ export const individualIdWiseTargetSheetStateAtom = atom({
   default: null,
   effects_UNSTABLE: [persistAtom],
 });
+
+
+export const enviroTargetSheetDetailsAtom = atom({
+  key: "enviroTargetSheetDetailsState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+}); 
+
+export const productWiseTargetSheetStateAtom = atom({
+  key: "productWiseTargetSheetState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});
+
+export const serviceIndividualOrganizationTargetSheetStateAtom = atom({
+  key: "serviceIndividualOrganizationTargetSheetState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});
+
+export const projectIndividualOrganizationTargetSheetStateAtom = atom({
+  key: "projectIndividualOrganizationTargetSheetState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});

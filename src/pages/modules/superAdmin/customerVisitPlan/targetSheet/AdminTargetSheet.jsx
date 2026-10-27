@@ -4,6 +4,8 @@ import BreadCrumb from "../../../../../components/uiComponents/breadcrumb/BreadC
 import DataTable from "../../../../../components/uiComponents/dataTable/DataTable.jsx";
 import { useTheme } from "../../../../../hooks/theme/useTheme.js";
 import useAdminTargetSheet from "../../../../../hooks/superAdminHook/customerVisitPlan/targetSheet/useAdminTargetSheet.js";
+import useEnviroAdminTargetSheet from "../../../../../hooks/superAdminHook/customerVisitPlan/targetSheet/useEnviroAdminTargetSheet.js";
+import useCompany from "../../../../../hooks/common/useCompany.js";
 
 const formatCurrency = (v) =>
   v === null || v === undefined ? "-" : `₹ ${Number(v).toLocaleString("en-IN")}`;
@@ -18,6 +20,7 @@ const Stat = ({ label, value }) => (
 const AdminTargetSheet = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const { isEnviroSolution, isCompanyLoaded } = useCompany();
   const {
     loading,
     allEmployeeList,
@@ -27,6 +30,15 @@ const AdminTargetSheet = () => {
     resetTeamWiseTargetSheet,
   } = useAdminTargetSheet();
 
+  const {
+    loading: enviroLoading,
+    enviroTargetSheetsEmployee,
+    enviroTeamWiseTargetSheet,
+    fetchEnviroTeamWiseTargetSheet,
+    resetEnviroTeamWiseTargetSheet,
+    fetchEnviroTargetSheetsEmployee,
+  } = useEnviroAdminTargetSheet();
+
   const [activeTab, setActiveTab] = useState("teamWise");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -34,7 +46,10 @@ const AdminTargetSheet = () => {
   const [empLimit, setEmpLimit] = useState(10);
   // null = top-level (logged-in user's) team; otherwise drill into that member
   const [teamDrillId, setTeamDrillId] = useState(null);
-
+  const [enviroSheetType, setEnviroSheetType] = useState("Product");
+  const [enviroYear, setEnviroYear] = useState("2026");
+  const currentYear = new Date().getFullYear();
+const enviroYearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i); // 2021..2031
   useEffect(() => {
     fetchTeamWiseTargetSheetList(
       undefined,
@@ -46,11 +61,40 @@ const AdminTargetSheet = () => {
     };
   }, [teamDrillId]);
 
-  useEffect(() => {
-    if (activeTab === "employeeList" ) {
-      fetchAllEmployeeList();
+  useEffect(() => {  if (activeTab === "employeeList") {
+      if (isEnviroSolution) {
+        fetchEnviroTargetSheetsEmployee();
+      } else {
+        // fetchAllEmployeeList();
+        fetchTeamWiseTargetSheetList(undefined, undefined, teamDrillId ?? undefined);
+      }
     }
-  }, [activeTab]);
+  }, [activeTab, isEnviroSolution]);
+
+  useEffect(() => {
+    if (isEnviroSolution && activeTab === "teamWise") {
+      fetchEnviroTeamWiseTargetSheet(
+        enviroSheetType,
+        enviroYear,
+        page,
+        limit,
+        teamDrillId ?? undefined
+      );
+      return () => {
+        resetEnviroTeamWiseTargetSheet();
+      };
+    }
+  }, [activeTab, enviroSheetType, enviroYear, page, limit, teamDrillId, isEnviroSolution]);
+
+  useEffect(() => {
+    if (activeTab === "employeeList") {
+      if (isEnviroSolution) {
+        fetchEnviroTargetSheetsEmployee();
+      } else {
+        fetchAllEmployeeList();
+      }
+    }
+  }, [activeTab, isEnviroSolution]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -64,6 +108,15 @@ const AdminTargetSheet = () => {
   // has its own target (row.hasOwnTarget). Otherwise drill into that row's team.
   const handleTeamView = (id, row) => {
     if (!id) return;
+    if (isEnviroSolution) {
+      if ((enviroViewing?.HasOwned || enviroViewing?.hasOwnTarget) && (row?.hasOwned || row?.hasOwnTarget)) {
+        navigate(`/admin/sales-executive/target-sheet/enviro-universal-target-sheet/${id}?sheetType=${enviroSheetType}`);
+        return;
+      }
+      setTeamDrillId(id);
+      setPage(1);
+      return;
+    }
     if (viewing?.hasOwnTarget && row?.hasOwnTarget) {
       navigate(`/admin/sales-executive/target-sheet/universal-target-sheet/${id}`);
       return;
@@ -80,22 +133,43 @@ const AdminTargetSheet = () => {
   const { year, viewing, hasOwnTarget, rows, teamTotal } =
     teamWiseTargetSheetList ?? {};
 
+  const {
+    viewing: enviroViewing,
+    tables,
+    sheetTypes,
+  } = enviroTeamWiseTargetSheet ?? {};
+
+  const enviroCurrentTable = tables?.[enviroSheetType] || {};
+  const enviroRows = enviroCurrentTable.rows ?? [];
+  const enviroTeamTotal = enviroCurrentTable.total || {};
+
   const teamPaginatedRows = useMemo(() => {
     const start = (page - 1) * limit;
     return (rows ?? []).slice(start, start + limit);
   }, [rows, page, limit]);
 
+  const enviroPaginatedRows = useMemo(() => {
+    const start = (page - 1) * limit;
+    return enviroRows.slice(start, start + limit);
+  }, [enviroRows, page, limit]);
+
   const empPaginatedRows = useMemo(() => {
+    if (isEnviroSolution) {
+      const start = (empPage - 1) * empLimit;
+      const list = enviroTargetSheetsEmployee?.data ?? enviroTargetSheetsEmployee ?? [];
+      return Array.isArray(list) ? list.slice(start, start + empLimit) : [];
+    }
     const start = (empPage - 1) * empLimit;
     return (allEmployeeList ?? []).slice(start, start + empLimit);
-  }, [allEmployeeList, empPage, empLimit]);
+  }, [allEmployeeList, empPage, empLimit, enviroTargetSheetsEmployee, isEnviroSolution]);
 
   const teamColumns = [
     { key: "type", header: "Type", align: "left" },
     { key: "employeeName", header: "Employee Name", align: "left" },
     { key: "designation", header: "Designation", align: "left" },
-    { key: "hospitalCount", header: "Hospitals", align: "center" },
-    { key: "annualProductCount", header: "Products", align: "center" },
+    { key: "individualCount", header: "Individuals", align: "center" },
+    { key: "organizationCount", header: "Organizations", align: "center" },
+    { key: "annualProductCount", header: `${enviroSheetType} Count`, align: "center" },
     { key: "annualTargetQuantity", header: "Target Qty", align: "center" },
     { key: "annualAchievedQuantity", header: "Achieved Qty", align: "center" },
     {
@@ -111,6 +185,8 @@ const AdminTargetSheet = () => {
       render: (r) => formatCurrency(r.annualAchievedPrice),
     },
   ];
+
+  const enviroTeamColumns = teamColumns;
 
   const empColumns = [
     {
@@ -128,11 +204,21 @@ const AdminTargetSheet = () => {
         ),
     },
     { key: "employeeId", header: "EmpID", align: "left" },
-     { key: "fullName", header: "Name", align: "center" },
-     { key: "designation", header: "Designation", align: "center" },
-      { key: "reportingManagerName", header: "Reporting Manager", align: "center" },
-       { key: "totalSheetCount", header: "Total Sheets", align: "center" },
-        { key: "pendingSheetCount", header: "Pending Sheets", align: "center" },
+    { key: "fullName", header: "Name", align: "center" },
+    { key: "designation", header: "Designation", align: "center" },
+    { key: "reportingManagerName", header: "Reporting Manager", align: "center" },
+    { key: "totalSheetCount", header: "Total Sheets", align: "center" },
+    { key: "pendingSheetCount", header: "Pending Sheets", align: "center" },
+  ];
+
+  const enviroEmpColumns = [
+    { key: "name", header: "Name", align: "left" },
+    { key: "productSheetCount", header: "Product Sheets", align: "center" },
+    { key: "pendingProductSheetCount", header: "Pending Product Sheets", align: "center" },
+    { key: "serviceSheetCount", header: "Service Sheets", align: "center" },
+    { key: "pendingServiceSheetCount", header: "Pending Service Sheets", align: "center" },
+    { key: "projectSheetCount", header: "Project Sheets", align: "center" },
+    { key: "pendingProjectSheetCount", header: "Pending Project Sheets", align: "center" },
   ];
 
   return (
@@ -180,8 +266,56 @@ const AdminTargetSheet = () => {
         {/* Team Wise Tab */}
         {activeTab === "teamWise" && (
           <>
+            {isEnviroSolution && (
+              <div className="flex items-center gap-4 mb-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Sheet Type</label>
+                  <select
+                    value={enviroSheetType}
+                    onChange={(e) => {
+                      setEnviroSheetType(e.target.value);
+                      setPage(1);
+                    }}
+                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                  >
+                    {["Product", "Service", "Project"].map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+               
+                 <div className="flex items-center gap-2">
+  <label className="text-sm font-medium text-gray-700">Year</label>
+  <select
+    value={enviroYear}
+    onChange={(e) => {
+      setEnviroYear(e.target.value);
+      setPage(1);
+    }}
+    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+  >
+    {enviroYearOptions.map((y) => (
+      <option key={y} value={String(y)}>{y}</option>
+    ))}
+  </select>
+</div>  
+             
+              </div>
+            )}
 
-            {teamTotal && (
+            {isEnviroSolution && enviroTeamTotal && (
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                <Stat label="Individuals" value={enviroTeamTotal.individualCount ?? 0} />
+                <Stat label="Organizations" value={enviroTeamTotal.organizationCount ?? 0} />
+                <Stat label={`${enviroSheetType} Count`} value={enviroTeamTotal.annualProductCount ?? 0} />
+                <Stat label="Target Qty" value={enviroTeamTotal.annualTargetQuantity ?? 0} />
+                <Stat label="Achieved Qty" value={enviroTeamTotal.annualAchievedQuantity ?? 0} />
+                <Stat label="Target Price" value={formatCurrency(enviroTeamTotal.annualTargetPrice)} />
+                <Stat label="Achieved Price" value={formatCurrency(enviroTeamTotal.annualAchievedPrice)} />
+              </div>
+            )}
+
+            {!isEnviroSolution && teamTotal && (
               <div className="flex flex-wrap items-center gap-4 mb-4">
                 <Stat label="Hospitals" value={teamTotal.hospitalCount ?? 0} />
                 <Stat label="Products" value={teamTotal.annualProductCount ?? 0} />
@@ -198,9 +332,15 @@ const AdminTargetSheet = () => {
                 <span className="text-[15px] text-gray-600">
                   Viewing team of{" "}
                   <span className="font-semibold text-[#252C58]">
-                    {viewing?.employeeName ?? "selected member"}
+                    {isEnviroSolution
+                      ? enviroViewing?.employeeName ?? "selected member"
+                      : viewing?.employeeName ?? "selected member"}
                   </span>
-                  {viewing?.designation ? ` (${viewing.designation})` : ""}
+                  {enviroViewing?.designation
+                    ? ` (${enviroViewing.designation})`
+                    : viewing?.designation
+                    ? ` (${viewing.designation})`
+                    : ""}
                 </span>
                 <button
                   onClick={handleTeamBack}
@@ -212,18 +352,29 @@ const AdminTargetSheet = () => {
             )}
 
             <DataTable
-              columns={teamColumns}
-              rows={teamPaginatedRows}
-              loading={loading}
-              emptyMessage="No team target sheet data available."
+              columns={isEnviroSolution ? enviroTeamColumns : teamColumns}
+              rows={isEnviroSolution ? enviroPaginatedRows : teamPaginatedRows}
+              loading={isEnviroSolution ? enviroLoading : loading}
+              emptyMessage={
+                isEnviroSolution
+                  ? `No ${enviroSheetType} team target sheet data available.`
+                  : "No team target sheet data available."
+              }
               srNoStartIndex={(page - 1) * limit}
               onRowView={handleTeamView}
               actionLabel="View team"
               pagination={{
                 currentPage: page,
-                totalItems: rows?.length ?? 0,
+                totalItems: isEnviroSolution
+                  ? enviroRows.length
+                  : rows?.length ?? 0,
                 itemsPerPage: limit,
-                totalPages: Math.max(Math.ceil((rows?.length ?? 0) / limit), 1),
+                totalPages: Math.max(
+                  Math.ceil(
+                    (isEnviroSolution ? enviroRows.length : rows?.length ?? 0) / limit
+                  ),
+                  1
+                ),
               }}
               onPageChange={setPage}
               onItemsPerPageChange={(value) => {
@@ -237,23 +388,41 @@ const AdminTargetSheet = () => {
         {/* Employee List Tab */}
         {activeTab === "employeeList" && (
           <DataTable
-            columns={empColumns}
+            columns={isEnviroSolution ? enviroEmpColumns : empColumns}
             rows={empPaginatedRows}
             showAction
-            viewKey="_id"
-            onRowView={(id) => {
-              navigate(`/admin/sales-executive/target-sheet/employee-wise-target-sheet/${id}`);
+            viewKey={isEnviroSolution ? "_id" : "_id"}
+            onRowView={(id, row) => {
+              if (isEnviroSolution) {
+                navigate(`/admin/sales-executive/target-sheet/enviro-employee-wise-target-sheet/${id}`);
+              } else {
+                navigate(`/admin/sales-executive/target-sheet/employee-wise-target-sheet/${id}`);
+              }
             }}
             actionLabel="View Target Sheet"
-            loading={loading}
+            loading={loading || enviroLoading}
             emptyMessage="No employee data available."
             srNoStartIndex={(empPage - 1) * empLimit}
             pagination={{
               currentPage: empPage,
-              totalItems: allEmployeeList?.length ?? 0,
+              totalItems: isEnviroSolution
+                ? (Array.isArray(enviroTargetSheetsEmployee?.data)
+                    ? enviroTargetSheetsEmployee.data.length
+                    : Array.isArray(enviroTargetSheetsEmployee)
+                    ? enviroTargetSheetsEmployee.length
+                    : 0)
+                : (allEmployeeList?.length ?? 0),
               itemsPerPage: empLimit,
               totalPages: Math.max(
-                Math.ceil((allEmployeeList?.length ?? 0) / empLimit),
+                Math.ceil(
+                  (isEnviroSolution
+                    ? (Array.isArray(enviroTargetSheetsEmployee?.data)
+                        ? enviroTargetSheetsEmployee.data.length
+                        : Array.isArray(enviroTargetSheetsEmployee)
+                        ? enviroTargetSheetsEmployee.length
+                        : 0)
+                    : (allEmployeeList?.length ?? 0)) / empLimit
+                ),
                 1
               ),
             }}

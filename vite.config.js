@@ -15,6 +15,6 @@ export default defineConfig({
     host: true,
     // Vite 6 rejects requests whose Host header is not localhost/an IP address,
     // so the public tunnel hostname has to be allowed explicitly.
-    allowedHosts: [NGROK_DOMAIN, '.ngrok-free.dev', '.ngrok-free.app', '.ngrok.io'],
+    allowedHosts: [NGROK_DOMAIN, '.ngrok-free.dev', '.ngrok-free.app', '.ngrok.io','crm.wishboxdecor.in'],
   },
 })

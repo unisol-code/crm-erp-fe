@@ -64,6 +64,10 @@ import {
   ViewHospitalIdWiseTargetSheet,
   ViewProductIdWiseTargetSheet,
   ViewIndividualWiseTargetSheet,
+  EnviroSolutionTargetSheetHome,
+  EnviroProductTargetSheetForm,
+  EnviroProjectTargetSheetForm,
+  EnviroServiceTargetSheetForm,EnviroProductWiseTargetSheet
 } from "./pages/modules/salesExecutive/customerVisitPlan/targetSheet/index";
 import TerritorySnapshot from "./pages/modules/salesExecutive/customerVisitPlan/territorySnapshot/TerritorySnapshot";
 
@@ -116,9 +120,15 @@ import EnviroOrganizationDetails from "./pages/modules/superAdmin/AllSalesAnalyt
 import EnviroIndividualDetails from "./pages/modules/superAdmin/AllSalesAnalytics/EnviroIndividualDetails";
 import AdminTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminTargetSheet";
 import AdminUniversalTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminUniversalTargetSheet";
+import EnviroUniversalTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/EnviroUniversalTargetSheet";
 import AdminIndividualWiseTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminIndividualWiseTargetSheet";
-import AdminEmployeeWiseTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEmployeeWiseTargetSheet";
+import AdminEmployeeWiseTargetSheet from 
+"./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEmployeeWiseTargetSheet";
+import AdminEnviroEmployeeWiseTargetSheet from
+  "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEnviroEmployeeWiseTargetSheet";
 import AdminApprovalPendingEMpSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminApprovalPendingEMpSheet";
+import AdminEnviroTargetSheetView from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEnviroTargetSheetView";
+import AdminEnviroEmployeePendingTargetSheet from "./pages/modules/superAdmin/customerVisitPlan/targetSheet/AdminEnviroEmployeePendingTargetSheet";
 function App() {
   const [activeTab, setActiveTab] = useState("/crm-dashboard");
 
@@ -729,6 +739,17 @@ function App() {
           }
         />
         <Route
+          path="/admin/sales-executive/target-sheet/enviro-universal-target-sheet/:id"
+          element={
+            <SuperAdminLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            >
+              <EnviroUniversalTargetSheet />
+            </SuperAdminLayout>
+          }
+        />
+        <Route
           path="/admin/sales-executive/target-sheet/individual-wise-target-sheet/:id"
           element={
             <SuperAdminLayout
@@ -739,17 +760,41 @@ function App() {
             </SuperAdminLayout>
           }
         />
-        <Route
-          path="/admin/sales-executive/target-sheet/employee-wise-target-sheet/:id"
-          element={
-            <SuperAdminLayout
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-            >
-              <AdminEmployeeWiseTargetSheet />
-            </SuperAdminLayout>
-          }
-        />
+          <Route
+            path="/admin/sales-executive/target-sheet/employee-wise-target-sheet/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <AdminEmployeeWiseTargetSheet />
+              </SuperAdminLayout>
+            }
+          />
+          <Route
+            path="/admin/sales-executive/target-sheet/enviro-employee-wise-target-sheet/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <AdminEnviroEmployeeWiseTargetSheet />
+              </SuperAdminLayout>
+            }
+          />
+
+             <Route
+            path="/admin/sales-executive/target-sheet/enviro-employee-wise-target-sheet/pending-approval/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <AdminEnviroEmployeePendingTargetSheet />
+              </SuperAdminLayout>
+            }
+          />
+
         <Route
           path="/admin/sales-executive/target-sheet/my-approval-queue"
           element={
@@ -760,6 +805,16 @@ function App() {
               <AdminApprovalPendingEMpSheet />
             </SuperAdminLayout>
           }
+        />
+        <Route path="/admin/sales-executive/target-sheet/enviro-target-sheet-view"    
+        element={
+          <SuperAdminLayout
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          >
+            <AdminEnviroTargetSheetView />
+          </SuperAdminLayout>
+        }
         />
         {/* <Route
           path="/organization-details/:id"
@@ -963,6 +1018,65 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <TargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+
+          {/* ------------- ENVIRO SOLUTION TARGET SHEETS -------------
+              Frontend-only screens. They are guarded internally with
+              `isEnviroSolution` so no other company can use them. */}
+          <Route
+            path="/sales-executive/enviro-target-sheet"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroProductWiseTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+                    <Route
+            path="/sales-executive/enviro-target-sheet/create-target-sheet"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroSolutionTargetSheetHome />
+              </SalesExecutiveLayout>
+            }
+          />
+          <Route
+            path="/sales-executive/enviro-target-sheet/product"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroProductTargetSheetForm />
+              </SalesExecutiveLayout>
+            }
+          />
+          <Route
+            path="/sales-executive/enviro-target-sheet/project"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroProjectTargetSheetForm />
+              </SalesExecutiveLayout>
+            }
+          />
+          <Route
+            path="/sales-executive/enviro-target-sheet/service"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroServiceTargetSheetForm />
               </SalesExecutiveLayout>
             }
           />

@@ -14,6 +14,7 @@ import {
 import { userAuthState } from "../../../state/authenticatedState/authenticatedState";
 import { useSignIn } from "../../../hooks/auth/useSignIn";
 import { useTheme } from "../../../hooks/theme/useTheme";
+import useCompany from "../../../hooks/common/useCompany";
 import contactUs from "../../../assets/images/contactUs.png";
 import Custom from "../../../assets/custom.png";
 import CRM from "../../../assets/images/crm 2.png";
@@ -30,6 +31,7 @@ const SalesExecutiveSidebar = ({ collapsed, setCollapsed }) => {
   const navigate = useNavigate();
   const setUserInfo = useSetRecoilState(userAuthState);
   const { resetSuperAdmin, resetEmployee } = useSignIn();
+  const { isEnviroSolution } = useCompany();
 
   const SidebarItems = [
     {
@@ -55,7 +57,24 @@ const SalesExecutiveSidebar = ({ collapsed, setCollapsed }) => {
           name: "Monthly Planning",
           path: "/sales-executive/monthly-planning",
         },
-        { id: 32, name: "Target Sheet", path: "/sales-executive/target-sheet" },
+        /* The standard Target Sheet is replaced by the EnviroSolution
+           target sheet for the EnviroSolution company (frontend only,
+           no API yet). Every other company keeps the standard one. */
+        ...(isEnviroSolution
+          ? [
+              {
+                id: 34,
+                name: "EnviroSolution Target Sheet",
+                path: "/sales-executive/enviro-target-sheet",
+              },
+            ]
+          : [
+              {
+                id: 32,
+                name: "Target Sheet",
+                path: "/sales-executive/target-sheet",
+              },
+            ]),
         {
           id: 33,
           name: "Territory Snapshot",
