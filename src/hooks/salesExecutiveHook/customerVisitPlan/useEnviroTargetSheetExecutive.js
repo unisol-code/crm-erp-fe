@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import useFetch from "../../useFetch";
 import conf from "../../../config";
 import {
-  enviroTargetSheetDetailsAtom,productWiseTargetSheetStateAtom,serviceIndividualOrganizationTargetSheetStateAtom,projectIndividualOrganizationTargetSheetStateAtom,teamWiseTargetSheetStateAtom
+  enviroTargetSheetDetailsAtom,productWiseTargetSheetStateAtom,serviceIndividualOrganizationTargetSheetStateAtom,projectIndividualOrganizationTargetSheetStateAtom,teamWiseTargetSheetStateAtom,enviroUniversalTargetSheetStateAtom,enviroTargetQueueStateAtom
 } from "../../../state/salesExecutiveState/customerVisitPlan/targetSheetState";
 
 /**
@@ -30,6 +30,10 @@ const useEnviroTargetSheetExecutive = () => {
     useRecoilState(projectIndividualOrganizationTargetSheetStateAtom);
   const [teamWiseTargetSheetDetails, setTeamWiseTargetSheetDetails] =
     useRecoilState(teamWiseTargetSheetStateAtom);
+    const [enviroUniversalTargetSheetDetails, setEnviroUniversalTargetSheetDetails] =
+    useRecoilState(enviroUniversalTargetSheetStateAtom);
+  const [enviroTargetQueueDetails, setEnviroTargetQueueDetails] =
+    useRecoilState(enviroTargetQueueStateAtom);
 
   // POST /api/enviroTargetSheet/enviro-create-targetsheet
   const createEnviroTargetSheet = async (data) => {
@@ -361,7 +365,7 @@ const useEnviroTargetSheetExecutive = () => {
   };
 
   // GET /api/enviroTargetSheet/enviro-show-team-wise-targetsheet
-  const fetchEnviroTeamWiseTargetSheet = async (sheetType, _id) => {
+  const fetchEnviroTeamWiseTargetSheet = async (sheetType, year, _id) => {
     setLoading(true);
     setError(null);
 
@@ -369,6 +373,7 @@ const useEnviroTargetSheetExecutive = () => {
       const params = new URLSearchParams();
       if (sheetType) params.append("sheetType", sheetType);
       if (_id) params.append("_id", _id);
+      if (year) params.append("year", year);
 
       const query = params.toString();
       const url = `${conf.apiBaseUrl}enviroTargetSheet/enviro-show-team-wise-targetsheet${
@@ -405,6 +410,127 @@ const useEnviroTargetSheetExecutive = () => {
     setTeamWiseTargetSheetDetails(null);
   };
 
+  // GET /api/enviroTargetSheet/enviro-universal-targetsheet
+  const fetchEnviroUniversalTargetSheet = async (targetSalesId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      if (targetSalesId) params.append("targetSalesId", targetSalesId);
+
+      const query = params.toString();
+      const url = `${conf.apiBaseUrl}enviroTargetSheet/enviro-universal-targetsheet${
+        query ? `?${query}` : ""
+      }`;
+
+      const res = await fetchData({
+        method: "GET",
+        url,
+      });
+
+      if (res) {
+        setEnviroUniversalTargetSheetDetails(res?.data ?? res);
+        toast.success(res?.message || "Enviro universal target sheet fetched successfully");
+        return res;
+      }
+
+      throw new Error(res?.message || "Failed to fetch enviro universal target sheet");
+    } catch (err) {
+      console.error("Error fetching enviro universal target sheet:", err);
+      setError(err);
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Error while fetching enviro universal target sheet"
+      );
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // GET /api/enviroTargetSheet/queue
+  const fetchEnviroTargetQueue = async (targetSalesId) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      if (targetSalesId) params.append("targetSalesId", targetSalesId);
+
+      const query = params.toString();
+      const url = `${conf.apiBaseUrl}enviroTargetSheet/queue${
+        query ? `?${query}` : ""
+      }`;
+
+      const res = await fetchData({
+        method: "GET",
+        url,
+      });
+
+      if (res) {
+        setEnviroTargetQueueDetails(res?.data ?? res);
+        toast.success(res?.message || "Enviro target queue fetched successfully");
+        return res;
+      }
+
+      throw new Error(res?.message || "Failed to fetch enviro target queue");
+    } catch (err) {
+      console.error("Error fetching enviro target queue:", err);
+      setError(err);
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Error while fetching enviro target queue"
+      );
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetEnviroUniversalTargetSheetDetails = () => {
+    setEnviroUniversalTargetSheetDetails(null);
+  };
+
+  const resetEnviroTargetQueueDetails = () => {
+    setEnviroTargetQueueDetails(null);
+  };
+
+    // PUT /api/AdminenviroTargetSheet/Admin-review-targetsheet/:id
+    const reviewEnviroTargetSheet = async (id, payload) => {
+      if (!id) {
+        toast.error("Target sheet id is required to review");
+        return false;
+      }
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetchData({
+          method: "PUT",
+          url: `${conf.apiBaseUrl}AdminenviroTargetSheet/Admin-review-targetsheet/${id}`,
+          data: payload || {},
+        });
+        if (res) {
+          toast.success(res?.message || "Enviro target sheet reviewed successfully");
+          return res;
+        }
+        throw new Error(res?.message || "Failed to review enviro target sheet");
+      } catch (err) {
+        console.error("Error reviewing enviro target sheet:", err);
+        setError(err);
+        toast.error(
+          err?.response?.data?.message ||
+            err?.message ||
+            "Failed to review enviro target sheet"
+        );
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    };
+
 return {
     loading,
     error,
@@ -426,6 +552,13 @@ return {
     teamWiseTargetSheetDetails,
     fetchEnviroTeamWiseTargetSheet,
     resetTeamWiseTargetSheetDetails,
+    enviroUniversalTargetSheetDetails,
+    fetchEnviroUniversalTargetSheet,
+    resetEnviroUniversalTargetSheetDetails,
+    enviroTargetQueueDetails,
+    fetchEnviroTargetQueue,
+    resetEnviroTargetQueueDetails,
+    reviewEnviroTargetSheet
   };
 };
 

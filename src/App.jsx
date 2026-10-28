@@ -67,7 +67,7 @@ import {
   EnviroSolutionTargetSheetHome,
   EnviroProductTargetSheetForm,
   EnviroProjectTargetSheetForm,
-  EnviroServiceTargetSheetForm,EnviroProductWiseTargetSheet,EnviroTeamwiseTargetSheet
+  EnviroServiceTargetSheetForm,EnviroProductWiseTargetSheet,EnviroTeamwiseTargetSheet,EnviroUniveralTeamvisetargetSheet
 } from "./pages/modules/salesExecutive/customerVisitPlan/targetSheet/index";
 import TerritorySnapshot from "./pages/modules/salesExecutive/customerVisitPlan/territorySnapshot/TerritorySnapshot";
 
@@ -1044,6 +1044,17 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <EnviroTeamwiseTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+                 <Route
+            path="/sales-executive/enviro-target-sheet/teamwise/universal-target-sheet/:id"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroUniveralTeamvisetargetSheet />
               </SalesExecutiveLayout>
             }
           />
