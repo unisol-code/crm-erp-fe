@@ -16,3 +16,4 @@ export {default as EnviroServiceTargetSheetForm} from "./enviro/EnviroServiceTar
 export {default as EnviroProductWiseTargetSheet} from "./enviro/EnviroProductWiseTargetSheet.jsx";
 export { default as EnviroTeamwiseTargetSheet } from "./enviro/EnviroTeamwiseTargetSheet.jsx";
 export { default as EnviroUniveralTeamvisetargetSheet } from "./enviro/EnviroUniveralTeamvisetargetSheet.jsx";
+export { default as EnviroPendingApprovalTargetSheet } from "./enviro/EnviroPendingApprovalTargetSheet.jsx";

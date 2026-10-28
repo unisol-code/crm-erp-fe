@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import BreadCrumb from "../../../../../../components/uiComponents/breadcrumb/BreadCrumb.jsx";
 import DataTable from "../../../../../../components/uiComponents/dataTable/DataTable.jsx";
 import { useTheme } from "../../../../../../hooks/theme/useTheme.js";
@@ -19,6 +20,7 @@ const Stat = ({ label, value }) => (
 
 const EnviroTeamwiseTargetSheet = () => {
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const { isEnviroSolution, isCompanyLoaded } = useCompany();
   const {
     loading,
@@ -75,9 +77,12 @@ const EnviroTeamwiseTargetSheet = () => {
 
   const handleViewEmployee = (id, row) => {
     if (!id) return;
-    // TODO: route to employee-wise target sheet page
-    console.log("View employee:", id);
+    if ((viewing?.hasOwned) && (row?.hasOwned)) {
+      navigate(`/sales-executive/enviro-target-sheet/teamwise/universal-target-sheet/${id}?sheetType=${enviroSheetType}`);
+      return;
+    }
     setTeamDrillId(id);
+    setPage(1);
   };
 
   const {
@@ -131,14 +136,14 @@ const EnviroTeamwiseTargetSheet = () => {
           </h2>
           <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
             <button
-              onClick={() => handleTabChange("teamWise")}
+              onClick={() => navigate("/sales-executive/enviro-target-sheet/teamwise/pending-approval-target-sheet")}
               className={`px-6 py-2 text-base font-medium rounded-md transition-all ${
                 activeTab === "teamWise"
                   ? "bg-orange-500 text-white shadow-md"
                   : "bg-transparent text-gray-600 hover:bg-gray-200"
               }`}
             >
-              Team Wise Target Sheet
+              Pending Team Wise Target Sheet
             </button>
           </div>
         </div>

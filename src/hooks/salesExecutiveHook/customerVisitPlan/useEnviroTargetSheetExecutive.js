@@ -417,7 +417,7 @@ const useEnviroTargetSheetExecutive = () => {
 
     try {
       const params = new URLSearchParams();
-      if (targetSalesId) params.append("targetSalesId", targetSalesId);
+      if (targetSalesId) params.append("_id", targetSalesId);
 
       const query = params.toString();
       const url = `${conf.apiBaseUrl}enviroTargetSheet/enviro-universal-targetsheet${
@@ -451,18 +451,16 @@ const useEnviroTargetSheetExecutive = () => {
   };
 
   // GET /api/enviroTargetSheet/queue
-  const fetchEnviroTargetQueue = async (targetSalesId) => {
+  const fetchEnviroTargetQueue = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const params = new URLSearchParams();
-      if (targetSalesId) params.append("targetSalesId", targetSalesId);
+      // const params = new URLSearchParams();
+      // if (targetSalesId) params.append("targetSalesId", targetSalesId);
 
-      const query = params.toString();
-      const url = `${conf.apiBaseUrl}enviroTargetSheet/queue${
-        query ? `?${query}` : ""
-      }`;
+      // const query = params.toString();
+      const url = `${conf.apiBaseUrl}enviroTargetSheet/queue`;
 
       const res = await fetchData({
         method: "GET",
@@ -470,7 +468,7 @@ const useEnviroTargetSheetExecutive = () => {
       });
 
       if (res) {
-        setEnviroTargetQueueDetails(res?.data ?? res);
+        setEnviroTargetQueueDetails(res);
         toast.success(res?.message || "Enviro target queue fetched successfully");
         return res;
       }

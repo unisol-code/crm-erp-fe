@@ -67,7 +67,7 @@ import {
   EnviroSolutionTargetSheetHome,
   EnviroProductTargetSheetForm,
   EnviroProjectTargetSheetForm,
-  EnviroServiceTargetSheetForm,EnviroProductWiseTargetSheet,EnviroTeamwiseTargetSheet,EnviroUniveralTeamvisetargetSheet
+  EnviroServiceTargetSheetForm,EnviroProductWiseTargetSheet,EnviroTeamwiseTargetSheet,EnviroUniveralTeamvisetargetSheet,EnviroPendingApprovalTargetSheet
 } from "./pages/modules/salesExecutive/customerVisitPlan/targetSheet/index";
 import TerritorySnapshot from "./pages/modules/salesExecutive/customerVisitPlan/territorySnapshot/TerritorySnapshot";
 
@@ -1055,6 +1055,17 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <EnviroUniveralTeamvisetargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+                <Route
+            path="/sales-executive/enviro-target-sheet/teamwise/pending-approval-target-sheet"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroPendingApprovalTargetSheet />
               </SalesExecutiveLayout>
             }
           />
