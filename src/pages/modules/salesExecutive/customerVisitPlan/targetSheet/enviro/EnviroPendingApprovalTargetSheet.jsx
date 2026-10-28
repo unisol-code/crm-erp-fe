@@ -122,7 +122,7 @@ const EnviroPendingApprovalTargetSheet = () => {
           </p>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 border border-gray-200 rounded-xl bg-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 border border-gray-200 rounded-xl bg-gray-100">
               <div>
                 <span className="text-sm font-medium text-gray-600">
                   Awaiting
@@ -147,14 +147,14 @@ const EnviroPendingApprovalTargetSheet = () => {
                   {data?.total ?? "N/A"}
                 </p>
               </div>
-              <div>
+              {/* <div>
                 <span className="text-sm font-medium text-gray-600">
                   Page
                 </span>
                 <p className="text-lg font-semibold text-[#252C58]">
                   {data?.page ?? "N/A"} of {data?.totalPages ?? "N/A"}
                 </p>
-              </div>
+              </div> */}
             </div>
 
             <h3 className="text-lg font-semibold text-gray-800 mb-3">

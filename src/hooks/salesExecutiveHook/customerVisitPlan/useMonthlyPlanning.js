@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import useFetch from "../../useFetch";
 import conf from "../../../config/index";
 import { toast } from "react-toastify";
-import { monthlyPlanningDetailsStateAtom, monthlyPlanningListStateAtom, monthWisePlanningStateAtom, oneMonthPlanningStateAtom ,monthlySummaryStateAtom, targetSheetYearlySummaryStateAtom} from "../../../state/mothlyPlanningState/monthlyPlanningState";
+import { monthlyPlanningDetailsStateAtom, monthlyPlanningListStateAtom, monthWisePlanningStateAtom, oneMonthPlanningStateAtom ,monthlySummaryStateAtom, targetSheetYearlySummaryStateAtom, teamWiseYearlyPlanningStateAtom} from "../../../state/mothlyPlanningState/monthlyPlanningState";
 import Swal from "sweetalert2";
 import { confirmAlert } from "../../../utils/alertToast";
 
@@ -16,6 +16,7 @@ const useMonthlyPlanning = () => {
     const [monthWisePlanning, setMonthWisePlanning] = useRecoilState(monthWisePlanningStateAtom);
     const [monthlySummary, setMonthlySummary] = useRecoilState(monthlySummaryStateAtom);
     const [targetSheetYearlySummary, setTargetSheetYearlySummary] = useRecoilState(targetSheetYearlySummaryStateAtom);
+    const [teamWiseYearlyPlanning, setTeamWiseYearlyPlanning] = useRecoilState(teamWiseYearlyPlanningStateAtom);
     // Guards against a stale in-flight yearly-summary response overwriting a newer one
     const yearlySummaryReqIdRef = useRef(0);
     const fetchMonthlyPlanningList = async (page, limit, fromDate, toDate) => {
@@ -54,6 +55,27 @@ const useMonthlyPlanning = () => {
         } catch (err) {
             console.error("Error while fetching month-wise planning:", err);
             toast.error("Failed to fetch month-wise planning");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchTeamWiseYearlyPlanning = async (year, id) => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            if (year) params.append("year", year);
+            if (id) params.append("id", id);
+            const res = await fetchData({
+                method: "GET",
+                url: `${conf.apiBaseUrl}planning/team-wise-yearly-planning?${params.toString()}`
+            });
+            if (res) {
+                setTeamWiseYearlyPlanning(res);
+            }
+        } catch (err) {
+            console.error("Error while fetching team-wise yearly planning:", err);
+            toast.error("Failed to fetch team-wise yearly planning");
         } finally {
             setLoading(false);
         }
@@ -117,6 +139,11 @@ const fetchTargetSheetYearlySummary = async ({ organization, individualName, pro
     toast.error("Failed to fetch target sheet yearly summary");
   }
 };
+
+const resetTeamWiseYearlyPlanning = () => {
+  setTeamWiseYearlyPlanning(null);
+};
+
 
     const resetTargetSheetYearlySummary = () => {
         yearlySummaryReqIdRef.current += 1; // invalidate any in-flight fetch
@@ -270,7 +297,10 @@ const fetchTargetSheetYearlySummary = async ({ organization, individualName, pro
         monthWisePlanning,fetchMonthlySummary,monthlySummary,
         fetchTargetSheetYearlySummary,
         targetSheetYearlySummary,
-        resetTargetSheetYearlySummary
+        resetTargetSheetYearlySummary,
+        teamWiseYearlyPlanning,
+        fetchTeamWiseYearlyPlanning,
+        resetTeamWiseYearlyPlanning
     };
 };
 

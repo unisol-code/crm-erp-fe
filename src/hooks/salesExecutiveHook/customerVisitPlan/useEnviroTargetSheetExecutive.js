@@ -507,7 +507,7 @@ const useEnviroTargetSheetExecutive = () => {
       try {
         const res = await fetchData({
           method: "PUT",
-          url: `${conf.apiBaseUrl}AdminenviroTargetSheet/Admin-review-targetsheet/${id}`,
+          url: `${conf.apiBaseUrl}enviroTargetSheet/review-targetsheet/${id}`,
           data: payload || {},
         });
         if (res) {

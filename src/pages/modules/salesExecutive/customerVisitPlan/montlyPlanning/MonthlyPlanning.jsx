@@ -95,6 +95,14 @@ const MonthlyPlanning = () => {
             )}
           </div> */}
 
+                    <Button
+            onClick={() =>
+              navigate("/sales-executive/monthly-planning/teamwise-monthly-plan")
+            }
+            variant={1}
+            text="Teamwise Monthly Plan"
+          />
+
           <Button
             onClick={() =>
               navigate("/sales-executive/monthly-planning/create-monthly-plan")
