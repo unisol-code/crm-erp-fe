@@ -14,3 +14,4 @@ export {default as EnviroProductTargetSheetForm} from "./enviro/EnviroProductTar
 export {default as EnviroProjectTargetSheetForm} from "./enviro/EnviroProjectTargetSheetForm.jsx";
 export {default as EnviroServiceTargetSheetForm} from "./enviro/EnviroServiceTargetSheetForm.jsx";
 export {default as EnviroProductWiseTargetSheet} from "./enviro/EnviroProductWiseTargetSheet.jsx";
+export { default as EnviroTeamwiseTargetSheet } from "./enviro/EnviroTeamwiseTargetSheet.jsx";

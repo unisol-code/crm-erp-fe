@@ -75,3 +75,9 @@ export const projectIndividualOrganizationTargetSheetStateAtom = atom({
   default: null,
   effects_UNSTABLE: [persistAtom],
 });
+
+export const teamWiseTargetSheetStateAtom = atom({
+  key: "teamWiseTargetSheetState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});

@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import useFetch from "../../useFetch";
 import conf from "../../../config";
 import {
-  enviroTargetSheetDetailsAtom,productWiseTargetSheetStateAtom,serviceIndividualOrganizationTargetSheetStateAtom,projectIndividualOrganizationTargetSheetStateAtom
+  enviroTargetSheetDetailsAtom,productWiseTargetSheetStateAtom,serviceIndividualOrganizationTargetSheetStateAtom,projectIndividualOrganizationTargetSheetStateAtom,teamWiseTargetSheetStateAtom
 } from "../../../state/salesExecutiveState/customerVisitPlan/targetSheetState";
 
 /**
@@ -28,6 +28,8 @@ const useEnviroTargetSheetExecutive = () => {
     useRecoilState(serviceIndividualOrganizationTargetSheetStateAtom);
   const [projectIndividualOrganizationTargetSheetDetails, setProjectIndividualOrganizationTargetSheetDetails] =
     useRecoilState(projectIndividualOrganizationTargetSheetStateAtom);
+  const [teamWiseTargetSheetDetails, setTeamWiseTargetSheetDetails] =
+    useRecoilState(teamWiseTargetSheetStateAtom);
 
   // POST /api/enviroTargetSheet/enviro-create-targetsheet
   const createEnviroTargetSheet = async (data) => {
@@ -358,6 +360,51 @@ const useEnviroTargetSheetExecutive = () => {
     }
   };
 
+  // GET /api/enviroTargetSheet/enviro-show-team-wise-targetsheet
+  const fetchEnviroTeamWiseTargetSheet = async (sheetType, _id) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      if (sheetType) params.append("sheetType", sheetType);
+      if (_id) params.append("_id", _id);
+
+      const query = params.toString();
+      const url = `${conf.apiBaseUrl}enviroTargetSheet/enviro-show-team-wise-targetsheet${
+        query ? `?${query}` : ""
+      }`;
+
+      const res = await fetchData({
+        method: "GET",
+        url,
+      });
+
+      if (res) {
+        setTeamWiseTargetSheetDetails(res?.data ?? res);
+        toast.success(res?.message || "Enviro team wise target sheet fetched successfully");
+        return res;
+      }
+
+      throw new Error(res?.message || "Failed to fetch enviro team wise target sheet");
+    } catch (err) {
+      console.error("Error fetching enviro team wise target sheet:", err);
+      setError(err);
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Error while fetching enviro team wise target sheet"
+      );
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetTeamWiseTargetSheetDetails = () => {
+    setTeamWiseTargetSheetDetails(null);
+  };
+
 return {
     loading,
     error,
@@ -376,6 +423,9 @@ return {
     fetchProjectIndividualOrganizationTargetSheet,
     fetchProjectIndividualOrganizationTargetSheetById,
     resetProjectIndividualOrganizationTargetSheetDetails,
+    teamWiseTargetSheetDetails,
+    fetchEnviroTeamWiseTargetSheet,
+    resetTeamWiseTargetSheetDetails,
   };
 };
 
