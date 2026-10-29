@@ -56,7 +56,7 @@ import {
 
 
 import {
-  TargetSheet,
+  TargetSheet,TeamWiseTargetSheet,TeamWiseUniversalTargetSheet,TeamwiseTargetApprovalPendingSheet,
   TargetSheetForm,
   PreviewTargetSheet,
   EditTargetSheet,
@@ -1143,6 +1143,39 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <TargetSheetForm />
+              </SalesExecutiveLayout>
+            }
+          />
+               <Route
+            path="/sales-executive/target-sheet/teamwise-target-sheet"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamWiseTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+               <Route
+            path="/sales-executive/target-sheet/teamwise-universal-target-sheet/:id"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamWiseUniversalTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+           <Route
+            path="/sales-executive/target-sheet/teamwise-pending-approval-target-sheet"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamwiseTargetApprovalPendingSheet />
               </SalesExecutiveLayout>
             }
           />

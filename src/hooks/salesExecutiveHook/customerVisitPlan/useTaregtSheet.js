@@ -12,6 +12,9 @@ import {
   productIdWiseTargetSheetStateAtom,
   allIndividualTargetSheetStateAtom,
   individualIdWiseTargetSheetStateAtom,
+  teamWiseTargetSheetStateAtom,
+  teamWiseTargetQueueStateAtom,
+  universalTargetSheetStateAtom,
 } from "../../../state/salesExecutiveState/customerVisitPlan/targetSheetState";
 
 const useTargetSheet = () => {
@@ -47,6 +50,18 @@ const useTargetSheet = () => {
     useState(false);
   const [individualIdWiseTargetLoading, setIndividualIdWiseTargetLoading] =
     useState(false);
+  const [teamWiseTargetLoading, setTeamWiseTargetLoading] = useState(false);
+  const [teamWiseQueueLoading, setTeamWiseQueueLoading] = useState(false);
+
+  const [teamWiseTargetSheet, setTeamWiseTargetSheet] = useRecoilState(
+    teamWiseTargetSheetStateAtom
+  );
+  const [teamWiseTargetQueue, setTeamWiseTargetQueue] = useRecoilState(
+    teamWiseTargetQueueStateAtom
+  );
+  const [universalTargetSheet, setUniversalTargetSheet] = useRecoilState(
+    universalTargetSheetStateAtom
+  );
   const fetchTargetSheetYearList = async () => {
     // console.log(filters);
     setLoading(true);
@@ -263,6 +278,103 @@ const useTargetSheet = () => {
     setIndividualIdWiseTargetSheet(null);
   };
 
+  const fetchTeamWiseTargetSheet = async (year, _id) => {
+    setTeamWiseTargetLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (year) params.append("year", year);
+      if (_id) params.append("_id", _id);
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}targets/showTeamWiseTargetSheet?${params.toString()}`,
+      });
+      if (res) {
+        setTeamWiseTargetSheet(res);
+        return res;
+      }
+    } catch (err) {
+      console.error("Error while fetching team-wise target sheet:", err);
+      toast.error("Failed to fetch team-wise target sheet");
+    } finally {
+      setTeamWiseTargetLoading(false);
+    }
+  };
+
+  const fetchTeamWiseTargetQueue = async () => {
+    setTeamWiseQueueLoading(true);
+    try {
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}targets/queue`,
+      });
+      if (res) {
+        setTeamWiseTargetQueue(res);
+        return res;
+      }
+    } catch (err) {
+      console.error("Error while fetching team-wise target queue:", err);
+      toast.error("Failed to fetch team-wise target queue");
+    } finally {
+      setTeamWiseQueueLoading(false);
+    }
+  };
+
+  const reviewTargetSheet = async (id, data) => {
+    setTeamWiseQueueLoading(true);
+    try {
+      const res = await fetchData({
+        method: "PUT",
+        url: `${conf.apiBaseUrl}targets/review/${id}`,
+        data: data,
+      });
+      if (res) {
+        toast.success(res?.message || "Target sheet reviewed successfully");
+        return res;
+      }
+    } catch (err) {
+      console.error("Error while reviewing target sheet:", err);
+      toast.error(
+        err?.response?.data?.message || "Error while reviewing target sheet"
+      );
+    } finally {
+      setTeamWiseQueueLoading(false);
+    }
+  };
+
+  const fetchUniversalTargetSheet = async (id, year) => {
+    setTeamWiseTargetLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (year) params.append("year", year);
+      if (id) params.append("id", id);
+      const res = await fetchData({
+        method: "GET",
+        url: `${conf.apiBaseUrl}targets/universal-target-sheet?${params.toString()}`,
+      });
+      if (res) {
+        setUniversalTargetSheet(res);
+        return res;
+      }
+    } catch (err) {
+      console.error("Error while fetching universal target sheet:", err);
+      toast.error("Failed to fetch universal target sheet");
+    } finally {
+      setTeamWiseTargetLoading(false);
+    }
+  };
+
+  const resetTeamWiseTargetSheet = () => {
+    setTeamWiseTargetSheet(null);
+  };
+
+  const resetTeamWiseTargetQueue = () => {
+    setTeamWiseTargetQueue(null);
+  };
+
+  const resetUniversalTargetSheet = () => {
+    setUniversalTargetSheet(null);
+  };
+
   const fetchOrganizationNames = async () => {
     setLoading(true);
     try {
@@ -378,6 +490,18 @@ const useTargetSheet = () => {
     individualIdWiseTargetLoading,
     fetchIndividualIdWiseTargetSheet,
     resetIndividualIdWiseTargetSheet,
+    teamWiseTargetSheet,
+    teamWiseTargetLoading,
+    fetchTeamWiseTargetSheet,
+    resetTeamWiseTargetSheet,
+    teamWiseTargetQueue,
+    teamWiseQueueLoading,
+    fetchTeamWiseTargetQueue,
+    resetTeamWiseTargetQueue,
+    reviewTargetSheet,
+    universalTargetSheet,
+    fetchUniversalTargetSheet,
+    resetUniversalTargetSheet,
   };
 };
 

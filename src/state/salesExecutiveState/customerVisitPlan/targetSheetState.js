@@ -93,3 +93,15 @@ export const enviroTargetQueueStateAtom = atom({
   default: null,
   effects_UNSTABLE: [persistAtom],
 });
+
+export const teamWiseTargetQueueStateAtom = atom({
+  key: "teamWiseTargetQueueState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});
+
+export const universalTargetSheetStateAtom = atom({
+  key: "universalTargetSheetState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});
