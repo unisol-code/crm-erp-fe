@@ -38,12 +38,13 @@ const useMonthlyPlanning = () => {
         }
     };
 
-    const fetchMonthWisePlanning = async (page, limit, month, year) => {
+    const fetchMonthWisePlanning = async (page, limit,_id, month, year) => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
             if (page) params.append("page", page);
             if (limit) params.append("limit", limit);
+            if (_id) params.append("_id", _id);
             if (month) params.append("month", month);
             if (year) params.append("year", year);
             const res = await fetchData({
@@ -176,13 +177,14 @@ const resetTeamWiseYearlyPlanning = () => {
     };
 
 
-    const fetchOneMonthPlanningList = async (page, limit, month, year, doctorName, organizationName, createPlanningForDate) => {
+    const fetchOneMonthPlanningList = async (page, limit,_id, month, year, doctorName, organizationName, createPlanningForDate) => {
         setOneMonthPlanningList(null);
         setLoading(true);
         try {
             const params = new URLSearchParams();
             if (page) params.append("page", page);
             if (limit) params.append("limit", limit);
+            if (_id) params.append("_id", _id);
             if (month) params.append("month", month);
             if (year) params.append("year", year);
             if (doctorName) params.append("doctorName", doctorName);

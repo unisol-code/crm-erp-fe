@@ -30,7 +30,7 @@ const ViewMonthWisePlanning = () => {
     };
 
     useEffect(() => {
-        fetchMonthWisePlanning(page, limit, month, year);
+        fetchMonthWisePlanning(page, limit,id, month, year);
     }, [page, limit]);
 
         const handleCardClick = (type) => {

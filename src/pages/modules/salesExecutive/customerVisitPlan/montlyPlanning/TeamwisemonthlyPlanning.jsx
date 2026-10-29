@@ -28,20 +28,26 @@ const TeamwisemonthlyPlanning = () => {
   const { summary, viewing } = teamWiseYearlyPlanning ?? {};
   const rows = summary?.rows ?? [];
   const teamTotal = summary?.teamTotal ?? null;
+  const hasOwnPlanning = summary?.hasOwnPlanning ?? false;
 
   const paginatedRows = useMemo(() => {
     const start = (page - 1) * limit;
     return rows.slice(start, start + limit);
   }, [rows, page, limit]);
 
-  const handleTeamView = (id, row) => {
+  const handleTeamView = (id, row ) => {
     if (!id) return;
-    if (row?.hasChildren) {
+     if (hasOwnPlanning && row?.hasOwnPlanning) {
+    navigate(
+      `/sales-executive/monthly-planning/universal-monthly-planning/${row._id}`
+    );
+  } else if (row?.hasChildren) {
       setTeamDrillId(id);
       setPage(1);
-    }else {
-      navigate(`/sales-executive/monthly-planning/universal-monthly-planning/${row._id }`);     
-    } 
+    }
+  else {
+    console.log("Planning is not available");
+  }
   };
 
   const handleTeamBack = () => {

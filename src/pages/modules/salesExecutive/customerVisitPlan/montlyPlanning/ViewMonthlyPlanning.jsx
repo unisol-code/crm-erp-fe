@@ -62,6 +62,7 @@ const ViewMonthlyPlanning = () => {
     fetchOneMonthPlanningList(
       page,
       limit,
+      id,
       "",
       "",
       selectedPerson,
