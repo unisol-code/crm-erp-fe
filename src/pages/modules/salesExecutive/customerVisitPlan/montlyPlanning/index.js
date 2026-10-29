@@ -6,3 +6,4 @@ export { default as ViewMonthlyPlanningDetails } from "./ViewMonthlyPlanningDeta
 export { default as UpdateMonthlyPlanning } from "./UpdateMonthlyPlanning.jsx";
 export { default as ViewMonthWisePlanning } from "./ViewMonthWisePlanning.jsx";
 export { default as TeamwisemonthlyPlanning } from "./TeamwisemonthlyPlanning.jsx";
+export { default as TeamwiseUniversalMonthlyPlanning } from "./TeamwiseUniversalMonthlyPlanning.jsx";

@@ -39,7 +39,7 @@ import {
   PreviewMonthlyPlanning,
   ViewMonthlyPlanningDetails,
   UpdateMonthlyPlanning,
-  ViewMonthWisePlanning,TeamwisemonthlyPlanning
+  ViewMonthWisePlanning,TeamwisemonthlyPlanning,TeamwiseUniversalMonthlyPlanning
 } from "./pages/modules/salesExecutive/customerVisitPlan/montlyPlanning/index";
 
 import {
@@ -915,6 +915,17 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <TeamwisemonthlyPlanning />
+              </SalesExecutiveLayout>
+            }
+          />
+                       <Route
+            path="/sales-executive/monthly-planning/universal-monthly-planning/:id"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamwiseUniversalMonthlyPlanning />
               </SalesExecutiveLayout>
             }
           />
