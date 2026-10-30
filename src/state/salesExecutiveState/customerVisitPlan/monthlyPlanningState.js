@@ -1,6 +1,10 @@
 import { atom } from "recoil";
 import { recoilPersist } from "recoil-persist";
-const { persistAtom } = recoilPersist();
+export const teamWiseYearlyPlanningStateAtom = atom({
+  key: "teamWiseYearlyPlanningState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});
 
 export const monthlyPlanningListStateAtom = atom({
   key: "monthlyPlanningListState",

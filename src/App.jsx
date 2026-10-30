@@ -43,7 +43,7 @@ import {
 } from "./pages/modules/salesExecutive/customerVisitPlan/montlyPlanning/index";
 
 import {
-  EmployeeList,
+  EmployeeList,TeamwiseYearlyPlanning,TeamwiseMonthlyUniversalTarget,
   EmployeeMonthlyPlanning,
   EmployeeViewMonthlyPlanning,
   // EmployeeCreateMonthlyPlanning,
@@ -670,6 +670,29 @@ function App() {
               </SuperAdminLayout>
             }
           />
+              <Route
+            path="/admin/sales-executive/teamwise-yearly-planning"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamwiseYearlyPlanning />
+              </SuperAdminLayout>
+            }
+          />
+           <Route
+            path="/admin/sales-executive/monthly-planning/universal-monthly-planning/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamwiseMonthlyUniversalTarget/>
+              </SuperAdminLayout>
+            }
+          />
+
 
           <Route
             path="/admin/sales-executive/monthly-planning/:id"
