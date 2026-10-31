@@ -127,10 +127,22 @@ function TargetCard({ title, period, target, achieved, percentage, highlighted =
   );
 }
 
-export function TargetSheetSection({ targetData, loading = false }) {
-  // New response: data is an OBJECT with months[] and quarters[]
-  const data =
-    targetData?.data && !Array.isArray(targetData.data) ? targetData.data : null;
+export function TargetSheetSection({ targetData, enviroData, loading = false }) {
+  const [selectedSheetType, setSelectedSheetType] = React.useState("Product");
+
+  const isEnviro = !!enviroData?.data && typeof enviroData.data === "object" && !Array.isArray(enviroData.data) && (enviroData.data.Product || enviroData.data.Project || enviroData.data.Service);
+
+  const enviroSheetTypes = isEnviro ? Object.keys(enviroData.data) : [];
+
+  React.useEffect(() => {
+    if (isEnviro && enviroSheetTypes.length && !enviroSheetTypes.includes(selectedSheetType)) {
+      setSelectedSheetType(enviroSheetTypes[0]);
+    }
+  }, [isEnviro, enviroSheetTypes, selectedSheetType]);
+
+  const data = isEnviro
+    ? (enviroData?.data?.[selectedSheetType] ?? null)
+    : (targetData?.data && !Array.isArray(targetData.data) ? targetData.data : null);
 
   const months = useMemo(
     () => (Array.isArray(data?.months) ? data.months : []),
@@ -178,16 +190,29 @@ export function TargetSheetSection({ targetData, loading = false }) {
   return (
     <div>
       {/* Page header */}
-      <div className="mb-4">
-        <h2 className="text-xl font-bold text-[var(--theme-text-primary)]">
-          Target Sheet Analytics
-        </h2>
-        <p className="text-sm text-[var(--theme-text-secondary)]">
-          Performance Overview
-        </p>
-        <p className="text-sm font-semibold text-[var(--theme-primary)]">
-          {formatQuarter(data.currentMonth)} | {formatQuarter(data.currentQuarter)}
-        </p>
+      <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-[var(--theme-text-primary)]">
+            Target Sheet Analytics
+          </h2>
+          <p className="text-sm text-[var(--theme-text-secondary)]">
+            Performance Overview
+          </p>
+          <p className="text-sm font-semibold text-[var(--theme-primary)]">
+            {formatQuarter(data.currentMonth)} | {formatQuarter(data.currentQuarter)}
+          </p>
+        </div>
+        {isEnviro && enviroSheetTypes.length > 0 && (
+          <select
+            value={selectedSheetType}
+            onChange={(e) => setSelectedSheetType(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+          >
+            {enviroSheetTypes.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* 1. Monthly / Quarterly / Yearly target cards */}

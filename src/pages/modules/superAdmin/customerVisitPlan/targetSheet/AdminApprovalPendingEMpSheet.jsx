@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import BreadCrumb from "../../../../../components/uiComponents/breadcrumb/BreadCrumb.jsx";
 import { useTheme } from "../../../../../hooks/theme/useTheme.js";
@@ -7,6 +7,9 @@ import useAdminTargetSheet from "../../../../../hooks/superAdminHook/customerVis
 import LoaderSpinner from "../../../../../components/uiComponents/loader/LoaderSpinner.jsx";
 
 const QUARTERS = ["Quarter1", "Quarter2", "Quarter3", "Quarter4"];
+
+// Sheet is only reviewable while it is sitting at the CEO-approval stage
+const PENDING_CEO_APPROVAL = "pending_CEO_approval";
 
 const currency = (val) =>
   val != null
@@ -18,12 +21,19 @@ const currency = (val) =>
     : "0";
 
 const statusColor = (status = "") => {
-  const s = status.toLowerCase();
+  const s = String(status).toLowerCase();
   if (s.includes("reject")) return "bg-red-100 text-red-700";
   if (s.includes("approv")) return "bg-green-100 text-green-700";
   if (s.includes("pending")) return "bg-yellow-100 text-yellow-700";
   return "bg-gray-100 text-gray-600";
 };
+
+const formatStatus = (status) =>
+  status ? String(status).replace(/_/g, " ") : "N/A";
+
+// Single source of truth for "can this sheet be approved / rejected?"
+const canReviewSheet = (sheet) =>
+  !!sheet?._id && sheet?.status === PENDING_CEO_APPROVAL;
 
 const AdminApprovalPendingEMpSheet = () => {
   const { theme } = useTheme();
@@ -39,7 +49,7 @@ const AdminApprovalPendingEMpSheet = () => {
   } = useAdminTargetSheet();
 
   const [expanded, setExpanded] = useState({});
-  // Review modal state: null or { sheetId, action: "approve" | "reject", orgLabel }
+  // Review modal state: null or { sheetId, action, orgLabel }
   const [reviewModal, setReviewModal] = useState(null);
   const [remarks, setRemarks] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
@@ -58,11 +68,17 @@ const AdminApprovalPendingEMpSheet = () => {
     setExpanded((prev) => ({ ...prev, [idx]: !prev[idx] }));
 
   const toggleProduct = (sheetIdx, prodIdx) =>
-    setExpanded((prev) => ({ ...prev, [`${sheetIdx}-${prodIdx}`]: !prev[`${sheetIdx}-${prodIdx}`] }));
+    setExpanded((prev) => ({
+      ...prev,
+      [`${sheetIdx}-${prodIdx}`]: !prev[`${sheetIdx}-${prodIdx}`],
+    }));
 
-  const openReview = (sheetId, action) => {
+  // ── Review handlers ────────────────────────────────────────────────
+  // We capture orgLabel at click-time because `sheet` is only in scope
+  // inside the .map() callback — not at the modal's render site.
+  const openReview = (sheetId, action, orgLabel = "") => {
     if (!sheetId) return;
-    setReviewModal({ sheetId, action });
+    setReviewModal({ sheetId, action, orgLabel });
     setRemarks("");
   };
 
@@ -75,21 +91,30 @@ const AdminApprovalPendingEMpSheet = () => {
   const submitReview = async () => {
     if (!reviewModal) return;
     const { sheetId, action } = reviewModal;
+
     if (action === "reject" && !remarks.trim()) {
       toast.error("Please add a remark before rejecting");
       return;
     }
+
     setReviewSubmitting(true);
-    const res = await reviewTargetSheet(sheetId, {
-      action,
-      remarks: remarks.trim(),
-    });
-    setReviewSubmitting(false);
-    if (res) {
-      setReviewModal(null);
-      setRemarks("");
-      // Refresh to reflect the updated review status
-      if (employeeId) fetchMyApprovalQueue({ employeeId });
+    try {
+      const res = await reviewTargetSheet(sheetId, {
+        action,
+        remarks: remarks.trim(),
+      });
+
+      if (res) {
+        setReviewModal(null);
+        setRemarks("");
+        // Refresh the queue so the reviewed sheet's new status shows
+        if (employeeId) fetchMyApprovalQueue({ employeeId });
+      }
+    } catch (err) {
+      console.error("Error submitting review:", err);
+      toast.error("Failed to submit review. Please try again.");
+    } finally {
+      setReviewSubmitting(false);
     }
   };
 
@@ -132,46 +157,84 @@ const AdminApprovalPendingEMpSheet = () => {
             {/* Sheet Info */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 border border-gray-200 rounded-xl bg-gray-100">
               <div>
-                <span className="text-sm font-medium text-gray-600">Employee ID</span>
-                <p className="text-lg font-semibold text-[#252C58]">{data?.employeeId || "N/A"}</p>
+                <span className="text-sm font-medium text-gray-600">
+                  Employee ID
+                </span>
+                <p className="text-lg font-semibold text-[#252C58]">
+                  {data?.employeeId || "N/A"}
+                </p>
               </div>
               <div>
-                <span className="text-sm font-medium text-gray-600">Total Sheet Count</span>
-                <p className="text-lg font-semibold text-[#252C58]">{data?.totalSheetCount || "N/A"}</p>
+                <span className="text-sm font-medium text-gray-600">
+                  Total Sheet Count
+                </span>
+                <p className="text-lg font-semibold text-[#252C58]">
+                  {data?.totalSheetCount || "N/A"}
+                </p>
               </div>
               <div>
-                <span className="text-sm font-medium text-gray-600">Pending Sheet Count</span>
-                <p className="text-lg font-semibold text-[#252C58]">{data?.pendingSheetCount || "N/A"}</p>
+                <span className="text-sm font-medium text-gray-600">
+                  Pending Sheet Count
+                </span>
+                <p className="text-lg font-semibold text-[#252C58]">
+                  {data?.pendingSheetCount || "N/A"}
+                </p>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-600">Count</span>
-                <p className="text-lg font-semibold text-[#252C58]">{data?.count || "N/A"}</p>
+                <p className="text-lg font-semibold text-[#252C58]">
+                  {data?.count || "N/A"}
+                </p>
               </div>
             </div>
 
             {/* Summary By Year */}
             {summaryByYear.length > 0 && (
               <div className="mb-8 border border-gray-200 rounded-xl overflow-hidden">
-                <div className="p-4" style={{ backgroundColor: theme.secondaryColor }}>
-                  <h3 className="text-lg font-semibold text-[#252C58]">Summary By Year</h3>
+                <div
+                  className="p-4"
+                  style={{ backgroundColor: theme.secondaryColor }}
+                >
+                  <h3 className="text-lg font-semibold text-[#252C58]">
+                    Summary By Year
+                  </h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm text-left text-gray-700 table-auto">
                     <thead className="uppercase bg-gray-100 border-b border-gray-300">
                       <tr>
-                        <th className="p-4 text-base font-semibold text-left">Year</th>
-                        <th className="p-4 text-base font-semibold text-left">Organization Count</th>
-                        <th className="p-4 text-base font-semibold text-left">Product Count</th>
-                        <th className="p-4 text-base font-semibold text-left">Individual Count</th>
+                        <th className="p-4 text-base font-semibold text-left">
+                          Year
+                        </th>
+                        <th className="p-4 text-base font-semibold text-left">
+                          Organization Count
+                        </th>
+                        <th className="p-4 text-base font-semibold text-left">
+                          Product Count
+                        </th>
+                        <th className="p-4 text-base font-semibold text-left">
+                          Individual Count
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {summaryByYear.map((yearItem, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50 transition-all">
-                          <td className="px-4 py-3 text-[15px] text-[#252C58]">{yearItem?.year || "N/A"}</td>
-                          <td className="px-4 py-3 text-[15px] text-[#252C58]">{yearItem?.organizationCount ?? 0}</td>
-                          <td className="px-4 py-3 text-[15px] text-[#252C58]">{yearItem?.productCount ?? 0}</td>
-                          <td className="px-4 py-3 text-[15px] text-[#252C58]">{yearItem?.individualCount ?? 0}</td>
+                        <tr
+                          key={idx}
+                          className="hover:bg-gray-50 transition-all"
+                        >
+                          <td className="px-4 py-3 text-[15px] text-[#252C58]">
+                            {yearItem?.year || "N/A"}
+                          </td>
+                          <td className="px-4 py-3 text-[15px] text-[#252C58]">
+                            {yearItem?.organizationCount ?? 0}
+                          </td>
+                          <td className="px-4 py-3 text-[15px] text-[#252C58]">
+                            {yearItem?.productCount ?? 0}
+                          </td>
+                          <td className="px-4 py-3 text-[15px] text-[#252C58]">
+                            {yearItem?.individualCount ?? 0}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -198,38 +261,68 @@ const AdminApprovalPendingEMpSheet = () => {
                   0
                 );
 
+                const sheetStatus = sheet?.status;
+                const showReviewActions = canReviewSheet(sheet);
+
                 return (
                   <div
                     key={sheet?._id || sheetIdx}
                     className="mb-6 border border-gray-200 rounded-xl overflow-hidden"
                   >
                     {/* Sheet Header */}
-                    <div className="p-4" style={{ backgroundColor: theme.secondaryColor }}>
+                    <div
+                      className="p-4"
+                      style={{ backgroundColor: theme.secondaryColor }}
+                    >
                       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                        <h4 className="text-lg font-semibold text-[#252C58]">
-                          Sheet #{sheetIdx + 1}
-                        </h4>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <h4 className="text-lg font-semibold text-[#252C58]">
+                            Sheet #{sheetIdx + 1}
+                          </h4>
+                          {sheetStatus && (
+                            <span
+                              className={`inline-block px-2 py-1 text-xs font-semibold rounded-md ${statusColor(
+                                sheetStatus
+                              )}`}
+                            >
+                              {formatStatus(sheetStatus)}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              openReview(sheet?._id, "approve")
-                            }
-                            className="px-3 py-1 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-all disabled:opacity-60"
-                            disabled={reviewSubmitting}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              openReview(sheet?._id, "reject")
-                            }
-                            className="px-3 py-1 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-all disabled:opacity-60"
-                            disabled={reviewSubmitting}
-                          >
-                            Reject
-                          </button>
+                          {/* Approve / Reject only when the sheet is at CEO-approval stage */}
+                          {showReviewActions && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openReview(
+                                    sheet?._id,
+                                    "approve",
+                                    sheet?.organization
+                                  )
+                                }
+                                className="px-3 py-1 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-all disabled:opacity-60"
+                                disabled={reviewSubmitting}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openReview(
+                                    sheet?._id,
+                                    "reject",
+                                    sheet?.organization
+                                  )
+                                }
+                                className="px-3 py-1 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-all disabled:opacity-60"
+                                disabled={reviewSubmitting}
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
                           <button
                             type="button"
                             onClick={() => toggleSheet(sheetIdx)}
@@ -241,56 +334,108 @@ const AdminApprovalPendingEMpSheet = () => {
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Organization</span>
-                          <p className="text-base font-semibold text-[#252C58]">{sheet?.organization || "N/A"}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Organization
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {sheet?.organization || "N/A"}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Individual Name</span>
-                          <p className="text-base font-semibold text-[#252C58]">{sheet?.individualName || "N/A"}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Individual Name
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {sheet?.individualName || "N/A"}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Speciality</span>
-                          <p className="text-base font-semibold text-[#252C58]">{sheet?.speciality || "N/A"}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Speciality
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {sheet?.speciality || "N/A"}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Type of Surgery</span>
-                          <p className="text-base font-semibold text-[#252C58]">{sheet?.typeOfSurgeryPerformed || "N/A"}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Type of Surgery
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {sheet?.typeOfSurgeryPerformed || "N/A"}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Org Code</span>
-                          <p className="text-base font-semibold text-[#252C58]">{sheet?.uniqueCodeOrganization || "N/A"}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Org Code
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {sheet?.uniqueCodeOrganization || "N/A"}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Individual Code</span>
-                          <p className="text-base font-semibold text-[#252C58]">{sheet?.uniqueCodeIndividual || "N/A"}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Individual Code
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {sheet?.uniqueCodeIndividual || "N/A"}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">City</span>
-                          <p className="text-base font-semibold text-[#252C58]">{sheet?.city || "N/A"}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            City
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {sheet?.city || "N/A"}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Year</span>
-                          <p className="text-base font-semibold text-[#252C58]">{sheet?.year || "N/A"}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Year
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {sheet?.year || "N/A"}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Status</span>
-                          <p className="text-base font-semibold text-[#252C58]">{sheet?.status?.replace(/_/g, " ") || "N/A"}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Status
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {sheet?.status?.replace(/_/g, " ") || "N/A"}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Frozen</span>
-                          <p className="text-base font-semibold text-[#252C58]">{sheet?.isFrozen ? "Yes" : "No"}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Frozen
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {sheet?.isFrozen ? "Yes" : "No"}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Products</span>
-                          <p className="text-base font-semibold text-[#252C58]">{products.length}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Products
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {products.length}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Total Quantity</span>
-                          <p className="text-base font-semibold text-[#252C58]">{totalTargetQuantity}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Total Quantity
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {totalTargetQuantity}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-700">Total Target Price</span>
-                          <p className="text-base font-semibold text-[#252C58]">{currency(totalTargetPrice)}</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Total Target Price
+                          </span>
+                          <p className="text-base font-semibold text-[#252C58]">
+                            {currency(totalTargetPrice)}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -308,27 +453,52 @@ const AdminApprovalPendingEMpSheet = () => {
                               <table className="min-w-full text-sm text-left text-gray-700 table-auto">
                                 <thead className="uppercase bg-gray-100 border-b border-gray-300">
                                   <tr>
-                                    <th className="p-4 text-base font-semibold text-left">Role</th>
-                                    <th className="p-4 text-base font-semibold text-left">Status</th>
-                                    <th className="p-4 text-base font-semibold text-left">Remarks</th>
-                                    <th className="p-4 text-base font-semibold text-left">Action Date</th>
+                                    <th className="p-4 text-base font-semibold text-left">
+                                      Role
+                                    </th>
+                                    <th className="p-4 text-base font-semibold text-left">
+                                      Status
+                                    </th>
+                                    <th className="p-4 text-base font-semibold text-left">
+                                      Remarks
+                                    </th>
+                                    <th className="p-4 text-base font-semibold text-left">
+                                      Action Date
+                                    </th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                  {Object.entries(approvalsList).map(([role, a]) => (
-                                    <tr key={role} className="hover:bg-gray-50 transition-all">
-                                      <td className="px-4 py-3 text-[15px] text-[#252C58]">{role}</td>
-                                      <td className="px-4 py-3 text-[15px]">
-                                        <span className={`inline-block px-2 py-1 rounded text-sm font-semibold ${statusColor(a?.status)}`}>
-                                          {a?.status || "N/A"}
-                                        </span>
-                                      </td>
-                                      <td className="px-4 py-3 text-[15px] text-[#252C58]">{a?.remarks || "-"}</td>
-                                      <td className="px-4 py-3 text-[15px] text-[#252C58]">
-                                        {a?.actionDate ? new Date(a.actionDate).toLocaleString("en-IN") : "-"}
-                                      </td>
-                                    </tr>
-                                  ))}
+                                  {Object.entries(approvalsList).map(
+                                    ([role, a]) => (
+                                      <tr
+                                        key={role}
+                                        className="hover:bg-gray-50 transition-all"
+                                      >
+                                        <td className="px-4 py-3 text-[15px] text-[#252C58]">
+                                          {role}
+                                        </td>
+                                        <td className="px-4 py-3 text-[15px]">
+                                          <span
+                                            className={`inline-block px-2 py-1 rounded text-sm font-semibold ${statusColor(
+                                              a?.status
+                                            )}`}
+                                          >
+                                            {a?.status || "N/A"}
+                                          </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-[15px] text-[#252C58]">
+                                          {a?.remarks || "-"}
+                                        </td>
+                                        <td className="px-4 py-3 text-[15px] text-[#252C58]">
+                                          {a?.actionDate
+                                            ? new Date(
+                                                a.actionDate
+                                              ).toLocaleString("en-IN")
+                                            : "-"}
+                                        </td>
+                                      </tr>
+                                    )
+                                  )}
                                 </tbody>
                               </table>
                             </div>
@@ -348,32 +518,55 @@ const AdminApprovalPendingEMpSheet = () => {
                                 className="mb-4 border border-gray-200 rounded-xl overflow-hidden"
                               >
                                 {/* Product Header */}
-                                <div className="p-3" style={{ backgroundColor: theme.secondaryColor }}>
+                                <div
+                                  className="p-3"
+                                  style={{
+                                    backgroundColor: theme.secondaryColor,
+                                  }}
+                                >
                                   <div className="flex items-center justify-between mb-2">
                                     <h6 className="text-sm font-semibold text-[#252C58]">
                                       {product?.name || "N/A"}
-                                      {product?.productType ? ` — ${product.productType}` : ""}
+                                      {product?.productType
+                                        ? ` — ${product.productType}`
+                                        : ""}
                                     </h6>
                                     <button
                                       type="button"
-                                      onClick={() => toggleProduct(sheetIdx, prodIdx)}
+                                      onClick={() =>
+                                        toggleProduct(sheetIdx, prodIdx)
+                                      }
                                       className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-white/70 text-[#252C58] hover:bg-white transition-all"
                                     >
-                                      {expanded[`${sheetIdx}-${prodIdx}`] ? "Collapse" : "Expand"}
+                                      {expanded[`${sheetIdx}-${prodIdx}`]
+                                        ? "Collapse"
+                                        : "Expand"}
                                     </button>
                                   </div>
                                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                     <div>
-                                      <span className="text-xs font-medium text-gray-700">Price</span>
-                                      <p className="text-sm font-semibold text-[#252C58]">{currency(product?.price)}</p>
+                                      <span className="text-xs font-medium text-gray-700">
+                                        Price
+                                      </span>
+                                      <p className="text-sm font-semibold text-[#252C58]">
+                                        {currency(product?.price)}
+                                      </p>
                                     </div>
                                     <div>
-                                      <span className="text-xs font-medium text-gray-700">Entered Quantity</span>
-                                      <p className="text-sm font-semibold text-[#252C58]">{product?.enteredQuantity ?? 0}</p>
+                                      <span className="text-xs font-medium text-gray-700">
+                                        Entered Quantity
+                                      </span>
+                                      <p className="text-sm font-semibold text-[#252C58]">
+                                        {product?.enteredQuantity ?? 0}
+                                      </p>
                                     </div>
                                     <div>
-                                      <span className="text-xs font-medium text-gray-700">Over All Target Price</span>
-                                      <p className="text-sm font-semibold text-[#252C58]">{currency(product?.overAllTargetPrice)}</p>
+                                      <span className="text-xs font-medium text-gray-700">
+                                        Over All Target Price
+                                      </span>
+                                      <p className="text-sm font-semibold text-[#252C58]">
+                                        {currency(product?.overAllTargetPrice)}
+                                      </p>
                                     </div>
                                   </div>
                                 </div>
@@ -385,65 +578,144 @@ const AdminApprovalPendingEMpSheet = () => {
                                       <table className="min-w-full text-sm text-left text-gray-700 table-auto">
                                         <thead
                                           className="sticky top-0 z-10 text-xs uppercase bg-gray-100 border-b border-gray-300"
-                                          style={{ backgroundColor: theme.secondaryColor }}
+                                          style={{
+                                            backgroundColor:
+                                              theme.secondaryColor,
+                                          }}
                                         >
                                           <tr>
-                                            <th className="p-3 text-base font-semibold text-center">Quarter</th>
-                                            <th className="p-3 text-base font-semibold text-center">Month</th>
-                                            <th className="p-3 text-base font-semibold text-center">Target Quantity</th>
-                                            <th className="p-3 text-base font-semibold text-center">Target Price</th>
-                                            <th className="p-3 text-base font-semibold text-center">Achievement Quantity</th>
-                                            <th className="p-3 text-base font-semibold text-center">Achievement Price</th>
+                                            <th className="p-3 text-base font-semibold text-center">
+                                              Quarter
+                                            </th>
+                                            <th className="p-3 text-base font-semibold text-center">
+                                              Month
+                                            </th>
+                                            <th className="p-3 text-base font-semibold text-center">
+                                              Target Quantity
+                                            </th>
+                                            <th className="p-3 text-base font-semibold text-center">
+                                              Target Price
+                                            </th>
+                                            <th className="p-3 text-base font-semibold text-center">
+                                              Achievement Quantity
+                                            </th>
+                                            <th className="p-3 text-base font-semibold text-center">
+                                              Achievement Price
+                                            </th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-200">
                                           {QUARTERS.map((q, qIdx) => {
                                             const qData = achievement?.[q];
                                             if (!qData) return null;
-                                            const monthKeys = Object.keys(qData).filter(
+                                            const monthKeys = Object.keys(
+                                              qData
+                                            ).filter(
                                               (k) => !k.startsWith("Quarter")
                                             );
-                                            const hasMonths = monthKeys.length > 0;
+                                            const hasMonths =
+                                              monthKeys.length > 0;
                                             return (
                                               <React.Fragment key={q}>
                                                 {hasMonths ? (
-                                                  monthKeys.map((month, mIdx) => {
-                                                    const mData = qData[month];
-                                                    return (
-                                                      <tr key={month} className="hover:bg-gray-50 transition-all">
-                                                        {mIdx === 0 && (
-                                                          <td
-                                                            className="p-3 text-center text-[17px] font-normal text-[#252C58] align-middle"
-                                                            rowSpan={monthKeys.length}
-                                                          >
-                                                            {`Q${qIdx + 1}`}
+                                                  monthKeys.map(
+                                                    (month, mIdx) => {
+                                                      const mData = qData[month];
+                                                      return (
+                                                        <tr
+                                                          key={month}
+                                                          className="hover:bg-gray-50 transition-all"
+                                                        >
+                                                          {mIdx === 0 && (
+                                                            <td
+                                                              className="p-3 text-center text-[17px] font-normal text-[#252C58] align-middle"
+                                                              rowSpan={
+                                                                monthKeys.length
+                                                              }
+                                                            >
+                                                              {`Q${qIdx + 1}`}
+                                                            </td>
+                                                          )}
+                                                          <td className="px-3 py-3 text-[17px] font-normal text-center text-[#252C58]">
+                                                            {month}
                                                           </td>
-                                                        )}
-                                                        <td className="px-3 py-3 text-[17px] font-normal text-center text-[#252C58]">{month}</td>
-                                                        <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">{mData?.targetQuantity ?? 0}</td>
-                                                        <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">{currency(mData?.targetPrice)}</td>
-                                                        <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">{mData?.targetAchievementQuantity ?? 0}</td>
-                                                        <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">{currency(mData?.targetAchievementPrice)}</td>
-                                                      </tr>
-                                                    );
-                                                  })
+                                                          <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">
+                                                            {mData?.targetQuantity ??
+                                                              0}
+                                                          </td>
+                                                          <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">
+                                                            {currency(
+                                                              mData?.targetPrice
+                                                            )}
+                                                          </td>
+                                                          <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">
+                                                            {mData?.targetAchievementQuantity ??
+                                                              0}
+                                                          </td>
+                                                          <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">
+                                                            {currency(
+                                                              mData?.targetAchievementPrice
+                                                            )}
+                                                          </td>
+                                                        </tr>
+                                                      );
+                                                    }
+                                                  )
                                                 ) : (
                                                   <tr className="hover:bg-gray-50 transition-all">
-                                                    <td className="p-3 text-center text-[17px] font-normal text-[#252C58] align-middle" colSpan="2">{`Q${qIdx + 1}`}</td>
-                                                    <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">{qData?.QuarterTargetQuantity ?? 0}</td>
-                                                    <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">{currency(qData?.QuarterTargetPrice)}</td>
-                                                    <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">{qData?.QuarterAchievementQuantity ?? 0}</td>
-                                                    <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">{currency(qData?.QuarterAchievementPrice)}</td>
+                                                    <td
+                                                      className="p-3 text-center text-[17px] font-normal text-[#252C58] align-middle"
+                                                      colSpan="2"
+                                                    >
+                                                      {`Q${qIdx + 1}`}
+                                                    </td>
+                                                    <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">
+                                                      {qData?.QuarterTargetQuantity ??
+                                                        0}
+                                                    </td>
+                                                    <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">
+                                                      {currency(
+                                                        qData?.QuarterTargetPrice
+                                                      )}
+                                                    </td>
+                                                    <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">
+                                                      {qData?.QuarterAchievementQuantity ??
+                                                        0}
+                                                    </td>
+                                                    <td className="p-3 text-[17px] font-normal text-center text-[#252C58]">
+                                                      {currency(
+                                                        qData?.QuarterAchievementPrice
+                                                      )}
+                                                    </td>
                                                   </tr>
                                                 )}
 
                                                 {/* Quarter Summary Row */}
                                                 <tr className="bg-gray-300 font-semibold">
-                                                  <td className="p-3 text-center text-[17px] font-semibold text-[#252C58] align-middle" colSpan="2">{`Q${qIdx + 1} Summary`}</td>
-                                                  <td className="p-3 text-[17px] font-semibold text-center text-[#252C58]">{qData?.QuarterTargetQuantity ?? 0}</td>
-                                                  <td className="p-3 text-[17px] font-semibold text-center text-[#252C58]">{currency(qData?.QuarterTargetPrice)}</td>
-                                                  <td className="p-3 text-[17px] font-semibold text-center text-[#252C58]">{qData?.QuarterAchievementQuantity ?? 0}</td>
-                                                  <td className="p-3 text-[17px] font-semibold text-center text-[#252C58]">{currency(qData?.QuarterAchievementPrice)}</td>
+                                                  <td
+                                                    className="p-3 text-center text-[17px] font-semibold text-[#252C58] align-middle"
+                                                    colSpan="2"
+                                                  >
+                                                    {`Q${qIdx + 1} Summary`}
+                                                  </td>
+                                                  <td className="p-3 text-[17px] font-semibold text-center text-[#252C58]">
+                                                    {qData?.QuarterTargetQuantity ??
+                                                      0}
+                                                  </td>
+                                                  <td className="p-3 text-[17px] font-semibold text-center text-[#252C58]">
+                                                    {currency(
+                                                      qData?.QuarterTargetPrice
+                                                    )}
+                                                  </td>
+                                                  <td className="p-3 text-[17px] font-semibold text-center text-[#252C58]">
+                                                    {qData?.QuarterAchievementQuantity ??
+                                                      0}
+                                                  </td>
+                                                  <td className="p-3 text-[17px] font-semibold text-center text-[#252C58]">
+                                                    {currency(
+                                                      qData?.QuarterAchievementPrice
+                                                    )}
+                                                  </td>
                                                 </tr>
                                               </React.Fragment>
                                             );
@@ -457,7 +729,9 @@ const AdminApprovalPendingEMpSheet = () => {
                             );
                           })
                         ) : (
-                          <p className="text-center text-gray-500 py-6">No products available.</p>
+                          <p className="text-center text-gray-500 py-6">
+                            No products available.
+                          </p>
                         )}
                       </div>
                     )}
@@ -465,7 +739,9 @@ const AdminApprovalPendingEMpSheet = () => {
                 );
               })
             ) : (
-              <p className="text-center text-gray-500 py-6">No pending approval sheets available.</p>
+              <p className="text-center text-gray-500 py-6">
+                No pending approval sheets available.
+              </p>
             )}
           </>
         )}
@@ -495,10 +771,16 @@ const AdminApprovalPendingEMpSheet = () => {
             </div>
 
             <div className="p-5">
+              <p className="text-sm text-gray-600 mb-1">
+                Sheet ID:{" "}
+                <span className="font-semibold text-[#252C58]">
+                  {reviewModal.sheetId || "N/A"}
+                </span>
+              </p>
               <p className="text-sm text-gray-600 mb-4">
                 Organization:{" "}
                 <span className="font-semibold text-[#252C58]">
-                  {sheet?.organization || "N/A"}
+                  {reviewModal.orgLabel || "N/A"}
                 </span>
               </p>
 
