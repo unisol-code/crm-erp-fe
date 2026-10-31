@@ -88,6 +88,7 @@ export const useSignIn = () => {
         sessionStorage.setItem("companyName", res?.companyName);
         sessionStorage.setItem("name", res?.name);
         sessionStorage.setItem("profile", res?.photo);
+        sessionStorage.setItem("designation", res?.designation);
         sessionStorage.setItem(
           "isSalesExecutiveLogin",
           res?.isSalesExecutiveLogin

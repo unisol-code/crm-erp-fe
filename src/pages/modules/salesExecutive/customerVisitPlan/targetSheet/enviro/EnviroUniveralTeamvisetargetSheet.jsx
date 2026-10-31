@@ -14,11 +14,11 @@ const QUARTERS = ["Quarter1", "Quarter2", "Quarter3", "Quarter4"];
 
 const currency = (val) =>
   val != null
-    ? `â¹ ${Number(val).toLocaleString("en-IN")}`
+    ? `₹ ${Number(val).toLocaleString("en-IN")}`
     : "-";
 
 const statusColor = (status = "") => {
-  const s = status.toLowerCase();
+  const s = String(status).toLowerCase();
   if (s.includes("reject")) return "bg-red-100 text-red-700";
   if (s.includes("pending")) return "bg-yellow-100 text-yellow-700";
   if (s.includes("approv")) return "bg-green-100 text-green-700";
@@ -27,6 +27,26 @@ const statusColor = (status = "") => {
 
 const formatStatus = (status) =>
   status ? String(status).replace(/_/g, " ") : "N/A";
+
+// ── Pending-actor helpers ─────────────────────────────────────────────
+// "pending_Sales Director_approval" → "salesdirector"
+// "Sales Director"                  → "salesdirector"
+const normalise = (value = "") =>
+  String(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+
+// Extracts the "who must act next" role from a pending status string.
+// Returns "" when the status is not `pending_<role>_approval`.
+const getPendingActor = (status = "") => {
+  const match = String(status).match(/^pending[_\s-]*(.+?)[_\s-]*approval$/i);
+  return match ? normalise(match[1]) : "";
+};
+
+// True only when the sheet is waiting for the *logged-in* designation.
+const canDesignationReview = (status, designation) => {
+  const actor = getPendingActor(status);
+  const mine = normalise(designation);
+  return !!actor && !!mine && actor === mine;
+};
 
 const Stat = ({ label, value }) => (
   <div className="relative overflow-hidden rounded-xl bg-white border border-gray-200 shadow-sm p-4 flex-1 min-w-[135px]">
@@ -63,6 +83,9 @@ const EnviroUniveralTeamvisetargetSheet = () => {
   const [remarks, setRemarks] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
+  // Logged-in user's designation — drives whether Approve/Reject shows up
+  const designation = sessionStorage.getItem("designation");
+
   useEffect(() => {
     if (id) {
       fetchEnviroUniversalTargetSheet(id);
@@ -74,13 +97,14 @@ const EnviroUniveralTeamvisetargetSheet = () => {
     };
   }, [id]);
 
-  const openReview = (sheetId, action) => {
+  const openReview = (sheetId, action, headerLabel) => {
     if (!sheetId) return;
-    setReviewModal({ sheetId, action });
+    setReviewModal({ sheetId, action, headerLabel });
     setRemarks("");
   };
 
   const closeReview = () => {
+    if (reviewSubmitting) return;
     setReviewModal(null);
     setRemarks("");
   };
@@ -93,14 +117,20 @@ const EnviroUniveralTeamvisetargetSheet = () => {
       return;
     }
     setReviewSubmitting(true);
-    const res = await reviewEnviroTargetSheet(sheetId, {
-      action,
-      remarks: remarks.trim(),
-    });
-    setReviewSubmitting(false);
-    if (res) {
-      closeReview();
-      fetchEnviroUniversalTargetSheet(id);
+    try {
+      const res = await reviewEnviroTargetSheet(sheetId, {
+        action,
+        remarks: remarks.trim(),
+      });
+      if (res) {
+        closeReview();
+        fetchEnviroUniversalTargetSheet(id);
+      }
+    } catch (err) {
+      console.error("Error submitting review:", err);
+      toast.error("Failed to submit review. Please try again.");
+    } finally {
+      setReviewSubmitting(false);
     }
   };
 
@@ -176,6 +206,19 @@ const EnviroUniveralTeamvisetargetSheet = () => {
   };
 
   const currentSummary = getSummaryForType();
+
+  // Header text for the sheet card — computed once so both the title and the
+  // review modal can reuse it. Falls back to the individual / organization
+  // name so Service sheets (which have no projectName) still read correctly.
+  const getSheetHeaderLabel = (sheet) => {
+    const parts = [];
+    if (sheet?.uniqueCodeIndividual) parts.push(`Individual: ${sheet.uniqueCodeIndividual}`);
+    else if (sheet?.individualName) parts.push(`Individual: ${sheet.individualName}`);
+    if (sheet?.uniqueCodeOrganization) parts.push(`Org: ${sheet.uniqueCodeOrganization}`);
+    else if (sheet?.organizationName) parts.push(`Org: ${sheet.organizationName}`);
+    if (selectedSheetType === "Project" && sheet?.projectName) parts.push(sheet.projectName);
+    return parts.length ? parts.join(" — ") : `Sheet #${sheet?._id || ""}`;
+  };
 
   return (
     <div className="w-full min-h-screen pb-10">
@@ -278,40 +321,25 @@ const EnviroUniveralTeamvisetargetSheet = () => {
               {selectedSheetType} Sheets ({sheets[selectedSheetType]?.length || 0})
             </h3>
             {(sheets[selectedSheetType] || []).length > 0 ? (
-              (sheets[selectedSheetType] || []).map((sheet, sIdx) => (
-                <div
-                  key={sheet?._id || sIdx}
-                  className="mb-4 border border-gray-200 rounded-xl overflow-hidden"
-                >
-                  <div className="p-4" style={{ backgroundColor: theme.secondaryColor }}>
-                    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                      <h4 className="text-lg font-semibold text-[#252C58]">
-                        {selectedSheetType === "Product" && sheet?.uniqueCodeIndividual && `Individual: ${sheet.uniqueCodeIndividual}`}
-                        {selectedSheetType === "Product" && sheet?.uniqueCodeOrganization && ` — Org: ${sheet.uniqueCodeOrganization}`}
-                        {selectedSheetType === "Product" && sheet?.individualName && ` — ${sheet.individualName}`}
-                        {selectedSheetType === "Project" && sheet?.uniqueCodeIndividual && `Individual: ${sheet.uniqueCodeIndividual}`}
-                        {selectedSheetType === "Project" && sheet?.uniqueCodeOrganization && ` — Org: ${sheet.uniqueCodeOrganization}`}
-                        {selectedSheetType === "Project" && sheet?.projectName && ` — ${sheet.projectName}`}
-                      </h4>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {sheet?.status === "pending_Sales Manager_approval" ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => openReview(sheet?._id, "approve")}
-                              className="px-3 py-1 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-all"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openReview(sheet?._id, "reject")}
-                              className="px-3 py-1 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-all"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        ) : (
+              (sheets[selectedSheetType] || []).map((sheet, sIdx) => {
+                const headerLabel = getSheetHeaderLabel(sheet);
+                const showReviewActions = canDesignationReview(
+                  sheet?.status,
+                  designation
+                );
+
+                return (
+                  <div
+                    key={sheet?._id || sIdx}
+                    className="mb-4 border border-gray-200 rounded-xl overflow-hidden"
+                  >
+                    <div className="p-4" style={{ backgroundColor: theme.secondaryColor }}>
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <h4 className="text-lg font-semibold text-[#252C58]">
+                          {headerLabel}
+                        </h4>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Status badge is always visible */}
                           <span
                             title={`Status: ${formatStatus(sheet?.status)}`}
                             className={`inline-block px-3 py-1 text-sm font-semibold rounded-md ${statusColor(
@@ -320,149 +348,202 @@ const EnviroUniveralTeamvisetargetSheet = () => {
                           >
                             {formatStatus(sheet?.status)}
                           </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setExpanded((prev) => ({ ...prev, [sIdx]: !prev[sIdx] }))}
-                          className="flex items-center gap-1 px-3 py-1 text-sm font-medium rounded-md bg-white/70 text-[#252C58] hover:bg-white transition-all"
-                        >
-                          {expanded[sIdx] ? "Collapse" : "Expand"}
-                          {expanded[sIdx] ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <span className="text-sm font-medium text-gray-700">Segment</span>
-                        <p className="text-base font-semibold text-[#252C58]">{sheet?.segment || "N/A"}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-700">Financial Year</span>
-                        <p className="text-base font-semibold text-[#252C58]">{sheet?.financialYear || "N/A"}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-700">Target Price</span>
-                        <p className="text-base font-semibold text-[#252C58]">{currency(sheetTotalPrice(sheet))}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-700">Achieved Price</span>
-                        <p className="text-base font-semibold text-[#252C58]">{currency(sheetAchievedPrice(sheet))}</p>
-                      </div>
-                    </div>
-                  </div>
 
-                  {expanded[sIdx] && (
-                    <div className="overflow-x-auto border-t border-gray-200">
-                      <table className="min-w-full text-sm text-left text-gray-700 table-auto">
-                        <thead className="uppercase bg-gray-100 border-b border-gray-300">
-                          <tr>
-                            {selectedSheetType === "Product" && (
-                              <>
-                                <th className="p-4 text-base font-semibold text-left">Product Type</th>
-                                <th className="p-4 text-base font-semibold text-left">Product Name</th>
-                                <th className="p-4 text-base font-semibold text-right">Price</th>
-                                <th className="p-4 text-base font-semibold text-right">Qty</th>
-                                <th className="p-4 text-base font-semibold text-right">Target Price</th>
-                                <th className="p-4 text-base font-semibold text-right">Achieved Price</th>
-                                <th className="p-4 text-base font-semibold text-right">Achievement %</th>
-                              </>
-                            )}
-                            {selectedSheetType === "Service" && (
-                              <>
-                                <th className="p-4 text-base font-semibold text-left">Service Name</th>
-                                <th className="p-4 text-base font-semibold text-left">Product Type</th>
-                                <th className="p-4 text-base font-semibold text-right">Service Price</th>
-                                <th className="p-4 text-base font-semibold text-right">Months</th>
-                                <th className="p-4 text-base font-semibold text-right">Acres</th>
-                                <th className="p-4 text-base font-semibold text-right">Total Price</th>
-                                <th className="p-4 text-base font-semibold text-right">Achieved Price</th>
-                                <th className="p-4 text-base font-semibold text-right">Achievement %</th>
-                              </>
-                            )}
-                            {selectedSheetType === "Project" && (
-                              <>
-                                <th className="p-4 text-base font-semibold text-left">Project Name</th>
-                                <th className="p-4 text-base font-semibold text-left">Project Type</th>
-                                <th className="p-4 text-base font-semibold text-right">Plant Capacity</th>
-                                <th className="p-4 text-base font-semibold text-right">Project Price</th>
-                                <th className="p-4 text-base font-semibold text-right">Achieved Price</th>
-                                <th className="p-4 text-base font-semibold text-right">Achievement %</th>
-                              </>
-                            )}
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {(() => {
-                            const items = getItemsForType(sheet);
-                            return items.length > 0 ? (
-                              items.map((item, i) => {
-                                let targetPrice = 0;
-                                if (selectedSheetType === "Product") {
-                                  targetPrice = item.overAllTargetPrice ?? 0;
-                                } else if (selectedSheetType === "Service") {
-                                  targetPrice = (item.services ?? []).reduce((acc, s) => acc + (s.totalPrice ?? 0), 0);
-                                } else if (selectedSheetType === "Project") {
-                                  targetPrice = (item.projects ?? []).reduce((acc, s) => acc + (s.projectPrice ?? 0), 0);
+                          {/* Buttons only for the designation that owes the next action */}
+                          {showReviewActions && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openReview(sheet?._id, "approve", headerLabel)
                                 }
-                                let achievedPrice = 0;
-                                QUARTERS.forEach((q) => {
-                                  Object.values(item.achievement?.[q] ?? {}).forEach((m) => {
-                                    achievedPrice += m.targetAchievementPrice ?? 0;
-                                  });
-                                });
-                                const achPercent = targetPrice ? ((achievedPrice / targetPrice) * 100).toFixed(2) + "%" : "0%";
-                                return (
-                                  <tr key={item._id ?? i}>
-                                    {selectedSheetType === "Product" && (
-                                      <>
-                                        <td className="p-4">{item.productType || "-"}</td>
-                                        <td className="p-4">{item.name || "-"}</td>
-                                        <td className="p-4 text-right">{currency(item.price)}</td>
-                                        <td className="p-4 text-right">{item.enteredQuantity ?? "-"}</td>
-                                        <td className="p-4 text-right">{currency(targetPrice)}</td>
-                                        <td className="p-4 text-right">{currency(achievedPrice)}</td>
-                                        <td className="p-4 text-right">{achPercent}</td>
-                                      </>
-                                    )}
-                                    {selectedSheetType === "Service" && (
-                                      <>
-                                        <td className="p-4">{item.serviceName || "-"}</td>
-                                        <td className="p-4">{item.productType || "-"}</td>
-                                        <td className="p-4 text-right">{currency(item.servicePrice)}</td>
-                                        <td className="p-4 text-right">{item.months ?? "-"}</td>
-                                        <td className="p-4 text-right">{item.acres ?? "-"}</td>
-                                        <td className="p-4 text-right">{currency(item.totalPrice)}</td>
-                                        <td className="p-4 text-right">{currency(achievedPrice)}</td>
-                                        <td className="p-4 text-right">{achPercent}</td>
-                                      </>
-                                    )}
-                                    {selectedSheetType === "Project" && (
-                                      <>
-                                        <td className="p-4">{item.projectName || "-"}</td>
-                                        <td className="p-4">{item.projectType || "-"}</td>
-                                        <td className="p-4 text-right">{item.plantCapacity || "-"}</td>
-                                        <td className="p-4 text-right">{currency(item.projectPrice)}</td>
-                                        <td className="p-4 text-right">{currency(achievedPrice)}</td>
-                                        <td className="p-4 text-right">{achPercent}</td>
-                                      </>
-                                    )}
-                                  </tr>
-                                );
-                              })
+                                className="px-3 py-1 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-all disabled:opacity-60"
+                                disabled={reviewSubmitting}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openReview(sheet?._id, "reject", headerLabel)
+                                }
+                                className="px-3 py-1 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-all disabled:opacity-60"
+                                disabled={reviewSubmitting}
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpanded((prev) => ({
+                                ...prev,
+                                [sIdx]: !prev[sIdx],
+                              }))
+                            }
+                            className="flex items-center gap-1 px-3 py-1 text-sm font-medium rounded-md bg-white/70 text-[#252C58] hover:bg-white transition-all"
+                          >
+                            {expanded[sIdx] ? "Collapse" : "Expand"}
+                            {expanded[sIdx] ? (
+                              <FiChevronUp size={16} />
                             ) : (
-                              <tr>
-                                <td colSpan={selectedSheetType === "Product" ? 7 : (selectedSheetType === "Service" ? 8 : 6)} className="p-4 text-center text-gray-500">
-                                  No items found.
-                                </td>
-                              </tr>
-                            );
-                          })()}
-                        </tbody>
-                      </table>
+                              <FiChevronDown size={16} />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">Segment</span>
+                          <p className="text-base font-semibold text-[#252C58]">{sheet?.segment || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">Financial Year</span>
+                          <p className="text-base font-semibold text-[#252C58]">{sheet?.financialYear || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">Target Price</span>
+                          <p className="text-base font-semibold text-[#252C58]">{currency(sheetTotalPrice(sheet))}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">Achieved Price</span>
+                          <p className="text-base font-semibold text-[#252C58]">{currency(sheetAchievedPrice(sheet))}</p>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))
+
+                    {expanded[sIdx] && (
+                      <div className="overflow-x-auto border-t border-gray-200">
+                        <table className="min-w-full text-sm text-left text-gray-700 table-auto">
+                          <thead className="uppercase bg-gray-100 border-b border-gray-300">
+                            <tr>
+                              {selectedSheetType === "Product" && (
+                                <>
+                                  <th className="p-4 text-base font-semibold text-left">Product Type</th>
+                                  <th className="p-4 text-base font-semibold text-left">Product Name</th>
+                                  <th className="p-4 text-base font-semibold text-right">Price</th>
+                                  <th className="p-4 text-base font-semibold text-right">Qty</th>
+                                  <th className="p-4 text-base font-semibold text-right">Target Price</th>
+                                  <th className="p-4 text-base font-semibold text-right">Achieved Price</th>
+                                  <th className="p-4 text-base font-semibold text-right">Achievement %</th>
+                                </>
+                              )}
+                              {selectedSheetType === "Service" && (
+                                <>
+                                  <th className="p-4 text-base font-semibold text-left">Service Name</th>
+                                  <th className="p-4 text-base font-semibold text-left">Product Type</th>
+                                  <th className="p-4 text-base font-semibold text-right">Service Price</th>
+                                  <th className="p-4 text-base font-semibold text-right">Months</th>
+                                  <th className="p-4 text-base font-semibold text-right">Acres</th>
+                                  <th className="p-4 text-base font-semibold text-right">Total Price</th>
+                                  <th className="p-4 text-base font-semibold text-right">Achieved Price</th>
+                                  <th className="p-4 text-base font-semibold text-right">Achievement %</th>
+                                </>
+                              )}
+                              {selectedSheetType === "Project" && (
+                                <>
+                                  <th className="p-4 text-base font-semibold text-left">Project Name</th>
+                                  <th className="p-4 text-base font-semibold text-left">Project Type</th>
+                                  <th className="p-4 text-base font-semibold text-right">Plant Capacity</th>
+                                  <th className="p-4 text-base font-semibold text-right">Project Price</th>
+                                  <th className="p-4 text-base font-semibold text-right">Achieved Price</th>
+                                  <th className="p-4 text-base font-semibold text-right">Achievement %</th>
+                                </>
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {(() => {
+                              const items = getItemsForType(sheet);
+                              return items.length > 0 ? (
+                                items.map((item, i) => {
+                                  let targetPrice = 0;
+                                  if (selectedSheetType === "Product") {
+                                    targetPrice = item.overAllTargetPrice ?? 0;
+                                  } else if (selectedSheetType === "Service") {
+                                    targetPrice = (item.services ?? []).reduce(
+                                      (acc, s) => acc + (s.totalPrice ?? 0),
+                                      0
+                                    );
+                                  } else if (selectedSheetType === "Project") {
+                                    targetPrice = (item.projects ?? []).reduce(
+                                      (acc, s) => acc + (s.projectPrice ?? 0),
+                                      0
+                                    );
+                                  }
+                                  let achievedPrice = 0;
+                                  QUARTERS.forEach((q) => {
+                                    Object.values(item.achievement?.[q] ?? {}).forEach((m) => {
+                                      achievedPrice += m.targetAchievementPrice ?? 0;
+                                    });
+                                  });
+                                  const achPercent = targetPrice
+                                    ? ((achievedPrice / targetPrice) * 100).toFixed(2) + "%"
+                                    : "0%";
+                                  return (
+                                    <tr key={item._id ?? i}>
+                                      {selectedSheetType === "Product" && (
+                                        <>
+                                          <td className="p-4">{item.productType || "-"}</td>
+                                          <td className="p-4">{item.name || "-"}</td>
+                                          <td className="p-4 text-right">{currency(item.price)}</td>
+                                          <td className="p-4 text-right">{item.enteredQuantity ?? "-"}</td>
+                                          <td className="p-4 text-right">{currency(targetPrice)}</td>
+                                          <td className="p-4 text-right">{currency(achievedPrice)}</td>
+                                          <td className="p-4 text-right">{achPercent}</td>
+                                        </>
+                                      )}
+                                      {selectedSheetType === "Service" && (
+                                        <>
+                                          <td className="p-4">{item.serviceName || "-"}</td>
+                                          <td className="p-4">{item.productType || "-"}</td>
+                                          <td className="p-4 text-right">{currency(item.servicePrice)}</td>
+                                          <td className="p-4 text-right">{item.months ?? "-"}</td>
+                                          <td className="p-4 text-right">{item.acres ?? "-"}</td>
+                                          <td className="p-4 text-right">{currency(item.totalPrice)}</td>
+                                          <td className="p-4 text-right">{currency(achievedPrice)}</td>
+                                          <td className="p-4 text-right">{achPercent}</td>
+                                        </>
+                                      )}
+                                      {selectedSheetType === "Project" && (
+                                        <>
+                                          <td className="p-4">{item.projectName || "-"}</td>
+                                          <td className="p-4">{item.projectType || "-"}</td>
+                                          <td className="p-4 text-right">{item.plantCapacity || "-"}</td>
+                                          <td className="p-4 text-right">{currency(item.projectPrice)}</td>
+                                          <td className="p-4 text-right">{currency(achievedPrice)}</td>
+                                          <td className="p-4 text-right">{achPercent}</td>
+                                        </>
+                                      )}
+                                    </tr>
+                                  );
+                                })
+                              ) : (
+                                <tr>
+                                  <td
+                                    colSpan={
+                                      selectedSheetType === "Product"
+                                        ? 7
+                                        : selectedSheetType === "Service"
+                                        ? 8
+                                        : 6
+                                    }
+                                    className="p-4 text-center text-gray-500"
+                                  >
+                                    No items found.
+                                  </td>
+                                </tr>
+                              );
+                            })()}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             ) : (
               <p className="text-center text-gray-500 py-8">
                 No {selectedSheetType} sheets found for this employee.
@@ -475,22 +556,49 @@ const EnviroUniveralTeamvisetargetSheet = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                {reviewModal.action === "approve" ? "Approve Target Sheet" : "Reject Target Sheet"}
+                {reviewModal.action === "approve"
+                  ? "Approve Target Sheet"
+                  : "Reject Target Sheet"}
               </h3>
-              {reviewModal.action === "reject" && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Remarks (required for reject)
-                  </label>
-                  <textarea
-                    value={remarks}
-                    onChange={(e) => setRemarks(e.target.value)}
-                    rows={4}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="Enter your remarks..."
-                  />
-                </div>
+
+              {/* Show which sheet is being reviewed so the modal isn't anonymous */}
+              {reviewModal.headerLabel && (
+                <p className="text-sm text-gray-600 mb-1">
+                  Sheet:{" "}
+                  <span className="font-semibold text-[#252C58]">
+                    {reviewModal.headerLabel}
+                  </span>
+                </p>
               )}
+              {reviewModal.sheetId && (
+                <p className="text-sm text-gray-600 mb-4">
+                  ID:{" "}
+                  <span className="font-semibold text-[#252C58]">
+                    {reviewModal.sheetId}
+                  </span>
+                </p>
+              )}
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Remarks
+                  {reviewModal.action === "reject" && (
+                    <span className="text-red-600"> *</span>
+                  )}
+                </label>
+                <textarea
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  rows={4}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder={
+                    reviewModal.action === "approve"
+                      ? "Add a remark (optional)"
+                      : "Enter your remarks..."
+                  }
+                />
+              </div>
+
               <div className="flex justify-end gap-3">
                 <button
                   type="button"
@@ -503,7 +611,7 @@ const EnviroUniveralTeamvisetargetSheet = () => {
                 <button
                   type="button"
                   onClick={submitReview}
-                  className={`px-4 py-2 text-sm font-medium rounded-md text-white transition-all ${
+                  className={`px-4 py-2 text-sm font-medium rounded-md text-white transition-all disabled:opacity-60 ${
                     reviewModal.action === "approve"
                       ? "bg-green-600 hover:bg-green-700"
                       : "bg-red-600 hover:bg-red-700"
