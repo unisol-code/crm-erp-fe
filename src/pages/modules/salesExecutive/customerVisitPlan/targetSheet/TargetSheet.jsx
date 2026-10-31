@@ -113,6 +113,13 @@ const TargetSheet = () => {
 
           <div className="flex items-center gap-2">
 
+                <Button
+              onClick={() =>
+                navigate("/sales-executive/target-sheet/teamwise-target-sheet")
+              }
+              variant={1}
+              text="Team-Wise Target Sheet"
+            />
 
             {/* Create New */}
             <Button

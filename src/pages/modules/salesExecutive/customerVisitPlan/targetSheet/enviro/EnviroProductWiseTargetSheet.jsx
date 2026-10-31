@@ -176,6 +176,13 @@ const handleViewClick = (id, row) => {
             Enviro Target Sheet
           </h2>
           <div className="flex items-center gap-2">
+               <Button
+              onClick={() =>
+                navigate("/sales-executive/enviro-target-sheet/teamwise")
+              }
+              variant={1}
+              text="Teamwise Target Sheet"
+            />
             <Button
               onClick={() =>
                 navigate("/sales-executive/enviro-target-sheet/create-target-sheet")

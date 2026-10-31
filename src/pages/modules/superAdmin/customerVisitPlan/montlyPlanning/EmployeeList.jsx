@@ -51,7 +51,9 @@ const EmployeeList = () => {
         {/* Header Section */}
         <div className="flex justify-between gap-4 flex-wrap items-center mb-4">
           <h1 className="text-2xl font-bold text-gray-800">Employee List</h1>
-
+           <Button
+            text="Teamwise Yearly Planning Sheet" onClick={() => navigate("/admin/sales-executive/teamwise-yearly-planning")} 
+           />
         </div>
 
         <hr

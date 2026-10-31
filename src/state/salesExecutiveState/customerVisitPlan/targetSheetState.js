@@ -75,3 +75,33 @@ export const projectIndividualOrganizationTargetSheetStateAtom = atom({
   default: null,
   effects_UNSTABLE: [persistAtom],
 });
+
+export const teamWiseTargetSheetStateAtom = atom({
+  key: "teamWiseTargetSheetState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});
+
+export const enviroUniversalTargetSheetStateAtom = atom({
+  key: "enviroUniversalTargetSheetState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});
+
+export const enviroTargetQueueStateAtom = atom({
+  key: "enviroTargetQueueState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});
+
+export const teamWiseTargetQueueStateAtom = atom({
+  key: "teamWiseTargetQueueState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});
+
+export const universalTargetSheetStateAtom = atom({
+  key: "universalTargetSheetState",
+  default: null,
+  effects_UNSTABLE: [persistAtom],
+});

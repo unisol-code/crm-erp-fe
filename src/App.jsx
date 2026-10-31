@@ -39,11 +39,11 @@ import {
   PreviewMonthlyPlanning,
   ViewMonthlyPlanningDetails,
   UpdateMonthlyPlanning,
-  ViewMonthWisePlanning,
+  ViewMonthWisePlanning,TeamwisemonthlyPlanning,TeamwiseUniversalMonthlyPlanning
 } from "./pages/modules/salesExecutive/customerVisitPlan/montlyPlanning/index";
 
 import {
-  EmployeeList,
+  EmployeeList,TeamwiseYearlyPlanning,TeamwiseMonthlyUniversalTarget,
   EmployeeMonthlyPlanning,
   EmployeeViewMonthlyPlanning,
   // EmployeeCreateMonthlyPlanning,
@@ -56,7 +56,7 @@ import {
 
 
 import {
-  TargetSheet,
+  TargetSheet,TeamWiseTargetSheet,TeamWiseUniversalTargetSheet,TeamwiseTargetApprovalPendingSheet,
   TargetSheetForm,
   PreviewTargetSheet,
   EditTargetSheet,
@@ -67,7 +67,7 @@ import {
   EnviroSolutionTargetSheetHome,
   EnviroProductTargetSheetForm,
   EnviroProjectTargetSheetForm,
-  EnviroServiceTargetSheetForm,EnviroProductWiseTargetSheet
+  EnviroServiceTargetSheetForm,EnviroProductWiseTargetSheet,EnviroTeamwiseTargetSheet,EnviroUniveralTeamvisetargetSheet,EnviroPendingApprovalTargetSheet
 } from "./pages/modules/salesExecutive/customerVisitPlan/targetSheet/index";
 import TerritorySnapshot from "./pages/modules/salesExecutive/customerVisitPlan/territorySnapshot/TerritorySnapshot";
 
@@ -670,6 +670,29 @@ function App() {
               </SuperAdminLayout>
             }
           />
+              <Route
+            path="/admin/sales-executive/teamwise-yearly-planning"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamwiseYearlyPlanning />
+              </SuperAdminLayout>
+            }
+          />
+           <Route
+            path="/admin/sales-executive/monthly-planning/universal-monthly-planning/:id"
+            element={
+              <SuperAdminLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamwiseMonthlyUniversalTarget/>
+              </SuperAdminLayout>
+            }
+          />
+
 
           <Route
             path="/admin/sales-executive/monthly-planning/:id"
@@ -907,6 +930,28 @@ function App() {
               </SalesExecutiveLayout>
             }
           />
+             <Route
+            path="/sales-executive/monthly-planning/teamwise-monthly-plan"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamwisemonthlyPlanning />
+              </SalesExecutiveLayout>
+            }
+          />
+                       <Route
+            path="/sales-executive/monthly-planning/universal-monthly-planning/:id"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamwiseUniversalMonthlyPlanning />
+              </SalesExecutiveLayout>
+            }
+          />
           <Route
             path="/sales-executive/monthly-planning/view-month-wise/:id/:month/:year"
             element={
@@ -1037,6 +1082,39 @@ function App() {
             }
           />
                     <Route
+            path="/sales-executive/enviro-target-sheet/teamwise"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroTeamwiseTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+                 <Route
+            path="/sales-executive/enviro-target-sheet/teamwise/universal-target-sheet/:id"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroUniveralTeamvisetargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+                <Route
+            path="/sales-executive/enviro-target-sheet/teamwise/pending-approval-target-sheet"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <EnviroPendingApprovalTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+                    <Route
             path="/sales-executive/enviro-target-sheet/create-target-sheet"
             element={
               <SalesExecutiveLayout
@@ -1088,6 +1166,39 @@ function App() {
                 setActiveTab={setActiveTab}
               >
                 <TargetSheetForm />
+              </SalesExecutiveLayout>
+            }
+          />
+               <Route
+            path="/sales-executive/target-sheet/teamwise-target-sheet"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamWiseTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+               <Route
+            path="/sales-executive/target-sheet/teamwise-universal-target-sheet/:id"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamWiseUniversalTargetSheet />
+              </SalesExecutiveLayout>
+            }
+          />
+           <Route
+            path="/sales-executive/target-sheet/teamwise-pending-approval-target-sheet"
+            element={
+              <SalesExecutiveLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              >
+                <TeamwiseTargetApprovalPendingSheet />
               </SalesExecutiveLayout>
             }
           />

@@ -3,7 +3,7 @@ import { useState } from "react";
 import useFetch from "../../useFetch";
 import conf from "../../../config/index";
 import { toast } from "react-toastify";
-import { monthlyPlanningDetailsStateAtom, monthlyPlanningListStateAtom, monthlySummaryStateAtom, monthWisePlanningStateAtom, oneMonthPlanningStateAtom } from "../../../state/mothlyPlanningState/monthlyPlanningState";
+import { monthlyPlanningDetailsStateAtom, monthlyPlanningListStateAtom, monthlySummaryStateAtom, monthWisePlanningStateAtom, oneMonthPlanningStateAtom, teamWiseYearlyPlanningStateAtom, teamWiseMonthMonthlyPlanningStateAtom } from "../../../state/mothlyPlanningState/monthlyPlanningState";
 import Swal from "sweetalert2";
 import { confirmAlert } from "../../../utils/alertToast";
 
@@ -15,6 +15,8 @@ const useMonthlyPlanning = () => {
     const [monthlyPlanningDetails, setMonthlyPlanningDetails] = useRecoilState(monthlyPlanningDetailsStateAtom)
     const [monthWisePlanning, setMonthWisePlanning] = useRecoilState(monthWisePlanningStateAtom);
     const [monthlySummary, setMonthlySummary] = useRecoilState(monthlySummaryStateAtom);
+    const [teamWiseYearlyPlanning, setTeamWiseYearlyPlanning] = useRecoilState(teamWiseYearlyPlanningStateAtom);
+    const [teamWiseMonthMonthlyPlanning, setTeamWiseMonthMonthlyPlanning] = useRecoilState(teamWiseMonthMonthlyPlanningStateAtom);
 
 
     const fetchMonthlyPlanningList = async (id, page, limit, fromDate, toDate) => {
@@ -218,6 +220,51 @@ const useMonthlyPlanning = () => {
         }
     };
 
+    const fetchAdminTeamYearWiseMonthlyPlanning = async (year, id) => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            if (year) params.append("year", year);
+            if (id) params.append("_id", id);
+            const res = await fetchData({
+                method: "GET",
+                url: `${conf.apiBaseUrl}monthlyPlanning/AdminshowTeamYearWiseMonthlyPlanning?${params.toString()}`
+            });
+            if (res) {
+                setTeamWiseYearlyPlanning(res);
+            }
+        } catch (err) {
+            console.error("Error while fetching admin team year-wise monthly planning:", err);
+            toast.error("Failed to fetch admin team year-wise monthly planning");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchAdminTeamMonthWiseMonthlyPlanning = async (_id) => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            if (_id) params.append("_id", _id);
+            const res = await fetchData({
+                method: "GET",
+                url: `${conf.apiBaseUrl}monthlyPlanning/AdminshowTeamMonthWiseMonthlyPlanning?${params.toString()}`
+            });
+            if (res) {
+                setTeamWiseMonthMonthlyPlanning(res);
+            }
+        } catch (err) {
+            console.error("Error while fetching admin team month-wise monthly planning:", err);
+            toast.error("Failed to fetch admin team month-wise monthly planning");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resetTeamWiseMonthMonthlyPlanning = () => {
+        setTeamWiseMonthMonthlyPlanning(null);
+    };
+
     return {
         monthlyPlanningList,
         loading,
@@ -233,7 +280,12 @@ const useMonthlyPlanning = () => {
         updateMonthlyPlanning,
         fetchMonthWisePlanning,
         monthWisePlanning,fetchMonthlySummary,
-        monthlySummary
+        monthlySummary,
+        fetchAdminTeamYearWiseMonthlyPlanning,
+        teamWiseYearlyPlanning,
+        fetchAdminTeamMonthWiseMonthlyPlanning,
+        teamWiseMonthMonthlyPlanning,
+        resetTeamWiseMonthMonthlyPlanning
     };
 };
 

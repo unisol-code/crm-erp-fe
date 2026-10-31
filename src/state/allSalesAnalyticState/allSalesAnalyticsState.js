@@ -208,3 +208,24 @@ export const individualGrphicalErrorStateAtom = atom(createPersistedAtom("indivi
 export const individualGrphicalDataStateAtom = atom(createPersistedAtom("individualGrphicalDataState", null));
 
 export const individualGrphicalLoadingStateAtom = atom(createPersistedAtom("individualGrphicalLoadingState", false));
+
+// Enviro Target Sheet Analytics State
+// (GET dashboard/enviroTargetSheetanalytics)
+// Query params: sheetType, year, region, state, district, city, salespersonName
+export const enviroTargetSheetAnalyticsFiltersStateAtom = atom(createPersistedAtom("enviroTargetSheetAnalyticsFiltersState", {
+  sheetType: "",
+  year: "",
+  region: "",
+  state: "",
+  district: "",
+  city: "",
+  salespersonName: "",
+  page: 1,
+  limit: 10,
+}));
+
+export const enviroTargetSheetAnalyticsErrorStateAtom = atom(createPersistedAtom("enviroTargetSheetAnalyticsErrorState", null));
+
+export const enviroTargetSheetAnalyticsDataStateAtom = atom(createPersistedAtom("enviroTargetSheetAnalyticsDataState", null));
+
+export const enviroTargetSheetAnalyticsLoadingStateAtom = atom(createPersistedAtom("enviroTargetSheetAnalyticsLoadingState", false));

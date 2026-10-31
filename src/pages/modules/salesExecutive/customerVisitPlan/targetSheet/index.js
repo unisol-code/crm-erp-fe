@@ -6,7 +6,9 @@ export {default as ViewYearWiseProductTargetSheet} from "./ViewYearWiseProductTa
 export {default as ViewHospitalIdWiseTargetSheet} from "./ViewHospitalIdWiseTargetSheet.jsx";
 export {default as ViewProductIdWiseTargetSheet} from "./ViewProductIdWiseTargetSheet.jsx";
 export {default as ViewIndividualWiseTargetSheet} from "./ViewIndividualWiseTargetSheet.jsx";
-
+export {default as TeamWiseTargetSheet} from "./TeamWiseTargetSheet.jsx";
+export {default as TeamWiseUniversalTargetSheet} from "./TeamWiseUniversalTargetSheet.jsx";
+export {default as TeamwiseTargetApprovalPendingSheet} from "./TeamwiseTargetApprovalPendingSheet.jsx";
 /* ---------------- ENVIRO SOLUTION TARGET SHEETS ---------------- */
 /* Frontend-only screens available exclusively to the EnviroSolution company. */
 export {default as EnviroSolutionTargetSheetHome} from "./enviro/EnviroSolutionTargetSheetHome.jsx";
@@ -14,3 +16,6 @@ export {default as EnviroProductTargetSheetForm} from "./enviro/EnviroProductTar
 export {default as EnviroProjectTargetSheetForm} from "./enviro/EnviroProjectTargetSheetForm.jsx";
 export {default as EnviroServiceTargetSheetForm} from "./enviro/EnviroServiceTargetSheetForm.jsx";
 export {default as EnviroProductWiseTargetSheet} from "./enviro/EnviroProductWiseTargetSheet.jsx";
+export { default as EnviroTeamwiseTargetSheet } from "./enviro/EnviroTeamwiseTargetSheet.jsx";
+export { default as EnviroUniveralTeamvisetargetSheet } from "./enviro/EnviroUniveralTeamvisetargetSheet.jsx";
+export { default as EnviroPendingApprovalTargetSheet } from "./enviro/EnviroPendingApprovalTargetSheet.jsx";
