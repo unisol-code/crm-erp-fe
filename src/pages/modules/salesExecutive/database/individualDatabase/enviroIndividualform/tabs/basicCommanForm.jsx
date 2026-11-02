@@ -161,7 +161,7 @@ const BasicCommonForm = ({ formik }) => {
     }
     if (previousSegmentRef.current !== currentSegment) {
       previousSegmentRef.current = currentSegment;
-      formik.setFieldValue("orgnizationName", "");
+      formik.setFieldValue("organizationName", "");
     }
   }, [formik.values.segment]);
 
@@ -211,7 +211,7 @@ const BasicCommonForm = ({ formik }) => {
       <SectionHeading title="Associated with Organization" />
       <Select
         label="Organization Name"
-        name="orgnizationName"
+        name="organizationName"
         formik={formik}
         options={organizationNameOptions}
         loading={locationLoading}
