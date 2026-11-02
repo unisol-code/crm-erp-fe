@@ -441,7 +441,6 @@ console.log("non clinic",newDepartmentForNonClinical)
     onBlur={() => formik.setFieldTouched('state', true)}
     placeholder="Select State"
     isClearable
-    styles={selectStyles}
   />
 
   {formik.touched.state && formik.errors.state && (

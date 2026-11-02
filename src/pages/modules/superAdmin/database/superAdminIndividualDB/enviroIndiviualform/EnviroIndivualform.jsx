@@ -68,7 +68,7 @@ const initialValues = {
   // view pages read. `orgnizationName` (misspelled) is the legacy key still used by
   // the common tab; it is kept only so that tab keeps hydrating.
   organizationName: "",
-  orgnizationName: "",
+  // orgnizationName: "",
   region: "",
   state: "",
   district: "",
@@ -103,11 +103,6 @@ const initialValues = {
   goals: "",
   officeName: "",
   designation: "",
-    region: "",
-    state: "",
-    district: "",
-    pinCode: "",
-    officeAddress: "",
   districtBlockRegion: "",
   yearsOfExperience: "",
   frequentlyRequestedServices: [],
@@ -116,8 +111,7 @@ const initialValues = {
   effectiveLanguage: "",
   dataMaintainedDigitally: "",
   dataManagementTools: [],
-  dataManagementToolsOthers: "",  
-  commentBox: "", salesId: "",
+  dataManagementToolsOthers: "",
 
   // FPO fields
   fpoName: "",
@@ -125,7 +119,6 @@ const initialValues = {
   registrationAct: "",
   yearOfEstablishment: "",
   operationalArea: "",
-  officeAddress: "",
   officialContactNumber: "",
   officialEmailId: "",
   websiteAppUrl: "",
@@ -141,7 +134,7 @@ const initialValues = {
   majorRevenueSourcesOthers: "",
   keyBuyerTypes: [],
   topChallenges: "",
-  topPriorities: "", salesId: "",
+  topPriorities: "",
 };
 
 // Section Heading
@@ -336,7 +329,7 @@ const EnviroIndivualform = () => {
 
       const commonFields = [
         "firstName", "lastName", "email", "contact",
-        "segment", "orgnizationName", "region", "state", "district", "cityTownVillage", "address", "pinCode",
+        "segment", "organizationName", "region", "state", "district", "cityTownVillage", "address", "pinCode",
         // Sales Person dropdown (same salesId key as the Farmers tab)
         "salesId",
       ];

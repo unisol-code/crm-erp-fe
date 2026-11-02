@@ -60,15 +60,15 @@ const AdminEmployeeWiseTargetSheet = () => {
   const approvals = data?.approvals ?? {};
 
   const grandTotalQuantity = employeeData.reduce(
-    (acc, sheet) => acc + sheet?.totalSheetCount ?? 0,
+    (acc, sheet) => acc + (sheet?.totalSheetCount ?? 0),
     0
   );
   const grandPendingCount = employeeData.reduce(
-    (acc, sheet) => acc + sheet?.pendingSheetCount ?? 0,
+    (acc, sheet) => acc + (sheet?.pendingSheetCount ?? 0),
     0
   );
   const grandIndividualCount = employeeData.reduce(
-    (acc, sheet) => acc + sheet?.individualCount ?? 0,
+    (acc, sheet) => acc + (sheet?.individualCount ?? 0),
     0
   );
 
