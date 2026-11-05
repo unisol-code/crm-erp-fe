@@ -98,7 +98,15 @@ function OrganizationalDatabase() {
 
   const tableData = isEnviroSolution ? enviroAdminOrgList?.data : adminOrganizationalDB?.data;
   const tableLoading = isEnviroSolution ? enviroOrgListLoading : loading;
-  const paginationData = isEnviroSolution ? enviroAdminOrgList : adminOrganizationalDB;
+  const paginationData = isEnviroSolution
+    ? enviroAdminOrgList
+    : (adminOrganizationalDB?.pagination
+        ? { currentPage: adminOrganizationalDB.pagination.currentPage,
+            totalItems: adminOrganizationalDB.pagination.totalItems,
+            totalPages: adminOrganizationalDB.pagination.totalPages,
+            hasNextPage: adminOrganizationalDB.pagination.hasNextPage,
+            hasPrevPage: adminOrganizationalDB.pagination.hasPrevPage }
+        : adminOrganizationalDB);
 
   console.log("Organizational DB:", adminOrganizationalDB);
   console.log("Enviro Org List:", enviroAdminOrgList);
