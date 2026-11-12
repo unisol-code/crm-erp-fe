@@ -222,7 +222,7 @@ const SuperAdminOrganizationDatabase = () => {
 
   const tableData = isEnviroSolution ? enviroAdminOrgList?.data : adminOrganizationalDB?.data;
   const tableLoading = isEnviroSolution ? enviroOrgListLoading : loading;
-  const paginationData = isEnviroSolution ? enviroAdminOrgList : adminOrganizationalDB;
+  const paginationData = isEnviroSolution ? enviroAdminOrgList : adminOrganizationalDB?.pagination;
 
   return (
     <>

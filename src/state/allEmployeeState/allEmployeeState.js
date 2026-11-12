@@ -1,10 +1,4 @@
 import { atom } from "recoil";
-import { recoilPersist } from "recoil-persist";
-const { persistAtom } = recoilPersist();
+import { createPersistedAtom } from "../recoilConfig";
 
-export const allEmployeeAtom = atom({
-  key: "allEmployee",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-
+export const allEmployeeAtom = atom(createPersistedAtom("allEmployee", []));

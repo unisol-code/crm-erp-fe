@@ -1,62 +1,16 @@
 // enviroAdminTargetSheetState.js
 import { atom } from "recoil";
+import { createPersistedAtom } from "../../../recoilConfig";
 
-export const enviroTeamWiseTargetSheetAtom = atom({
-  key: "enviroTeamWiseTargetSheetAtom",
-  default: null,
-});
-
-export const enviroAdminProductWiseTargetSheetListAtom = atom({
-  key: "enviroAdminProductWiseTargetSheetListAtom",
-  default: null,
-});
-
-export const enviroAdminProductWiseTargetSheetByIdAtom = atom({
-  key: "enviroAdminProductWiseTargetSheetByIdAtom",
-  default: null,
-});
-
-export const enviroAdminServiceWiseTargetSheetListAtom = atom({
-  key: "enviroAdminServiceWiseTargetSheetListAtom",
-  default: null,
-});
-
-export const enviroAdminServiceWiseTargetSheetByIdAtom = atom({
-  key: "enviroAdminServiceWiseTargetSheetByIdAtom",
-  default: null,
-});
-
-export const enviroAdminProjectWiseTargetSheetListAtom = atom({
-  key: "enviroAdminProjectWiseTargetSheetListAtom",
-  default: null,
-});
-
-export const enviroAdminProjectWiseTargetSheetByIdAtom = atom({
-  key: "enviroAdminProjectWiseTargetSheetByIdAtom",
-  default: null,
-});
-
-export const enviroAdminProductUniversalTargetSheetAtom = atom({
-  key: "enviroAdminProductUniversalTargetSheetAtom",
-  default: null,
-});
-
-export const enviroAdminServiceUniversalTargetSheetAtom = atom({
-  key: "enviroAdminServiceUniversalTargetSheetAtom",
-  default: null,
-});
-
-export const enviroAdminProjectUniversalTargetSheetAtom = atom({
-  key: "enviroAdminProjectUniversalTargetSheetAtom",
-  default: null,
-});
-
-export const enviroAdminMyApprovalQueueAtom = atom({
-  key: "enviroAdminMyApprovalQueueAtom",
-  default: null,
-});
-
-export const enviroTargetSheetsEmployeeAtom = atom({
-  key: "enviroTargetSheetsEmployeeAtom",
-  default: null,
-});
+export const enviroTeamWiseTargetSheetAtom = atom(createPersistedAtom("enviroTeamWiseTargetSheetAtom", null));
+export const enviroAdminProductWiseTargetSheetListAtom = atom(createPersistedAtom("enviroAdminProductWiseTargetSheetListAtom", null));
+export const enviroAdminProductWiseTargetSheetByIdAtom = atom(createPersistedAtom("enviroAdminProductWiseTargetSheetByIdAtom", null));
+export const enviroAdminServiceWiseTargetSheetListAtom = atom(createPersistedAtom("enviroAdminServiceWiseTargetSheetListAtom", null));
+export const enviroAdminServiceWiseTargetSheetByIdAtom = atom(createPersistedAtom("enviroAdminServiceWiseTargetSheetByIdAtom", null));
+export const enviroAdminProjectWiseTargetSheetListAtom = atom(createPersistedAtom("enviroAdminProjectWiseTargetSheetListAtom", null));
+export const enviroAdminProjectWiseTargetSheetByIdAtom = atom(createPersistedAtom("enviroAdminProjectWiseTargetSheetByIdAtom", null));
+export const enviroAdminProductUniversalTargetSheetAtom = atom(createPersistedAtom("enviroAdminProductUniversalTargetSheetAtom", null));
+export const enviroAdminServiceUniversalTargetSheetAtom = atom(createPersistedAtom("enviroAdminServiceUniversalTargetSheetAtom", null));
+export const enviroAdminProjectUniversalTargetSheetAtom = atom(createPersistedAtom("enviroAdminProjectUniversalTargetSheetAtom", null));
+export const enviroAdminMyApprovalQueueAtom = atom(createPersistedAtom("enviroAdminMyApprovalQueueAtom", null));
+export const enviroTargetSheetsEmployeeAtom = atom(createPersistedAtom("enviroTargetSheetsEmployeeAtom", null));

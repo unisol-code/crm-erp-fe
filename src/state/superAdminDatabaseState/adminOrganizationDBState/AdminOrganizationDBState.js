@@ -1,33 +1,8 @@
 import { atom } from "recoil";
-import { recoilPersist } from "recoil-persist";
-const { persistAtom } = recoilPersist();
+import { createPersistedAtom } from "../../recoilConfig";
 
-export const adminOrganizationalDBAtom = atom({
-  key: "getAdminOrganizationalDBs",
-  default: [],
-  effects: [persistAtom],
-});
-
-export const adminOrganizationalDBByIDAtom = atom({
-  key: "getAdminOrganizationalDBByID",
-  default: null,
-  effects: [persistAtom],
-});
-
-export const enviroAdminOrgListAtom = atom({
-  key: "enviroAdminOrgListKey",
-  default: [],
-  effects: [persistAtom],
-})
-
-export const enviroAdminOrgDetailsAtom = atom({
-  key: "enviroAdminOrgDetailsKey",
-  default: null,
-  effects: [persistAtom],
-})
-
-export const servicesOfferedDropAtom = atom({
-  key: "servicesOfferedDropKey",
-  default: [],
-  effects: [persistAtom],
-})
+export const adminOrganizationalDBAtom = atom(createPersistedAtom("getAdminOrganizationalDBs", []));
+export const adminOrganizationalDBByIDAtom = atom(createPersistedAtom("getAdminOrganizationalDBByID", null));
+export const enviroAdminOrgListAtom = atom(createPersistedAtom("enviroAdminOrgListKey", []));
+export const enviroAdminOrgDetailsAtom = atom(createPersistedAtom("enviroAdminOrgDetailsKey", null));
+export const servicesOfferedDropAtom = atom(createPersistedAtom("servicesOfferedDropKey", []));

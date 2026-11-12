@@ -1,39 +1,9 @@
 import { atom } from "recoil";
-import { recoilPersist } from "recoil-persist";
-const { persistAtom } = recoilPersist();
+import { createPersistedAtom } from "../recoilConfig";
 
-export const homeFinancialYearAtom = atom({
-  key: "homeFinancialYear",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const homeCalendarYearAtom = atom({
-  key: "homeCalendarYear",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const homeTopProductsAtom = atom({
-  key: "homeTopProducts",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const homeTopCustomerAtom = atom({
-  key: "homeTopCustomer",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const homeEarningByCompanyAtom = atom({
-  key: "homeEarningByCompany",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const homeTotalSalesAtom = atom({
-  key: "homeTotalSales",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
+export const homeFinancialYearAtom = atom(createPersistedAtom("homeFinancialYear", []));
+export const homeCalendarYearAtom = atom(createPersistedAtom("homeCalendarYear", []));
+export const homeTopProductsAtom = atom(createPersistedAtom("homeTopProducts", []));
+export const homeTopCustomerAtom = atom(createPersistedAtom("homeTopCustomer", []));
+export const homeEarningByCompanyAtom = atom(createPersistedAtom("homeEarningByCompany", []));
+export const homeTotalSalesAtom = atom(createPersistedAtom("homeTotalSales", []));

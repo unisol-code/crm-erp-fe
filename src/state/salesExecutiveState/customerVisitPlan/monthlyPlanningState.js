@@ -1,49 +1,10 @@
 import { atom } from "recoil";
-import { recoilPersist } from "recoil-persist";
-export const teamWiseYearlyPlanningStateAtom = atom({
-  key: "teamWiseYearlyPlanningState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
+import { createPersistedAtom } from "../../recoilConfig";
 
-export const monthlyPlanningListStateAtom = atom({
-  key: "monthlyPlanningListState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const oneMonthPlanningStateAtom = atom({
-  key: "oneMonthPlanningState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const monthlyPlanningDetailsStateAtom = atom({
-  key: "monthlyPlanningDetailsState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const monthWisePlanningStateAtom = atom({
-  key: "monthWisePlanningState",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const monthlySummaryStateAtom = atom({
-  key: "monthlySummaryState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const targetSheetYearlySummaryStateAtom = atom({
-  key: "targetSheetYearlySummaryState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const teamWiseYearlyPlanningStateAtom = atom({
-  key: "teamWiseYearlyPlanningState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
+export const monthlyPlanningListStateAtom = atom(createPersistedAtom("monthlyPlanningListState", []));
+export const oneMonthPlanningStateAtom = atom(createPersistedAtom("oneMonthPlanningState", []));
+export const monthlyPlanningDetailsStateAtom = atom(createPersistedAtom("monthlyPlanningDetailsState", null));
+export const monthWisePlanningStateAtom = atom(createPersistedAtom("monthWisePlanningState", []));
+export const monthlySummaryStateAtom = atom(createPersistedAtom("monthlySummaryState", null));
+export const targetSheetYearlySummaryStateAtom = atom(createPersistedAtom("targetSheetYearlySummaryState", null));
+export const teamWiseYearlyPlanningStateAtom = atom(createPersistedAtom("teamWiseYearlyPlanningState", null));
