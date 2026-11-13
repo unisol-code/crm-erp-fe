@@ -1,107 +1,20 @@
 import { atom } from "recoil";
-import { recoilPersist } from "recoil-persist";
+import { createPersistedAtom } from "../../recoilConfig";
 
-const { persistAtom } = recoilPersist();
-
-export const targetSheetListStateAtom = atom({
-  key: "tagetSheetListState",
-  default: [],
-  effects_UNSTABLE: [persistAtom], 
-});
-
-export const targetSheetDetailsAtom = atom({
-  key:"targetSheetDetailState",
-  default:[],
-  effects_UNSTABLE:[persistAtom]
-})
-
-export const yearWiseProductTargetSheetStateAtom = atom({
-  key: "yearWiseProductTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const hospitalWiseTargetSheetStateAtom = atom({
-  key: "hospitalWiseTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const hospitalIdWiseTargetSheetStateAtom = atom({
-  key: "hospitalIdWiseTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const productIdWiseTargetSheetStateAtom = atom({
-  key: "productIdWiseTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const allIndividualTargetSheetStateAtom = atom({
-  key: "allIndividualTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const individualIdWiseTargetSheetStateAtom = atom({
-  key: "individualIdWiseTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-
-export const enviroTargetSheetDetailsAtom = atom({
-  key: "enviroTargetSheetDetailsState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-}); 
-
-export const productWiseTargetSheetStateAtom = atom({
-  key: "productWiseTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const serviceIndividualOrganizationTargetSheetStateAtom = atom({
-  key: "serviceIndividualOrganizationTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const projectIndividualOrganizationTargetSheetStateAtom = atom({
-  key: "projectIndividualOrganizationTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const teamWiseTargetSheetStateAtom = atom({
-  key: "teamWiseTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const enviroUniversalTargetSheetStateAtom = atom({
-  key: "enviroUniversalTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const enviroTargetQueueStateAtom = atom({
-  key: "enviroTargetQueueState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const teamWiseTargetQueueStateAtom = atom({
-  key: "teamWiseTargetQueueState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const universalTargetSheetStateAtom = atom({
-  key: "universalTargetSheetState",
-  default: null,
-  effects_UNSTABLE: [persistAtom],
-});
+export const targetSheetListStateAtom = atom(createPersistedAtom("tagetSheetListState", []));
+export const targetSheetDetailsAtom = atom(createPersistedAtom("targetSheetDetailState", []));
+export const yearWiseProductTargetSheetStateAtom = atom(createPersistedAtom("yearWiseProductTargetSheetState", null));
+export const hospitalWiseTargetSheetStateAtom = atom(createPersistedAtom("hospitalWiseTargetSheetState", null));
+export const hospitalIdWiseTargetSheetStateAtom = atom(createPersistedAtom("hospitalIdWiseTargetSheetState", null));
+export const productIdWiseTargetSheetStateAtom = atom(createPersistedAtom("productIdWiseTargetSheetState", null));
+export const allIndividualTargetSheetStateAtom = atom(createPersistedAtom("allIndividualTargetSheetState", null));
+export const individualIdWiseTargetSheetStateAtom = atom(createPersistedAtom("individualIdWiseTargetSheetState", null));
+export const enviroTargetSheetDetailsAtom = atom(createPersistedAtom("enviroTargetSheetDetailsState", null));
+export const productWiseTargetSheetStateAtom = atom(createPersistedAtom("productWiseTargetSheetState", null));
+export const serviceIndividualOrganizationTargetSheetStateAtom = atom(createPersistedAtom("serviceIndividualOrganizationTargetSheetState", null));
+export const projectIndividualOrganizationTargetSheetStateAtom = atom(createPersistedAtom("projectIndividualOrganizationTargetSheetState", null));
+export const teamWiseTargetSheetStateAtom = atom(createPersistedAtom("teamWiseTargetSheetState", null));
+export const enviroUniversalTargetSheetStateAtom = atom(createPersistedAtom("enviroUniversalTargetSheetState", null));
+export const enviroTargetQueueStateAtom = atom(createPersistedAtom("enviroTargetQueueState", null));
+export const teamWiseTargetQueueStateAtom = atom(createPersistedAtom("teamWiseTargetQueueState", null));
+export const universalTargetSheetStateAtom = atom(createPersistedAtom("universalTargetSheetState", null));

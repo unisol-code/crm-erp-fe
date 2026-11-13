@@ -1,52 +1,11 @@
 import { atom } from "recoil";
-import { recoilPersist } from "recoil-persist";
-const { persistAtom } = recoilPersist();
+import { createPersistedAtom } from "../recoilConfig";
 
-export const allCompanyAtom = atom({
-  key: "allCompany",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-});
-
-export const financialYearAtom = atom({
-  key: "financialYears",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-})
-
-export const calendarYearAtom = atom({
-  key: "calendarYears",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-})
-
-export const topProductsAtom = atom({
-  key: "topProducts",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-})
-
-export const topCustomerAtom = atom({
-  key: "topCustomers",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-})
-
-export const earningByItemAtom = atom({
-  key: "earningByItem",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-})
-
-
-export const businessSnapShotAtom = atom({
-  key: "businessSnapShot",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-})
-
-export const todaySpecialAtom = atom({
-  key: "todaySpecial",
-  default: [],
-  effects_UNSTABLE: [persistAtom],
-})
+export const allCompanyAtom = atom(createPersistedAtom("allCompany", []));
+export const financialYearAtom = atom(createPersistedAtom("financialYears", []));
+export const calendarYearAtom = atom(createPersistedAtom("calendarYears", []));
+export const topProductsAtom = atom(createPersistedAtom("topProducts", []));
+export const topCustomerAtom = atom(createPersistedAtom("topCustomers", []));
+export const earningByItemAtom = atom(createPersistedAtom("earningByItem", []));
+export const businessSnapShotAtom = atom(createPersistedAtom("businessSnapShot", []));
+export const todaySpecialAtom = atom(createPersistedAtom("todaySpecial", []));
