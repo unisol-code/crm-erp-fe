@@ -5,8 +5,8 @@ import { themeStateAtom } from "../../state/themeState/themeState"
 
 export const useTheme = () => {
   const companyThemeMap = {
-    UniSol: "UniSol",
-    SurgiSol: "SurgiSol",
+    UniSol: "UniSol",  "Unisol Services LLP": "UniSol",
+    SurgiSol: "SurgiSol",  "Surgisol Healthcare Pvt Ltd": "SurgiSol",
     "Enviro solution": "EnviroSolution",
     "Ignite Sphere": "IgniteSphere",
     Home: "Home",
